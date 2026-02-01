@@ -21,7 +21,6 @@
   "installCommand": "cd admin-web && npm install",
   "framework": "create-react-app",
   "regions": ["iad1"],
-  "functions": {},
   "rewrites": [
     {
       "source": "/((?!api/.*).*)",
