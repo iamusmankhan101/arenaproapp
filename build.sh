@@ -1,5 +1,7 @@
 #!/bin/bash
-echo "🚀 Building Arena Pro Admin Panel for Vercel..."
+
+# Arena Pro Admin Panel - Build Script
+echo "🚀 Building Arena Pro Admin Panel..."
 
 # Navigate to admin-web directory
 cd admin-web
@@ -9,11 +11,18 @@ echo "📦 Installing dependencies..."
 npm install
 
 # Build the project
-echo "🔨 Building production build..."
+echo "🔨 Building production version..."
 npm run build
 
-# Copy build to root for Vercel
-echo "📁 Preparing build for deployment..."
-cp -r build/* ../
-
-echo "✅ Build completed successfully!"
+# Check if build was successful
+if [ $? -eq 0 ]; then
+    echo "✅ Build completed successfully!"
+    echo "📊 Build output:"
+    ls -la build/
+    echo ""
+    echo "🌐 Ready for deployment!"
+    echo "📁 Build directory: admin-web/build"
+else
+    echo "❌ Build failed!"
+    exit 1
+fi
