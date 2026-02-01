@@ -1,0 +1,355 @@
+import React, { useEffect, useState } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  FlatList, 
+  ScrollView, 
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  RefreshControl
+} from 'react-native';
+import { 
+  Text, 
+  Chip, 
+  Button, 
+  SegmentedButtons, 
+  Searchbar,
+  Surface
+} from 'react-native-paper';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUserBookings } from '../../store/slices/bookingSlice';
+import BookingCard from '../../components/BookingCard';
+import { MaterialIcons } from '@expo/vector-icons';
+
+export default function BookingScreen() {
+  const [selectedTab, setSelectedTab] = useState('upcoming');
+  const [searchQuery, setSearchQuery] = useState('');
+  const dispatch = useDispatch();
+  const { userBookings, loading } = useSelector(state => state.booking);
+
+  useEffect(() => {
+    dispatch(fetchUserBookings());
+  }, [dispatch]);
+
+  const filterBookings = (bookings, filter) => {
+    const now = new Date();
+    
+    let filtered = [];
+    switch (filter) {
+      case 'upcoming':
+        filtered = bookings.filter(booking => 
+          new Date(booking.dateTime) > now && booking.status !== 'cancelled'
+        );
+        break;
+      case 'past':
+        filtered = bookings.filter(booking => 
+          new Date(booking.dateTime) <= now || booking.status === 'completed'
+        );
+        break;
+      case 'cancelled':
+        filtered = bookings.filter(booking => booking.status === 'cancelled');
+        break;
+      default:
+        filtered = bookings;
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(booking =>
+        booking.turfName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.turfArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.sport?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.bookingId.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return filtered;
+  };
+
+  const filteredBookings = filterBookings(userBookings, selectedTab);
+
+  const getBookingStats = () => {
+    const total = userBookings.length;
+    const upcoming = userBookings.filter(b => 
+      new Date(b.dateTime) > new Date() && b.status !== 'cancelled'
+    ).length;
+    const completed = userBookings.filter(b => b.status === 'completed').length;
+    const totalSpent = userBookings
+      .filter(b => b.paymentStatus === 'paid')
+      .reduce((sum, b) => sum + b.totalAmount, 0);
+
+    return { total, upcoming, completed, totalSpent };
+  };
+
+  const stats = getBookingStats();
+
+  const renderBooking = ({ item }) => (
+    <BookingCard booking={item} />
+  );
+
+  const getEmptyMessage = () => {
+    if (searchQuery.trim()) {
+      return `No bookings found for "${searchQuery}"`;
+    }
+    
+    switch (selectedTab) {
+      case 'upcoming':
+        return 'No upcoming bookings. Time to book a ground!';
+      case 'past':
+        return 'No past bookings yet.';
+      case 'cancelled':
+        return 'No cancelled bookings.';
+      default:
+        return 'No bookings found.';
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#229a60" barStyle="light-content" />
+      
+      {/* Enhanced Header */}
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>My Bookings</Text>
+          <Text style={styles.subtitle}>Manage your ground reservations</Text>
+        </View>
+        
+        {/* Quick Stats */}
+        <View style={styles.quickStats}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{stats.upcoming}</Text>
+            <Text style={styles.statLabel}>Upcoming</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{stats.total}</Text>
+            <Text style={styles.statLabel}>Total</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>PKR {stats.totalSpent.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>Spent</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.content}>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Searchbar
+            placeholder="Search bookings, venues, sports..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchbar}
+            iconColor="#229a60"
+            inputStyle={styles.searchInput}
+            elevation={0}
+          />
+        </View>
+
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          <SegmentedButtons
+            value={selectedTab}
+            onValueChange={setSelectedTab}
+            buttons={[
+              { 
+                value: 'upcoming', 
+                label: 'Upcoming',
+                icon: () => <MaterialIcons name="schedule" size={18} color={selectedTab === 'upcoming' ? '#229a60' : '#666'} />
+              },
+              { 
+                value: 'past', 
+                label: 'Past',
+                icon: () => <MaterialIcons name="history" size={18} color={selectedTab === 'past' ? '#229a60' : '#666'} />
+              },
+              { 
+                value: 'cancelled', 
+                label: 'Cancelled',
+                icon: () => <MaterialIcons name="cancel" size={18} color={selectedTab === 'cancelled' ? '#229a60' : '#666'} />
+              },
+            ]}
+            style={styles.segmentedButtons}
+          />
+        </View>
+
+        {/* Results Count */}
+        {filteredBookings.length > 0 && (
+          <View style={styles.resultsContainer}>
+            <Text style={styles.resultsText}>
+              {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''} found
+            </Text>
+          </View>
+        )}
+
+        {/* Bookings List */}
+        <FlatList
+          data={filteredBookings}
+          renderItem={renderBooking}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={() => dispatch(fetchUserBookings())}
+              colors={['#229a60']}
+              tintColor="#229a60"
+            />
+          }
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <MaterialIcons name="event-busy" size={64} color="#E0E0E0" />
+              </View>
+              <Text style={styles.emptyTitle}>
+                {getEmptyMessage()}
+              </Text>
+              {selectedTab === 'upcoming' && !searchQuery.trim() && (
+                <Button 
+                  mode="contained" 
+                  style={styles.bookNowButton}
+                  contentStyle={styles.bookNowButtonContent}
+                  onPress={() => {/* Navigate to venue list */}}
+                >
+                  Book a Ground
+                </Button>
+              )}
+            </View>
+          }
+        />
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  header: {
+    backgroundColor: '#229a60',
+    paddingTop: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 4,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  quickStats: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 8,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  searchbar: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  searchInput: {
+    fontFamily: 'Montserrat_400Regular',
+  },
+  tabContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  segmentedButtons: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  resultsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  resultsText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  list: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+    fontFamily: 'Montserrat_600SemiBold',
+    lineHeight: 24,
+  },
+  bookNowButton: {
+    backgroundColor: '#229a60',
+    borderRadius: 12,
+    paddingHorizontal: 24,
+  },
+  bookNowButtonContent: {
+    paddingVertical: 8,
+  },
+});
