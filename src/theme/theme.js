@@ -4,15 +4,21 @@ export const theme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#2E7D32', // Green for turf
-    secondary: '#FF6F00', // Orange for energy
-    tertiary: '#1976D2', // Blue for trust
+    primary: '#004d43', // Brand primary - dark teal
+    secondary: '#cdec6a', // Brand secondary - light green
+    tertiary: '#006b5a', // Darker teal variation
     surface: '#FFFFFF',
     background: '#F5F5F5',
     error: '#D32F2F',
-    success: '#388E3C',
+    success: '#004d43', // Use brand primary for success
     warning: '#F57C00',
-    splash: '#337f35', // Green for splash screen
+    splash: '#004d43', // Brand primary for splash screen
+    
+    // Additional brand variations
+    primaryLight: '#e8f5f3',
+    secondaryLight: '#f7fce8',
+    primaryDark: '#003832',
+    secondaryDark: '#a8c555',
   },
   fonts: {
     ...MD3LightTheme.fonts,
