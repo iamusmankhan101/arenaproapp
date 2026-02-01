@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Image, Dimensions } from 'react-native';
+import { theme } from '../theme/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,7 +21,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#229a60',
+    backgroundColor: theme.colors.primary, // Using brand primary color
     justifyContent: 'center',
     alignItems: 'center',
   },
