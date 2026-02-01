@@ -6,8 +6,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
 import { fetchChallenges } from '../../store/slices/teamSlice';
 import RealtimeNotification from '../../components/RealtimeNotification';
-import SportsCategories from '../../components/SportsCategories';
 import realtimeSyncService from '../../services/realtimeSync';
+import { SportsIcon } from '../../components/SportsIcons';
 
 const { width } = Dimensions.get('window');
 
@@ -35,19 +35,16 @@ const sportCategories = [
   {
     id: 1,
     name: 'Cricket',
-    icon: '🏏',
     color: '#004d43',
   },
   {
     id: 2,
     name: 'Futsal',
-    icon: '⚽',
     color: '#004d43',
   },
   {
     id: 3,
     name: 'Padel',
-    icon: '🏓',
     color: '#004d43',
   }
 ];
@@ -151,7 +148,7 @@ export default function HomeScreen({ navigation }) {
       activeOpacity={0.8}
     >
       <View style={[styles.sportIconContainer, { backgroundColor: sport.color }]}>
-        <Text style={styles.sportIcon}>{sport.icon}</Text>
+        <SportsIcon sport={sport.name} size={32} style={styles.sportIconImage} />
       </View>
       <Text style={styles.sportName}>{sport.name}</Text>
     </TouchableOpacity>
@@ -365,12 +362,9 @@ export default function HomeScreen({ navigation }) {
       {!showSearchResults && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sports</Text>
-          <SportsCategories 
-            onSportSelect={(sportKey) => {
-              navigation.navigate('VenueList', { sportType: sportKey });
-            }}
-            horizontal={true}
-          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsScroll}>
+            {sportCategories.map(renderSportCategory)}
+          </ScrollView>
         </View>
       )}
 
@@ -632,10 +626,10 @@ const styles = StyleSheet.create({
   },
   sportIcon: {
     fontSize: 24,
+    color: 'white',
   },
   sportIconImage: {
-    width: 32,
-    height: 32,
+    backgroundColor: 'transparent',
   },
   sportName: {
     fontSize: 12,

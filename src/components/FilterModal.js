@@ -36,7 +36,7 @@ export default function FilterModal({ visible, onDismiss }) {
     setLocalFilters({...localFilters, sports: updatedSports});
   };
 
-  const availableSports = ['Cricket', 'Futsal', 'Padel'];
+  const availableSports = ['Cricket', 'Football', 'Futsal', 'Padel'];
 
   return (
     <Portal>
