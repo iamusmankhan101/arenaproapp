@@ -122,7 +122,7 @@ export default function ProfileScreen({ navigation }) {
           onPress={handleLogout}
           activeOpacity={0.7}
         >
-          <MaterialIcons name="logout" size={24} color="#F44336" />
+          <MaterialIcons name="logout" size={24} color="#ffffffff" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   profileCard: {
-    backgroundColor: 'white',
+    backgroundColor: '#004d43',
     borderRadius: 16,
     padding: 20,
     flexDirection: 'row',
@@ -174,12 +174,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   avatar: {
-    backgroundColor: '#229a60',
+    backgroundColor: '#cdec6a', // Primary brand color
     marginRight: 16,
   },
   avatarLabel: {
     fontSize: 32,
     fontWeight: 'bold',
+    color: '#004d43', // Primary color text on secondary background
   },
   userInfo: {
     flex: 1,
@@ -187,12 +188,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'white', // White text for contrast
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 14,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.8)', // Semi-transparent white for email
   },
   menuContainer: {
     backgroundColor: 'white',
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   logoutButton: {
-    backgroundColor: 'white',
+    backgroundColor: '#ed0000',
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -250,7 +251,7 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontSize: 16,
-    color: '#F44336',
+    color: '#ffffffff',
     marginLeft: 12,
     fontWeight: '600',
   },

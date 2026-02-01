@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Alert, TouchableOpacity, Dimensions, Image } from 'react-native';
-import { Text, Card, Button, FAB, Searchbar, Chip } from 'react-native-paper';
+import { Text, Card, FAB, Searchbar, Chip } from 'react-native-paper';
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Icon } from '../../components/Icons';
+import { useTheme } from '../../theme/theme';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function MapScreen({ navigation }) {
   const [location, setLocation] = useState(null);
@@ -22,11 +22,12 @@ export default function MapScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
-  const [venues, setVenues] = useState([]);
+  const [filteredVenues, setFilteredVenues] = useState([]);
   
   const mapRef = useRef(null);
   const dispatch = useDispatch();
   const { nearbyTurfs } = useSelector(state => state.turf);
+  const theme = useTheme();
 
   const sportFilters = ['All', 'Football', 'Cricket', 'Padel', 'Tennis'];
 
@@ -41,31 +42,69 @@ export default function MapScreen({ navigation }) {
   }, []);
 
   useEffect(() => {
-    // Update venues when nearbyTurfs changes
-    setVenues(nearbyTurfs);
+    // Update filtered venues when nearbyTurfs changes
+    setFilteredVenues(nearbyTurfs);
   }, [nearbyTurfs]);
 
   useEffect(() => {
     filterVenues();
-  }, [searchQuery, selectedSport, venues]);
+  }, [searchQuery, selectedSport, nearbyTurfs]);
+
+  // Helper function to get full address from venue data
+  const getVenueAddress = (venue) => {
+    const addressParts = [];
+    if (venue.address) addressParts.push(venue.address);
+    if (venue.area && venue.area !== venue.address) addressParts.push(venue.area);
+    if (venue.city) addressParts.push(venue.city);
+    return addressParts.join(', ') || 'Address not available';
+  };
+
+  // Helper function to get venue coordinates with fallback
+  const getVenueCoordinates = (venue) => {
+    // Use main coordinates if available
+    if (venue.latitude && venue.longitude) {
+      return {
+        latitude: venue.latitude,
+        longitude: venue.longitude
+      };
+    }
+    
+    // Fallback to location object coordinates if main coordinates are missing
+    if (venue.location && venue.location.latitude && venue.location.longitude) {
+      return {
+        latitude: venue.location.latitude,
+        longitude: venue.location.longitude
+      };
+    }
+    
+    // Default fallback coordinates (Karachi center)
+    return {
+      latitude: 24.8607,
+      longitude: 67.0011
+    };
+  };
 
   const filterVenues = () => {
-    let filtered = venues;
+    let filtered = nearbyTurfs;
 
     if (searchQuery) {
-      filtered = filtered.filter(venue => 
-        venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        venue.sports.some(sport => sport.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+      filtered = filtered.filter(venue => {
+        const nameMatch = venue.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const sportsMatch = venue.sports && venue.sports.some(sport => 
+          sport.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        const addressMatch = getVenueAddress(venue).toLowerCase().includes(searchQuery.toLowerCase());
+        return nameMatch || sportsMatch || addressMatch;
+      });
     }
 
     if (selectedSport !== 'All') {
       filtered = filtered.filter(venue => 
-        venue.sports.includes(selectedSport)
+        venue.sports && venue.sports.includes(selectedSport)
       );
     }
 
-    setVenues(filtered);
+    setFilteredVenues(filtered);
   };
 
   useEffect(() => {
@@ -110,9 +149,10 @@ export default function MapScreen({ navigation }) {
     setSelectedVenue(venue);
     // Center map on selected venue
     if (mapRef.current) {
+      const coordinates = getVenueCoordinates(venue);
       mapRef.current.animateToRegion({
-        latitude: venue.latitude,
-        longitude: venue.longitude,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       }, 1000);
@@ -139,12 +179,9 @@ export default function MapScreen({ navigation }) {
   };
 
   const zoomToFitMarkers = () => {
-    if (mapRef.current && venues.length > 0) {
+    if (mapRef.current && filteredVenues.length > 0) {
       mapRef.current.fitToCoordinates(
-        venues.map(venue => ({
-          latitude: venue.latitude,
-          longitude: venue.longitude
-        })),
+        filteredVenues.map(venue => getVenueCoordinates(venue)),
         {
           edgePadding: { top: 100, right: 50, bottom: 100, left: 50 },
           animated: true,
@@ -170,7 +207,7 @@ export default function MapScreen({ navigation }) {
           style={styles.filterButton}
           onPress={() => setShowFilters(!showFilters)}
         >
-          <Icon name="filter-list" size={24} color="#229a60" />
+          <MaterialIcons name="filter-list" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -180,21 +217,21 @@ export default function MapScreen({ navigation }) {
           <Text style={styles.filterTitle}>Filter by Sport:</Text>
           <View style={styles.chipContainer}>
             {sportFilters.map((sport) => (
-              <Chip
-                key={sport}
-                selected={selectedSport === sport}
-                onPress={() => setSelectedSport(sport)}
-                style={[
-                  styles.sportChip,
-                  selectedSport === sport && styles.selectedChip
-                ]}
-                textStyle={[
-                  styles.chipText,
-                  selectedSport === sport && styles.selectedChipText
-                ]}
-              >
-                {sport}
-              </Chip>
+                <Chip
+                  key={sport}
+                  selected={selectedSport === sport}
+                  onPress={() => setSelectedSport(sport)}
+                  style={[
+                    styles.sportChip,
+                    selectedSport === sport && { backgroundColor: theme.colors.primary }
+                  ]}
+                  textStyle={[
+                    styles.chipText,
+                    selectedSport === sport && styles.selectedChipText
+                  ]}
+                >
+                  {sport}
+                </Chip>
             ))}
           </View>
         </View>
@@ -211,37 +248,38 @@ export default function MapScreen({ navigation }) {
         showsMyLocationButton={false}
         mapType="standard"
       >
-        {venues.map((venue) => (
-          <Marker
-            key={venue.id}
-            coordinate={{
-              latitude: venue.latitude,
-              longitude: venue.longitude,
-            }}
-            pinColor={getMarkerColor(venue)}
-            onPress={() => handleMarkerPress(venue)}
-          >
-            <Callout onPress={() => handleVenueSelect(venue)}>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>{venue.name}</Text>
-                <Text style={styles.calloutPrice}>PKR {venue.pricePerHour}/hr</Text>
-                <View style={styles.calloutRating}>
-                  <Icon name="star" size={14} color="#FFD700" />
-                  <Text style={styles.calloutRatingText}>{venue.rating}</Text>
+        {filteredVenues.map((venue) => {
+          const coordinates = getVenueCoordinates(venue);
+          return (
+            <Marker
+              key={venue.id}
+              coordinate={coordinates}
+              pinColor={getMarkerColor(venue)}
+              onPress={() => handleMarkerPress(venue)}
+            >
+              <Callout onPress={() => handleVenueSelect(venue)}>
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.calloutTitle}>{venue.name}</Text>
+                  <Text style={styles.calloutAddress}>{getVenueAddress(venue)}</Text>
+                  <Text style={styles.calloutPrice}>PKR {venue.pricePerHour || venue.basePrice || 'N/A'}/hr</Text>
+                  <View style={styles.calloutRating}>
+                    <MaterialIcons name="star" size={14} color="#FFD700" />
+                    <Text style={styles.calloutRatingText}>{venue.rating || '4.0'}</Text>
+                  </View>
+                  <Text style={[
+                    styles.calloutAvailability,
+                    { color: venue.openNow && venue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
+                  ]}>
+                    {getAvailabilityText(venue)}
+                  </Text>
+                  <Text style={styles.calloutSports}>
+                    {venue.sports ? venue.sports.join(' • ') : 'Sports info not available'}
+                  </Text>
                 </View>
-                <Text style={[
-                  styles.calloutAvailability,
-                  { color: venue.openNow && venue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
-                ]}>
-                  {getAvailabilityText(venue)}
-                </Text>
-                <Text style={styles.calloutSports}>
-                  {venue.sports.join(' • ')}
-                </Text>
-              </View>
-            </Callout>
-          </Marker>
-        ))}
+              </Callout>
+            </Marker>
+          );
+        })}
       </MapView>
 
       {/* Selected Venue Card */}
@@ -252,14 +290,15 @@ export default function MapScreen({ navigation }) {
               <Image source={selectedVenue.image} style={styles.venueImage} />
               <View style={styles.venueInfo}>
                 <Text style={styles.venueName}>{selectedVenue.name}</Text>
+                <Text style={styles.venueAddress}>{getVenueAddress(selectedVenue)}</Text>
                 <View style={styles.venueDetails}>
                   <View style={styles.venueRating}>
-                    <Icon name="star" size={16} color="#FFD700" />
-                    <Text style={styles.venueRatingText}>{selectedVenue.rating}</Text>
+                    <MaterialIcons name="star" size={16} color="#FFD700" />
+                    <Text style={styles.venueRatingText}>{selectedVenue.rating || '4.0'}</Text>
                   </View>
-                  <Text style={styles.venueDistance}>{selectedVenue.distance}</Text>
+                  <Text style={styles.venueDistance}>{selectedVenue.distance || 'Distance N/A'}</Text>
                 </View>
-                <Text style={styles.venuePrice}>PKR {selectedVenue.pricePerHour}/hr</Text>
+                <Text style={styles.venuePrice}>PKR {selectedVenue.pricePerHour || selectedVenue.basePrice || 'N/A'}/hr</Text>
                 <Text style={[
                   styles.venueAvailability,
                   { color: selectedVenue.openNow && selectedVenue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
@@ -271,7 +310,7 @@ export default function MapScreen({ navigation }) {
                 style={styles.closeButton}
                 onPress={() => setSelectedVenue(null)}
               >
-                <Icon name="close" size={20} color="#666" />
+                <MaterialIcons name="close" size={20} color="#666" />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -281,23 +320,20 @@ export default function MapScreen({ navigation }) {
       {/* Action Buttons */}
       <FAB
         icon="target"
-        style={styles.locationFab}
+        style={[styles.locationFab, { backgroundColor: theme.colors.primary }]}
         onPress={getCurrentLocation}
-        small
       />
 
       <FAB
         icon="fullscreen"
         style={styles.zoomFab}
         onPress={zoomToFitMarkers}
-        small
       />
 
       <FAB
         icon="menu"
         style={styles.listFab}
         onPress={() => navigation.navigate('VenueList')}
-        small
       />
     </View>
   );
@@ -361,7 +397,7 @@ const styles = StyleSheet.create({
     marginRight: 0,
   },
   selectedChip: {
-    backgroundColor: '#229a60',
+    backgroundColor: '#004d43',
   },
   chipText: {
     color: '#666',
@@ -374,8 +410,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   calloutContainer: {
-    width: 200,
-    padding: 10,
+    width: 220,
+    padding: 12,
   },
   calloutTitle: {
     fontSize: 16,
@@ -383,10 +419,16 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
+  calloutAddress: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 6,
+    fontStyle: 'italic',
+  },
   calloutPrice: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#229a60',
+    color: '#004d43',
     marginBottom: 4,
   },
   calloutRating: {
@@ -437,7 +479,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 2,
+  },
+  venueAddress: {
+    fontSize: 12,
+    color: '#666',
     marginBottom: 4,
+    fontStyle: 'italic',
   },
   venueDetails: {
     flexDirection: 'row',
@@ -461,7 +509,7 @@ const styles = StyleSheet.create({
   venuePrice: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#229a60',
+    color: '#004d43',
     marginBottom: 2,
   },
   venueAvailability: {
@@ -476,7 +524,6 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 160,
-    backgroundColor: '#229a60',
   },
   zoomFab: {
     position: 'absolute',

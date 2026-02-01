@@ -61,7 +61,7 @@ export default function ChallengeScreen({ navigation }) {
       style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}
       onPress={() => setActiveTab(tab)}
     >
-      <MaterialIcons name={icon} size={20} color={activeTab === tab ? '#229a60' : '#666'} />
+      <MaterialIcons name={icon} size={20} color={activeTab === tab ? '#004d43' : '#666'} />
       <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
         {label}
       </Text>
@@ -102,7 +102,7 @@ export default function ChallengeScreen({ navigation }) {
           style={styles.quickActionCard}
           onPress={() => setShowCreateModal(true)}
         >
-          <MaterialIcons name="add-circle" size={32} color="#229a60" />
+          <MaterialIcons name="add-circle" size={32} color="#cdec6a" />
           <Text style={styles.quickActionTitle}>Create Challenge</Text>
           <Text style={styles.quickActionSubtitle}>Start a new match</Text>
         </TouchableOpacity>
@@ -111,7 +111,7 @@ export default function ChallengeScreen({ navigation }) {
           style={styles.quickActionCard}
           onPress={() => navigation.navigate('VenueList')}
         >
-          <MaterialIcons name="location-on" size={32} color="#229a60" />
+          <MaterialIcons name="location-on" size={32} color="#cdec6a" />
           <Text style={styles.quickActionTitle}>Find Venue</Text>
           <Text style={styles.quickActionSubtitle}>Book a ground</Text>
         </TouchableOpacity>
@@ -148,7 +148,7 @@ export default function ChallengeScreen({ navigation }) {
               </View>
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { 
-                  color: (teamStats.fairPlayScore || 4) >= 4 ? '#229a60' : 
+                  color: (teamStats.fairPlayScore || 4) >= 4 ? '#004d43' : 
                          (teamStats.fairPlayScore || 4) >= 3 ? '#FF9800' : '#F44336' 
                 }]}>
                   {(teamStats.fairPlayScore || 4).toFixed(1)}
@@ -167,7 +167,7 @@ export default function ChallengeScreen({ navigation }) {
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
-          iconColor="#229a60"
+          iconColor="#004d43" // Primary brand color
         />
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#229a60',
+    backgroundColor: '#004d43', // Primary brand color
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeTabButton: {
-    backgroundColor: 'rgba(34, 154, 96, 0.1)',
+    backgroundColor: 'rgba(0, 77, 67, 0.1)', // Primary brand color with transparency
   },
   tabText: {
     marginLeft: 8,
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_500Medium',
   },
   activeTabText: {
-    color: '#229a60',
+    color: '#004d43', // Primary brand color
     fontWeight: 'bold',
   },
   quickActionsContainer: {
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   quickActionCard: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#004d43',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
@@ -330,13 +330,13 @@ const styles = StyleSheet.create({
   quickActionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#ffffffff',
     marginTop: 8,
     fontFamily: 'Montserrat_600SemiBold',
   },
   quickActionSubtitle: {
     fontSize: 11,
-    color: '#666',
+    color: '#ffffffff',
     marginTop: 4,
     fontFamily: 'Montserrat_400Regular',
   },
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   },
   teamName: {
     fontWeight: 'bold',
-    color: '#229a60',
+    color: '#004d43', // Primary brand color
     fontFamily: 'Montserrat_700Bold',
     fontSize: 16,
   },
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   winRateValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#229a60',
+    color: '#004d43', // Primary brand color
     fontFamily: 'Montserrat_700Bold',
   },
   winRateLabel: {
@@ -432,8 +432,8 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   selectedFilterChip: {
-    backgroundColor: '#229a60',
-    borderColor: '#229a60',
+    backgroundColor: '#004d43', // Primary brand color
+    borderColor: '#004d43',
   },
   filterChipText: {
     color: '#666',
