@@ -225,14 +225,22 @@ export const bookingAPI = {
       
       const venueData = venueSnap.data();
       
-      // Use admin-configured time slots (prioritize timeSlots over availableSlots)
-      let venueTimeSlots = venueData.timeSlots || venueData.availableSlots || [];
+      // Check if there are date-specific slots for the requested date
+      let venueTimeSlots = [];
       
-      console.log(`📊 Mobile: Venue has ${venueTimeSlots.length} time slots configured`);
-      console.log(`📊 Mobile: Using ${venueData.timeSlots ? 'timeSlots' : 'availableSlots'} field`);
+      if (venueData.dateSpecificSlots && venueData.dateSpecificSlots[date]) {
+        // Use date-specific slots if they exist for this date
+        venueTimeSlots = venueData.dateSpecificSlots[date];
+        console.log(`📊 Mobile: Using date-specific slots for ${date}: ${venueTimeSlots.length} slots configured`);
+      } else {
+        // Fall back to general time slots
+        venueTimeSlots = venueData.timeSlots || venueData.availableSlots || [];
+        console.log(`📊 Mobile: Using general time slots: ${venueTimeSlots.length} slots configured`);
+        console.log(`📊 Mobile: Using ${venueData.timeSlots ? 'timeSlots' : 'availableSlots'} field`);
+      }
       
       if (venueTimeSlots.length === 0) {
-        console.log('⚠️ Mobile: No time slots configured for this venue');
+        console.log('⚠️ Mobile: No time slots configured for this venue/date');
         return { data: [] };
       }
       
@@ -241,7 +249,7 @@ export const bookingAPI = {
       console.log(`📊 Mobile: ${selectedSlots.length}/${venueTimeSlots.length} slots are selected by admin`);
       
       if (selectedSlots.length === 0) {
-        console.log('⚠️ Mobile: No slots selected by admin for this venue');
+        console.log('⚠️ Mobile: No slots selected by admin for this venue/date');
         return { data: [] };
       }
       
