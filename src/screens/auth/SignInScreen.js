@@ -150,12 +150,12 @@ export default function SignInScreen({ navigation }) {
             mode="contained"
             onPress={handleSignIn}
             style={styles.signInButton}
-            buttonColor="#229a60"
-            textColor="white"
+            buttonColor="#004d43"
+            textColor="#cdec6a"
             contentStyle={styles.signInButtonContent}
             labelStyle={styles.signInButtonText}
             disabled={loading}
-            icon={loading ? undefined : () => <MaterialIcons name="arrow-forward" size={20} color="white" />}
+            icon={loading ? undefined : () => <MaterialIcons name="arrow-forward" size={20} color="#cdec6a" />}
           >
             {loading ? <ActivityIndicator color="white" size="small" /> : 'SIGN IN'}
           </Button>
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#229a60',
+    backgroundColor: '#cdec6a',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -231,12 +231,12 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#004d43',
   },
   brandName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#229a60',
+    color: '#004d43',
   },
   formContainer: {
     flex: 1,

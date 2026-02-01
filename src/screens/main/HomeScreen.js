@@ -6,6 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
 import { fetchChallenges } from '../../store/slices/teamSlice';
 import RealtimeNotification from '../../components/RealtimeNotification';
+import SportsCategories from '../../components/SportsCategories';
 import realtimeSyncService from '../../services/realtimeSync';
 
 const { width } = Dimensions.get('window');
@@ -35,19 +36,19 @@ const sportCategories = [
     id: 1,
     name: 'Cricket',
     icon: '🏏',
-    color: '#F5F5F5',
+    color: '#004d43',
   },
   {
     id: 2,
     name: 'Futsal',
     icon: '⚽',
-    color: '#F5F5F5',
+    color: '#004d43',
   },
   {
     id: 3,
     name: 'Padel',
     icon: '🏓',
-    color: '#F5F5F5',
+    color: '#004d43',
   }
 ];
 
@@ -364,9 +365,17 @@ export default function HomeScreen({ navigation }) {
       {!showSearchResults && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sports</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsScroll}>
-            {sportCategories.map(renderSportCategory)}
-          </ScrollView>
+          <SportsCategories 
+            onSportSelect={(sportKey) => {
+              if (sportKey === 'all') {
+                navigation.navigate('VenueList');
+              } else {
+                navigation.navigate('VenueList', { sportType: sportKey });
+              }
+            }}
+            horizontal={true}
+            showAll={true}
+          />
         </View>
       )}
 
@@ -435,7 +444,7 @@ export default function HomeScreen({ navigation }) {
             style={styles.createChallengeButton}
             onPress={() => navigation.navigate('Lalkaar')}
           >
-            <MaterialIcons name="add" size={24} color="white" />
+            <MaterialIcons name="add" size={24} color="#cdec6a" />
             <Text style={styles.createChallengeText}>Create Your Challenge</Text>
           </TouchableOpacity>
         </View>
@@ -870,14 +879,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#229a60',
+    backgroundColor: '#004d43',
     paddingVertical: 15,
     borderRadius: 12,
     marginTop: 15,
   },
   createChallengeText: {
     fontSize: 16,
-    color: 'white',
+    color: '#cdec6a',
     marginLeft: 8,
     fontFamily: 'Montserrat_600SemiBold',
   },

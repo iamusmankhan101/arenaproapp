@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Card, Text, Chip, Button } from 'react-native-paper';
 import { Rating } from 'react-native-ratings';
 import { MaterialIcons } from '@expo/vector-icons';
+import { SportsIcon, SportsIconList } from './SportsIcons';
 
 export default function TurfCard({ turf, onPress }) {
   const getPriceColor = (pricePerHour) => {
@@ -59,6 +60,21 @@ export default function TurfCard({ turf, onPress }) {
               {turf.surfaceType} • {turf.size}
             </Text>
           </View>
+
+          {/* Sports Icons Row */}
+          {turf.sports && turf.sports.length > 0 && (
+            <View style={styles.detailRow}>
+              <SportsIconList 
+                sports={turf.sports} 
+                size={20} 
+                maxIcons={4}
+                style={styles.sportsIcons}
+              />
+              <Text style={styles.detailText}>
+                {turf.sports.join(', ')}
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.features}>
@@ -146,6 +162,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     color: '#666',
     fontSize: 14,
+  },
+  sportsIcons: {
+    marginRight: 8,
   },
   features: {
     flexDirection: 'row',

@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Modal, Portal, Text, Button, Card, Switch, Chip } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { setFilters } from '../store/slices/turfSlice';
+import { SportsIcon } from './SportsIcons';
 
 export default function FilterModal({ visible, onDismiss }) {
   const dispatch = useDispatch();
@@ -20,10 +21,22 @@ export default function FilterModal({ visible, onDismiss }) {
       surfaceType: 'all',
       hasGenerator: false,
       priceRange: [0, 5000],
+      sports: [],
     };
     setLocalFilters(resetFilters);
     dispatch(setFilters(resetFilters));
   };
+
+  const handleSportToggle = (sport) => {
+    const currentSports = localFilters.sports || [];
+    const updatedSports = currentSports.includes(sport)
+      ? currentSports.filter(s => s !== sport)
+      : [...currentSports, sport];
+    
+    setLocalFilters({...localFilters, sports: updatedSports});
+  };
+
+  const availableSports = ['Cricket', 'Football', 'Futsal', 'Padel'];
 
   return (
     <Portal>

@@ -109,7 +109,7 @@ export default function SignUpScreen({ navigation }) {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <MaterialIcons name="arrow-back" size={24} color="#333" />
+            <MaterialIcons name="arrow-back" size={24} color="#000000" />
           </TouchableOpacity>
         </View>
 
@@ -328,7 +328,7 @@ export default function SignUpScreen({ navigation }) {
             disabled={loading}
           >
             <Text style={styles.signUpButtonText}>SIGN UP</Text>
-            {!loading && <MaterialIcons name="arrow-forward" size={20} color="white" style={styles.buttonIcon} />}
+            {!loading && <MaterialIcons name="arrow-forward" size={20} color="#cdec6a" style={styles.buttonIcon} />}
             {loading && <ActivityIndicator color="white" size="small" />}
           </TouchableOpacity>
 
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000000',
     marginBottom: 40,
   },
   formContainer: {
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   signUpButton: {
-    backgroundColor: '#229a60',
+    backgroundColor: '#004d43',
     borderRadius: 12,
     marginTop: 24,
     marginBottom: 24,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 1,
-    color: 'white',
+    color: '#cdec6a',
   },
   dividerContainer: {
     flexDirection: 'row',

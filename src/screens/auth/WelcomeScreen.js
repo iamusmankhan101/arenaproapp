@@ -53,7 +53,8 @@ export default function WelcomeScreen({ navigation }) {
               onPress={() => navigation.navigate('SignUp')}
               style={styles.primaryButton}
               contentStyle={styles.buttonContent}
-              buttonColor="#229a60"
+              textColor="#004d43"
+              buttonColor="#cdec6a"
             >
               Get Started
             </Button>
@@ -63,8 +64,8 @@ export default function WelcomeScreen({ navigation }) {
               onPress={() => navigation.navigate('SignIn')}
               style={styles.secondaryButton}
               contentStyle={styles.buttonContent}
-              textColor="white"
-              buttonColor="transparent"
+              textColor="#004d43"
+              buttonColor="#ffffff"
             >
               I already have an account
             </Button>
