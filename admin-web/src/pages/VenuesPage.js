@@ -88,6 +88,7 @@ export default function VenuesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [addVenueModalOpen, setAddVenueModalOpen] = useState(false);
+  const [editingVenue, setEditingVenue] = useState(null);
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 25,
@@ -127,7 +128,9 @@ export default function VenuesPage() {
       const newStatus = venue.status === 'active' ? 'inactive' : 'active';
       dispatch(updateVenueStatus({ venueId, status: newStatus }));
     } else if (action === 'edit') {
-      console.log('Edit venue:', venueId);
+      const venue = venues.data.find(v => v.id === venueId);
+      setEditingVenue(venue);
+      setAddVenueModalOpen(true);
     } else if (action === 'analytics') {
       console.log('View analytics for venue:', venueId);
     }
@@ -355,10 +358,14 @@ export default function VenuesPage() {
         />
       </Box>
 
-      {/* Add Venue Modal */}
+      {/* Add/Edit Venue Modal */}
       <AddVenueModal 
         open={addVenueModalOpen} 
-        onClose={() => setAddVenueModalOpen(false)} 
+        onClose={() => {
+          setAddVenueModalOpen(false);
+          setEditingVenue(null);
+        }}
+        editVenue={editingVenue}
       />
 
       {/* Success/Error Snackbar */}

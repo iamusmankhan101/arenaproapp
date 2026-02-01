@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { Schedule, DateRange, CloudUpload, Close } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
-import { addVenue } from '../store/slices/adminSlice';
+import { addVenue, updateVenue } from '../store/slices/adminSlice';
 
 const SPORTS_OPTIONS = ['Football', 'Cricket', 'Padel', 'Futsal', 'Basketball', 'Tennis'];
 const FACILITIES_OPTIONS = [
@@ -33,11 +33,12 @@ const FACILITIES_OPTIONS = [
   'Scoreboard', 'Pavilion', 'Indoor Court'
 ];
 
-export default function AddVenueModal({ open, onClose }) {
+export default function AddVenueModal({ open, onClose, editVenue = null }) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [uploadedImages, setUploadedImages] = useState([]);
+  const isEditing = Boolean(editVenue);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -59,6 +60,64 @@ export default function AddVenueModal({ open, onClose }) {
     selectedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     dateSpecificSlots: {} // Object to store slots for different dates
   });
+
+  // Load edit venue data when editVenue prop changes
+  useEffect(() => {
+    if (editVenue) {
+      setFormData({
+        name: editVenue.name || '',
+        description: editVenue.description || '',
+        address: editVenue.address || '',
+        city: editVenue.city || 'Lahore',
+        area: editVenue.area || '',
+        latitude: editVenue.latitude?.toString() || '',
+        longitude: editVenue.longitude?.toString() || '',
+        sports: editVenue.sports || [],
+        facilities: editVenue.facilities || [],
+        basePrice: editVenue.basePrice?.toString() || '1000',
+        openTime: editVenue.openTime || '06:00',
+        closeTime: editVenue.closeTime || '23:00',
+        images: editVenue.images || [],
+        slotDuration: editVenue.slotDuration?.toString() || '60',
+        availableSlots: editVenue.availableSlots || [],
+        selectedDate: new Date().toISOString().split('T')[0],
+        dateSpecificSlots: editVenue.dateSpecificSlots || {}
+      });
+      
+      // Set uploaded images for editing
+      if (editVenue.images && editVenue.images.length > 0) {
+        const existingImages = editVenue.images.map((img, index) => ({
+          id: `existing-${index}`,
+          preview: typeof img === 'string' ? img : img.preview || img.url,
+          name: `Image ${index + 1}`,
+          existing: true
+        }));
+        setUploadedImages(existingImages);
+      }
+    } else {
+      // Reset form for new venue
+      setFormData({
+        name: '',
+        description: '',
+        address: '',
+        city: 'Lahore',
+        area: '',
+        latitude: '',
+        longitude: '',
+        sports: [],
+        facilities: [],
+        basePrice: '1000',
+        openTime: '06:00',
+        closeTime: '23:00',
+        images: [],
+        slotDuration: '60',
+        availableSlots: [],
+        selectedDate: new Date().toISOString().split('T')[0],
+        dateSpecificSlots: {}
+      });
+      setUploadedImages([]);
+    }
+  }, [editVenue]);
 
   // Handle image upload
   const handleImageUpload = (event) => {
@@ -251,14 +310,16 @@ export default function AddVenueModal({ open, onClose }) {
       return;
     }
 
-    // Check if at least one date-specific slot is selected
-    const hasSelectedSlots = Object.values(formData.dateSpecificSlots).some(dateSlots => 
-      dateSlots.some(slot => slot.selected)
-    );
+    // Check if at least one date-specific slot is selected (only for new venues)
+    if (!isEditing) {
+      const hasSelectedSlots = Object.values(formData.dateSpecificSlots).some(dateSlots => 
+        dateSlots.some(slot => slot.selected)
+      );
 
-    if (!hasSelectedSlots) {
-      setError('Please configure and select at least one time slot for at least one date');
-      return;
+      if (!hasSelectedSlots) {
+        setError('Please configure and select at least one time slot for at least one date');
+        return;
+      }
     }
 
     setLoading(true);
@@ -285,7 +346,16 @@ export default function AddVenueModal({ open, onClose }) {
         ...(dateSpecificAvailability && { dateSpecificSlots: dateSpecificAvailability })
       };
 
-      await dispatch(addVenue(venueData)).unwrap();
+      if (isEditing) {
+        // Update existing venue
+        await dispatch(updateVenue({ 
+          venueId: editVenue.id, 
+          venueData 
+        })).unwrap();
+      } else {
+        // Add new venue
+        await dispatch(addVenue(venueData)).unwrap();
+      }
       
       // Reset form and close modal
       setFormData({
@@ -314,7 +384,7 @@ export default function AddVenueModal({ open, onClose }) {
       onClose();
       
     } catch (error) {
-      setError(error.message || 'Failed to add venue');
+      setError(error.message || `Failed to ${isEditing ? 'update' : 'add'} venue`);
     } finally {
       setLoading(false);
     }
@@ -329,7 +399,7 @@ export default function AddVenueModal({ open, onClose }) {
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Add New Venue</DialogTitle>
+      <DialogTitle>{isEditing ? 'Edit Venue' : 'Add New Venue'}</DialogTitle>
       
       <DialogContent>
         {error && (
@@ -812,7 +882,7 @@ export default function AddVenueModal({ open, onClose }) {
           disabled={loading}
           startIcon={loading ? <CircularProgress size={20} /> : null}
         >
-          {loading ? 'Adding...' : 'Add Venue'}
+          {loading ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Venue' : 'Add Venue')}
         </Button>
       </DialogActions>
     </Dialog>

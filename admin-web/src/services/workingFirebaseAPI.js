@@ -290,6 +290,33 @@ export const workingAdminAPI = {
     }
   },
 
+  // Update venue
+  async updateVenue(venueId, venueData) {
+    try {
+      console.log('🔄 Updating venue:', venueId, venueData);
+      const firestore = initFirebase();
+      
+      const venueRef = doc(firestore, 'venues', venueId);
+      const updateData = {
+        ...venueData,
+        updatedAt: new Date()
+      };
+      
+      await updateDoc(venueRef, updateData);
+      
+      console.log('✅ Venue updated successfully');
+      return { 
+        id: venueId, 
+        ...updateData,
+        success: true, 
+        message: 'Venue updated successfully' 
+      };
+    } catch (error) {
+      console.error('❌ Error updating venue:', error);
+      throw new Error(`Failed to update venue: ${error.message}`);
+    }
+  },
+
   // Update booking status
   async updateBookingStatus(bookingId, status) {
     try {
