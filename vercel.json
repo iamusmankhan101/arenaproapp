@@ -10,12 +10,6 @@
       }
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/admin-web/build/$1"
-    }
-  ],
   "buildCommand": "cd admin-web && npm run build",
   "outputDirectory": "admin-web/build",
   "installCommand": "cd admin-web && npm install",
