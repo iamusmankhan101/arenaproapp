@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   bookableButton: {
-    backgroundColor: '#229a60',
+    backgroundColor: '#004d43', // Primary brand color
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,

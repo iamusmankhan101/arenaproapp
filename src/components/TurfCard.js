@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Card, Text, Chip, Button } from 'react-native-paper';
 import { Rating } from 'react-native-ratings';
 import { MaterialIcons } from '@expo/vector-icons';
-import { SportsIcon, SportsIconList } from './SportsIcons';
+import { SportsIconList } from './SportsIcons';
 
 export default function TurfCard({ turf, onPress }) {
   const getPriceColor = (pricePerHour) => {
@@ -39,6 +39,7 @@ export default function TurfCard({ turf, onPress }) {
               imageSize={16}
               readonly
               startingValue={turf.rating}
+              tintColor="#004d43"
             />
             <Text style={styles.ratingText}>
               {turf.rating} ({turf.reviewCount} reviews)
@@ -110,6 +111,7 @@ export default function TurfCard({ turf, onPress }) {
             compact 
             onPress={onPress}
             style={styles.bookButton}
+            buttonColor="#004d43"
           >
             Book Now
           </Button>
@@ -190,5 +192,6 @@ const styles = StyleSheet.create({
   },
   bookButton: {
     minWidth: 100,
+    backgroundColor: '#004d43', // Primary brand color
   },
 });
