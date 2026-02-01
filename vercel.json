@@ -1,11 +1,21 @@
 {
-  "buildCommand": "npm install --prefix admin-web && npm run build --prefix admin-web",
-  "outputDirectory": "admin-web/build",
-  "framework": "create-react-app",
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/((?!api/.*).*)",
-      "destination": "/index.html"
+      "src": "admin-web/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
