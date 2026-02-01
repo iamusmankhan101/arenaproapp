@@ -210,8 +210,20 @@ export const workingAdminAPI = {
       
       // Process results
       const bookings = [];
+      
+      // Get venue names for better display
+      const venuesRef = collection(firestore, 'venues');
+      const venuesSnapshot = await getDocs(venuesRef);
+      const venuesMap = {};
+      venuesSnapshot.forEach((doc) => {
+        venuesMap[doc.id] = doc.data();
+      });
+      
       querySnapshot.forEach((doc) => {
         const bookingData = doc.data();
+        
+        // Get venue information
+        const venue = venuesMap[bookingData.turfId] || {};
         
         // Transform booking data for admin panel display
         const transformedBooking = {
@@ -220,9 +232,9 @@ export const workingAdminAPI = {
           customerName: bookingData.guestInfo?.name || bookingData.customerName || 'Guest User',
           customerPhone: bookingData.guestInfo?.phone || bookingData.customerPhone || 'N/A',
           customerEmail: bookingData.guestInfo?.email || bookingData.customerEmail || 'N/A',
-          turfName: bookingData.turf?.name || 'Unknown Venue',
-          turfArea: bookingData.turf?.address || 'N/A',
-          sport: bookingData.sport || 'Football',
+          turfName: venue.name || bookingData.turf?.name || 'Unknown Venue',
+          turfArea: venue.area || venue.address || bookingData.turf?.address || 'N/A',
+          sport: bookingData.sport || (venue.sports && venue.sports[0]) || 'Football',
           dateTime: bookingData.date ? (bookingData.date.toDate ? bookingData.date.toDate() : new Date(bookingData.date)) : new Date(),
           duration: bookingData.duration || 1,
           totalAmount: bookingData.totalAmount || 0,
@@ -510,11 +522,23 @@ export const workingAdminAPI = {
   // Update booking status
   async updateBookingStatus(bookingId, status) {
     try {
-      console.log('🔄 Updating booking status:', bookingId, status);
+      console.log('🔄 Admin: Updating booking status:', bookingId, status);
+      const firestore = initFirebase();
+      
+      const bookingRef = doc(firestore, 'bookings', bookingId);
+      await updateDoc(bookingRef, {
+        status: status,
+        updatedAt: new Date(),
+        // Update payment status based on booking status
+        ...(status === 'confirmed' && { paymentStatus: 'paid' }),
+        ...(status === 'cancelled' && { paymentStatus: 'refunded' })
+      });
+      
+      console.log('✅ Admin: Booking status updated successfully');
       return { success: true, message: 'Booking status updated successfully' };
     } catch (error) {
-      console.error('❌ Error updating booking status:', error);
-      throw error;
+      console.error('❌ Admin: Error updating booking status:', error);
+      throw new Error(`Failed to update booking status: ${error.message}`);
     }
   },
 
