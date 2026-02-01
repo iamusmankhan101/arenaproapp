@@ -1,8 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-// Use mock data for admin authentication (since we're using Firebase for main data)
-const USE_MOCK_AUTH = true;
-
 // Mock admin credentials and data
 const mockAdminCredentials = {
   'admin@pitchit.com': 'admin123',

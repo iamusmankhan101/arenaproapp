@@ -17,16 +17,12 @@ import {
   Typography,
   Alert,
   CircularProgress,
-  FormControlLabel,
-  Switch,
   Card,
   CardContent,
   IconButton,
-  Divider,
-  Checkbox,
-  ButtonGroup
+  Checkbox
 } from '@mui/material';
-import { Add, Delete, AccessTime, Schedule, DateRange, CloudUpload, Image, Close } from '@mui/icons-material';
+import { Schedule, DateRange, CloudUpload, Close } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue } from '../store/slices/adminSlice';
 
@@ -155,7 +151,7 @@ export default function AddVenueModal({ open, onClose }) {
         availableSlots: allSlots
       }));
     }
-  }, [generateAllPossibleSlots]);
+  }, [generateAllPossibleSlots, formData.openTime, formData.closeTime]);
 
   // Generate initial slots when component mounts
   useEffect(() => {
@@ -168,53 +164,6 @@ export default function AddVenueModal({ open, onClose }) {
       }));
     }
   }, [generateAllPossibleSlots]); // Include generateAllPossibleSlots as dependency
-
-  const handleAddCustomSlot = () => {
-    const newSlot = {
-      id: `custom-slot-${Date.now()}`,
-      startTime: '09:00',
-      endTime: '10:00',
-      price: parseFloat(formData.basePrice) || 1000,
-      available: true,
-      selected: true
-    };
-    
-    const currentDate = formData.selectedDate;
-    setFormData(prev => ({
-      ...prev,
-      dateSpecificSlots: {
-        ...prev.dateSpecificSlots,
-        [currentDate]: [
-          ...(prev.dateSpecificSlots[currentDate] || []),
-          newSlot
-        ]
-      }
-    }));
-  };
-
-  const handleRemoveCustomSlot = (slotId) => {
-    const currentDate = formData.selectedDate;
-    setFormData(prev => ({
-      ...prev,
-      dateSpecificSlots: {
-        ...prev.dateSpecificSlots,
-        [currentDate]: (prev.dateSpecificSlots[currentDate] || []).filter(slot => slot.id !== slotId)
-      }
-    }));
-  };
-
-  const handleSlotChange = (slotId, field, value) => {
-    const currentDate = formData.selectedDate;
-    setFormData(prev => ({
-      ...prev,
-      dateSpecificSlots: {
-        ...prev.dateSpecificSlots,
-        [currentDate]: (prev.dateSpecificSlots[currentDate] || []).map(slot =>
-          slot.id === slotId ? { ...slot, [field]: value } : slot
-        )
-      }
-    }));
-  };
 
   // Handle date change for date-specific slots
   const handleDateChange = (event) => {

@@ -18,7 +18,6 @@ import {
   Block,
   CheckCircle,
   Phone,
-  Email,
   Star,
   Refresh,
 } from '@mui/icons-material';

@@ -7,8 +7,6 @@ import {
   Grid,
   Button,
   Switch,
-  FormControlLabel,
-  Divider,
   List,
   ListItem,
   ListItemText,
