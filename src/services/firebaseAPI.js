@@ -130,7 +130,11 @@ export const turfAPI = {
   async toggleFavorite(turfId) {
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        // Return false if user is not authenticated instead of throwing error
+        console.log('⚠️ User not authenticated, cannot toggle favorite');
+        return { data: { isFavorite: false, message: 'Please sign in to add favorites' } };
+      }
       
       const favoritesRef = collection(db, 'favorites');
       const q = query(favoritesRef, 
@@ -155,7 +159,8 @@ export const turfAPI = {
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      throw error;
+      // Return false instead of throwing error to prevent app crashes
+      return { data: { isFavorite: false, error: error.message } };
     }
   },
 
@@ -163,7 +168,11 @@ export const turfAPI = {
   async getFavorites() {
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        // Return empty array if user is not authenticated instead of throwing error
+        console.log('⚠️ User not authenticated, returning empty favorites');
+        return { data: [] };
+      }
       
       const favoritesRef = collection(db, 'favorites');
       const q = query(favoritesRef, where('userId', '==', user.uid));
@@ -192,7 +201,8 @@ export const turfAPI = {
       return { data: favorites };
     } catch (error) {
       console.error('Error fetching favorites:', error);
-      throw error;
+      // Return empty array instead of throwing error to prevent app crashes
+      return { data: [] };
     }
   }
 };
@@ -249,7 +259,10 @@ export const bookingAPI = {
   async createBooking(bookingData) {
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.log('⚠️ User not authenticated, cannot create booking');
+        throw new Error('Please sign in to make a booking');
+      }
       
       const bookingRef = await addDoc(collection(db, 'bookings'), {
         ...bookingData,
@@ -278,7 +291,10 @@ export const bookingAPI = {
   async getUserBookings() {
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.log('⚠️ User not authenticated, returning empty bookings');
+        return { data: [] };
+      }
       
       const bookingsRef = collection(db, 'bookings');
       const q = query(bookingsRef, 
@@ -295,7 +311,7 @@ export const bookingAPI = {
       return { data: bookings };
     } catch (error) {
       console.error('Error fetching user bookings:', error);
-      throw error;
+      return { data: [] };
     }
   },
 
@@ -346,7 +362,10 @@ export const teamAPI = {
   async createChallenge(challengeData) {
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.log('⚠️ User not authenticated, cannot create challenge');
+        throw new Error('Please sign in to create a challenge');
+      }
       
       const challengeRef = await addDoc(collection(db, 'challenges'), {
         ...challengeData,
@@ -366,7 +385,10 @@ export const teamAPI = {
   async acceptChallenge(challengeId) {
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.log('⚠️ User not authenticated, cannot accept challenge');
+        throw new Error('Please sign in to accept a challenge');
+      }
       
       const challengeRef = doc(db, 'challenges', challengeId);
       await updateDoc(challengeRef, {
