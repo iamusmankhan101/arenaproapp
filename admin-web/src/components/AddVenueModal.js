@@ -976,6 +976,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
                       Date-Specific: {Object.keys(formData.dateSpecificSlots).length} dates configured
                     </Typography>
                   </Box>
+                  </Box> {/* Close the Date-Specific Slots Box */}
                 </CardContent>
               </Card>
             </Grid>

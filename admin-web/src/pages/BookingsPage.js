@@ -93,7 +93,16 @@ const ActionMenu = ({ booking, onAction }) => {
 
 export default function BookingsPage() {
   const dispatch = useDispatch();
-  const { bookings, bookingsLoading } = useSelector(state => state.admin);
+  const { bookings, bookingsLoading, bookingsError } = useSelector(state => state.admin);
+  
+  // Debug logging
+  console.log('📊 BookingsPage render:', {
+    bookingsData: bookings?.data,
+    bookingsTotal: bookings?.total,
+    bookingsLoading,
+    bookingsError,
+    dataLength: bookings?.data?.length
+  });
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -211,16 +220,30 @@ export default function BookingsPage() {
       field: 'dateTime',
       headerName: 'Date & Time',
       width: 160,
-      renderCell: (params) => (
-        <Box>
-          <Typography variant="body2">
-            {format(new Date(params.value), 'MMM dd, yyyy')}
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            {format(new Date(params.value), 'hh:mm a')}
-          </Typography>
-        </Box>
-      ),
+      renderCell: (params) => {
+        try {
+          const date = new Date(params.value);
+          return (
+            <Box>
+              <Typography variant="body2">
+                {format(date, 'MMM dd, yyyy')}
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                {format(date, 'hh:mm a')}
+              </Typography>
+            </Box>
+          );
+        } catch (error) {
+          console.error('Date formatting error:', error, params.value);
+          return (
+            <Box>
+              <Typography variant="body2">
+                Invalid Date
+              </Typography>
+            </Box>
+          );
+        }
+      },
     },
     {
       field: 'duration',
@@ -232,11 +255,23 @@ export default function BookingsPage() {
       field: 'totalAmount',
       headerName: 'Amount',
       width: 120,
-      renderCell: (params) => (
-        <Typography variant="body2" fontWeight="medium">
-          PKR {params.value.toLocaleString()}
-        </Typography>
-      ),
+      renderCell: (params) => {
+        try {
+          const amount = Number(params.value) || 0;
+          return (
+            <Typography variant="body2" fontWeight="medium">
+              PKR {amount.toLocaleString()}
+            </Typography>
+          );
+        } catch (error) {
+          console.error('Amount formatting error:', error, params.value);
+          return (
+            <Typography variant="body2" fontWeight="medium">
+              PKR 0
+            </Typography>
+          );
+        }
+      },
     },
     {
       field: 'status',
@@ -323,15 +358,22 @@ export default function BookingsPage() {
         </Box>
       </Box>
 
+      {/* Error Display */}
+      {bookingsError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Error loading bookings: {bookingsError}
+        </Alert>
+      )}
+
       {/* Data Grid */}
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={bookings.data}
+          rows={bookings?.data || []}
           columns={columns}
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[25, 50, 100]}
-          rowCount={bookings.total}
+          rowCount={bookings?.total || 0}
           paginationMode="server"
           loading={bookingsLoading}
           disableRowSelectionOnClick
