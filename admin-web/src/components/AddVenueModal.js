@@ -26,7 +26,7 @@ import { Schedule, DateRange, CloudUpload, Close } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue, updateVenue } from '../store/slices/adminSlice';
 
-const SPORTS_OPTIONS = ['Football', 'Cricket', 'Padel', 'Futsal', 'Basketball', 'Tennis'];
+const SPORTS_OPTIONS = ['Cricket', 'Futsal', 'Padel', 'Basketball', 'Tennis'];
 const FACILITIES_OPTIONS = [
   'Floodlights', 'Parking', 'Changing Room', 'Cafeteria', 'Equipment Rental',
   'Air Conditioning', 'Pro Shop', 'Lounge', 'Coaching', 'Practice Nets',

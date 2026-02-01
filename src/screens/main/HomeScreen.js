@@ -367,14 +367,9 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Sports</Text>
           <SportsCategories 
             onSportSelect={(sportKey) => {
-              if (sportKey === 'all') {
-                navigation.navigate('VenueList');
-              } else {
-                navigation.navigate('VenueList', { sportType: sportKey });
-              }
+              navigation.navigate('VenueList', { sportType: sportKey });
             }}
             horizontal={true}
-            showAll={true}
           />
         </View>
       )}

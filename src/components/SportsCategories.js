@@ -6,7 +6,6 @@ import { theme } from '../theme/theme';
 
 const sportsCategories = [
   { name: 'Cricket', key: 'cricket', color: '#FF6B35' },
-  { name: 'Football', key: 'football', color: '#4ECDC4' },
   { name: 'Futsal', key: 'futsal', color: '#45B7D1' },
   { name: 'Padel', key: 'padel', color: '#96CEB4' },
 ];
@@ -46,11 +45,9 @@ export const SportsCategories = ({
   onSportSelect, 
   selectedSports = [], 
   horizontal = true,
-  showAll = true 
+  showAll = false 
 }) => {
-  const displayCategories = showAll 
-    ? [{ name: 'All', key: 'all', color: theme.colors.primary }, ...sportsCategories]
-    : sportsCategories;
+  const displayCategories = sportsCategories;
 
   if (horizontal) {
     return (
