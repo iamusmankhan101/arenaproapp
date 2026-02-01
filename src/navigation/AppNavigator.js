@@ -117,6 +117,11 @@ export default function AppNavigator() {
           <Stack.Screen name="BookingConfirm" component={BookingConfirmScreen} />
           <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
           <Stack.Screen name="AdminPanel" component={AdminNavigator} />
+          {/* Auth screens available for guest booking flow */}
+          <Stack.Screen name="SignIn" component={SignInScreen} />
+          <Stack.Screen name="SignUp" component={SignUpScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="OTP" component={OTPScreen} />
         </>
       )}
     </Stack.Navigator>

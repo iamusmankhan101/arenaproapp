@@ -100,7 +100,13 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         closeTime: closeTime,
         images: Array.isArray(editVenue.images) ? editVenue.images : [],
         slotDuration: (editVenue.slotDuration || 60).toString(),
-        availableSlots: Array.isArray(editVenue.timeSlots) ? editVenue.timeSlots : [],
+        availableSlots: Array.isArray(editVenue.timeSlots) ? editVenue.timeSlots.map(slot => ({
+          ...slot,
+          // Ensure both time and startTime fields exist for compatibility
+          time: slot.time || slot.startTime,
+          startTime: slot.startTime || slot.time,
+          selected: slot.selected !== false // Default to selected unless explicitly false
+        })) : [],
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: editVenue.dateSpecificSlots || {}
       });
@@ -365,9 +371,17 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         basePrice: parseFloat(formData.basePrice),
         latitude: formData.latitude ? parseFloat(formData.latitude) : 31.5204,
         longitude: formData.longitude ? parseFloat(formData.longitude) : 74.3587,
+        // Explicitly include availableSlots (time slots) for both add and edit operations
+        availableSlots: formData.availableSlots || [],
         // Include date-specific slots if they exist
         ...(dateSpecificAvailability && { dateSpecificSlots: dateSpecificAvailability })
       };
+
+      console.log('🔄 Submitting venue data:', {
+        name: venueData.name,
+        availableSlots: venueData.availableSlots?.length || 0,
+        isEditing: isEditing
+      });
 
       if (isEditing) {
         // Update existing venue
@@ -758,10 +772,84 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
                     </Typography>
                   </Box>
 
-                  {/* Tabs for General vs Date-Specific Slots */}
-                  <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                    Configure availability for specific dates. This allows you to set different time slots for different days.
-                  </Typography>
+                  {/* Basic Time Slots (for mobile app compatibility) */}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                      Basic Time Slots (Mobile App)
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                      These are the default time slots that will appear in the mobile app. You can select/deselect and modify prices.
+                    </Typography>
+                    
+                    <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                      <Grid container spacing={1}>
+                        {formData.availableSlots.map((slot, index) => (
+                          <Grid item xs={6} sm={4} md={3} key={slot.id || index}>
+                            <Card
+                              variant="outlined"
+                              sx={{
+                                backgroundColor: slot.selected ? '#e8f5e8' : '#fafafa',
+                                borderColor: slot.selected ? '#4caf50' : '#e0e0e0',
+                                borderWidth: slot.selected ? 2 : 1,
+                              }}
+                            >
+                              <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                  <Checkbox
+                                    checked={slot.selected || false}
+                                    size="small"
+                                    sx={{ p: 0, mr: 0.5 }}
+                                    color="primary"
+                                    onChange={(e) => {
+                                      const updatedSlots = [...formData.availableSlots];
+                                      updatedSlots[index] = { ...slot, selected: e.target.checked };
+                                      setFormData(prev => ({ ...prev, availableSlots: updatedSlots }));
+                                    }}
+                                  />
+                                  <Typography variant="caption" fontWeight="bold">
+                                    {slot.time || slot.startTime} - {slot.endTime}
+                                  </Typography>
+                                </Box>
+                                
+                                <TextField
+                                  size="small"
+                                  type="number"
+                                  value={slot.price || formData.basePrice}
+                                  onChange={(e) => {
+                                    const updatedSlots = [...formData.availableSlots];
+                                    updatedSlots[index] = { ...slot, price: parseInt(e.target.value) || 0 };
+                                    setFormData(prev => ({ ...prev, availableSlots: updatedSlots }));
+                                  }}
+                                  InputProps={{
+                                    startAdornment: <Typography variant="caption" sx={{ mr: 0.5 }}>PKR</Typography>
+                                  }}
+                                  sx={{ width: '100%' }}
+                                />
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                    
+                    <Box sx={{ mt: 2, p: 1, backgroundColor: '#f0f8ff', borderRadius: 1 }}>
+                      <Typography variant="body2" fontWeight="bold" gutterBottom>
+                        Mobile App Summary:
+                      </Typography>
+                      <Typography variant="caption">
+                        Selected Slots: {formData.availableSlots.filter(slot => slot.selected).length} / {formData.availableSlots.length}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Date-Specific Slots (Advanced) */}
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                      Date-Specific Slots (Advanced)
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                      Configure availability for specific dates. This allows you to set different time slots for different days.
+                    </Typography>
 
                   {/* Date Selection */}
                   <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>

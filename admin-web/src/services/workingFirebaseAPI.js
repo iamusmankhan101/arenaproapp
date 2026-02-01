@@ -233,8 +233,30 @@ export const workingAdminAPI = {
   // Add venue (working implementation)
   async addVenue(venueData) {
     try {
-      console.log('➕ Adding venue:', venueData.name);
+      console.log('➕ Admin: Adding venue:', {
+        name: venueData.name,
+        availableSlots: venueData.availableSlots?.length || 0,
+        selectedSlots: venueData.availableSlots?.filter(slot => slot.selected !== false).length || 0
+      });
       const firestore = initFirebase();
+      
+      // Process time slots - filter to only include selected slots and ensure proper structure
+      let processedTimeSlots = [];
+      if (venueData.availableSlots && Array.isArray(venueData.availableSlots)) {
+        processedTimeSlots = venueData.availableSlots
+          .filter(slot => slot.selected !== false) // Only include selected slots
+          .map(slot => ({
+            id: slot.id,
+            time: slot.time || slot.startTime,
+            startTime: slot.startTime || slot.time,
+            endTime: slot.endTime,
+            price: Number(slot.price) || Number(venueData.basePrice) || 0,
+            available: true,
+            selected: true // Mark as selected since we filtered for selected slots
+          }));
+        
+        console.log(`📊 Admin: Processed ${processedTimeSlots.length} selected time slots for new venue`);
+      }
       
       // Prepare venue data for Firestore with consistent structure
       const venueToAdd = {
@@ -265,8 +287,9 @@ export const workingAdminAPI = {
           open: venueData.openTime || '06:00',
           close: venueData.closeTime || '23:00'
         },
-        // Time slots if provided
-        ...(venueData.availableSlots && { timeSlots: venueData.availableSlots }),
+        // Time slots - use processed selected slots
+        timeSlots: processedTimeSlots,
+        // Include date-specific slots if provided
         ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
         // Status and timestamps
         isActive: true,
@@ -278,7 +301,7 @@ export const workingAdminAPI = {
       // Add to Firestore
       const docRef = await addDoc(collection(firestore, 'venues'), venueToAdd);
       
-      console.log('✅ Venue added successfully with ID:', docRef.id);
+      console.log(`✅ Admin: Venue added successfully with ID: ${docRef.id} and ${processedTimeSlots.length} time slots`);
       return { 
         success: true, 
         message: 'Venue added successfully',
@@ -287,7 +310,7 @@ export const workingAdminAPI = {
       };
       
     } catch (error) {
-      console.error('❌ Error adding venue:', error);
+      console.error('❌ Admin: Error adding venue:', error);
       throw new Error(`Failed to add venue: ${error.message}`);
     }
   },
@@ -315,10 +338,32 @@ export const workingAdminAPI = {
   // Update venue
   async updateVenue(venueId, venueData) {
     try {
-      console.log('🔄 Updating venue:', venueId, venueData);
+      console.log('🔄 Admin: Updating venue:', venueId, {
+        name: venueData.name,
+        availableSlots: venueData.availableSlots?.length || 0,
+        selectedSlots: venueData.availableSlots?.filter(slot => slot.selected !== false).length || 0
+      });
       const firestore = initFirebase();
       
       const venueRef = doc(firestore, 'venues', venueId);
+      
+      // Process time slots - filter to only include selected slots and ensure proper structure
+      let processedTimeSlots = [];
+      if (venueData.availableSlots && Array.isArray(venueData.availableSlots)) {
+        processedTimeSlots = venueData.availableSlots
+          .filter(slot => slot.selected !== false) // Only include selected slots
+          .map(slot => ({
+            id: slot.id,
+            time: slot.time || slot.startTime,
+            startTime: slot.startTime || slot.time,
+            endTime: slot.endTime,
+            price: Number(slot.price) || Number(venueData.basePrice) || 0,
+            available: true,
+            selected: true // Mark as selected since we filtered for selected slots
+          }));
+        
+        console.log(`📊 Admin: Processed ${processedTimeSlots.length} selected time slots for venue update`);
+      }
       
       // Prepare update data with proper structure
       const updateData = {
@@ -349,8 +394,9 @@ export const workingAdminAPI = {
           open: venueData.openTime || '06:00',
           close: venueData.closeTime || '23:00'
         },
-        // Time slots if provided
-        ...(venueData.availableSlots && { timeSlots: venueData.availableSlots }),
+        // Time slots - use processed selected slots
+        timeSlots: processedTimeSlots,
+        // Include date-specific slots if provided
         ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
         // Status and timestamps
         isActive: true,
@@ -360,7 +406,7 @@ export const workingAdminAPI = {
       
       await updateDoc(venueRef, updateData);
       
-      console.log('✅ Venue updated successfully');
+      console.log(`✅ Admin: Venue updated successfully with ${processedTimeSlots.length} time slots`);
       return { 
         id: venueId, 
         ...updateData,
@@ -368,7 +414,7 @@ export const workingAdminAPI = {
         message: 'Venue updated successfully' 
       };
     } catch (error) {
-      console.error('❌ Error updating venue:', error);
+      console.error('❌ Admin: Error updating venue:', error);
       throw new Error(`Failed to update venue: ${error.message}`);
     }
   },

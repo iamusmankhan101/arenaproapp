@@ -212,24 +212,36 @@ export const bookingAPI = {
   // Get available slots
   async getAvailableSlots(turfId, date) {
     try {
-      console.log(`🕐 Fetching available slots for venue ${turfId} on ${date}`);
+      console.log(`🕐 Mobile: Fetching available slots for venue ${turfId} on ${date}`);
       
       // First, get the venue's time slots from the venue document
       const venueRef = doc(db, 'venues', turfId);
       const venueSnap = await getDoc(venueRef);
       
       if (!venueSnap.exists()) {
-        console.log(`❌ Venue ${turfId} not found`);
+        console.log(`❌ Mobile: Venue ${turfId} not found`);
         throw new Error('Venue not found');
       }
       
       const venueData = venueSnap.data();
-      const venueTimeSlots = venueData.timeSlots || [];
       
-      console.log(`📊 Venue has ${venueTimeSlots.length} time slots configured`);
+      // Use admin-configured time slots (prioritize timeSlots over availableSlots)
+      let venueTimeSlots = venueData.timeSlots || venueData.availableSlots || [];
+      
+      console.log(`📊 Mobile: Venue has ${venueTimeSlots.length} time slots configured`);
+      console.log(`📊 Mobile: Using ${venueData.timeSlots ? 'timeSlots' : 'availableSlots'} field`);
       
       if (venueTimeSlots.length === 0) {
-        console.log('⚠️ No time slots configured for this venue');
+        console.log('⚠️ Mobile: No time slots configured for this venue');
+        return { data: [] };
+      }
+      
+      // Filter to only show selected slots (admin-configured availability)
+      const selectedSlots = venueTimeSlots.filter(slot => slot.selected !== false);
+      console.log(`📊 Mobile: ${selectedSlots.length}/${venueTimeSlots.length} slots are selected by admin`);
+      
+      if (selectedSlots.length === 0) {
+        console.log('⚠️ Mobile: No slots selected by admin for this venue');
         return { data: [] };
       }
       
@@ -255,24 +267,39 @@ export const bookingAPI = {
           return booking.timeSlot || booking.slot?.startTime;
         }).filter(Boolean);
         
-        console.log(`📋 Found ${bookedSlots.length} booked slots:`, bookedSlots);
+        console.log(`📋 Mobile: Found ${bookedSlots.length} booked slots:`, bookedSlots);
       } catch (indexError) {
-        console.warn('⚠️ Firestore index not ready yet, showing all slots as available:', indexError.message);
+        console.warn('⚠️ Mobile: Firestore index not ready yet, showing all slots as available:', indexError.message);
         // If index is not ready, show all slots as available
         bookedSlots = [];
       }
       
-      // Mark slots as available/unavailable based on bookings
-      const availableSlots = venueTimeSlots.map(slot => ({
-        ...slot,
-        available: !bookedSlots.includes(slot.time || slot.startTime)
-      }));
+      // Mark selected slots as available/unavailable based on bookings
+      const availableSlots = selectedSlots.map(slot => {
+        const slotTime = slot.time || slot.startTime;
+        const isBooked = bookedSlots.includes(slotTime);
+        
+        return {
+          ...slot,
+          // Ensure both time and startTime fields exist for compatibility
+          time: slotTime,
+          startTime: slotTime,
+          available: !isBooked
+        };
+      });
       
-      console.log(`✅ Returning ${availableSlots.length} time slots (${availableSlots.filter(s => s.available).length} available)`);
+      console.log(`✅ Mobile: Returning ${availableSlots.length} selected time slots (${availableSlots.filter(s => s.available).length} available)`);
+      
+      // Log sample slots for debugging
+      if (availableSlots.length > 0) {
+        console.log(`📋 Mobile: Sample slots:`, availableSlots.slice(0, 3).map(slot => 
+          `${slot.time} - ${slot.endTime} (PKR ${slot.price}) [Available: ${slot.available}]`
+        ));
+      }
       
       return { data: availableSlots };
     } catch (error) {
-      console.error('❌ Error fetching available slots:', error);
+      console.error('❌ Mobile: Error fetching available slots:', error);
       throw error;
     }
   },

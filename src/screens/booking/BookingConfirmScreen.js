@@ -88,7 +88,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
           [
             {
               text: 'Sign In Now',
-              onPress: () => navigation.navigate('Auth', { screen: 'SignIn' })
+              onPress: () => navigation.navigate('SignIn')
             },
             {
               text: 'Later',
