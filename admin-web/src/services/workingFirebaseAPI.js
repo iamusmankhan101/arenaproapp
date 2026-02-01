@@ -191,20 +191,108 @@ export const workingAdminAPI = {
   // Get bookings
   async getBookings(params = {}) {
     try {
-      console.log('📅 Fetching bookings...');
+      console.log('📅 Admin: Fetching bookings...');
+      const firestore = initFirebase();
+      
+      // Create query for bookings collection
+      let bookingsQuery = collection(firestore, 'bookings');
+      
+      // Add ordering by creation date (newest first)
+      try {
+        bookingsQuery = query(bookingsQuery, orderBy('createdAt', 'desc'));
+      } catch (orderError) {
+        console.warn('⚠️ Admin: Could not order by createdAt, using simple query');
+        // If ordering fails, use simple query
+      }
+      
+      // Execute query
+      const querySnapshot = await getDocs(bookingsQuery);
+      
+      // Process results
+      const bookings = [];
+      querySnapshot.forEach((doc) => {
+        const bookingData = doc.data();
+        
+        // Transform booking data for admin panel display
+        const transformedBooking = {
+          id: doc.id,
+          bookingId: bookingData.bookingReference || doc.id.slice(-6),
+          customerName: bookingData.guestInfo?.name || bookingData.customerName || 'Guest User',
+          customerPhone: bookingData.guestInfo?.phone || bookingData.customerPhone || 'N/A',
+          customerEmail: bookingData.guestInfo?.email || bookingData.customerEmail || 'N/A',
+          turfName: bookingData.turf?.name || 'Unknown Venue',
+          turfArea: bookingData.turf?.address || 'N/A',
+          sport: bookingData.sport || 'Football',
+          dateTime: bookingData.date ? (bookingData.date.toDate ? bookingData.date.toDate() : new Date(bookingData.date)) : new Date(),
+          duration: bookingData.duration || 1,
+          totalAmount: bookingData.totalAmount || 0,
+          status: bookingData.status || 'pending',
+          paymentStatus: bookingData.paymentStatus || 'pending',
+          timeSlot: bookingData.timeSlot || bookingData.slot?.startTime || 'N/A',
+          // Ensure dates are properly formatted
+          createdAt: bookingData.createdAt?.toDate?.() || new Date(),
+          updatedAt: bookingData.updatedAt?.toDate?.() || new Date(),
+          // Additional fields for admin
+          userId: bookingData.userId,
+          userType: bookingData.userType || 'guest',
+          turfId: bookingData.turfId,
+        };
+        
+        bookings.push(transformedBooking);
+      });
+      
+      // Apply filters if specified
+      let filteredBookings = bookings;
+      
+      if (params.filter && params.filter !== 'all') {
+        if (params.filter === 'today') {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          
+          filteredBookings = bookings.filter(booking => {
+            const bookingDate = new Date(booking.dateTime);
+            return bookingDate >= today && bookingDate < tomorrow;
+          });
+        } else {
+          filteredBookings = bookings.filter(booking => booking.status === params.filter);
+        }
+      }
+      
+      // Apply search if specified
+      if (params.search) {
+        const searchLower = params.search.toLowerCase();
+        filteredBookings = filteredBookings.filter(booking => 
+          booking.customerName.toLowerCase().includes(searchLower) ||
+          booking.turfName.toLowerCase().includes(searchLower) ||
+          booking.bookingId.toLowerCase().includes(searchLower) ||
+          booking.customerPhone.includes(params.search)
+        );
+      }
+      
+      // Apply pagination
+      const startIndex = (parseInt(params.page) || 0) * (parseInt(params.pageSize) || 25);
+      const endIndex = startIndex + (parseInt(params.pageSize) || 25);
+      const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
+      
+      const result = {
+        data: paginatedBookings,
+        total: filteredBookings.length,
+        page: parseInt(params.page) || 0,
+        pageSize: parseInt(params.pageSize) || 25
+      };
+      
+      console.log(`✅ Admin: Bookings fetched: ${paginatedBookings.length}/${filteredBookings.length} bookings (${bookings.length} total)`);
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Admin: Error fetching bookings:', error);
       return {
         data: [],
         total: 0,
         page: parseInt(params.page) || 0,
         pageSize: parseInt(params.pageSize) || 25
-      };
-    } catch (error) {
-      console.error('❌ Error fetching bookings:', error);
-      return {
-        data: [],
-        total: 0,
-        page: 0,
-        pageSize: 25
       };
     }
   },
