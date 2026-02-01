@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build": "cd admin-web && npm install && npm run build",
+    "vercel-build": "cd admin-web && npm install && npm run build && cp -r build/* ./"
   },
   "dependencies": {
     "@babel/preset-env": "^7.28.6",

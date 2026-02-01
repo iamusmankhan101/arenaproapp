@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "name": "arena-pro-admin",
+  "builds": [
+    {
+      "src": "admin-web/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "admin-web/build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/admin-web/build/$1"
+    }
+  ],
+  "buildCommand": "cd admin-web && npm run build",
+  "outputDirectory": "admin-web/build",
+  "installCommand": "cd admin-web && npm install",
+  "framework": "create-react-app",
+  "regions": ["iad1"],
+  "functions": {},
+  "rewrites": [
+    {
+      "source": "/((?!api/.*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
