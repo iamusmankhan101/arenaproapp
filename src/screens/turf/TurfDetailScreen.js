@@ -17,7 +17,7 @@ import {
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleFavorite, fetchFavorites, fetchTurfDetails } from '../../store/slices/turfSlice';
-import { fetchAvailableSlots } from '../../store/slices/bookingSlice';
+import { fetchAvailableSlots, clearAvailableSlots } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
@@ -31,13 +31,24 @@ export default function TurfDetailScreen({ route, navigation }) {
   
   const dispatch = useDispatch();
   const { favorites, selectedTurf, loading } = useSelector(state => state.turf);
-  const { availableSlots, loading: slotsLoading } = useSelector(state => state.booking);
+  const { availableSlots, loading: slotsLoading, error: slotsError } = useSelector(state => state.booking);
+  
+  // Debug Redux state
+  useEffect(() => {
+    console.log('🔍 TurfDetailScreen Redux State:', {
+      availableSlots: availableSlots?.length || 0,
+      slotsLoading,
+      slotsError,
+      showTimeSlots
+    });
+  }, [availableSlots, slotsLoading, slotsError, showTimeSlots]);
   
   // Check if current venue is in favorites
   const isFavorite = favorites.some(fav => fav.id === turfId);
 
   // Load turf details and favorites on component mount
   useEffect(() => {
+    console.log(`🔄 TurfDetailScreen: Loading details for venue ${turfId}`);
     dispatch(fetchTurfDetails(turfId));
     dispatch(fetchFavorites());
   }, [dispatch, turfId]);
@@ -46,6 +57,9 @@ export default function TurfDetailScreen({ route, navigation }) {
   useEffect(() => {
     if (showTimeSlots && selectedDate) {
       const dateString = selectedDate.toISOString().split('T')[0];
+      console.log(`🔄 TurfDetailScreen: Fetching slots for ${turfId} on ${dateString}`);
+      // Clear previous slots before fetching new ones
+      dispatch(clearAvailableSlots());
       dispatch(fetchAvailableSlots({ turfId, date: dateString }));
     }
   }, [dispatch, turfId, selectedDate, showTimeSlots]);
@@ -215,6 +229,10 @@ export default function TurfDetailScreen({ route, navigation }) {
   };
 
   const handleBooking = () => {
+    console.log('🎯 TurfDetailScreen: Opening booking modal, clearing cache');
+    // Clear any cached slots and force fresh fetch
+    dispatch(clearAvailableSlots());
+    setSelectedTimeSlot(null);
     setShowTimeSlots(true);
   };
 
@@ -498,40 +516,71 @@ export default function TurfDetailScreen({ route, navigation }) {
 
               {/* Time Slots Grid */}
               <Text style={styles.sectionLabel}>Available Time Slots</Text>
-              <ScrollView style={styles.timeSlotsScroll} showsVerticalScrollIndicator={false}>
-                <View style={styles.timeSlotsGrid}>
-                  {(venue.timeSlots || []).map((slot) => (
-                    <TouchableOpacity
-                      key={slot.id}
-                      style={[
-                        styles.timeSlotCard,
-                        !slot.available && styles.unavailableSlot,
-                        selectedTimeSlot?.id === slot.id && styles.selectedSlot
-                      ]}
-                      onPress={() => handleTimeSlotSelect(slot)}
-                      disabled={!slot.available}
-                    >
-                      <Text style={[
-                        styles.timeSlotTime,
-                        !slot.available && styles.unavailableSlotText,
-                        selectedTimeSlot?.id === slot.id && styles.selectedSlotText
-                      ]}>
-                        {slot.time} - {slot.endTime}
-                      </Text>
-                      <Text style={[
-                        styles.timeSlotPrice,
-                        !slot.available && styles.unavailableSlotPrice,
-                        selectedTimeSlot?.id === slot.id && styles.selectedSlotPrice
-                      ]}>
-                        PKR {slot.price.toLocaleString()}
-                      </Text>
-                      {!slot.available && (
-                        <Text style={styles.bookedText}>Booked</Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
+              {slotsLoading ? (
+                <View style={styles.loadingContainer}>
+                  <Text style={styles.loadingText}>Loading time slots...</Text>
                 </View>
-              </ScrollView>
+              ) : slotsError ? (
+                <View style={styles.noSlotsContainer}>
+                  <Text style={styles.noSlotsText}>Error loading time slots</Text>
+                  <Text style={styles.noSlotsSubtext}>{slotsError}</Text>
+                </View>
+              ) : (
+                <ScrollView style={styles.timeSlotsScroll} showsVerticalScrollIndicator={false}>
+                  <View style={styles.timeSlotsGrid}>
+                    {(() => {
+                      const slotsToShow = availableSlots && availableSlots.length > 0 ? availableSlots : venue.timeSlots || [];
+                      console.log(`🕐 TurfDetailScreen: Displaying ${slotsToShow.length} time slots`);
+                      console.log(`   - Redux availableSlots: ${availableSlots?.length || 0}`);
+                      console.log(`   - Venue timeSlots: ${venue.timeSlots?.length || 0}`);
+                      console.log(`   - Using: ${availableSlots && availableSlots.length > 0 ? 'Redux slots' : 'Venue slots'}`);
+                      
+                      if (slotsToShow.length === 0) {
+                        console.log('❌ TurfDetailScreen: No slots to display!');
+                        console.log('   - availableSlots:', availableSlots);
+                        console.log('   - venue.timeSlots:', venue.timeSlots);
+                      }
+                      
+                      return slotsToShow.map((slot) => (
+                        <TouchableOpacity
+                          key={slot.id}
+                          style={[
+                            styles.timeSlotCard,
+                            !slot.available && styles.unavailableSlot,
+                            selectedTimeSlot?.id === slot.id && styles.selectedSlot
+                          ]}
+                          onPress={() => handleTimeSlotSelect(slot)}
+                          disabled={!slot.available}
+                        >
+                          <Text style={[
+                            styles.timeSlotTime,
+                            !slot.available && styles.unavailableSlotText,
+                            selectedTimeSlot?.id === slot.id && styles.selectedSlotText
+                          ]}>
+                            {slot.time || slot.startTime} - {slot.endTime}
+                          </Text>
+                          <Text style={[
+                            styles.timeSlotPrice,
+                            !slot.available && styles.unavailableSlotPrice,
+                            selectedTimeSlot?.id === slot.id && styles.selectedSlotPrice
+                          ]}>
+                            PKR {slot.price.toLocaleString()}
+                          </Text>
+                          {!slot.available && (
+                            <Text style={styles.bookedText}>Booked</Text>
+                          )}
+                        </TouchableOpacity>
+                      ));
+                    })()}
+                  </View>
+                  {(!availableSlots || availableSlots.length === 0) && (!venue.timeSlots || venue.timeSlots.length === 0) && (
+                    <View style={styles.noSlotsContainer}>
+                      <Text style={styles.noSlotsText}>No time slots available for this date</Text>
+                      <Text style={styles.noSlotsSubtext}>Please try selecting a different date</Text>
+                    </View>
+                  )}
+                </ScrollView>
+              )}
 
               {/* Selected Slot Summary */}
               {selectedTimeSlot && (
@@ -966,5 +1015,31 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 1,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  noSlotsContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  noSlotsText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  noSlotsSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 8,
+    fontFamily: 'Montserrat_400Regular',
   },
 });

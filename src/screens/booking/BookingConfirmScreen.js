@@ -77,8 +77,30 @@ export default function BookingConfirmScreen({ route, navigation }) {
         slotType: slot.priceType,
       };
 
-      await dispatch(createBooking(bookingData)).unwrap();
-      setShowSuccessModal(true);
+      const result = await dispatch(createBooking(bookingData)).unwrap();
+      
+      // Handle different booking responses
+      if (result.requiresSignIn) {
+        // Guest booking created, but requires sign in
+        Alert.alert(
+          'Booking Created!',
+          result.message || 'Your booking has been created. Please sign in to complete your booking.',
+          [
+            {
+              text: 'Sign In Now',
+              onPress: () => navigation.navigate('Auth', { screen: 'SignIn' })
+            },
+            {
+              text: 'Later',
+              style: 'cancel',
+              onPress: () => navigation.navigate('MainTabs', { screen: 'Home' })
+            }
+          ]
+        );
+      } else {
+        // Authenticated booking confirmed
+        setShowSuccessModal(true);
+      }
       
     } catch (error) {
       Alert.alert(

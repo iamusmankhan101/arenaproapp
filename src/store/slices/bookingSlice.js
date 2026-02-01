@@ -1,14 +1,30 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { bookingAPI } from '../../services/api';
+import { getAPIConfig } from '../../config/backendConfig';
+
+// Dynamic API import based on backend configuration
+const getAPI = async () => {
+  const config = getAPIConfig();
+  if (config.useFirebaseAPI) {
+    const { bookingAPI } = await import('../../services/firebaseAPI');
+    return bookingAPI;
+  } else {
+    const { bookingAPI } = await import('../../services/api');
+    return bookingAPI;
+  }
+};
 
 export const fetchAvailableSlots = createAsyncThunk(
   'booking/fetchSlots',
   async ({ turfId, date }, { rejectWithValue }) => {
     try {
+      console.log(`🔄 Redux: Fetching available slots for ${turfId} on ${date}`);
+      const bookingAPI = await getAPI();
       const response = await bookingAPI.getAvailableSlots(turfId, date);
+      console.log(`✅ Redux: Successfully fetched ${response.data.length} slots`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      console.error('❌ Redux: Error fetching slots:', error);
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
@@ -17,10 +33,11 @@ export const createBooking = createAsyncThunk(
   'booking/create',
   async (bookingData, { rejectWithValue }) => {
     try {
+      const bookingAPI = await getAPI();
       const response = await bookingAPI.createBooking(bookingData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
@@ -29,10 +46,11 @@ export const fetchUserBookings = createAsyncThunk(
   'booking/fetchUserBookings',
   async (_, { rejectWithValue }) => {
     try {
+      const bookingAPI = await getAPI();
       const response = await bookingAPI.getUserBookings();
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
@@ -60,6 +78,12 @@ const bookingSlice = createSlice({
       state.selectedSlot = null;
     },
     clearError: (state) => {
+      state.error = null;
+    },
+    clearAvailableSlots: (state) => {
+      console.log('🧹 Redux: Clearing available slots');
+      state.availableSlots = [];
+      state.loading = false;
       state.error = null;
     },
   },
@@ -99,6 +123,7 @@ export const {
   setSelectedSlot, 
   setSelectedDate, 
   clearCurrentBooking, 
-  clearError 
+  clearError,
+  clearAvailableSlots
 } = bookingSlice.actions;
 export default bookingSlice.reducer;

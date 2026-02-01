@@ -212,45 +212,67 @@ export const bookingAPI = {
   // Get available slots
   async getAvailableSlots(turfId, date) {
     try {
-      const bookingsRef = collection(db, 'bookings');
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      console.log(`🕐 Fetching available slots for venue ${turfId} on ${date}`);
       
-      const q = query(bookingsRef, 
-        where('turfId', '==', turfId),
-        where('date', '>=', startOfDay),
-        where('date', '<=', endOfDay),
-        where('status', 'in', ['confirmed', 'pending'])
-      );
+      // First, get the venue's time slots from the venue document
+      const venueRef = doc(db, 'venues', turfId);
+      const venueSnap = await getDoc(venueRef);
       
-      const snapshot = await getDocs(q);
-      const bookedSlots = snapshot.docs.map(doc => doc.data().timeSlot);
-      
-      // Generate available slots (6 AM to 11 PM)
-      const slots = [];
-      for (let hour = 6; hour <= 22; hour++) {
-        const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-        const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
-        
-        // Calculate price based on time (peak hours cost more)
-        let basePrice = 2000;
-        if (hour >= 17 && hour <= 21) basePrice = 2500; // Peak hours
-        if (hour >= 6 && hour <= 8) basePrice = 1800; // Morning discount
-        
-        slots.push({
-          id: hour,
-          time: timeSlot,
-          endTime: endTime,
-          price: basePrice,
-          available: !bookedSlots.includes(timeSlot)
-        });
+      if (!venueSnap.exists()) {
+        console.log(`❌ Venue ${turfId} not found`);
+        throw new Error('Venue not found');
       }
       
-      return { data: slots };
+      const venueData = venueSnap.data();
+      const venueTimeSlots = venueData.timeSlots || [];
+      
+      console.log(`📊 Venue has ${venueTimeSlots.length} time slots configured`);
+      
+      if (venueTimeSlots.length === 0) {
+        console.log('⚠️ No time slots configured for this venue');
+        return { data: [] };
+      }
+      
+      // Try to get existing bookings for this date (with fallback for index issues)
+      let bookedSlots = [];
+      try {
+        const bookingsRef = collection(db, 'bookings');
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        const q = query(bookingsRef, 
+          where('turfId', '==', turfId),
+          where('date', '>=', startOfDay),
+          where('date', '<=', endOfDay),
+          where('status', 'in', ['confirmed', 'pending'])
+        );
+        
+        const snapshot = await getDocs(q);
+        bookedSlots = snapshot.docs.map(doc => {
+          const booking = doc.data();
+          return booking.timeSlot || booking.slot?.startTime;
+        }).filter(Boolean);
+        
+        console.log(`📋 Found ${bookedSlots.length} booked slots:`, bookedSlots);
+      } catch (indexError) {
+        console.warn('⚠️ Firestore index not ready yet, showing all slots as available:', indexError.message);
+        // If index is not ready, show all slots as available
+        bookedSlots = [];
+      }
+      
+      // Mark slots as available/unavailable based on bookings
+      const availableSlots = venueTimeSlots.map(slot => ({
+        ...slot,
+        available: !bookedSlots.includes(slot.time || slot.startTime)
+      }));
+      
+      console.log(`✅ Returning ${availableSlots.length} time slots (${availableSlots.filter(s => s.available).length} available)`);
+      
+      return { data: availableSlots };
     } catch (error) {
-      console.error('Error fetching available slots:', error);
+      console.error('❌ Error fetching available slots:', error);
       throw error;
     }
   },
@@ -260,13 +282,42 @@ export const bookingAPI = {
     try {
       const user = auth.currentUser;
       if (!user) {
-        console.log('⚠️ User not authenticated, cannot create booking');
-        throw new Error('Please sign in to make a booking');
+        console.log('⚠️ User not authenticated, creating guest booking');
+        // For guest bookings, we'll use a temporary guest ID
+        const guestId = `guest_${Date.now()}`;
+        
+        const bookingRef = await addDoc(collection(db, 'bookings'), {
+          ...bookingData,
+          userId: guestId,
+          userType: 'guest',
+          status: 'pending', // Guest bookings start as pending
+          paymentStatus: 'pending',
+          bookingReference: `PIT${Date.now().toString().slice(-6)}`,
+          createdAt: serverTimestamp(),
+          guestInfo: {
+            requiresSignIn: true,
+            message: 'Please sign in to complete your booking'
+          }
+        });
+        
+        return { 
+          data: { 
+            id: bookingRef.id, 
+            ...bookingData,
+            status: 'pending',
+            paymentStatus: 'pending',
+            bookingReference: `PIT${Date.now().toString().slice(-6)}`,
+            requiresSignIn: true,
+            message: 'Booking created! Please sign in to complete your booking.'
+          } 
+        };
       }
       
+      // Authenticated user booking
       const bookingRef = await addDoc(collection(db, 'bookings'), {
         ...bookingData,
         userId: user.uid,
+        userType: 'authenticated',
         status: 'confirmed',
         paymentStatus: 'paid',
         bookingReference: `PIT${Date.now().toString().slice(-6)}`,
@@ -278,7 +329,10 @@ export const bookingAPI = {
           id: bookingRef.id, 
           ...bookingData,
           status: 'confirmed',
-          bookingReference: `PIT${Date.now().toString().slice(-6)}`
+          paymentStatus: 'paid',
+          bookingReference: `PIT${Date.now().toString().slice(-6)}`,
+          requiresSignIn: false,
+          message: 'Booking confirmed successfully!'
         } 
       };
     } catch (error) {
