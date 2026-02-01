@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import adminAPI from '../../services/workingFirebaseAPI';
+import { workingAdminAPI } from '../../services/workingFirebaseAPI';
 
 // Dashboard Stats
 export const fetchDashboardStats = createAsyncThunk(
   'admin/fetchDashboardStats',
   async (_, { rejectWithValue }) => {
     try {
-      return await adminAPI.getDashboardStats();
+      return await workingAdminAPI.getDashboardStats();
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -18,7 +18,7 @@ export const fetchBookings = createAsyncThunk(
   'admin/fetchBookings',
   async (params, { rejectWithValue }) => {
     try {
-      return await adminAPI.getBookings(params);
+      return await workingAdminAPI.getBookings(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -29,7 +29,7 @@ export const updateBookingStatus = createAsyncThunk(
   'admin/updateBookingStatus',
   async ({ bookingId, status }, { rejectWithValue }) => {
     try {
-      await adminAPI.updateBookingStatus(bookingId, status);
+      await workingAdminAPI.updateBookingStatus(bookingId, status);
       return { bookingId, status };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -41,7 +41,7 @@ export const cancelBooking = createAsyncThunk(
   'admin/cancelBooking',
   async ({ bookingId, reason }, { rejectWithValue }) => {
     try {
-      await adminAPI.updateBookingStatus(bookingId, 'cancelled');
+      await workingAdminAPI.updateBookingStatus(bookingId, 'cancelled');
       return { bookingId, status: 'cancelled' };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -54,7 +54,7 @@ export const fetchVenues = createAsyncThunk(
   'admin/fetchVenues',
   async (params, { rejectWithValue }) => {
     try {
-      return await adminAPI.getVenues(params);
+      return await workingAdminAPI.getVenues(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -65,7 +65,7 @@ export const updateVenueStatus = createAsyncThunk(
   'admin/updateVenueStatus',
   async ({ venueId, status }, { rejectWithValue }) => {
     try {
-      await adminAPI.updateVenueStatus(venueId, status);
+      await workingAdminAPI.updateVenueStatus(venueId, status);
       return { venueId, status };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -77,7 +77,7 @@ export const addVenue = createAsyncThunk(
   'admin/addVenue',
   async (venueData, { rejectWithValue }) => {
     try {
-      return await adminAPI.addVenue(venueData);
+      return await workingAdminAPI.addVenue(venueData);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -88,7 +88,7 @@ export const updateVenue = createAsyncThunk(
   'admin/updateVenue',
   async ({ venueId, venueData }, { rejectWithValue }) => {
     try {
-      return await adminAPI.updateVenue(venueId, venueData);
+      return await workingAdminAPI.updateVenue(venueId, venueData);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -100,7 +100,7 @@ export const fetchCustomers = createAsyncThunk(
   'admin/fetchCustomers',
   async (params, { rejectWithValue }) => {
     try {
-      return await adminAPI.getCustomers(params);
+      return await workingAdminAPI.getCustomers(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -111,7 +111,7 @@ export const updateCustomerStatus = createAsyncThunk(
   'admin/updateCustomerStatus',
   async ({ customerId, status }, { rejectWithValue }) => {
     try {
-      await adminAPI.updateCustomerStatus(customerId, status);
+      await workingAdminAPI.updateCustomerStatus(customerId, status);
       return { customerId, status };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -124,7 +124,7 @@ export const fetchRevenueReport = createAsyncThunk(
   'admin/fetchRevenueReport',
   async (params, { rejectWithValue }) => {
     try {
-      return await adminAPI.getRevenueReport(params);
+      return await workingAdminAPI.getRevenueReport(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -135,7 +135,7 @@ export const fetchBookingReport = createAsyncThunk(
   'admin/fetchBookingReport',
   async (params, { rejectWithValue }) => {
     try {
-      return await adminAPI.getBookingReport(params);
+      return await workingAdminAPI.getBookingReport(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }

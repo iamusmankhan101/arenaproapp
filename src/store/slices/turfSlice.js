@@ -14,13 +14,13 @@ const getAPI = async () => {
 };
 
 export const fetchNearbyTurfs = createAsyncThunk(
-  'turf/fetchNearby',
+  'turf/fetchAll',
   async ({ latitude, longitude, radius = 5 }, { rejectWithValue }) => {
     try {
-      console.log('🚀 Mobile app: fetchNearbyTurfs called with:', { latitude, longitude, radius });
+      console.log('🚀 Mobile app: fetchAllTurfs called (no location filtering)');
       const turfAPI = await getAPI();
       const response = await turfAPI.getNearbyTurfs(latitude, longitude, radius);
-      console.log('✅ Mobile app: fetchNearbyTurfs response:', response.data.length, 'venues');
+      console.log('✅ Mobile app: fetchAllTurfs response:', response.data.length, 'venues');
       return response.data;
     } catch (error) {
       // Return empty array if API fails, don't show error to user
@@ -72,7 +72,7 @@ export const fetchFavorites = createAsyncThunk(
 const turfSlice = createSlice({
   name: 'turf',
   initialState: {
-    nearbyTurfs: [],
+    nearbyTurfs: [], // Now contains all active venues, not just nearby ones
     selectedTurf: null,
     favorites: [],
     loading: false,

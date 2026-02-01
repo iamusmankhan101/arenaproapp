@@ -236,21 +236,43 @@ export const workingAdminAPI = {
       console.log('➕ Adding venue:', venueData.name);
       const firestore = initFirebase();
       
-      // Prepare venue data for Firestore
+      // Prepare venue data for Firestore with consistent structure
       const venueToAdd = {
-        ...venueData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: 'active',
-        // Ensure numeric fields are properly converted
-        basePrice: Number(venueData.basePrice),
-        latitude: Number(venueData.latitude) || 31.5204,
-        longitude: Number(venueData.longitude) || 74.3587,
-        // Ensure arrays are properly formatted
+        name: venueData.name,
+        description: venueData.description || '',
+        address: venueData.address,
+        city: venueData.city || 'Lahore',
+        area: venueData.area,
         sports: Array.isArray(venueData.sports) ? venueData.sports : [],
         facilities: Array.isArray(venueData.facilities) ? venueData.facilities : [],
-        timeSlots: Array.isArray(venueData.timeSlots) ? venueData.timeSlots : [],
-        images: Array.isArray(venueData.images) ? venueData.images : []
+        basePrice: Number(venueData.basePrice) || 1000,
+        openTime: venueData.openTime || '06:00',
+        closeTime: venueData.closeTime || '23:00',
+        slotDuration: Number(venueData.slotDuration) || 60,
+        images: Array.isArray(venueData.images) ? venueData.images : [],
+        // Location data structure
+        location: {
+          latitude: Number(venueData.latitude) || 31.5204,
+          longitude: Number(venueData.longitude) || 74.3587,
+          city: venueData.city || 'Lahore'
+        },
+        // Pricing structure
+        pricing: {
+          basePrice: Number(venueData.basePrice) || 1000
+        },
+        // Operating hours structure
+        operatingHours: {
+          open: venueData.openTime || '06:00',
+          close: venueData.closeTime || '23:00'
+        },
+        // Time slots if provided
+        ...(venueData.availableSlots && { timeSlots: venueData.availableSlots }),
+        ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
+        // Status and timestamps
+        isActive: true,
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
       
       // Add to Firestore
@@ -297,8 +319,42 @@ export const workingAdminAPI = {
       const firestore = initFirebase();
       
       const venueRef = doc(firestore, 'venues', venueId);
+      
+      // Prepare update data with proper structure
       const updateData = {
-        ...venueData,
+        name: venueData.name,
+        description: venueData.description || '',
+        address: venueData.address,
+        city: venueData.city || 'Lahore',
+        area: venueData.area,
+        sports: Array.isArray(venueData.sports) ? venueData.sports : [],
+        facilities: Array.isArray(venueData.facilities) ? venueData.facilities : [],
+        basePrice: Number(venueData.basePrice) || 0,
+        openTime: venueData.openTime || '06:00',
+        closeTime: venueData.closeTime || '23:00',
+        slotDuration: Number(venueData.slotDuration) || 60,
+        images: Array.isArray(venueData.images) ? venueData.images : [],
+        // Location data
+        location: {
+          latitude: Number(venueData.latitude) || 31.5204,
+          longitude: Number(venueData.longitude) || 74.3587,
+          city: venueData.city || 'Lahore'
+        },
+        // Pricing structure
+        pricing: {
+          basePrice: Number(venueData.basePrice) || 0
+        },
+        // Operating hours
+        operatingHours: {
+          open: venueData.openTime || '06:00',
+          close: venueData.closeTime || '23:00'
+        },
+        // Time slots if provided
+        ...(venueData.availableSlots && { timeSlots: venueData.availableSlots }),
+        ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
+        // Status and timestamps
+        isActive: true,
+        status: 'active',
         updatedAt: new Date()
       };
       

@@ -26,7 +26,7 @@ import { Schedule, DateRange, CloudUpload, Close } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue, updateVenue } from '../store/slices/adminSlice';
 
-const SPORTS_OPTIONS = ['Cricket', 'Futsal', 'Padel', 'Basketball', 'Tennis'];
+const SPORTS_OPTIONS = ['Football', 'Cricket', 'Padel', 'Futsal', 'Basketball', 'Tennis'];
 const FACILITIES_OPTIONS = [
   'Floodlights', 'Parking', 'Changing Room', 'Cafeteria', 'Equipment Rental',
   'Air Conditioning', 'Pro Shop', 'Lounge', 'Coaching', 'Practice Nets',
@@ -64,22 +64,43 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
   // Load edit venue data when editVenue prop changes
   useEffect(() => {
     if (editVenue) {
+      console.log('🔄 Loading edit venue data:', editVenue);
+      
+      // Extract location data from different possible structures
+      let latitude = '';
+      let longitude = '';
+      
+      if (editVenue.location?.latitude) {
+        latitude = editVenue.location.latitude.toString();
+        longitude = editVenue.location.longitude.toString();
+      } else if (editVenue.latitude) {
+        latitude = editVenue.latitude.toString();
+        longitude = editVenue.longitude.toString();
+      }
+      
+      // Extract pricing data
+      const basePrice = editVenue.pricing?.basePrice || editVenue.basePrice || 1000;
+      
+      // Extract operating hours
+      const openTime = editVenue.operatingHours?.open || editVenue.openTime || '06:00';
+      const closeTime = editVenue.operatingHours?.close || editVenue.closeTime || '23:00';
+      
       setFormData({
         name: editVenue.name || '',
         description: editVenue.description || '',
         address: editVenue.address || '',
-        city: editVenue.city || 'Lahore',
+        city: editVenue.city || editVenue.location?.city || 'Lahore',
         area: editVenue.area || '',
-        latitude: editVenue.latitude?.toString() || '',
-        longitude: editVenue.longitude?.toString() || '',
-        sports: editVenue.sports || [],
-        facilities: editVenue.facilities || [],
-        basePrice: editVenue.basePrice?.toString() || '1000',
-        openTime: editVenue.openTime || '06:00',
-        closeTime: editVenue.closeTime || '23:00',
-        images: editVenue.images || [],
-        slotDuration: editVenue.slotDuration?.toString() || '60',
-        availableSlots: editVenue.availableSlots || [],
+        latitude: latitude,
+        longitude: longitude,
+        sports: Array.isArray(editVenue.sports) ? editVenue.sports : [],
+        facilities: Array.isArray(editVenue.facilities) ? editVenue.facilities : [],
+        basePrice: basePrice.toString(),
+        openTime: openTime,
+        closeTime: closeTime,
+        images: Array.isArray(editVenue.images) ? editVenue.images : [],
+        slotDuration: (editVenue.slotDuration || 60).toString(),
+        availableSlots: Array.isArray(editVenue.timeSlots) ? editVenue.timeSlots : [],
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: editVenue.dateSpecificSlots || {}
       });
@@ -94,6 +115,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         }));
         setUploadedImages(existingImages);
       }
+      
+      console.log('✅ Edit venue data loaded successfully');
     } else {
       // Reset form for new venue
       setFormData({

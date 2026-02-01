@@ -63,10 +63,10 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 // Turf/Venue API
 export const turfAPI = {
-  // Get nearby turfs
+  // Get nearby turfs - now returns all active venues without location filtering
   async getNearbyTurfs(latitude, longitude, radius = 10) {
     try {
-      console.log('🏟️ Mobile app: Fetching nearby turfs...', { latitude, longitude, radius });
+      console.log('🏟️ Mobile app: Fetching all active venues (no location filtering)...');
       const turfsRef = collection(db, 'venues');
       const q = query(turfsRef, where('isActive', '==', true));
       const snapshot = await getDocs(q);
@@ -77,56 +77,28 @@ export const turfAPI = {
       snapshot.forEach((doc) => {
         const data = doc.data();
         
-        // Handle different location data structures
-        let turfLat, turfLng;
-        if (data.location?.coordinates) {
-          // New structure: location.coordinates.latitude
-          turfLat = data.location.coordinates.latitude;
-          turfLng = data.location.coordinates.longitude;
-        } else if (data.location?.latitude) {
-          // Current structure: location.latitude
-          turfLat = data.location.latitude;
-          turfLng = data.location.longitude;
-        } else if (data.latitude) {
-          // Fallback: direct latitude/longitude
-          turfLat = data.latitude;
-          turfLng = data.longitude;
-        } else {
-          console.warn('⚠️ Mobile app: No location data found for turf:', doc.id, data.name);
-          return; // Skip this turf
-        }
+        console.log(`📍 Mobile app: Adding venue ${data.name} to results`);
         
-        const distance = calculateDistance(
-          latitude, 
-          longitude, 
-          turfLat, 
-          turfLng
-        );
+        const serializedData = serializeFirestoreData({
+          id: doc.id,
+          ...data,
+          distance: 0, // Set distance to 0 since we're not filtering by location
+          // Add compatibility fields for existing components
+          sport: Array.isArray(data.sports) ? data.sports[0] : (typeof data.sports === 'string' ? data.sports.split(',')[0].trim() : 'Unknown'),
+          pricePerHour: data.pricing?.basePrice || 0,
+          time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
+        });
         
-        console.log(`📍 Mobile app: ${data.name} is ${distance.toFixed(2)}km away`);
-        
-        if (distance <= radius) {
-          const serializedData = serializeFirestoreData({
-            id: doc.id,
-            ...data,
-            distance: Math.round(distance * 10) / 10, // Round to 1 decimal
-            // Add compatibility fields for existing components
-            sport: data.sports?.[0] || 'Unknown',
-            pricePerHour: data.pricing?.basePrice || 0,
-            time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
-          });
-          
-          turfs.push(serializedData);
-        }
+        turfs.push(serializedData);
       });
       
-      // Sort by distance
-      turfs.sort((a, b) => a.distance - b.distance);
+      // Sort by name instead of distance
+      turfs.sort((a, b) => a.name.localeCompare(b.name));
       
-      console.log(`✅ Mobile app: Returning ${turfs.length} venues within ${radius}km radius`);
+      console.log(`✅ Mobile app: Returning ${turfs.length} venues (all active venues)`);
       return { data: turfs };
     } catch (error) {
-      console.error('❌ Mobile app: Error fetching nearby turfs:', error);
+      console.error('❌ Mobile app: Error fetching venues:', error);
       throw error;
     }
   },

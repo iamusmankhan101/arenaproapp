@@ -29,8 +29,8 @@ export default function VenueListScreen({ navigation, route }) {
 
   // Load venues on component mount
   useEffect(() => {
-    // Fetch nearby turfs (you can get user location here)
-    dispatch(fetchNearbyTurfs({ latitude: 31.5204, longitude: 74.3587, radius: 10 })); // Lahore coordinates as default
+    // Fetch all active venues (no location filtering)
+    dispatch(fetchNearbyTurfs({ latitude: 0, longitude: 0, radius: 0 })); // Dummy values since location filtering is removed
   }, [dispatch]);
 
   // Get initial filter from navigation params
@@ -38,6 +38,8 @@ export default function VenueListScreen({ navigation, route }) {
     if (route.params?.sportType) {
       const sport = route.params.sportType.charAt(0).toUpperCase() + route.params.sportType.slice(1);
       setSelectedCategory(sport);
+    } else if (route.params?.sport) {
+      setSelectedCategory(route.params.sport);
     }
   }, [route.params]);
 
@@ -47,7 +49,17 @@ export default function VenueListScreen({ navigation, route }) {
 
     // Filter by category
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(venue => venue.sport === selectedCategory);
+      filtered = filtered.filter(venue => {
+        // Handle different sports data structures
+        if (Array.isArray(venue.sports)) {
+          return venue.sports.some(sport => sport.toLowerCase() === selectedCategory.toLowerCase());
+        } else if (typeof venue.sports === 'string') {
+          return venue.sports.toLowerCase().includes(selectedCategory.toLowerCase());
+        } else if (venue.sport) {
+          return venue.sport.toLowerCase() === selectedCategory.toLowerCase();
+        }
+        return false;
+      });
     }
 
     // Filter by search query
@@ -56,7 +68,9 @@ export default function VenueListScreen({ navigation, route }) {
         venue.area?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        venue.sport?.toLowerCase().includes(searchQuery.toLowerCase())
+        (Array.isArray(venue.sports) ? venue.sports.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) : 
+         typeof venue.sports === 'string' ? venue.sports.toLowerCase().includes(searchQuery.toLowerCase()) :
+         venue.sport?.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -80,7 +94,11 @@ export default function VenueListScreen({ navigation, route }) {
           <Text style={styles.ratingText}>{item.rating || 0}</Text>
         </View>
         <View style={styles.sportBadge}>
-          <Text style={styles.sportBadgeText}>{item.sport}</Text>
+          <Text style={styles.sportBadgeText}>
+            {Array.isArray(item.sports) ? item.sports[0] : 
+             typeof item.sports === 'string' ? item.sports.split(',')[0].trim() : 
+             item.sport || 'Sport'}
+          </Text>
         </View>
       </View>
       <View style={styles.venueInfo}>

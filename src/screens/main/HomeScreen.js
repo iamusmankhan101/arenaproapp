@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
 import { fetchChallenges } from '../../store/slices/teamSlice';
 import RealtimeNotification from '../../components/RealtimeNotification';
 import realtimeSyncService from '../../services/realtimeSync';
 import { SportsIcon } from '../../components/SportsIcons';
-
-const { width } = Dimensions.get('window');
 
 // Header slider images
 const headerImages = [
@@ -19,7 +18,18 @@ const headerImages = [
 ];
 
 // Default venue images by sport
-const getVenueImageBySport = (sport) => {
+const getVenueImageBySport = (venue) => {
+  // Get the first sport from the venue data
+  let primarySport = 'Football'; // default
+  
+  if (Array.isArray(venue.sports) && venue.sports.length > 0) {
+    primarySport = venue.sports[0];
+  } else if (typeof venue.sports === 'string') {
+    primarySport = venue.sports.split(',')[0].trim();
+  } else if (venue.sport) {
+    primarySport = venue.sport;
+  }
+  
   const sportImages = {
     'Cricket': require('../../images/cricket.jpg'),
     'Football': require('../../images/football.jpg'),
@@ -28,7 +38,7 @@ const getVenueImageBySport = (sport) => {
     'Basketball': require('../../images/football.jpg'), // fallback
     'Tennis': require('../../images/padel.jpg'), // fallback
   };
-  return sportImages[sport] || require('../../images/football.jpg'); // default fallback
+  return sportImages[primarySport] || require('../../images/football.jpg'); // default fallback
 };
 
 const sportCategories = [
@@ -65,10 +75,10 @@ export default function HomeScreen({ navigation }) {
   const { nearbyTurfs, loading: turfsLoading } = useSelector(state => state.turf);
   const { challenges, loading: challengesLoading } = useSelector(state => state.team);
   
-  // Load data on component mount
+  // Load data on component mount and when screen comes into focus
   useEffect(() => {
-    // Fetch nearby turfs using Karachi coordinates (where venues are located)
-    dispatch(fetchNearbyTurfs({ latitude: 24.8607, longitude: 67.0011, radius: 50 })); // Karachi coordinates with larger radius
+    // Fetch all active venues (no location filtering)
+    dispatch(fetchNearbyTurfs({ latitude: 0, longitude: 0, radius: 0 })); // Dummy values since location filtering is removed
     
     // Fetch recent challenges
     dispatch(fetchChallenges());
@@ -78,6 +88,16 @@ export default function HomeScreen({ navigation }) {
       setNotification({ message, type });
     });
   }, [dispatch]);
+
+  // Reload venues when screen comes into focus (when returning from other screens)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (nearbyTurfs.length === 0) {
+        console.log('🔄 HomeScreen: Reloading venues on focus');
+        dispatch(fetchNearbyTurfs({ latitude: 0, longitude: 0, radius: 0 })); // Dummy values since location filtering is removed
+      }
+    }, [dispatch, nearbyTurfs.length])
+  );
   
   // Auto-slide functionality
   useEffect(() => {
@@ -100,7 +120,9 @@ export default function HomeScreen({ navigation }) {
         venue.area?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        venue.sport?.toLowerCase().includes(searchQuery.toLowerCase())
+        (Array.isArray(venue.sports) ? venue.sports.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) : 
+         typeof venue.sports === 'string' ? venue.sports.toLowerCase().includes(searchQuery.toLowerCase()) :
+         venue.sport?.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredVenues(filtered);
       setShowSearchResults(true);
@@ -148,7 +170,7 @@ export default function HomeScreen({ navigation }) {
       activeOpacity={0.8}
     >
       <View style={[styles.sportIconContainer, { backgroundColor: sport.color }]}>
-        <SportsIcon sport={sport.name} size={32} style={styles.sportIconImage} />
+        <SportsIcon sport={sport.name.toLowerCase()} size={32} style={styles.sportIconImage} />
       </View>
       <Text style={styles.sportName}>{sport.name}</Text>
     </TouchableOpacity>
@@ -163,7 +185,7 @@ export default function HomeScreen({ navigation }) {
     >
       <View style={styles.venueImageContainer}>
         <Image 
-          source={venue.image || getVenueImageBySport(venue.sport)} 
+          source={venue.image || getVenueImageBySport(venue)} 
           style={styles.venueImage}
           resizeMode="cover"
         />
@@ -182,7 +204,11 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.venueFooter}>
           <View style={styles.venueIcons}>
             <Text style={styles.venueIconText}>
-              {venue.sport === 'Cricket' ? '🏏' : venue.sport === 'Football' ? '⚽' : venue.sport === 'Padel' ? '🏓' : '⚽'}
+              {Array.isArray(venue.sports) && venue.sports.length > 0 ? 
+                (venue.sports[0] === 'Cricket' ? '🏏' : venue.sports[0] === 'Football' ? '⚽' : venue.sports[0] === 'Padel' ? '🏓' : '⚽') :
+                typeof venue.sports === 'string' ? 
+                (venue.sports.includes('Cricket') ? '🏏' : venue.sports.includes('Football') ? '⚽' : venue.sports.includes('Padel') ? '🏓' : '⚽') :
+                venue.sport === 'Cricket' ? '🏏' : venue.sport === 'Football' ? '⚽' : venue.sport === 'Padel' ? '🏓' : '⚽'}
             </Text>
           </View>
           <TouchableOpacity style={styles.bookableButton}>
@@ -193,9 +219,19 @@ export default function HomeScreen({ navigation }) {
     </TouchableOpacity>
   );
 
-  // Group venues by sport
+  // Group venues by sport - Fixed to handle different data structures
   const getVenuesBySport = (sport) => {
-    return nearbyTurfs.filter(venue => venue.sport === sport);
+    return nearbyTurfs.filter(venue => {
+      // Handle different sports data structures
+      if (Array.isArray(venue.sports)) {
+        return venue.sports.some(s => s.toLowerCase().includes(sport.toLowerCase()));
+      } else if (typeof venue.sports === 'string') {
+        return venue.sports.toLowerCase().includes(sport.toLowerCase());
+      } else if (venue.sport) {
+        return venue.sport.toLowerCase().includes(sport.toLowerCase());
+      }
+      return false;
+    });
   };
 
   const cricketVenues = getVenuesBySport('Cricket');

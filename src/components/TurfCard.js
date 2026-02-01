@@ -50,7 +50,7 @@ export default function TurfCard({ turf, onPress }) {
           <View style={styles.detailRow}>
             <MaterialIcons name="location-on" size={16} color="#666" />
             <Text style={styles.detailText}>
-              {turf.distance}km away • {turf.area}
+              {turf.area} • {turf.size}
             </Text>
           </View>
           
@@ -62,16 +62,16 @@ export default function TurfCard({ turf, onPress }) {
           </View>
 
           {/* Sports Icons Row */}
-          {turf.sports && turf.sports.length > 0 && (
+          {turf.sports && (
             <View style={styles.detailRow}>
               <SportsIconList 
-                sports={turf.sports} 
+                sports={Array.isArray(turf.sports) ? turf.sports : (typeof turf.sports === 'string' ? turf.sports.split(', ').map(s => s.trim()) : [])} 
                 size={20} 
                 maxIcons={4}
                 style={styles.sportsIcons}
               />
               <Text style={styles.detailText}>
-                {turf.sports.join(', ')}
+                {Array.isArray(turf.sports) ? turf.sports.join(', ') : turf.sports}
               </Text>
             </View>
           )}
