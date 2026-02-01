@@ -162,10 +162,13 @@ export default function HomeScreen({ navigation }) {
     );
   };
 
-  const renderSportCategory = (sport) => (
+  const renderSportCategory = (sport, index) => (
     <TouchableOpacity
       key={sport.id}
-      style={styles.sportCard}
+      style={[
+        styles.sportCard,
+        index === sportCategories.length - 1 && styles.lastSportCard // Add extra margin to last card
+      ]}
       onPress={() => handleSportPress(sport)}
       activeOpacity={0.8}
     >
@@ -190,7 +193,7 @@ export default function HomeScreen({ navigation }) {
           resizeMode="cover"
         />
         <View style={styles.ratingBadge}>
-          <MaterialIcons name="star" size={16} color="white" />
+          <MaterialIcons name="star" size={16} color="#004d43" />
           <Text style={styles.ratingText}>{venue.rating || '4.0'}</Text>
         </View>
       </View>
@@ -641,11 +644,15 @@ const styles = StyleSheet.create({
   sportsScroll: {
     marginHorizontal: -20,
     paddingHorizontal: 20,
+    paddingRight: 0, // Remove right padding to eliminate empty space
   },
   sportCard: {
     alignItems: 'center',
-    marginRight: 20,
+    marginRight: 15, // Reduced margin
     width: 70,
+  },
+  lastSportCard: {
+    marginRight: 20, // Extra margin for last card to match container padding
   },
   sportIconContainer: {
     width: 60,
@@ -702,7 +709,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: '#FF8C00',
+    backgroundColor: '#cdec6a', // Secondary brand color
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
@@ -711,7 +718,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    color: 'white',
+    color: '#004d43', // Primary brand color for better contrast on light green background
     marginLeft: 4,
     fontFamily: 'Montserrat_600SemiBold',
   },

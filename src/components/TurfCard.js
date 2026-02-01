@@ -144,10 +144,14 @@ const styles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#cdec6a', // Secondary brand color
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   ratingText: {
     marginLeft: 8,
-    color: '#666',
+    color: '#004d43', // Primary brand color
     fontSize: 12,
   },
   details: {

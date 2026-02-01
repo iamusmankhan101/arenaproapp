@@ -389,14 +389,14 @@ const styles = StyleSheet.create({
   ratedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+    backgroundColor: '#cdec6a', // Secondary brand color
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   ratedText: {
     fontSize: 12,
-    color: '#FF9800',
+    color: '#004d43', // Primary brand color for better contrast
     marginLeft: 4,
     fontFamily: 'Montserrat_600SemiBold',
   },
