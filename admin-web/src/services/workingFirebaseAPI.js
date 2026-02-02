@@ -312,20 +312,154 @@ export const workingAdminAPI = {
   // Get customers
   async getCustomers(params = {}) {
     try {
-      console.log('👥 Fetching customers...');
+      console.log('👥 Admin: Fetching customers...');
+      const firestore = initFirebase();
+      
+      // Create query for users collection
+      let usersQuery = collection(firestore, 'users');
+      
+      // Add ordering by creation date (newest first)
+      try {
+        usersQuery = query(usersQuery, orderBy('createdAt', 'desc'));
+      } catch (orderError) {
+        console.warn('⚠️ Admin: Could not order users by createdAt, using simple query');
+        // If ordering fails, use simple query
+      }
+      
+      // Execute query
+      const querySnapshot = await getDocs(usersQuery);
+      
+      // Process results
+      const customers = [];
+      
+      // Get bookings data to calculate customer stats
+      let bookingsMap = {};
+      try {
+        const bookingsRef = collection(firestore, 'bookings');
+        const bookingsSnapshot = await getDocs(bookingsRef);
+        
+        bookingsSnapshot.forEach((doc) => {
+          const booking = doc.data();
+          const userId = booking.userId;
+          
+          if (!bookingsMap[userId]) {
+            bookingsMap[userId] = {
+              totalBookings: 0,
+              totalSpent: 0,
+              lastBooking: null,
+              preferredSports: new Set()
+            };
+          }
+          
+          bookingsMap[userId].totalBookings++;
+          bookingsMap[userId].totalSpent += booking.totalAmount || 0;
+          
+          const bookingDate = booking.createdAt?.toDate?.() || new Date(booking.createdAt);
+          if (!bookingsMap[userId].lastBooking || bookingDate > bookingsMap[userId].lastBooking) {
+            bookingsMap[userId].lastBooking = bookingDate;
+          }
+          
+          if (booking.sport) {
+            bookingsMap[userId].preferredSports.add(booking.sport);
+          }
+        });
+        
+        // Convert Sets to Arrays
+        Object.keys(bookingsMap).forEach(userId => {
+          bookingsMap[userId].preferredSports = Array.from(bookingsMap[userId].preferredSports);
+        });
+        
+      } catch (bookingError) {
+        console.log('📅 Admin: No bookings found for customer stats calculation');
+      }
+      
+      querySnapshot.forEach((doc) => {
+        const userData = doc.data();
+        const userId = doc.id;
+        const customerStats = bookingsMap[userId] || {
+          totalBookings: 0,
+          totalSpent: 0,
+          lastBooking: null,
+          preferredSports: []
+        };
+        
+        // Transform user data for admin panel display
+        const transformedCustomer = {
+          id: userId,
+          name: userData.fullName || userData.displayName || userData.name || 'Unknown User',
+          email: userData.email || 'N/A',
+          phone: userData.phoneNumber || userData.phone || 'N/A',
+          joinDate: userData.createdAt?.toDate?.() || new Date(),
+          status: userData.isActive !== false ? 'active' : 'inactive',
+          totalBookings: customerStats.totalBookings,
+          totalSpent: customerStats.totalSpent,
+          lastBooking: customerStats.lastBooking || userData.createdAt?.toDate?.() || new Date(),
+          preferredSports: customerStats.preferredSports.length > 0 ? customerStats.preferredSports : ['Football'],
+          rating: (4 + Math.random()).toFixed(1), // Mock rating for now
+          isVip: customerStats.totalSpent > 50000 || userData.isVip === true,
+          // Additional fields for admin
+          profilePicture: userData.photoURL || null,
+          address: userData.address || 'N/A',
+          dateOfBirth: userData.dateOfBirth || null,
+          // Ensure dates are properly formatted
+          createdAt: userData.createdAt?.toDate?.() || new Date(),
+          updatedAt: userData.updatedAt?.toDate?.() || new Date(),
+        };
+        
+        customers.push(transformedCustomer);
+      });
+      
+      // Apply filters if specified
+      let filteredCustomers = customers;
+      
+      if (params.filter && params.filter !== 'all') {
+        if (params.filter === 'active') {
+          filteredCustomers = customers.filter(customer => customer.status === 'active');
+        } else if (params.filter === 'inactive') {
+          filteredCustomers = customers.filter(customer => customer.status === 'inactive');
+        } else if (params.filter === 'vip') {
+          filteredCustomers = customers.filter(customer => customer.isVip);
+        } else if (params.filter === 'new') {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          filteredCustomers = customers.filter(customer => 
+            new Date(customer.joinDate) >= thirtyDaysAgo
+          );
+        }
+      }
+      
+      // Apply search if specified
+      if (params.search) {
+        const searchLower = params.search.toLowerCase();
+        filteredCustomers = filteredCustomers.filter(customer => 
+          customer.name.toLowerCase().includes(searchLower) ||
+          customer.email.toLowerCase().includes(searchLower) ||
+          customer.phone.includes(params.search)
+        );
+      }
+      
+      // Apply pagination
+      const startIndex = (parseInt(params.page) || 0) * (parseInt(params.pageSize) || 25);
+      const endIndex = startIndex + (parseInt(params.pageSize) || 25);
+      const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
+      
+      const result = {
+        data: paginatedCustomers,
+        total: filteredCustomers.length,
+        page: parseInt(params.page) || 0,
+        pageSize: parseInt(params.pageSize) || 25
+      };
+      
+      console.log(`✅ Admin: Customers fetched: ${paginatedCustomers.length}/${filteredCustomers.length} customers (${customers.length} total)`);
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Admin: Error fetching customers:', error);
       return {
         data: [],
         total: 0,
         page: parseInt(params.page) || 0,
         pageSize: parseInt(params.pageSize) || 25
-      };
-    } catch (error) {
-      console.error('❌ Error fetching customers:', error);
-      return {
-        data: [],
-        total: 0,
-        page: 0,
-        pageSize: 25
       };
     }
   },
@@ -545,11 +679,21 @@ export const workingAdminAPI = {
   // Update customer status
   async updateCustomerStatus(customerId, status) {
     try {
-      console.log('🔄 Updating customer status:', customerId, status);
+      console.log('🔄 Admin: Updating customer status:', customerId, status);
+      const firestore = initFirebase();
+      
+      const customerRef = doc(firestore, 'users', customerId);
+      await updateDoc(customerRef, {
+        isActive: status === 'active',
+        status: status,
+        updatedAt: new Date()
+      });
+      
+      console.log('✅ Admin: Customer status updated successfully');
       return { success: true, message: 'Customer status updated successfully' };
     } catch (error) {
-      console.error('❌ Error updating customer status:', error);
-      throw error;
+      console.error('❌ Admin: Error updating customer status:', error);
+      throw new Error(`Failed to update customer status: ${error.message}`);
     }
   }
 };
