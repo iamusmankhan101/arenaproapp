@@ -24,6 +24,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { createBooking } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
+import { theme } from '../../theme/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -159,20 +160,22 @@ export default function BookingConfirmScreen({ route, navigation }) {
   const { date: formattedDate, time } = formatDateTime();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#229a60" barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
       
       {/* Custom Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialIcons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Confirm Booking</Text>
-        <View style={styles.headerRight} />
-      </View>
+      <SafeAreaView style={[styles.header, { backgroundColor: theme.colors.primary }]}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <MaterialIcons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Confirm Booking</Text>
+          <View style={styles.headerRight} />
+        </View>
+      </SafeAreaView>
 
       <ScrollView 
         style={styles.scrollView}
@@ -191,8 +194,8 @@ export default function BookingConfirmScreen({ route, navigation }) {
         >
           <Surface style={styles.summaryCard} elevation={2}>
             <View style={styles.summaryHeader}>
-              <View style={styles.venueIcon}>
-                <MaterialIcons name="sports-soccer" size={24} color="#229a60" />
+              <View style={[styles.venueIcon, { backgroundColor: `${theme.colors.secondary}30` }]}>
+                <MaterialIcons name="sports-soccer" size={24} color={theme.colors.primary} />
               </View>
               <View style={styles.venueInfo}>
                 <Text style={styles.venueName}>{turf.name}</Text>
@@ -200,8 +203,8 @@ export default function BookingConfirmScreen({ route, navigation }) {
               </View>
               <Chip 
                 mode="outlined" 
-                style={styles.priceChip}
-                textStyle={styles.priceChipText}
+                style={[styles.priceChip, { backgroundColor: `${theme.colors.secondary}30`, borderColor: theme.colors.primary }]}
+                textStyle={[styles.priceChipText, { color: theme.colors.primary }]}
               >
                 PKR {pricing.total.toLocaleString()}
               </Chip>
@@ -247,7 +250,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
               
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Total Amount</Text>
-                <Text style={styles.totalValue}>PKR {pricing.total.toLocaleString()}</Text>
+                <Text style={[styles.totalValue, { color: theme.colors.primary }]}>PKR {pricing.total.toLocaleString()}</Text>
               </View>
             </View>
           </Surface>
@@ -280,7 +283,10 @@ export default function BookingConfirmScreen({ route, navigation }) {
                   key={method.value}
                   style={[
                     styles.paymentOption,
-                    paymentMethod === method.value && styles.selectedPaymentOption
+                    paymentMethod === method.value && [styles.selectedPaymentOption, { 
+                      borderColor: theme.colors.primary, 
+                      backgroundColor: `${theme.colors.secondary}20` 
+                    }]
                   ]}
                   onPress={() => setPaymentMethod(method.value)}
                 >
@@ -300,7 +306,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
                       <Text style={styles.paymentDesc}>{method.desc}</Text>
                     </View>
                   </View>
-                  <RadioButton value={method.value} color="#229a60" />
+                  <RadioButton value={method.value} color={theme.colors.primary} />
                 </TouchableOpacity>
               ))}
             </RadioButton.Group>
@@ -332,7 +338,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
               </View>
               
               <View style={styles.infoItem}>
-                <MaterialIcons name="phone" size={16} color="#229a60" />
+                <MaterialIcons name="phone" size={16} color={theme.colors.primary} />
                 <Text style={styles.infoText}>Contact: {turf.phoneNumber}</Text>
               </View>
               
@@ -349,16 +355,16 @@ export default function BookingConfirmScreen({ route, navigation }) {
       <View style={styles.bottomAction}>
         <View style={styles.totalSummary}>
           <Text style={styles.totalSummaryLabel}>Total Amount</Text>
-          <Text style={styles.totalSummaryValue}>PKR {pricing.total.toLocaleString()}</Text>
+          <Text style={[styles.totalSummaryValue, { color: theme.colors.primary }]}>PKR {pricing.total.toLocaleString()}</Text>
         </View>
         <Button
           mode="contained"
           onPress={handleConfirmBooking}
           loading={isBooking}
           disabled={isBooking}
-          style={styles.confirmButton}
+          style={[styles.confirmButton, { backgroundColor: theme.colors.primary }]}
           contentStyle={styles.confirmButtonContent}
-          labelStyle={styles.confirmButtonLabel}
+          labelStyle={[styles.confirmButtonLabel, { color: theme.colors.secondary }]}
         >
           {isBooking ? 'Processing...' : 'Confirm & Pay'}
         </Button>
@@ -382,15 +388,16 @@ export default function BookingConfirmScreen({ route, navigation }) {
             <Button
               mode="contained"
               onPress={handleSuccessModalClose}
-              style={styles.successButton}
+              style={[styles.successButton, { backgroundColor: theme.colors.primary }]}
               contentStyle={styles.successButtonContent}
+              labelStyle={{ color: theme.colors.secondary }}
             >
               View My Bookings
             </Button>
           </Surface>
         </Modal>
       </Portal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -400,17 +407,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#229a60',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   backButton: {
     width: 40,
@@ -453,7 +461,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(34, 154, 96, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -474,11 +481,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   priceChip: {
-    backgroundColor: 'rgba(34, 154, 96, 0.1)',
-    borderColor: '#229a60',
+    // backgroundColor and borderColor set dynamically
   },
   priceChipText: {
-    color: '#229a60',
     fontWeight: 'bold',
     fontFamily: 'Montserrat_600SemiBold',
   },
@@ -550,7 +555,6 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#229a60',
     fontFamily: 'Montserrat_700Bold',
   },
   paymentCard: {
@@ -571,8 +575,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
   },
   selectedPaymentOption: {
-    borderColor: '#229a60',
-    backgroundColor: 'rgba(34, 154, 96, 0.05)',
+    // borderColor and backgroundColor set dynamically
   },
   paymentLeft: {
     flexDirection: 'row',
@@ -647,11 +650,9 @@ const styles = StyleSheet.create({
   totalSummaryValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#229a60',
     fontFamily: 'Montserrat_700Bold',
   },
   confirmButton: {
-    backgroundColor: '#229a60',
     borderRadius: 12,
     elevation: 2,
   },
@@ -693,7 +694,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   successButton: {
-    backgroundColor: '#229a60',
     borderRadius: 12,
     minWidth: 200,
   },

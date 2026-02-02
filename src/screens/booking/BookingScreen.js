@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserBookings } from '../../store/slices/bookingSlice';
 import BookingCard from '../../components/BookingCard';
 import { MaterialIcons } from '@expo/vector-icons';
+import { theme } from '../../theme/theme';
 
 export default function BookingScreen() {
   const [selectedTab, setSelectedTab] = useState('upcoming');
@@ -106,11 +107,11 @@ export default function BookingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#229a60" barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
       
       {/* Enhanced Header */}
-      <View style={styles.header}>
+      <SafeAreaView style={[styles.header, { backgroundColor: theme.colors.primary }]}>
         <View style={styles.headerContent}>
           <Text style={styles.title}>My Bookings</Text>
           <Text style={styles.subtitle}>Manage your ground reservations</Text>
@@ -133,7 +134,7 @@ export default function BookingScreen() {
             <Text style={styles.statLabel}>Spent</Text>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
 
       <View style={styles.content}>
         {/* Search Bar */}
@@ -143,7 +144,7 @@ export default function BookingScreen() {
             onChangeText={setSearchQuery}
             value={searchQuery}
             style={styles.searchbar}
-            iconColor="#229a60"
+            iconColor={theme.colors.primary}
             inputStyle={styles.searchInput}
             elevation={0}
           />
@@ -158,17 +159,17 @@ export default function BookingScreen() {
               { 
                 value: 'upcoming', 
                 label: 'Upcoming',
-                icon: () => <MaterialIcons name="schedule" size={18} color={selectedTab === 'upcoming' ? '#229a60' : '#666'} />
+                icon: () => <MaterialIcons name="schedule" size={18} color={selectedTab === 'upcoming' ? theme.colors.primary : '#666'} />
               },
               { 
                 value: 'past', 
                 label: 'Past',
-                icon: () => <MaterialIcons name="history" size={18} color={selectedTab === 'past' ? '#229a60' : '#666'} />
+                icon: () => <MaterialIcons name="history" size={18} color={selectedTab === 'past' ? theme.colors.primary : '#666'} />
               },
               { 
                 value: 'cancelled', 
                 label: 'Cancelled',
-                icon: () => <MaterialIcons name="cancel" size={18} color={selectedTab === 'cancelled' ? '#229a60' : '#666'} />
+                icon: () => <MaterialIcons name="cancel" size={18} color={selectedTab === 'cancelled' ? theme.colors.primary : '#666'} />
               },
             ]}
             style={styles.segmentedButtons}
@@ -194,8 +195,8 @@ export default function BookingScreen() {
             <RefreshControl
               refreshing={loading}
               onRefresh={() => dispatch(fetchUserBookings())}
-              colors={['#229a60']}
-              tintColor="#229a60"
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -221,7 +222,7 @@ export default function BookingScreen() {
           }
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -231,13 +232,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    backgroundColor: '#229a60',
-    paddingTop: 20,
     paddingBottom: 24,
     paddingHorizontal: 20,
+    paddingLeft: 32,
   },
   headerContent: {
     marginBottom: 20,
+    paddingLeft: 20,
+    paddingTop: 20,
   },
   title: {
     fontSize: 28,
@@ -255,7 +257,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
+    margin: 16,
     alignItems: 'center',
     justifyContent: 'space-around',
   },
@@ -345,7 +348,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   bookNowButton: {
-    backgroundColor: '#229a60',
+    backgroundColor: theme.colors.primary,
     borderRadius: 12,
     paddingHorizontal: 24,
   },

@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toggleFavorite, fetchFavorites, fetchTurfDetails } from '../../store/slices/turfSlice';
 import { fetchAvailableSlots, clearAvailableSlots } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
+import { theme } from '../../theme/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,7 +31,7 @@ export default function TurfDetailScreen({ route, navigation }) {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   
   const dispatch = useDispatch();
-  const { favorites, selectedTurf, loading } = useSelector(state => state.turf);
+  const { favorites, selectedTurf } = useSelector(state => state.turf);
   const { availableSlots, loading: slotsLoading, error: slotsError } = useSelector(state => state.booking);
   
   // Debug Redux state
@@ -107,10 +108,14 @@ export default function TurfDetailScreen({ route, navigation }) {
       if (typeof sport === 'string') {
         return {
           name: sport,
-          icon: getSportIcon(sport)
+          icon: getSportIcon(sport),
+          image: getSportImage(sport)
         };
       }
-      return sport;
+      return {
+        ...sport,
+        image: getSportImage(sport.name || sport)
+      };
     }),
     
     // Transform facilities array to expected format
@@ -144,6 +149,18 @@ export default function TurfDetailScreen({ route, navigation }) {
       'Tennis': '🎾'
     };
     return icons[sport] || '⚽';
+  }
+
+  function getSportImage(sport) {
+    const images = {
+      'Cricket': require('../../images/cricket (1).png'),
+      'Football': require('../../images/game.png'),
+      'Futsal': require('../../images/game.png'),
+      'Padel': require('../../images/padel (1).png'),
+      'Basketball': require('../../images/game.png'),
+      'Tennis': require('../../images/padel (1).png')
+    };
+    return images[sport] || require('../../images/game.png');
   }
 
   function getFacilityIcon(facility) {
@@ -330,20 +347,20 @@ export default function TurfDetailScreen({ route, navigation }) {
     
     for (let i = 0; i < fullStars; i++) {
       stars.push(
-        <MaterialIcons key={i} name="star" size={16} color="#FFD700" />
+        <MaterialIcons key={i} name="star" size={16} color={theme.colors.secondary} />
       );
     }
     
     if (hasHalfStar) {
       stars.push(
-        <MaterialIcons key="half" name="star-half" size={16} color="#FFD700" />
+        <MaterialIcons key="half" name="star-half" size={16} color={theme.colors.secondary} />
       );
     }
     
     const remainingStars = 5 - Math.ceil(rating);
     for (let i = 0; i < remainingStars; i++) {
       stars.push(
-        <MaterialIcons key={`empty-${i}`} name="star-border" size={16} color="#FFD700" />
+        <MaterialIcons key={`empty-${i}`} name="star-border" size={16} color={theme.colors.secondary} />
       );
     }
     
@@ -402,7 +419,12 @@ export default function TurfDetailScreen({ route, navigation }) {
             </View>
             
             <View style={styles.ratingRow}>
-              <View style={styles.starsContainer}>
+              <View style={[styles.starsContainer, { 
+                backgroundColor: theme.colors.primary, 
+                paddingHorizontal: 8, 
+                paddingVertical: 4, 
+                borderRadius: 12 
+              }]}>
                 {renderStars(venue.rating)}
               </View>
               <Text style={styles.ratingText}>• {venue.reviewCount} reviews</Text>
@@ -426,8 +448,12 @@ export default function TurfDetailScreen({ route, navigation }) {
               <View style={styles.sportsContainer}>
                 {venue.availableSports.map((sport, index) => (
                   <View key={index} style={styles.sportItem}>
-                    <View style={styles.sportIcon}>
-                      <Text style={styles.sportEmoji}>{sport.icon}</Text>
+                    <View style={[styles.sportIcon, { backgroundColor: theme.colors.secondary }]}>
+                      <Image 
+                        source={sport.image} 
+                        style={[styles.sportImage, { tintColor: theme.colors.primary }]}
+                        resizeMode="contain"
+                      />
                     </View>
                     <Text style={styles.sportName}>{sport.name}</Text>
                   </View>
@@ -444,7 +470,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                 {venue.facilities.map((facility, index) => (
                   <View key={index} style={styles.facilityItem}>
                     <View style={styles.facilityIconContainer}>
-                      <MaterialIcons name={facility.icon} size={20} color="#229a60" />
+                      <MaterialIcons name={facility.icon} size={20} color={theme.colors.primary} />
                     </View>
                     <Text style={styles.facilityName}>{facility.name}</Text>
                   </View>
@@ -460,7 +486,7 @@ export default function TurfDetailScreen({ route, navigation }) {
         <Button
           mode="contained"
           onPress={handleBooking}
-          style={styles.bookButton}
+          style={[styles.bookButton, { backgroundColor: theme.colors.primary }]}
           contentStyle={styles.bookButtonContent}
         >
           Book Court
@@ -494,7 +520,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                     key={index}
                     style={[
                       styles.dateOption,
-                      selectedDate.toDateString() === date.toDateString() && styles.selectedDateOption
+                      selectedDate.toDateString() === date.toDateString() && { backgroundColor: theme.colors.primary }
                     ]}
                     onPress={() => setSelectedDate(date)}
                   >
@@ -547,7 +573,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                           style={[
                             styles.timeSlotCard,
                             !slot.available && styles.unavailableSlot,
-                            selectedTimeSlot?.id === slot.id && styles.selectedSlot
+                            selectedTimeSlot?.id === slot.id && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
                           ]}
                           onPress={() => handleTimeSlotSelect(slot)}
                           disabled={!slot.available}
@@ -584,7 +610,7 @@ export default function TurfDetailScreen({ route, navigation }) {
 
               {/* Selected Slot Summary */}
               {selectedTimeSlot && (
-                <View style={styles.selectedSlotSummary}>
+                <View style={[styles.selectedSlotSummary, { backgroundColor: `${theme.colors.secondary}20` }]}>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Selected Slot:</Text>
                     <Text style={styles.summaryValue}>
@@ -603,7 +629,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                   </View>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Total Price:</Text>
-                    <Text style={styles.summaryPrice}>
+                    <Text style={[styles.summaryPrice, { color: theme.colors.primary }]}>
                       PKR {selectedTimeSlot.price.toLocaleString()}
                     </Text>
                   </View>
@@ -613,18 +639,29 @@ export default function TurfDetailScreen({ route, navigation }) {
               {/* Action Buttons */}
               <View style={styles.modalActions}>
                 <Button
-                  mode="outlined"
+                  mode="contained"
                   onPress={() => setShowTimeSlots(false)}
-                  style={styles.cancelButton}
-                  textColor="#666"
+                  style={[styles.cancelButton, { backgroundColor: theme.colors.secondary }]}
+                  textColor={theme.colors.primary}
+                  contentStyle={styles.buttonContent}
+                  labelStyle={{ color: theme.colors.primary }}
                 >
                   Cancel
                 </Button>
                 <Button
                   mode="contained"
                   onPress={handleConfirmBooking}
-                  style={styles.confirmButton}
-                  buttonColor="#229a60"
+                  style={[
+                    styles.confirmButton, 
+                    { 
+                      backgroundColor: !selectedTimeSlot 
+                        ? `${theme.colors.primary}80` // 50% opacity when disabled
+                        : theme.colors.primary 
+                    }
+                  ]}
+                  textColor={theme.colors.secondary}
+                  contentStyle={styles.buttonContent}
+                  labelStyle={{ color: theme.colors.secondary }}
                   disabled={!selectedTimeSlot}
                 >
                   Confirm Booking
@@ -771,7 +808,7 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#229a60',
+    color: '#004d43',
     fontFamily: 'Montserrat_700Bold',
   },
   section: {
@@ -805,10 +842,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
+  },
+  sportImage: {
+    width: 24,
+    height: 24,
+    // tintColor will be set dynamically using theme.colors.primary
   },
   sportEmoji: {
     fontSize: 20,
@@ -832,7 +873,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(34, 154, 96, 0.1)',
+    backgroundColor: 'rgba(0, 77, 67, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -850,7 +891,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#F0F0F0',
   },
   bookButton: {
-    backgroundColor: '#229a60',
     borderRadius: 12,
   },
   bookButtonContent: {
@@ -899,7 +939,7 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   selectedDateOption: {
-    backgroundColor: '#229a60',
+    backgroundColor: '#004d43',
   },
   dateOptionText: {
     fontSize: 12,
@@ -939,8 +979,8 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   selectedSlot: {
-    backgroundColor: '#229a60',
-    borderColor: '#229a60',
+    backgroundColor: '#004d43',
+    borderColor: '#004d43',
   },
   unavailableSlot: {
     backgroundColor: '#F0F0F0',
@@ -978,7 +1018,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_500Medium',
   },
   selectedSlotSummary: {
-    backgroundColor: 'rgba(34, 154, 96, 0.1)',
+    backgroundColor: 'rgba(205, 236, 106, 0.2)',
     padding: 16,
     borderRadius: 12,
     marginBottom: 20,
@@ -1002,7 +1042,7 @@ const styles = StyleSheet.create({
   summaryPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#229a60',
+    color: '#004d43',
     fontFamily: 'Montserrat_700Bold',
   },
   modalActions: {
@@ -1011,10 +1051,12 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    borderColor: '#E0E0E0',
   },
   confirmButton: {
     flex: 1,
+  },
+  buttonContent: {
+    paddingVertical: 4,
   },
   loadingContainer: {
     padding: 40,
