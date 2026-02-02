@@ -75,69 +75,7 @@ export default function MapScreen({ navigation }) {
   const { nearbyTurfs, loading } = useSelector(state => state.turf);
   const themeColors = theme;
 
-  // Hardcoded test venues for immediate testing
-  const testVenues = [
-    {
-      id: 'test1',
-      name: 'Test Venue 1',
-      latitude: 31.5204,
-      longitude: 74.3587,
-      sports: ['Football'],
-      address: 'Lahore, Pakistan',
-      area: 'DHA',
-      city: 'Lahore',
-      rating: 4.5,
-      pricePerHour: 2000,
-      availableSlots: 3,
-      openNow: true,
-      coordinates: {
-        latitude: 31.5204,
-        longitude: 74.3587,
-        isValid: true,
-        source: 'test'
-      }
-    },
-    {
-      id: 'test2', 
-      name: 'Test Venue 2',
-      latitude: 31.5304,
-      longitude: 74.3687,
-      sports: ['Cricket'],
-      address: 'Lahore, Pakistan',
-      area: 'Gulberg',
-      city: 'Lahore',
-      rating: 4.2,
-      pricePerHour: 1500,
-      availableSlots: 5,
-      openNow: true,
-      coordinates: {
-        latitude: 31.5304,
-        longitude: 74.3687,
-        isValid: true,
-        source: 'test'
-      }
-    },
-    {
-      id: 'test3',
-      name: 'Test Venue 3', 
-      latitude: 31.5104,
-      longitude: 74.3487,
-      sports: ['Padel'],
-      address: 'Lahore, Pakistan',
-      area: 'Model Town',
-      city: 'Lahore',
-      rating: 4.8,
-      pricePerHour: 3000,
-      availableSlots: 2,
-      openNow: true,
-      coordinates: {
-        latitude: 31.5104,
-        longitude: 74.3487,
-        isValid: true,
-        source: 'test'
-      }
-    }
-  ];
+
 
   // Animation values
   const slideAnim = useRef(new Animated.Value(-100)).current;
@@ -166,11 +104,6 @@ export default function MapScreen({ navigation }) {
       }),
     ]).start();
 
-    // IMMEDIATE FIX: Use test venues first to verify marker rendering
-    console.log('🧪 MapScreen: Using test venues for immediate testing');
-    setVenuesWithValidCoords(testVenues);
-    setFilteredVenues(testVenues);
-
     // Proactively request location and load venues
     const initializeMapScreen = async () => {
       console.log('🚀 MapScreen: Initializing...');
@@ -186,8 +119,6 @@ export default function MapScreen({ navigation }) {
         console.log('✅ MapScreen: Venues loaded successfully:', result);
       } catch (error) {
         console.error('❌ MapScreen: Failed to load venues:', error);
-        // Keep test venues if API fails
-        console.log('🧪 MapScreen: Keeping test venues due to API failure');
       }
       
       // Then try to get user location for distance calculations
@@ -346,21 +277,47 @@ export default function MapScreen({ navigation }) {
     return getVenueCoordinatesSync(venue);
   };
 
-  // Enhanced venue coordinate processing with detailed logging
+  // Enhanced venue coordinate processing with detailed logging and coordinate spreading
   const processVenuesCoordinates = async (venues) => {
     const processedVenues = [];
     const invalidVenues = [];
+    const coordinateMap = new Map(); // Track duplicate coordinates
     
     console.log(`🗺️ Processing coordinates for ${venues.length} venues...`);
     
-    for (const venue of venues) {
+    for (let i = 0; i < venues.length; i++) {
+      const venue = venues[i];
       const coords = getVenueCoordinatesSync(venue);
+      
       if (coords.isValid) {
+        let finalCoords = { ...coords };
+        
+        // Check for duplicate coordinates and spread them out slightly
+        const coordKey = `${coords.latitude.toFixed(4)},${coords.longitude.toFixed(4)}`;
+        if (coordinateMap.has(coordKey)) {
+          const duplicateCount = coordinateMap.get(coordKey);
+          // Spread duplicates in a small circle around the original point
+          const angle = (duplicateCount * 60) * (Math.PI / 180); // 60 degrees apart
+          const offset = 0.002; // Small offset (~200m)
+          
+          finalCoords = {
+            latitude: coords.latitude + (Math.cos(angle) * offset),
+            longitude: coords.longitude + (Math.sin(angle) * offset),
+            isValid: true,
+            source: `${coords.source}-spread-${duplicateCount}`
+          };
+          
+          coordinateMap.set(coordKey, duplicateCount + 1);
+          console.log(`📍 Spread venue "${venue.name}" to avoid overlap: ${finalCoords.latitude}, ${finalCoords.longitude}`);
+        } else {
+          coordinateMap.set(coordKey, 1);
+        }
+        
         processedVenues.push({
           ...venue,
-          coordinates: coords
+          coordinates: finalCoords
         });
-        console.log(`✅ ${venue.name}: Valid coordinates (${coords.source}) - ${coords.latitude}, ${coords.longitude}`);
+        console.log(`✅ ${venue.name}: Valid coordinates (${finalCoords.source}) - ${finalCoords.latitude}, ${finalCoords.longitude}`);
       } else {
         invalidVenues.push({
           name: venue.name,
@@ -1013,7 +970,7 @@ export default function MapScreen({ navigation }) {
           />
         )}
 
-        {/* Enhanced Markers - FIXED VERSION */}
+        {/* Enhanced Markers - STABLE VERSION */}
         {filteredVenues.length > 0 ? (
           filteredVenues.map((venue, index) => {
             const coordinates = venue.coordinates || getVenueCoordinatesSync(venue);
@@ -1024,39 +981,55 @@ export default function MapScreen({ navigation }) {
               return null;
             }
 
-            console.log(`📍 MapScreen: Rendering marker ${index + 1} for ${venue.name} at ${coordinates.latitude}, ${coordinates.longitude}`);
+            // Ensure coordinates are numbers
+            const lat = Number(coordinates.latitude);
+            const lng = Number(coordinates.longitude);
+            
+            if (isNaN(lat) || isNaN(lng)) {
+              console.warn(`⚠️ MapScreen: Invalid coordinate numbers for ${venue.name}: ${lat}, ${lng}`);
+              return null;
+            }
+
+            console.log(`📍 MapScreen: Rendering marker ${index + 1} for ${venue.name} at ${lat}, ${lng}`);
 
             return (
               <Marker
-                key={`marker-${venue.id}-${index}`}
+                key={`venue-${venue.id}-${index}`} // Stable unique key
                 coordinate={{
-                  latitude: coordinates.latitude,
-                  longitude: coordinates.longitude
+                  latitude: lat,
+                  longitude: lng
                 }}
                 onPress={() => handleMarkerPress(venue)}
                 title={venue.name}
-                description={`${venue.sports?.join(', ')} - PKR ${venue.pricePerHour || 'N/A'}/hr`}
+                description={`${venue.sports?.join(', ') || 'Sports'} - PKR ${venue.pricePerHour || venue.basePrice || 'N/A'}/hr`}
               >
-                {/* Larger, more visible marker */}
+                {/* Simplified, stable marker design */}
                 <View style={[
                   styles.customMarker,
                   { 
                     backgroundColor: '#FF4444', // Bright red for visibility
-                    borderColor: 'white',
-                    borderWidth: 3,
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
+                    borderColor: selectedVenue?.id === venue.id ? '#FFD700' : 'white',
+                    borderWidth: selectedVenue?.id === venue.id ? 3 : 2,
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
                   }
                 ]}>
                   <MaterialIcons 
                     name="place" 
-                    size={24} 
+                    size={20} 
                     color="white" 
                   />
                   {/* Venue number for debugging */}
-                  <View style={[styles.slotsBadge, { backgroundColor: '#000' }]}>
-                    <Text style={styles.slotsBadgeText}>{index + 1}</Text>
+                  <View style={[styles.slotsBadge, { 
+                    backgroundColor: '#000',
+                    top: -6,
+                    right: -6,
+                    minWidth: 18,
+                    height: 18,
+                    borderRadius: 9
+                  }]}>
+                    <Text style={[styles.slotsBadgeText, { fontSize: 10 }]}>{index + 1}</Text>
                   </View>
                 </View>
 
@@ -1088,9 +1061,9 @@ export default function MapScreen({ navigation }) {
                       </Text>
                       
                       <View style={styles.calloutSports}>
-                        {venue.sports?.slice(0, 3).map((sport, index) => (
+                        {venue.sports?.slice(0, 3).map((sport, sportIndex) => (
                           <Chip 
-                            key={sport} 
+                            key={`${sport}-${sportIndex}`} 
                             style={styles.sportTag}
                             textStyle={styles.sportTagText}
                             compact

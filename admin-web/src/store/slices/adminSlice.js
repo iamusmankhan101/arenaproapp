@@ -329,14 +329,20 @@ const adminSlice = createSlice({
       
       // Customers
       .addCase(fetchCustomers.pending, (state) => {
+        console.log('🔄 Redux: fetchCustomers.pending');
         state.customersLoading = true;
         state.customersError = null;
       })
       .addCase(fetchCustomers.fulfilled, (state, action) => {
+        console.log('✅ Redux: fetchCustomers.fulfilled', {
+          dataLength: action.payload.data?.length || 0,
+          total: action.payload.total || 0
+        });
         state.customersLoading = false;
         state.customers = action.payload;
       })
       .addCase(fetchCustomers.rejected, (state, action) => {
+        console.log('❌ Redux: fetchCustomers.rejected', action.payload);
         state.customersLoading = false;
         state.customersError = action.payload;
       })

@@ -124,6 +124,13 @@ export default function CustomersPage() {
   ];
 
   useEffect(() => {
+    console.log('🔄 CustomersPage: Fetching customers with params:', {
+      page: paginationModel.page,
+      pageSize: paginationModel.pageSize,
+      filter: selectedFilter,
+      search: searchQuery,
+    });
+    
     dispatch(fetchCustomers({
       page: paginationModel.page,
       pageSize: paginationModel.pageSize,
@@ -131,6 +138,16 @@ export default function CustomersPage() {
       search: searchQuery,
     }));
   }, [dispatch, paginationModel, selectedFilter, searchQuery]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('📊 CustomersPage: State updated:', {
+      customersData: customers.data,
+      customersTotal: customers.total,
+      customersLoading,
+      dataLength: customers.data?.length || 0
+    });
+  }, [customers, customersLoading]);
 
   const handleSearch = (event) => {
     setSearchQuery(event.target.value);
@@ -342,12 +359,12 @@ export default function CustomersPage() {
       {/* Data Grid */}
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={customers.data}
+          rows={customers.data || []}
           columns={columns}
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[25, 50, 100]}
-          rowCount={customers.total}
+          rowCount={customers.total || 0}
           paginationMode="server"
           loading={customersLoading}
           disableRowSelectionOnClick
@@ -360,7 +377,26 @@ export default function CustomersPage() {
               borderBottom: '2px solid #e0e0e0',
             },
           }}
+          onStateChange={(state) => {
+            console.log('📊 DataGrid state change:', {
+              rows: state.rows,
+              rowCount: state.pagination?.rowCount,
+              loading: state.loading
+            });
+          }}
         />
+        
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+            <Typography variant="caption" display="block">
+              Debug Info: Rows={customers.data?.length || 0}, Total={customers.total || 0}, Loading={customersLoading ? 'Yes' : 'No'}
+            </Typography>
+            <Typography variant="caption" display="block">
+              Data: {JSON.stringify(customers.data?.slice(0, 2) || [], null, 2)}
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );
