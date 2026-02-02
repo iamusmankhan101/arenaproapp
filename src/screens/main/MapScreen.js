@@ -21,7 +21,7 @@ import {
   Badge,
   ActivityIndicator
 } from 'react-native-paper';
-import MapView, { Marker, PROVIDER_GOOGLE, Callout, Circle } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
@@ -1032,49 +1032,6 @@ export default function MapScreen({ navigation }) {
                     <Text style={[styles.slotsBadgeText, { fontSize: 10 }]}>{index + 1}</Text>
                   </View>
                 </View>
-
-                <Callout onPress={() => handleVenueSelect(venue)} tooltip>
-                  <Surface style={styles.calloutContainer} elevation={4}>
-                    <View style={styles.calloutContent}>
-                      <Text style={styles.calloutTitle}>{venue.name}</Text>
-                      <Text style={styles.calloutAddress}>{getVenueAddress(venue)}</Text>
-                      
-                      <View style={styles.calloutDetails}>
-                        <View style={styles.calloutRating}>
-                          <MaterialIcons name="star" size={14} color="#FFD700" />
-                          <Text style={styles.calloutRatingText}>{venue.rating || '4.0'}</Text>
-                        </View>
-                        <View style={styles.calloutDistance}>
-                          <MaterialIcons name="location-on" size={14} color="#666" />
-                          <Text style={styles.calloutDistanceText}>{venue.distance || 'Distance unknown'}</Text>
-                        </View>
-                        <Text style={styles.calloutPrice}>
-                          PKR {venue.pricePerHour || venue.basePrice || 'N/A'}/hr
-                        </Text>
-                      </View>
-                      
-                      <Text style={[
-                        styles.calloutAvailability,
-                        { color: venue.openNow && venue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
-                      ]}>
-                        {getAvailabilityText(venue)}
-                      </Text>
-                      
-                      <View style={styles.calloutSports}>
-                        {venue.sports?.slice(0, 3).map((sport, sportIndex) => (
-                          <Chip 
-                            key={`${sport}-${sportIndex}`} 
-                            style={styles.sportTag}
-                            textStyle={styles.sportTagText}
-                            compact
-                          >
-                            {sport}
-                          </Chip>
-                        ))}
-                      </View>
-                    </View>
-                  </Surface>
-                </Callout>
               </Marker>
             );
           })
@@ -1500,72 +1457,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     fontFamily: 'Montserrat_700Bold',
-  },
-  calloutContainer: {
-    width: 260,
-    borderRadius: 12,
-    backgroundColor: 'white',
-  },
-  calloutContent: {
-    padding: 16,
-  },
-  calloutTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-    fontFamily: 'Montserrat_700Bold',
-  },
-  calloutAddress: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 8,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  calloutDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-    flexWrap: 'wrap',
-  },
-  calloutRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  calloutRatingText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  calloutDistance: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 8,
-  },
-  calloutDistanceText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  calloutPrice: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#004d43',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  calloutAvailability: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginBottom: 8,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  calloutSports: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
   },
   sportTag: {
     backgroundColor: '#F0F0F0',

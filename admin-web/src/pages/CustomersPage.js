@@ -106,7 +106,7 @@ const ActionMenu = ({ customer, onAction }) => {
 
 export default function CustomersPage() {
   const dispatch = useDispatch();
-  const { customers, customersLoading } = useSelector(state => state.admin);
+  const { customers, customersLoading, customersError } = useSelector(state => state.admin);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -148,6 +148,49 @@ export default function CustomersPage() {
       dataLength: customers.data?.length || 0
     });
   }, [customers, customersLoading]);
+
+  // Enhanced debugging for customers loading
+  useEffect(() => {
+    console.log('🔍 CustomersPage: Component state debug:', {
+      customersData: customers.data,
+      customersDataType: typeof customers.data,
+      customersDataIsArray: Array.isArray(customers.data),
+      customersTotal: customers.total,
+      customersLoading,
+      customersError: customersError, // Add error from selector if available
+      dataLength: customers.data?.length || 0,
+      firstCustomer: customers.data?.[0] || null
+    });
+    
+    // Force re-render if data exists but DataGrid is empty
+    if (customers.data && customers.data.length > 0 && !customersLoading) {
+      console.log('✅ CustomersPage: Data available, should display in DataGrid');
+    } else if (!customersLoading && (!customers.data || customers.data.length === 0)) {
+      console.log('⚠️ CustomersPage: No data available after loading complete');
+    }
+  }, [customers, customersLoading]);
+
+
+  // Enhanced debugging for customers loading
+  useEffect(() => {
+    console.log('🔍 CustomersPage: Component state debug:', {
+      customersData: customers.data,
+      customersDataType: typeof customers.data,
+      customersDataIsArray: Array.isArray(customers.data),
+      customersTotal: customers.total,
+      customersLoading,
+      customersError,
+      dataLength: customers.data?.length || 0,
+      firstCustomer: customers.data?.[0] || null
+    });
+    
+    // Force re-render if data exists but DataGrid is empty
+    if (customers.data && customers.data.length > 0 && !customersLoading) {
+      console.log('✅ CustomersPage: Data available, should display in DataGrid');
+    } else if (!customersLoading && (!customers.data || customers.data.length === 0)) {
+      console.log('⚠️ CustomersPage: No data available after loading complete');
+    }
+  }, [customers, customersLoading, customersError]);
 
   const handleSearch = (event) => {
     setSearchQuery(event.target.value);
@@ -314,13 +357,17 @@ export default function CustomersPage() {
         <Typography variant="h4" component="h1">
           Customers Management
         </Typography>
+        
         <Button
           variant="outlined"
           startIcon={<Refresh />}
-          onClick={handleRefresh}
+          onClick={() => {
+            console.log('🔄 Manual refresh triggered');
+            handleRefresh();
+          }}
           disabled={customersLoading}
         >
-          Refresh
+          {customersLoading ? 'Loading...' : 'Refresh'}
         </Button>
       </Box>
 
@@ -357,7 +404,34 @@ export default function CustomersPage() {
       </Box>
 
       {/* Data Grid */}
+      
+      {/* Error Display */}
+      {customersError && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: 1, border: '1px solid #f44336' }}>
+          <Typography variant="body2" color="error">
+            ❌ Error loading customers: {customersError}
+          </Typography>
+          <Button 
+            variant="outlined" 
+            size="small" 
+            onClick={handleRefresh}
+            sx={{ mt: 1 }}
+          >
+            Retry
+          </Button>
+        </Box>
+      )}
+
       <Box sx={{ height: 600, width: '100%' }}>
+        {/* Debug info before DataGrid */}
+        {process.env.NODE_ENV === 'development' && (
+          <Box sx={{ mb: 1, p: 1, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+            <Typography variant="caption" display="block">
+              DataGrid Debug: Rows={customers.data?.length || 0}, Loading={customersLoading ? 'Yes' : 'No'}, Error={customersError || 'None'}
+            </Typography>
+          </Box>
+        )}
+        
         <DataGrid
           rows={customers.data || []}
           columns={columns}
@@ -368,6 +442,9 @@ export default function CustomersPage() {
           paginationMode="server"
           loading={customersLoading}
           disableRowSelectionOnClick
+          key={`customers-${customers.data?.length || 0}-${customersLoading}`}
+          // Force re-render when data changes
+          key={`customers-${customers.data?.length || 0}-${customersLoading}`}
           sx={{
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
@@ -379,14 +456,19 @@ export default function CustomersPage() {
           }}
           onStateChange={(state) => {
             console.log('📊 DataGrid state change:', {
-              rows: state.rows,
+              rows: state.rows?.length || 0,
               rowCount: state.pagination?.rowCount,
-              loading: state.loading
+              loading: state.loading,
+              error: state.error
             });
+          }}
+          // Add error handling
+          onError={(error) => {
+            console.error('❌ DataGrid error:', error);
           }}
         />
         
-        {/* Debug info */}
+        {/* Enhanced Debug info */}
         {process.env.NODE_ENV === 'development' && (
           <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
             <Typography variant="caption" display="block">
@@ -396,6 +478,8 @@ export default function CustomersPage() {
               Data: {JSON.stringify(customers.data?.slice(0, 2) || [], null, 2)}
             </Typography>
           </Box>
+        )}
+      </Box>
         )}
       </Box>
     </Box>
