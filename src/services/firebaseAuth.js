@@ -5,21 +5,126 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   GoogleAuthProvider,
-  signInWithCredential
+  signInWithCredential,
+  sendEmailVerification,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  onAuthStateChanged
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  collection, 
+  query, 
+  where, 
+  getDocs,
+  serverTimestamp,
+  increment
+} from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// User data structure for Firestore
+const createUserDocument = (user, additionalData = {}) => ({
+  uid: user.uid,
+  email: user.email,
+  displayName: user.displayName || additionalData.fullName || '',
+  fullName: additionalData.fullName || user.displayName || '',
+  phoneNumber: additionalData.phoneNumber || '',
+  city: additionalData.city || '',
+  area: additionalData.area || '',
+  profilePicture: user.photoURL || '',
+  isEmailVerified: user.emailVerified,
+  isPhoneVerified: false,
+  accountStatus: 'active', // active, suspended, pending
+  userType: 'customer', // customer, admin, venue_owner
+  preferences: {
+    notifications: {
+      email: true,
+      push: true,
+      sms: false
+    },
+    privacy: {
+      showProfile: true,
+      showBookingHistory: false
+    }
+  },
+  stats: {
+    totalBookings: 0,
+    totalSpent: 0,
+    favoriteVenues: [],
+    joinedChallenges: 0
+  },
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+  lastLoginAt: serverTimestamp(),
+  ...additionalData
+});
+
+// Enhanced Firebase Auth API
 export const firebaseAuthAPI = {
-  // Sign in with email/password
+  // Initialize auth state listener
+  initializeAuthListener: (callback) => {
+    return onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // Update last login time
+          await updateDoc(doc(db, 'users', user.uid), {
+            lastLoginAt: serverTimestamp()
+          });
+          
+          // Get complete user data from Firestore
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userData = userDoc.exists() ? userDoc.data() : {};
+          
+          const completeUser = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            emailVerified: user.emailVerified,
+            photoURL: user.photoURL,
+            ...userData
+          };
+          
+          callback({ user: completeUser, token: await user.getIdToken() });
+        } catch (error) {
+          console.error('Error updating user login:', error);
+          callback({ user: null, token: null });
+        }
+      } else {
+        callback({ user: null, token: null });
+      }
+    });
+  },
+
+  // Enhanced sign in with email/password
   signIn: async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
+      // Update last login time
+      await updateDoc(doc(db, 'users', user.uid), {
+        lastLoginAt: serverTimestamp()
+      });
+      
       // Get additional user data from Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const userData = userDoc.exists() ? userDoc.data() : {};
+      
+      const token = await user.getIdToken();
+      
+      // Store in AsyncStorage
+      await AsyncStorage.setItem('authToken', token);
+      await AsyncStorage.setItem('user', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        ...userData
+      }));
       
       return {
         data: {
@@ -27,35 +132,59 @@ export const firebaseAuthAPI = {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName,
+            emailVerified: user.emailVerified,
             ...userData
           },
-          token: await user.getIdToken()
+          token
         }
       };
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Sign in error:', error);
+      throw new Error(this.getErrorMessage(error.code));
     }
   },
 
-  // Sign up with email/password
-  signUp: async (email, password, fullName, phoneNumber) => {
+  // Enhanced sign up with email/password
+  signUp: async (email, password, fullName, phoneNumber = '', city = '') => {
     try {
+      // Check if email already exists
+      const existingUsers = await getDocs(
+        query(collection(db, 'users'), where('email', '==', email))
+      );
+      
+      if (!existingUsers.empty) {
+        throw new Error('An account with this email already exists');
+      }
+      
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Update profile
+      // Update Firebase Auth profile
       await updateProfile(user, { displayName: fullName });
       
-      // Save additional user data to Firestore
-      await setDoc(doc(db, 'users', user.uid), {
+      // Send email verification
+      await sendEmailVerification(user);
+      
+      // Create comprehensive user document in Firestore
+      const userData = createUserDocument(user, {
         fullName,
-        email,
         phoneNumber,
-        createdAt: new Date(),
-        isVerified: true,
-        city: '',
-        area: ''
+        city,
+        registrationMethod: 'email'
       });
+      
+      await setDoc(doc(db, 'users', user.uid), userData);
+      
+      const token = await user.getIdToken();
+      
+      // Store in AsyncStorage
+      await AsyncStorage.setItem('authToken', token);
+      await AsyncStorage.setItem('user', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: fullName,
+        ...userData
+      }));
       
       return {
         data: {
@@ -63,36 +192,56 @@ export const firebaseAuthAPI = {
             uid: user.uid,
             email: user.email,
             displayName: fullName,
-            fullName,
-            phoneNumber
+            emailVerified: user.emailVerified,
+            ...userData
           },
-          token: await user.getIdToken()
+          token,
+          message: 'Account created successfully! Please check your email for verification.'
         }
       };
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Sign up error:', error);
+      throw new Error(this.getErrorMessage(error.code));
     }
   },
 
-  // Google Sign In
+  // Google Sign In with enhanced user data
   googleSignIn: async (googleToken) => {
     try {
       const credential = GoogleAuthProvider.credential(googleToken);
       const userCredential = await signInWithCredential(auth, credential);
       const user = userCredential.user;
       
-      // Check if user document exists, create if not
+      // Check if user document exists
       const userDoc = await getDoc(doc(db, 'users', user.uid));
+      let userData;
+      
       if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', user.uid), {
-          fullName: user.displayName,
-          email: user.email,
-          createdAt: new Date(),
-          isVerified: true,
-          city: '',
-          area: ''
+        // Create new user document for Google sign-in
+        userData = createUserDocument(user, {
+          registrationMethod: 'google',
+          isEmailVerified: user.emailVerified
+        });
+        await setDoc(doc(db, 'users', user.uid), userData);
+      } else {
+        // Update existing user data
+        userData = userDoc.data();
+        await updateDoc(doc(db, 'users', user.uid), {
+          lastLoginAt: serverTimestamp(),
+          profilePicture: user.photoURL || userData.profilePicture
         });
       }
+      
+      const token = await user.getIdToken();
+      
+      // Store in AsyncStorage
+      await AsyncStorage.setItem('authToken', token);
+      await AsyncStorage.setItem('user', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        ...userData
+      }));
       
       return {
         data: {
@@ -100,65 +249,163 @@ export const firebaseAuthAPI = {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName,
-            ...userDoc.data()
+            emailVerified: user.emailVerified,
+            photoURL: user.photoURL,
+            ...userData
           },
-          token: await user.getIdToken()
+          token
         }
       };
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Google sign in error:', error);
+      throw new Error(this.getErrorMessage(error.code));
     }
   },
 
-  // Sign out
+  // Enhanced sign out
   signOut: async () => {
     try {
       await signOut(auth);
+      await AsyncStorage.multiRemove(['authToken', 'user']);
       return { data: { message: 'Signed out successfully' } };
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Sign out error:', error);
+      throw new Error('Failed to sign out');
     }
   },
 
-  // Forgot password
+  // Enhanced forgot password
   forgotPassword: async (email) => {
     try {
       await sendPasswordResetEmail(auth, email);
-      return { data: { message: 'Password reset email sent' } };
+      return { data: { message: 'Password reset email sent successfully' } };
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Forgot password error:', error);
+      throw new Error(this.getErrorMessage(error.code));
     }
   },
 
-  // Update profile
+  // Enhanced profile update
   updateProfile: async (userData) => {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error('No authenticated user');
       
-      // Update Firebase Auth profile
-      if (userData.displayName) {
+      // Update Firebase Auth profile if display name changed
+      if (userData.displayName && userData.displayName !== user.displayName) {
         await updateProfile(user, { displayName: userData.displayName });
       }
       
       // Update Firestore document
-      await updateDoc(doc(db, 'users', user.uid), {
+      const updateData = {
         ...userData,
-        updatedAt: new Date()
-      });
+        updatedAt: serverTimestamp()
+      };
+      
+      await updateDoc(doc(db, 'users', user.uid), updateData);
+      
+      // Update AsyncStorage
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        const updatedUser = { ...parsedUser, ...userData };
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      }
       
       return { data: { message: 'Profile updated successfully' } };
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Update profile error:', error);
+      throw new Error('Failed to update profile');
     }
   },
 
-  // Verify token
-  verifyToken: async (token) => {
+  // Change password
+  changePassword: async (currentPassword, newPassword) => {
     try {
-      // Firebase handles token verification automatically
       const user = auth.currentUser;
       if (!user) throw new Error('No authenticated user');
+      
+      // Re-authenticate user
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      
+      // Update password
+      await updatePassword(user, newPassword);
+      
+      // Update user document
+      await updateDoc(doc(db, 'users', user.uid), {
+        updatedAt: serverTimestamp()
+      });
+      
+      return { data: { message: 'Password changed successfully' } };
+    } catch (error) {
+      console.error('Change password error:', error);
+      throw new Error(this.getErrorMessage(error.code));
+    }
+  },
+
+  // Resend email verification
+  resendEmailVerification: async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user');
+      
+      await sendEmailVerification(user);
+      return { data: { message: 'Verification email sent successfully' } };
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      throw new Error('Failed to send verification email');
+    }
+  },
+
+  // Update user stats (for bookings, challenges, etc.)
+  updateUserStats: async (userId, statsUpdate) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      const updates = {};
+      
+      // Handle increment operations
+      Object.keys(statsUpdate).forEach(key => {
+        if (typeof statsUpdate[key] === 'number') {
+          updates[`stats.${key}`] = increment(statsUpdate[key]);
+        } else {
+          updates[`stats.${key}`] = statsUpdate[key];
+        }
+      });
+      
+      updates.updatedAt = serverTimestamp();
+      
+      await updateDoc(userRef, updates);
+      return { data: { message: 'User stats updated successfully' } };
+    } catch (error) {
+      console.error('Update user stats error:', error);
+      throw new Error('Failed to update user stats');
+    }
+  },
+
+  // Get user by ID (for admin purposes)
+  getUserById: async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (!userDoc.exists()) {
+        throw new Error('User not found');
+      }
+      
+      return { data: { user: userDoc.data() } };
+    } catch (error) {
+      console.error('Get user error:', error);
+      throw new Error('Failed to get user data');
+    }
+  },
+
+  // Verify token and get user data
+  verifyToken: async (token) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user');
+      
+      // Verify token is still valid
+      const currentToken = await user.getIdToken(true);
       
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const userData = userDoc.exists() ? userDoc.data() : {};
@@ -169,12 +416,39 @@ export const firebaseAuthAPI = {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName,
+            emailVerified: user.emailVerified,
             ...userData
-          }
+          },
+          token: currentToken
         }
       };
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Verify token error:', error);
+      throw new Error('Invalid or expired token');
     }
+  },
+
+  // Helper function to get user-friendly error messages
+  getErrorMessage: (errorCode) => {
+    const errorMessages = {
+      'auth/user-not-found': 'No account found with this email address',
+      'auth/wrong-password': 'Incorrect password',
+      'auth/email-already-in-use': 'An account with this email already exists',
+      'auth/weak-password': 'Password should be at least 6 characters long',
+      'auth/invalid-email': 'Please enter a valid email address',
+      'auth/user-disabled': 'This account has been disabled',
+      'auth/too-many-requests': 'Too many failed attempts. Please try again later',
+      'auth/network-request-failed': 'Network error. Please check your connection',
+      'auth/requires-recent-login': 'Please sign in again to complete this action',
+      'auth/invalid-credential': 'Invalid credentials provided'
+    };
+    
+    return errorMessages[errorCode] || 'An unexpected error occurred. Please try again.';
   }
 };
+
+// Export current user helper
+export const getCurrentUser = () => auth.currentUser;
+
+// Export auth state listener
+export const onAuthStateChange = (callback) => onAuthStateChanged(auth, callback);

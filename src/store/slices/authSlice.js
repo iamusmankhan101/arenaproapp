@@ -1,35 +1,29 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { authAPI } from '../../services/api';
+import { firebaseAuthAPI } from '../services/firebaseAuth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { shouldBypassAuth, getMockCredentials } from '../../config/devConfig';
+import { shouldBypassAuth, getMockCredentials } from '../config/devConfig';
 
-// Async thunks
+// Enhanced async thunks for Firebase authentication
 export const signIn = createAsyncThunk(
   'auth/signIn',
-  async ({ phoneNumber, password }, { rejectWithValue }) => {
+  async ({ email, password }, { rejectWithValue }) => {
     try {
-      const response = await authAPI.signIn(phoneNumber, password);
-      // Store token in AsyncStorage
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await firebaseAuthAPI.signIn(email, password);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { message: 'Sign in failed' });
+      return rejectWithValue({ message: error.message });
     }
   }
 );
 
 export const signUp = createAsyncThunk(
   'auth/signUp',
-  async ({ phoneNumber, password, fullName }, { rejectWithValue }) => {
+  async ({ email, password, fullName, phoneNumber, city }, { rejectWithValue }) => {
     try {
-      const response = await authAPI.signUp(phoneNumber, password, fullName);
-      // Store token in AsyncStorage
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await firebaseAuthAPI.signUp(email, password, fullName, phoneNumber, city);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { message: 'Sign up failed' });
+      return rejectWithValue({ message: error.message });
     }
   }
 );
@@ -38,40 +32,58 @@ export const googleSignIn = createAsyncThunk(
   'auth/googleSignIn',
   async (googleToken, { rejectWithValue }) => {
     try {
-      const response = await authAPI.googleSignIn(googleToken);
-      // Store token in AsyncStorage
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await firebaseAuthAPI.googleSignIn(googleToken);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { message: 'Google sign in failed' });
+      return rejectWithValue({ message: error.message });
     }
   }
 );
 
-export const sendOTP = createAsyncThunk(
-  'auth/sendOTP',
-  async (phoneNumber, { rejectWithValue }) => {
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (email, { rejectWithValue }) => {
     try {
-      const response = await authAPI.sendOTP(phoneNumber);
+      const response = await firebaseAuthAPI.forgotPassword(email);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { message: 'Failed to send OTP' });
+      return rejectWithValue({ message: error.message });
     }
   }
 );
 
-export const verifyOTP = createAsyncThunk(
-  'auth/verifyOTP',
-  async ({ phoneNumber, otp, password, fullName, isSignup }, { rejectWithValue }) => {
+export const updateProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (userData, { rejectWithValue }) => {
     try {
-      const response = await authAPI.verifyOTP(phoneNumber, otp, password, fullName, isSignup);
-      // Store token in AsyncStorage
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+      const response = await firebaseAuthAPI.updateProfile(userData);
+      return { ...response.data, userData };
+    } catch (error) {
+      return rejectWithValue({ message: error.message });
+    }
+  }
+);
+
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async ({ currentPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await firebaseAuthAPI.changePassword(currentPassword, newPassword);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { message: 'Invalid OTP' });
+      return rejectWithValue({ message: error.message });
+    }
+  }
+);
+
+export const resendEmailVerification = createAsyncThunk(
+  'auth/resendEmailVerification',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await firebaseAuthAPI.resendEmailVerification();
+      return response.data;
+    } catch (error) {
+      return rejectWithValue({ message: error.message });
     }
   }
 );
@@ -102,7 +114,6 @@ export const loadStoredAuth = createAsyncThunk(
       // Check if we should bypass auth in development
       if (shouldBypassAuth()) {
         const mockCredentials = getMockCredentials();
-        // Store mock credentials
         await AsyncStorage.setItem('authToken', mockCredentials.token);
         await AsyncStorage.setItem('user', JSON.stringify(mockCredentials.user));
         return mockCredentials;
@@ -113,15 +124,47 @@ export const loadStoredAuth = createAsyncThunk(
       
       if (token && userString) {
         const user = JSON.parse(userString);
-        // Verify token is still valid
-        const response = await authAPI.verifyToken(token);
-        return { token, user: response.data.user };
+        try {
+          // Verify token is still valid
+          const response = await firebaseAuthAPI.verifyToken(token);
+          return { token: response.data.token, user: response.data.user };
+        } catch (error) {
+          // Token is invalid, clear storage
+          await AsyncStorage.multiRemove(['authToken', 'user']);
+          return null;
+        }
       }
       return null;
     } catch (error) {
       // Clear invalid stored data
       await AsyncStorage.multiRemove(['authToken', 'user']);
       return rejectWithValue({ message: 'Invalid stored authentication' });
+    }
+  }
+);
+
+// Initialize auth state listener
+export const initializeAuth = createAsyncThunk(
+  'auth/initializeAuth',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      // Set up Firebase auth state listener
+      const unsubscribe = firebaseAuthAPI.initializeAuthListener((authData) => {
+        if (authData.user) {
+          dispatch(setAuthData({
+            user: authData.user,
+            token: authData.token,
+            isAuthenticated: true
+          }));
+        } else {
+          dispatch(clearAuth());
+        }
+        dispatch(setInitialized());
+      });
+      
+      return { unsubscribe };
+    } catch (error) {
+      return rejectWithValue({ message: 'Failed to initialize authentication' });
     }
   }
 );
@@ -134,17 +177,36 @@ const authSlice = createSlice({
     isAuthenticated: false,
     loading: false,
     error: null,
-    otpSent: false,
     initializing: true,
+    emailVerificationSent: false,
+    passwordResetSent: false,
+    authListener: null,
   },
   reducers: {
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      state.otpSent = false;
+      state.emailVerificationSent = false;
+      state.passwordResetSent = false;
       // Clear AsyncStorage
       AsyncStorage.multiRemove(['authToken', 'user']);
+      // Sign out from Firebase
+      firebaseAuthAPI.signOut();
+    },
+    clearAuth: (state) => {
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.emailVerificationSent = false;
+      state.passwordResetSent = false;
+    },
+    setAuthData: (state, action) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = action.payload.isAuthenticated;
+      state.loading = false;
+      state.error = null;
     },
     clearError: (state) => {
       state.error = null;
@@ -152,9 +214,25 @@ const authSlice = createSlice({
     setInitialized: (state) => {
       state.initializing = false;
     },
+    updateUserData: (state, action) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
+      // Initialize Auth
+      .addCase(initializeAuth.pending, (state) => {
+        state.initializing = true;
+      })
+      .addCase(initializeAuth.fulfilled, (state, action) => {
+        state.authListener = action.payload.unsubscribe;
+      })
+      .addCase(initializeAuth.rejected, (state, action) => {
+        state.initializing = false;
+        state.error = action.payload?.message || 'Failed to initialize authentication';
+      })
       // Development Bypass
       .addCase(devBypassAuth.pending, (state) => {
         state.loading = true;
@@ -197,6 +275,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        state.emailVerificationSent = true;
       })
       .addCase(signUp.rejected, (state, action) => {
         state.loading = false;
@@ -217,34 +296,58 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.message || 'Google sign in failed';
       })
-      // Send OTP
-      .addCase(sendOTP.pending, (state) => {
+      // Forgot Password
+      .addCase(forgotPassword.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(sendOTP.fulfilled, (state) => {
+      .addCase(forgotPassword.fulfilled, (state) => {
         state.loading = false;
-        state.otpSent = true;
+        state.passwordResetSent = true;
       })
-      .addCase(sendOTP.rejected, (state, action) => {
+      .addCase(forgotPassword.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Failed to send OTP';
+        state.error = action.payload?.message || 'Failed to send password reset email';
       })
-      // Verify OTP
-      .addCase(verifyOTP.pending, (state) => {
+      // Update Profile
+      .addCase(updateProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(verifyOTP.fulfilled, (state, action) => {
+      .addCase(updateProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.isAuthenticated = true;
-        state.otpSent = false;
+        if (state.user && action.payload.userData) {
+          state.user = { ...state.user, ...action.payload.userData };
+        }
       })
-      .addCase(verifyOTP.rejected, (state, action) => {
+      .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || 'Invalid OTP';
+        state.error = action.payload?.message || 'Failed to update profile';
+      })
+      // Change Password
+      .addCase(changePassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to change password';
+      })
+      // Resend Email Verification
+      .addCase(resendEmailVerification.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resendEmailVerification.fulfilled, (state) => {
+        state.loading = false;
+        state.emailVerificationSent = true;
+      })
+      .addCase(resendEmailVerification.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to send verification email';
       })
       // Load Stored Auth
       .addCase(loadStoredAuth.pending, (state) => {
@@ -265,5 +368,13 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setInitialized } = authSlice.actions;
+export const { 
+  logout, 
+  clearAuth, 
+  setAuthData, 
+  clearError, 
+  setInitialized, 
+  updateUserData 
+} = authSlice.actions;
+
 export default authSlice.reducer;

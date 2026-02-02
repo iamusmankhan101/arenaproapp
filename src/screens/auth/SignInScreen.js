@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -6,17 +6,19 @@ import {
   TouchableOpacity, 
   Image,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import { 
   Text, 
   TextInput, 
   Button, 
   Switch,
-  ActivityIndicator 
+  ActivityIndicator,
+  Snackbar
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signIn, googleSignIn, devBypassAuth } from '../../store/slices/authSlice';
+import { signIn, googleSignIn, devBypassAuth, clearError } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SignInScreen({ navigation }) {
@@ -26,21 +28,76 @@ export default function SignInScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.auth);
+  const { loading, error } = useSelector(state => state.auth);
+
+  // Clear error when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  // Show error alert
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Sign In Error', error, [
+        { text: 'OK', onPress: () => dispatch(clearError()) }
+      ]);
+    }
+  }, [error, dispatch]);
+
+  const validateForm = () => {
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email address');
+      return false;
+    }
+    
+    if (!email.includes('@')) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return false;
+    }
+    
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter your password');
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleSignIn = () => {
-    if (email.trim() && password.trim()) {
-      dispatch(signIn({ email: email.trim(), password }));
+    if (validateForm()) {
+      dispatch(signIn({ email: email.trim().toLowerCase(), password }));
     }
   };
 
   const handleGoogleSignIn = () => {
-    dispatch(googleSignIn());
+    // For now, we'll use dev bypass for Google sign in
+    // In production, you would integrate with Google Sign-In SDK
+    Alert.alert(
+      'Google Sign In',
+      'Google Sign In will be available in the next update. Would you like to continue as guest?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Continue as Guest', onPress: handleGuestLogin }
+      ]
+    );
   };
 
   const handleGuestLogin = () => {
-    // Use dev bypass for guest login
     dispatch(devBypassAuth());
+  };
+
+  const handleForgotPassword = () => {
+    if (!email.trim()) {
+      Alert.alert('Enter Email', 'Please enter your email address first, then tap "Forgot Password?"');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address');
+      return;
+    }
+    
+    navigation.navigate('ForgotPassword', { email: email.trim().toLowerCase() });
   };
 
   return (
@@ -60,20 +117,22 @@ export default function SignInScreen({ navigation }) {
               <Text style={styles.logoText}>A</Text>
             </View>
             <Text style={styles.brandName}>Arena Pro</Text>
+            <Text style={styles.tagline}>Your Sports Booking Platform</Text>
           </View>
         </View>
 
         {/* Sign In Form */}
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Sign in</Text>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
           
-          {/* Email/Phone Input */}
+          {/* Email Input */}
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <MaterialIcons name="person" size={20} color="#999" style={styles.inputIcon} />
+              <MaterialIcons name="email" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                placeholder="Email/Phone number"
+                placeholder="Email address"
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -99,7 +158,7 @@ export default function SignInScreen({ navigation }) {
               <MaterialIcons name="lock" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                placeholder="Your password"
+                placeholder="Password"
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
@@ -134,13 +193,13 @@ export default function SignInScreen({ navigation }) {
               <Switch
                 value={rememberMe}
                 onValueChange={setRememberMe}
-                color="#229a60"
+                color="#004d43"
                 style={styles.switch}
               />
               <Text style={styles.rememberMeText}>Remember Me</Text>
             </View>
             
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+            <TouchableOpacity onPress={handleForgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>
@@ -157,15 +216,16 @@ export default function SignInScreen({ navigation }) {
             disabled={loading}
             icon={loading ? undefined : () => <MaterialIcons name="arrow-forward" size={20} color="#cdec6a" />}
           >
-            {loading ? <ActivityIndicator color="white" size="small" /> : 'SIGN IN'}
+            {loading ? <ActivityIndicator color="#cdec6a" size="small" /> : 'SIGN IN'}
           </Button>
 
           {/* Guest Login */}
           <TouchableOpacity 
             onPress={handleGuestLogin}
             style={styles.guestButton}
+            disabled={loading}
           >
-            <Text style={styles.guestButtonText}>Login as Guest</Text>
+            <Text style={styles.guestButtonText}>Continue as Guest</Text>
           </TouchableOpacity>
 
           {/* Divider */}
@@ -181,12 +241,8 @@ export default function SignInScreen({ navigation }) {
             onPress={handleGoogleSignIn}
             disabled={loading}
           >
-            <Image 
-              source={require('../../images/2a5758d6-4edb-4047-87bb-e6b94dbbbab0-cover.png')}
-              style={styles.googleIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+            <MaterialIcons name="account-circle" size={24} color="#4285F4" />
+            <Text style={styles.googleButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
           {/* Sign Up Link */}
@@ -196,6 +252,22 @@ export default function SignInScreen({ navigation }) {
               <Text style={styles.signUpLink}>Sign up</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Development Helper */}
+          {__DEV__ && (
+            <View style={styles.devHelper}>
+              <Text style={styles.devHelperTitle}>Development Helper</Text>
+              <TouchableOpacity 
+                style={styles.devButton}
+                onPress={() => {
+                  setEmail('test@example.com');
+                  setPassword('password123');
+                }}
+              >
+                <Text style={styles.devButtonText}>Fill Test Credentials</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -214,7 +286,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 50,
   },
   logoWrapper: {
     alignItems: 'center',
@@ -227,6 +299,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   logoText: {
     fontSize: 32,
@@ -237,6 +314,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#004d43',
+    marginBottom: 4,
+  },
+  tagline: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
   formContainer: {
     flex: 1,
@@ -245,6 +328,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
     marginBottom: 32,
   },
   inputContainer: {
@@ -301,11 +389,13 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 16,
-    color: '#333',
+    color: '#004d43',
+    fontWeight: '500',
   },
   signInButton: {
     borderRadius: 12,
     marginBottom: 16,
+    elevation: 2,
   },
   signInButtonContent: {
     height: 56,
@@ -324,6 +414,7 @@ const styles = StyleSheet.create({
   guestButtonText: {
     fontSize: 16,
     color: '#666',
+    textDecorationLine: 'underline',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -350,16 +441,13 @@ const styles = StyleSheet.create({
     borderColor: '#E9ECEF',
     height: 56,
     marginBottom: 32,
-  },
-  googleIcon: {
-    width: 50,
-    height: 50,
-    marginRight: 12,
+    elevation: 1,
   },
   googleButtonText: {
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+    marginLeft: 12,
   },
   signUpContainer: {
     flexDirection: 'row',
@@ -373,7 +461,33 @@ const styles = StyleSheet.create({
   },
   signUpLink: {
     fontSize: 16,
-    color: '#229a60',
+    color: '#004d43',
     fontWeight: '600',
+  },
+  devHelper: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#FFF3CD',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFEAA7',
+  },
+  devHelperTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#856404',
+    marginBottom: 8,
+  },
+  devButton: {
+    backgroundColor: '#FFC107',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  devButtonText: {
+    fontSize: 14,
+    color: '#212529',
+    fontWeight: '500',
   },
 });

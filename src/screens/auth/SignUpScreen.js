@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -15,7 +15,7 @@ import {
   ActivityIndicator 
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signUp, googleSignIn } from '../../store/slices/authSlice';
+import { signUp, googleSignIn, clearError } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SignUpScreen({ navigation }) {
@@ -31,7 +31,7 @@ export default function SignUpScreen({ navigation }) {
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.auth);
+  const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
 
   const cities = [
     'Lahore',
@@ -41,56 +41,100 @@ export default function SignUpScreen({ navigation }) {
     'Faisalabad',
     'Multan',
     'Peshawar',
-    'Quetta'
+    'Quetta',
+    'Gujranwala',
+    'Sialkot'
   ];
 
-  const handleSignUp = () => {
-    // Validation
+  // Clear error when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  // Show error alert
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Sign Up Error', error, [
+        { text: 'OK', onPress: () => dispatch(clearError()) }
+      ]);
+    }
+  }, [error, dispatch]);
+
+  // Show success message for email verification
+  useEffect(() => {
+    if (emailVerificationSent) {
+      Alert.alert(
+        'Account Created!',
+        'Your account has been created successfully. Please check your email for verification link.',
+        [{ text: 'OK' }]
+      );
+    }
+  }, [emailVerificationSent]);
+
+  const validateForm = () => {
     if (!firstName.trim()) {
       Alert.alert('Error', 'Please enter your first name');
-      return;
+      return false;
     }
     if (!lastName.trim()) {
       Alert.alert('Error', 'Please enter your last name');
-      return;
+      return false;
     }
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
-      return;
+      Alert.alert('Error', 'Please enter your email address');
+      return false;
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return false;
     }
     if (!selectedCity) {
       Alert.alert('Error', 'Please select your city');
-      return;
+      return false;
     }
     if (!phoneNumber.trim()) {
       Alert.alert('Error', 'Please enter your phone number');
-      return;
+      return false;
+    }
+    if (phoneNumber.trim().length < 10) {
+      Alert.alert('Error', 'Please enter a valid phone number');
+      return false;
     }
     if (!password.trim()) {
       Alert.alert('Error', 'Please enter a password');
-      return;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
+      return false;
     }
     if (password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters long');
-      return;
+      return false;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return false;
     }
 
-    const fullName = `${firstName.trim()} ${lastName.trim()}`;
-    dispatch(signUp({ 
-      fullName, 
-      email: email.trim(), 
-      phoneNumber: phoneNumber.trim(),
-      city: selectedCity,
-      password 
-    }));
+    return true;
+  };
+
+  const handleSignUp = () => {
+    if (validateForm()) {
+      const fullName = `${firstName.trim()} ${lastName.trim()}`;
+      dispatch(signUp({ 
+        email: email.trim().toLowerCase(),
+        password,
+        fullName, 
+        phoneNumber: phoneNumber.trim(),
+        city: selectedCity
+      }));
+    }
   };
 
   const handleGoogleSignUp = () => {
-    dispatch(googleSignIn());
+    Alert.alert(
+      'Google Sign Up',
+      'Google Sign Up will be available in the next update. Please use email registration for now.',
+      [{ text: 'OK' }]
+    );
   };
 
   return (
@@ -114,7 +158,8 @@ export default function SignUpScreen({ navigation }) {
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>Sign up</Text>
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Join Arena Pro today</Text>
 
         {/* Form */}
         <View style={styles.formContainer}>
@@ -172,7 +217,7 @@ export default function SignUpScreen({ navigation }) {
               <MaterialIcons name="email" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                placeholder="username@email.com"
+                placeholder="Email address"
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
@@ -198,6 +243,7 @@ export default function SignUpScreen({ navigation }) {
               style={styles.inputWrapper}
               onPress={() => setShowCityDropdown(!showCityDropdown)}
             >
+              <MaterialIcons name="location-city" size={20} color="#999" style={styles.inputIcon} />
               <Text style={[styles.cityText, !selectedCity && styles.placeholderText]}>
                 {selectedCity || 'Select City'}
               </Text>
@@ -210,18 +256,20 @@ export default function SignUpScreen({ navigation }) {
             
             {showCityDropdown && (
               <View style={styles.dropdown}>
-                {cities.map((city) => (
-                  <TouchableOpacity
-                    key={city}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedCity(city);
-                      setShowCityDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>{city}</Text>
-                  </TouchableOpacity>
-                ))}
+                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
+                  {cities.map((city) => (
+                    <TouchableOpacity
+                      key={city}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSelectedCity(city);
+                        setShowCityDropdown(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText}>{city}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
             )}
           </View>
@@ -259,7 +307,7 @@ export default function SignUpScreen({ navigation }) {
               <MaterialIcons name="lock" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                placeholder="Password"
+                placeholder="Password (min 6 characters)"
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
@@ -321,16 +369,42 @@ export default function SignUpScreen({ navigation }) {
             </View>
           </View>
 
+          {/* Password Strength Indicator */}
+          <View style={styles.passwordStrength}>
+            <Text style={styles.passwordStrengthText}>
+              Password strength: {password.length < 6 ? 'Weak' : password.length < 8 ? 'Medium' : 'Strong'}
+            </Text>
+            <View style={styles.strengthBar}>
+              <View 
+                style={[
+                  styles.strengthFill, 
+                  { 
+                    width: password.length < 6 ? '33%' : password.length < 8 ? '66%' : '100%',
+                    backgroundColor: password.length < 6 ? '#FF6B6B' : password.length < 8 ? '#FFD93D' : '#6BCF7F'
+                  }
+                ]} 
+              />
+            </View>
+          </View>
+
           {/* Sign Up Button */}
           <TouchableOpacity
             style={[styles.signUpButton, loading && styles.signUpButtonDisabled]}
             onPress={handleSignUp}
             disabled={loading}
           >
-            <Text style={styles.signUpButtonText}>SIGN UP</Text>
+            <Text style={styles.signUpButtonText}>CREATE ACCOUNT</Text>
             {!loading && <MaterialIcons name="arrow-forward" size={20} color="#cdec6a" style={styles.buttonIcon} />}
-            {loading && <ActivityIndicator color="white" size="small" />}
+            {loading && <ActivityIndicator color="#cdec6a" size="small" />}
           </TouchableOpacity>
+
+          {/* Terms and Privacy */}
+          <Text style={styles.termsText}>
+            By creating an account, you agree to our{' '}
+            <Text style={styles.termsLink}>Terms of Service</Text>
+            {' '}and{' '}
+            <Text style={styles.termsLink}>Privacy Policy</Text>
+          </Text>
 
           {/* Divider */}
           <View style={styles.dividerContainer}>
@@ -345,12 +419,8 @@ export default function SignUpScreen({ navigation }) {
             onPress={handleGoogleSignUp}
             disabled={loading}
           >
-            <Image 
-              source={require('../../images/2a5758d6-4edb-4047-87bb-e6b94dbbbab0-cover.png')}
-              style={styles.googleIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.googleButtonText}>Sign up with Google</Text>
+            <MaterialIcons name="account-circle" size={24} color="#4285F4" />
+            <Text style={styles.googleButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
           {/* Sign In Link */}
@@ -360,6 +430,27 @@ export default function SignUpScreen({ navigation }) {
               <Text style={styles.signInLink}>Sign in</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Development Helper */}
+          {__DEV__ && (
+            <View style={styles.devHelper}>
+              <Text style={styles.devHelperTitle}>Development Helper</Text>
+              <TouchableOpacity 
+                style={styles.devButton}
+                onPress={() => {
+                  setFirstName('John');
+                  setLastName('Doe');
+                  setEmail('john.doe@example.com');
+                  setSelectedCity('Lahore');
+                  setPhoneNumber('3001234567');
+                  setPassword('password123');
+                  setConfirmPassword('password123');
+                }}
+              >
+                <Text style={styles.devButtonText}>Fill Test Data</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -389,7 +480,12 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 40,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 32,
   },
   formContainer: {
     flex: 1,
@@ -464,6 +560,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  dropdownScroll: {
+    maxHeight: 180,
+  },
   dropdownItem: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -491,15 +590,34 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
+  passwordStrength: {
+    marginBottom: 16,
+  },
+  passwordStrengthText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  strengthBar: {
+    height: 4,
+    backgroundColor: '#E9ECEF',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  strengthFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
   signUpButton: {
     backgroundColor: '#004d43',
     borderRadius: 12,
-    marginTop: 24,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 16,
     height: 56,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 2,
   },
   signUpButtonDisabled: {
     opacity: 0.6,
@@ -512,6 +630,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 1,
     color: '#cdec6a',
+  },
+  termsText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 18,
+  },
+  termsLink: {
+    color: '#004d43',
+    fontWeight: '500',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -538,16 +667,13 @@ const styles = StyleSheet.create({
     borderColor: '#E9ECEF',
     height: 56,
     marginBottom: 32,
-  },
-  googleIcon: {
-    width: 50,
-    height: 50,
-    marginRight: 12,
+    elevation: 1,
   },
   googleButtonText: {
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+    marginLeft: 12,
   },
   signInContainer: {
     flexDirection: 'row',
@@ -561,7 +687,33 @@ const styles = StyleSheet.create({
   },
   signInLink: {
     fontSize: 16,
-    color: '#229a60',
+    color: '#004d43',
     fontWeight: '600',
+  },
+  devHelper: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#FFF3CD',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFEAA7',
+  },
+  devHelperTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#856404',
+    marginBottom: 8,
+  },
+  devButton: {
+    backgroundColor: '#FFC107',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  devButtonText: {
+    fontSize: 14,
+    color: '#212529',
+    fontWeight: '500',
   },
 });
