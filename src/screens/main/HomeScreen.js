@@ -9,6 +9,13 @@ import { fetchChallenges } from '../../store/slices/teamSlice';
 import RealtimeNotification from '../../components/RealtimeNotification';
 import realtimeSyncService from '../../services/realtimeSync';
 import { SportsIcon } from '../../components/SportsIcons';
+import { 
+  HeaderSkeleton, 
+  SearchBarSkeleton, 
+  SportCategorySkeleton, 
+  VenueCardSkeleton, 
+  ChallengeCardSkeleton 
+} from '../../components/SkeletonLoader';
 
 // Header slider images
 const headerImages = [
@@ -243,6 +250,27 @@ export default function HomeScreen({ navigation }) {
   const futsalVenues = getVenuesBySport('Futsal');
 
   const renderSportSection = (sportName, venues, icon) => {
+    if (turfsLoading) {
+      return (
+        <View key={sportName} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <Text style={styles.sectionIcon}>{icon}</Text>
+              <Text style={styles.sectionTitle}>{sportName} Venues</Text>
+            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('VenueList', { sport: sportName })}>
+              <Text style={styles.seeMoreText}>See all</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venuesScroll}>
+            {[1, 2, 3].map((index) => (
+              <VenueCardSkeleton key={index} />
+            ))}
+          </ScrollView>
+        </View>
+      );
+    }
+    
     if (venues.length === 0) return null;
     
     return (
@@ -346,63 +374,77 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
       {/* Header Section with Full-Width Image Slider */}
-      <View style={styles.headerContainer}>
-        <Image 
-          source={headerImages[currentImageIndex]} 
-          style={styles.fullWidthImage}
-          resizeMode="cover"
-        />
-        <View style={styles.headerOverlay}>
-          <View style={styles.header}>
-            <View style={styles.userSection}>
-              <Text style={styles.greeting}>Hi, {user?.fullName?.split(' ')[0] || 'Eman'}</Text>
-              <Text style={styles.tagline}>Plan Your Sports</Text>
-              <Text style={styles.tagline}>Activates to be</Text>
-              <View style={styles.bestContainer}>
-                <Text style={styles.bestText}>the </Text>
-                <Text style={styles.bestHighlight}>Best</Text>
+      {turfsLoading ? (
+        <HeaderSkeleton />
+      ) : (
+        <View style={styles.headerContainer}>
+          <Image 
+            source={headerImages[currentImageIndex]} 
+            style={styles.fullWidthImage}
+            resizeMode="cover"
+          />
+          <View style={styles.headerOverlay}>
+            <View style={styles.header}>
+              <View style={styles.userSection}>
+                <Text style={styles.greeting}>Hi, {user?.fullName?.split(' ')[0] || 'Eman'}</Text>
+                <Text style={styles.tagline}>Plan Your Sports</Text>
+                <Text style={styles.tagline}>Activates to be</Text>
+                <View style={styles.bestContainer}>
+                  <Text style={styles.bestText}>the </Text>
+                  <Text style={styles.bestHighlight}>Best</Text>
+                </View>
               </View>
+              <TouchableOpacity 
+                style={styles.favoritesIcon}
+                onPress={() => navigation.navigate('Favorites')}
+              >
+                <MaterialIcons name="favorite" size={24} color="white" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity 
-              style={styles.favoritesIcon}
-              onPress={() => navigation.navigate('Favorites')}
-            >
-              <MaterialIcons name="favorite" size={24} color="white" />
-            </TouchableOpacity>
+            {renderImageDots()}
           </View>
-          {renderImageDots()}
         </View>
-      </View>
+      )}
 
       {/* Search Section */}
-      <View style={styles.searchSection}>
-        <Searchbar
-          placeholder="Search areas, venues, sports..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-          iconColor="#229a60"
-          inputStyle={styles.searchInput}
-          onSubmitEditing={handleSearchSubmit}
-          right={() => searchQuery ? (
-            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <MaterialIcons name="close" size={20} color="#666" />
-            </TouchableOpacity>
-          ) : null}
-        />
-        {showSearchResults && (
-          <Text style={styles.searchResultsText}>
-            {filteredVenues.length} venues found {searchQuery ? `for "${searchQuery}"` : ''}
-          </Text>
-        )}
-      </View>
+      {turfsLoading ? (
+        <SearchBarSkeleton />
+      ) : (
+        <View style={styles.searchSection}>
+          <Searchbar
+            placeholder="Search areas, venues, sports..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchbar}
+            iconColor="#229a60"
+            inputStyle={styles.searchInput}
+            onSubmitEditing={handleSearchSubmit}
+            right={() => searchQuery ? (
+              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                <MaterialIcons name="close" size={20} color="#666" />
+              </TouchableOpacity>
+            ) : null}
+          />
+          {showSearchResults && (
+            <Text style={styles.searchResultsText}>
+              {filteredVenues.length} venues found {searchQuery ? `for "${searchQuery}"` : ''}
+            </Text>
+          )}
+        </View>
+      )}
 
       {/* Sports Categories - Hide when searching */}
       {!showSearchResults && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sports</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsScroll}>
-            {sportCategories.map(renderSportCategory)}
+            {turfsLoading ? (
+              [1, 2, 3, 4].map((index) => (
+                <SportCategorySkeleton key={index} />
+              ))
+            ) : (
+              sportCategories.map(renderSportCategory)
+            )}
           </ScrollView>
         </View>
       )}
@@ -415,7 +457,11 @@ export default function HomeScreen({ navigation }) {
           </View>
           
           {turfsLoading ? (
-            <Text style={styles.loadingText}>Searching venues...</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venuesScroll}>
+              {[1, 2, 3].map((index) => (
+                <VenueCardSkeleton key={index} />
+              ))}
+            </ScrollView>
           ) : filteredVenues.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venuesScroll}>
               {filteredVenues.map(renderRecommendedVenue)}
@@ -427,10 +473,6 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.noResultsSubtext}>Try searching for a different area or sport</Text>
             </View>
           )}
-        </View>
-      ) : turfsLoading ? (
-        <View style={styles.section}>
-          <Text style={styles.loadingText}>Loading venues...</Text>
         </View>
       ) : (
         <>
@@ -459,7 +501,11 @@ export default function HomeScreen({ navigation }) {
           </View>
           
           {challengesLoading ? (
-            <Text style={styles.loadingText}>Loading challenges...</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.challengesScroll}>
+              {[1, 2, 3].map((index) => (
+                <ChallengeCardSkeleton key={index} />
+              ))}
+            </ScrollView>
           ) : challenges.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.challengesScroll}>
               {challenges.slice(0, 4).map(renderChallengeCard)}

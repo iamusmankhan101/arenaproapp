@@ -20,6 +20,7 @@ import { toggleFavorite, fetchFavorites, fetchTurfDetails } from '../../store/sl
 import { fetchAvailableSlots, clearAvailableSlots } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
+import { TurfCardSkeleton } from '../../components/SkeletonLoader';
 
 const { width, height } = Dimensions.get('window');
 
@@ -369,7 +370,13 @@ export default function TurfDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      {!venue ? (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <TurfCardSkeleton />
+          <TurfCardSkeleton />
+        </ScrollView>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header Image */}
         <View style={styles.imageContainer}>
           <TouchableOpacity 
@@ -480,6 +487,7 @@ export default function TurfDetailScreen({ route, navigation }) {
           )}
         </View>
       </ScrollView>
+      )}
 
       {/* Bottom Book Button */}
       <View style={styles.bottomContainer}>

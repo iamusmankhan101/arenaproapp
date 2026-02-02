@@ -13,6 +13,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Icon } from '../../components/Icons';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -76,6 +77,49 @@ export default function VenueListScreen({ navigation, route }) {
 
     setFilteredVenues(filtered);
   }, [searchQuery, selectedCategory, nearbyTurfs]);
+
+  // Helper function to get default image based on sport
+  const getDefaultImage = (sport) => {
+    const images = {
+      'Cricket': require('../../images/cricket.jpg'),
+      'Football': require('../../images/football.jpg'),
+      'Padel': require('../../images/padel.jpg'),
+      'Futsal': require('../../images/indoor-football-court-turf.jpeg')
+    };
+    return images[sport] || require('../../images/football.jpg');
+  };
+
+  const renderVenueCardSkeleton = () => (
+    <View style={styles.venueCard}>
+      <View style={styles.venueImageContainer}>
+        <SkeletonLoader width="100%" height={120} borderRadius={0} />
+      </View>
+      <View style={styles.venueInfo}>
+        <SkeletonLoader width="80%" height={14} borderRadius={4} style={{ marginBottom: 4 }} />
+        <SkeletonLoader width="60%" height={11} borderRadius={4} style={{ marginBottom: 4 }} />
+        <SkeletonLoader width="50%" height={10} borderRadius={4} style={{ marginBottom: 8 }} />
+        <View style={styles.venueFooter}>
+          <SkeletonLoader width={60} height={14} borderRadius={4} />
+          <SkeletonLoader width={50} height={20} borderRadius={6} />
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderSkeletonGrid = () => {
+    const skeletonData = Array.from({ length: 6 }, (_, index) => ({ id: `skeleton-${index}` }));
+    return (
+      <FlatList
+        data={skeletonData}
+        renderItem={renderVenueCardSkeleton}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.venuesList}
+        showsVerticalScrollIndicator={false}
+      />
+    );
+  };
 
   const renderVenueCard = ({ item }) => (
     <TouchableOpacity
@@ -185,9 +229,7 @@ export default function VenueListScreen({ navigation, route }) {
 
       {/* Venues List */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading venues...</Text>
-        </View>
+        renderSkeletonGrid()
       ) : (
         <FlatList
           data={filteredVenues}
@@ -208,17 +250,6 @@ export default function VenueListScreen({ navigation, route }) {
       )}
     </View>
   );
-
-  // Helper function to get default image based on sport
-  function getDefaultImage(sport) {
-    const images = {
-      'Cricket': require('../../images/cricket.jpg'),
-      'Football': require('../../images/football.jpg'),
-      'Padel': require('../../images/padel.jpg'),
-      'Futsal': require('../../images/indoor-football-court-turf.jpeg')
-    };
-    return images[sport] || require('../../images/football.jpg');
-  }
 }
 
 const styles = StyleSheet.create({

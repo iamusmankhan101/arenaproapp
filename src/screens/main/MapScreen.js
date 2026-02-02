@@ -27,6 +27,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 const { width, height } = Dimensions.get('window');
 
@@ -1042,7 +1043,41 @@ export default function MapScreen({ navigation }) {
       </MapView>
 
       {/* Enhanced Selected Venue Card with Image */}
-      {selectedVenue && (
+      {loading && !selectedVenue ? (
+        <Animated.View
+          style={[
+            styles.venueCardContainer,
+            { transform: [{ translateY: cardSlideAnim }] }
+          ]}
+        >
+          <Surface style={styles.venueCard} elevation={8}>
+            <View style={styles.venueImageContainer}>
+              <SkeletonLoader width="100%" height={120} borderRadius={0} />
+            </View>
+            <View style={styles.venueContent}>
+              <View style={styles.venueHeader}>
+                <SkeletonLoader width="70%" height={18} borderRadius={4} />
+                <SkeletonLoader width={50} height={16} borderRadius={8} />
+              </View>
+              <SkeletonLoader width="90%" height={14} borderRadius={4} style={{ marginVertical: 8 }} />
+              <View style={styles.venueDetails}>
+                <SkeletonLoader width="40%" height={12} borderRadius={4} />
+                <SkeletonLoader width="30%" height={12} borderRadius={4} />
+              </View>
+              <View style={styles.venueAvailabilityContainer}>
+                <SkeletonLoader width="50%" height={14} borderRadius={4} />
+                <SkeletonLoader width="60%" height={12} borderRadius={4} />
+              </View>
+              <View style={styles.sportsContainer}>
+                <SkeletonLoader width={60} height={20} borderRadius={10} style={{ marginRight: 8 }} />
+                <SkeletonLoader width={50} height={20} borderRadius={10} style={{ marginRight: 8 }} />
+                <SkeletonLoader width={40} height={20} borderRadius={10} />
+              </View>
+            </View>
+            <SkeletonLoader width="100%" height={40} borderRadius={20} style={{ margin: 16 }} />
+          </Surface>
+        </Animated.View>
+      ) : selectedVenue && (
         <Animated.View
           style={[
             styles.venueCardContainer,
