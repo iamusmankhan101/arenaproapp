@@ -47,16 +47,16 @@ const customMapStyle = [
 export default function MapScreen({ navigation }) {
   const [location, setLocation] = useState(null);
   const [region, setRegion] = useState({
-    latitude: 24.8607, // Karachi default
-    longitude: 67.0011,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    latitude: 31.5204, // Lahore coordinates where venues are located
+    longitude: 74.3587,
+    latitudeDelta: 0.05, // Smaller delta for closer zoom
+    longitudeDelta: 0.05,
   });
   const [initialRegion, setInitialRegion] = useState({
-    latitude: 24.8607, // Karachi default
-    longitude: 67.0011,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    latitude: 31.5204, // Lahore coordinates where venues are located
+    longitude: 74.3587,
+    latitudeDelta: 0.05, // Smaller delta for closer zoom
+    longitudeDelta: 0.05,
   });
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,6 +74,70 @@ export default function MapScreen({ navigation }) {
   const dispatch = useDispatch();
   const { nearbyTurfs, loading } = useSelector(state => state.turf);
   const themeColors = theme;
+
+  // Hardcoded test venues for immediate testing
+  const testVenues = [
+    {
+      id: 'test1',
+      name: 'Test Venue 1',
+      latitude: 31.5204,
+      longitude: 74.3587,
+      sports: ['Football'],
+      address: 'Lahore, Pakistan',
+      area: 'DHA',
+      city: 'Lahore',
+      rating: 4.5,
+      pricePerHour: 2000,
+      availableSlots: 3,
+      openNow: true,
+      coordinates: {
+        latitude: 31.5204,
+        longitude: 74.3587,
+        isValid: true,
+        source: 'test'
+      }
+    },
+    {
+      id: 'test2', 
+      name: 'Test Venue 2',
+      latitude: 31.5304,
+      longitude: 74.3687,
+      sports: ['Cricket'],
+      address: 'Lahore, Pakistan',
+      area: 'Gulberg',
+      city: 'Lahore',
+      rating: 4.2,
+      pricePerHour: 1500,
+      availableSlots: 5,
+      openNow: true,
+      coordinates: {
+        latitude: 31.5304,
+        longitude: 74.3687,
+        isValid: true,
+        source: 'test'
+      }
+    },
+    {
+      id: 'test3',
+      name: 'Test Venue 3', 
+      latitude: 31.5104,
+      longitude: 74.3487,
+      sports: ['Padel'],
+      address: 'Lahore, Pakistan',
+      area: 'Model Town',
+      city: 'Lahore',
+      rating: 4.8,
+      pricePerHour: 3000,
+      availableSlots: 2,
+      openNow: true,
+      coordinates: {
+        latitude: 31.5104,
+        longitude: 74.3487,
+        isValid: true,
+        source: 'test'
+      }
+    }
+  ];
 
   // Animation values
   const slideAnim = useRef(new Animated.Value(-100)).current;
@@ -102,6 +166,11 @@ export default function MapScreen({ navigation }) {
       }),
     ]).start();
 
+    // IMMEDIATE FIX: Use test venues first to verify marker rendering
+    console.log('🧪 MapScreen: Using test venues for immediate testing');
+    setVenuesWithValidCoords(testVenues);
+    setFilteredVenues(testVenues);
+
     // Proactively request location and load venues
     const initializeMapScreen = async () => {
       console.log('🚀 MapScreen: Initializing...');
@@ -117,6 +186,8 @@ export default function MapScreen({ navigation }) {
         console.log('✅ MapScreen: Venues loaded successfully:', result);
       } catch (error) {
         console.error('❌ MapScreen: Failed to load venues:', error);
+        // Keep test venues if API fails
+        console.log('🧪 MapScreen: Keeping test venues due to API failure');
       }
       
       // Then try to get user location for distance calculations
@@ -174,6 +245,14 @@ export default function MapScreen({ navigation }) {
     console.log('🔄 MapScreen: nearbyTurfs updated, count:', nearbyTurfs.length);
     if (nearbyTurfs.length > 0) {
       console.log('📊 MapScreen: Sample venues:', nearbyTurfs.slice(0, 2).map(v => ({ name: v.name, id: v.id })));
+      
+      // Auto-zoom to fit venues after a short delay
+      setTimeout(() => {
+        if (mapRef.current && isMapReady) {
+          console.log('🔍 MapScreen: Auto-zooming to fit venues');
+          zoomToFitMarkers(nearbyTurfs);
+        }
+      }, 1000);
     }
     setFilteredVenues(nearbyTurfs);
   }, [nearbyTurfs]);
@@ -934,9 +1013,9 @@ export default function MapScreen({ navigation }) {
           />
         )}
 
-        {/* Enhanced Markers */}
+        {/* Enhanced Markers - FIXED VERSION */}
         {filteredVenues.length > 0 ? (
-          filteredVenues.map((venue) => {
+          filteredVenues.map((venue, index) => {
             const coordinates = venue.coordinates || getVenueCoordinatesSync(venue);
             
             // Only render markers for venues with valid coordinates
@@ -945,35 +1024,40 @@ export default function MapScreen({ navigation }) {
               return null;
             }
 
-            console.log(`📍 MapScreen: Rendering marker for ${venue.name} at ${coordinates.latitude}, ${coordinates.longitude}`);
+            console.log(`📍 MapScreen: Rendering marker ${index + 1} for ${venue.name} at ${coordinates.latitude}, ${coordinates.longitude}`);
 
             return (
               <Marker
-                key={venue.id}
+                key={`marker-${venue.id}-${index}`}
                 coordinate={{
                   latitude: coordinates.latitude,
                   longitude: coordinates.longitude
                 }}
                 onPress={() => handleMarkerPress(venue)}
+                title={venue.name}
+                description={`${venue.sports?.join(', ')} - PKR ${venue.pricePerHour || 'N/A'}/hr`}
               >
+                {/* Larger, more visible marker */}
                 <View style={[
                   styles.customMarker,
                   { 
-                    backgroundColor: getMarkerColor(venue),
-                    borderColor: selectedVenue?.id === venue.id ? themeColors.colors.secondary : 'white',
-                    borderWidth: selectedVenue?.id === venue.id ? 3 : 2,
+                    backgroundColor: '#FF4444', // Bright red for visibility
+                    borderColor: 'white',
+                    borderWidth: 3,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
                   }
                 ]}>
                   <MaterialIcons 
-                    name="sports-soccer" 
-                    size={16} 
+                    name="place" 
+                    size={24} 
                     color="white" 
                   />
-                  {venue.availableSlots > 0 && (
-                    <View style={styles.slotsBadge}>
-                      <Text style={styles.slotsBadgeText}>{venue.availableSlots}</Text>
-                    </View>
-                  )}
+                  {/* Venue number for debugging */}
+                  <View style={[styles.slotsBadge, { backgroundColor: '#000' }]}>
+                    <Text style={styles.slotsBadgeText}>{index + 1}</Text>
+                  </View>
                 </View>
 
                 <Callout onPress={() => handleVenueSelect(venue)} tooltip>
@@ -1096,6 +1180,16 @@ export default function MapScreen({ navigation }) {
           onPress={location ? getCurrentLocation : requestLocationAccess}
           disabled={isLoading}
           size="medium"
+        />
+
+        <FAB
+          icon="zoom-in"
+          style={[styles.zoomFab, { backgroundColor: '#4CAF50' }]}
+          onPress={() => {
+            console.log('🔍 Manual zoom to venues triggered');
+            zoomToFitMarkers(filteredVenues);
+          }}
+          size="small"
         />
 
         <FAB
