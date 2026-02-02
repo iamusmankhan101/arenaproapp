@@ -1,4 +1,11 @@
-import { 
+// Complete fix for Firestore timestamp serialization in Redux
+const fs = require('fs');
+const path = require('path');
+
+console.log('🔧 Applying Complete Firestore Timestamp Fix...\n');
+
+// Update the auth service with comprehensive timestamp handling
+const authServiceContent = `import { 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -132,7 +139,7 @@ const withRetry = async (operation, operationName = 'Firebase operation') => {
   
   for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
     try {
-      console.log(`🔄 ${operationName} (attempt ${attempt}/${RETRY_CONFIG.maxRetries})`);
+      console.log(\`🔄 \${operationName} (attempt \${attempt}/\${RETRY_CONFIG.maxRetries})\`);
       
       const result = await Promise.race([
         operation(),
@@ -141,12 +148,12 @@ const withRetry = async (operation, operationName = 'Firebase operation') => {
         )
       ]);
       
-      console.log(`✅ ${operationName} succeeded`);
+      console.log(\`✅ \${operationName} succeeded\`);
       return result;
       
     } catch (error) {
       lastError = error;
-      console.log(`❌ ${operationName} failed on attempt ${attempt}:`, error.message);
+      console.log(\`❌ \${operationName} failed on attempt \${attempt}:\`, error.message);
       
       // Don't retry for certain errors
       if (error.code === 'auth/user-not-found' || 
@@ -159,7 +166,7 @@ const withRetry = async (operation, operationName = 'Firebase operation') => {
       }
       
       if (attempt < RETRY_CONFIG.maxRetries) {
-        console.log(`⏳ Waiting ${RETRY_CONFIG.retryDelay}ms before retry...`);
+        console.log(\`⏳ Waiting \${RETRY_CONFIG.retryDelay}ms before retry...\`);
         await new Promise(resolve => setTimeout(resolve, RETRY_CONFIG.retryDelay));
       }
     }
@@ -645,7 +652,7 @@ export const firebaseAuthAPI = {
       'auth/user-token-expired': 'User token has expired. Please sign in again.'
     };
     
-    return errorMessages[errorCode] || `Authentication error: ${errorCode || 'Unknown error'}. Please try again.`;
+    return errorMessages[errorCode] || \`Authentication error: \${errorCode || 'Unknown error'}. Please try again.\`;
   }
 };
 
@@ -660,3 +667,22 @@ export const onAuthStateChange = (callback) => {
   }
   return onAuthStateChanged(auth, callback);
 };
+`;
+
+// Write the updated auth service
+fs.writeFileSync(path.join(__dirname, 'src/services/firebaseAuth.js'), authServiceContent);
+console.log('✅ Updated Firebase Auth service with comprehensive timestamp cleaning');
+
+console.log('\n🎉 Complete Firestore Timestamp Fix Applied!');
+console.log('\n📋 What was fixed:');
+console.log('1. Added comprehensive Firebase Timestamp detection and conversion');
+console.log('2. Deep cleaning function to remove ALL non-serializable values');
+console.log('3. Handles all timestamp formats: Timestamp objects, serverTimestamp, etc.');
+console.log('4. Proper separation between Firestore operations and Redux data');
+console.log('5. Fallback handling for any timestamp conversion errors');
+
+console.log('\n🔧 This should completely resolve:');
+console.log('- Redux serialization errors with Firebase timestamps');
+console.log('- "firestore/timestamp/" type objects in Redux state');
+console.log('- Any remaining non-serializable value warnings');
+console.log('- Timestamp-related crashes in the auth flow');

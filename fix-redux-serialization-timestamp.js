@@ -1,4 +1,11 @@
-import { 
+// Fix for Redux serialization error with Firebase serverTimestamp
+const fs = require('fs');
+const path = require('path');
+
+console.log('🔧 Fixing Redux Serialization Error with Firebase Timestamps...\n');
+
+// Update the auth service to use regular timestamps instead of serverTimestamp in Redux state
+const authServiceContent = `import { 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -22,8 +29,7 @@ import {
   where, 
   getDocs,
   serverTimestamp,
-  increment,
-  Timestamp
+  increment
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,105 +41,15 @@ const RETRY_CONFIG = {
   timeoutMs: 15000
 };
 
-// Comprehensive function to convert any Firebase timestamp to serializable format
-const convertFirebaseTimestamp = (value) => {
-  // Handle null/undefined
-  if (!value) return new Date().toISOString();
-  
-  // If it's already a string, return as is
-  if (typeof value === 'string') return value;
-  
-  // If it's a Date object
-  if (value instanceof Date) return value.toISOString();
-  
-  // If it's a Firebase Timestamp object (has seconds and nanoseconds)
-  if (value && typeof value === 'object' && 
-      (value.seconds !== undefined || value.nanoseconds !== undefined)) {
-    try {
-      // Convert Firebase Timestamp to Date
-      const timestamp = new Timestamp(value.seconds || 0, value.nanoseconds || 0);
-      return timestamp.toDate().toISOString();
-    } catch (error) {
-      console.log('Error converting Firebase timestamp:', error);
-      return new Date().toISOString();
-    }
-  }
-  
-  // If it's a Firebase Timestamp instance
-  if (value && typeof value.toDate === 'function') {
-    try {
-      return value.toDate().toISOString();
-    } catch (error) {
-      console.log('Error converting Firebase timestamp instance:', error);
-      return new Date().toISOString();
-    }
-  }
-  
-  // If it's a serverTimestamp placeholder
-  if (value && value._methodName === 'serverTimestamp') {
-    return new Date().toISOString();
-  }
-  
-  // If it's an object with type "firestore/timestamp/"
-  if (value && typeof value === 'object' && value.type === 'firestore/timestamp/') {
-    try {
-      const timestamp = new Timestamp(value.seconds || 0, value.nanoseconds || 0);
-      return timestamp.toDate().toISOString();
-    } catch (error) {
-      console.log('Error converting firestore timestamp type:', error);
-      return new Date().toISOString();
-    }
-  }
-  
-  // Fallback to current time
-  return new Date().toISOString();
-};
-
-// Deep clean function to remove all non-serializable values from an object
-const deepCleanForRedux = (obj) => {
-  if (!obj || typeof obj !== 'object') return obj;
-  
-  if (Array.isArray(obj)) {
-    return obj.map(item => deepCleanForRedux(item));
-  }
-  
-  const cleaned = {};
-  
-  for (const [key, value] of Object.entries(obj)) {
-    if (value === null || value === undefined) {
-      cleaned[key] = value;
-    } else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      cleaned[key] = value;
-    } else if (Array.isArray(value)) {
-      cleaned[key] = deepCleanForRedux(value);
-    } else if (typeof value === 'object') {
-      // Check if it's a timestamp-like object
-      if (value.seconds !== undefined || value.nanoseconds !== undefined || 
-          value._methodName === 'serverTimestamp' || 
-          value.type === 'firestore/timestamp/' ||
-          (value.toDate && typeof value.toDate === 'function')) {
-        cleaned[key] = convertFirebaseTimestamp(value);
-      } else {
-        // Recursively clean nested objects
-        cleaned[key] = deepCleanForRedux(value);
-      }
-    } else {
-      // For any other type, try to convert to string or use fallback
-      cleaned[key] = String(value);
-    }
-  }
-  
-  return cleaned;
-};
-
 // Simplified network-aware wrapper
 const withRetry = async (operation, operationName = 'Firebase operation') => {
   let lastError;
   
   for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
     try {
-      console.log(`🔄 ${operationName} (attempt ${attempt}/${RETRY_CONFIG.maxRetries})`);
+      console.log(\`🔄 \${operationName} (attempt \${attempt}/\${RETRY_CONFIG.maxRetries})\`);
       
+      // Execute the operation with timeout
       const result = await Promise.race([
         operation(),
         new Promise((_, reject) => 
@@ -141,12 +57,12 @@ const withRetry = async (operation, operationName = 'Firebase operation') => {
         )
       ]);
       
-      console.log(`✅ ${operationName} succeeded`);
+      console.log(\`✅ \${operationName} succeeded\`);
       return result;
       
     } catch (error) {
       lastError = error;
-      console.log(`❌ ${operationName} failed on attempt ${attempt}:`, error.message);
+      console.log(\`❌ \${operationName} failed on attempt \${attempt}:\`, error.message);
       
       // Don't retry for certain errors
       if (error.code === 'auth/user-not-found' || 
@@ -158,14 +74,42 @@ const withRetry = async (operation, operationName = 'Firebase operation') => {
         throw error;
       }
       
+      // Wait before retry (except on last attempt)
       if (attempt < RETRY_CONFIG.maxRetries) {
-        console.log(`⏳ Waiting ${RETRY_CONFIG.retryDelay}ms before retry...`);
+        console.log(\`⏳ Waiting \${RETRY_CONFIG.retryDelay}ms before retry...\`);
         await new Promise(resolve => setTimeout(resolve, RETRY_CONFIG.retryDelay));
       }
     }
   }
   
+  // All retries failed
   throw lastError;
+};
+
+// Helper function to convert Firebase timestamps to serializable format
+const serializeTimestamp = (timestamp) => {
+  if (!timestamp) return new Date().toISOString();
+  
+  // If it's already a string, return as is
+  if (typeof timestamp === 'string') return timestamp;
+  
+  // If it's a Firebase Timestamp object
+  if (timestamp && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate().toISOString();
+  }
+  
+  // If it's a Date object
+  if (timestamp instanceof Date) {
+    return timestamp.toISOString();
+  }
+  
+  // If it's a serverTimestamp placeholder, use current time
+  if (timestamp && timestamp._methodName === 'serverTimestamp') {
+    return new Date().toISOString();
+  }
+  
+  // Fallback to current time
+  return new Date().toISOString();
 };
 
 // User data structure for Firestore (with serverTimestamp for Firestore)
@@ -205,9 +149,46 @@ const createUserDocumentForFirestore = (user, additionalData = {}) => ({
   ...additionalData
 });
 
+// User data structure for Redux (with serializable timestamps)
+const createUserDataForRedux = (user, firestoreData = {}, additionalData = {}) => ({
+  uid: user.uid,
+  email: user.email,
+  displayName: user.displayName || additionalData.fullName || '',
+  fullName: additionalData.fullName || user.displayName || '',
+  phoneNumber: additionalData.phoneNumber || firestoreData.phoneNumber || '',
+  city: additionalData.city || firestoreData.city || '',
+  area: additionalData.area || firestoreData.area || '',
+  profilePicture: user.photoURL || firestoreData.profilePicture || '',
+  isEmailVerified: user.emailVerified,
+  isPhoneVerified: firestoreData.isPhoneVerified || false,
+  accountStatus: firestoreData.accountStatus || 'active',
+  userType: firestoreData.userType || 'customer',
+  preferences: firestoreData.preferences || {
+    notifications: {
+      email: true,
+      push: true,
+      sms: false
+    },
+    privacy: {
+      showProfile: true,
+      showBookingHistory: false
+    }
+  },
+  stats: firestoreData.stats || {
+    totalBookings: 0,
+    totalSpent: 0,
+    favoriteVenues: [],
+    joinedChallenges: 0
+  },
+  createdAt: serializeTimestamp(firestoreData.createdAt),
+  updatedAt: serializeTimestamp(firestoreData.updatedAt),
+  lastLoginAt: serializeTimestamp(firestoreData.lastLoginAt),
+  ...additionalData
+});
+
 // Enhanced Firebase Auth API
 export const firebaseAuthAPI = {
-  // Initialize auth state listener with comprehensive timestamp cleaning
+  // Initialize auth state listener with proper serialization
   initializeAuthListener: (callback) => {
     try {
       return onAuthStateChanged(auth, async (user) => {
@@ -215,13 +196,15 @@ export const firebaseAuthAPI = {
           if (user) {
             console.log('Auth state changed - user signed in:', user.uid);
             
+            // Check if user document exists first
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
             
-            let rawFirestoreData = {};
+            let firestoreData = {};
             
             if (userDoc.exists()) {
-              rawFirestoreData = userDoc.data();
+              // Document exists, safe to update
+              firestoreData = userDoc.data();
               try {
                 await updateDoc(userDocRef, {
                   lastLoginAt: serverTimestamp()
@@ -231,6 +214,7 @@ export const firebaseAuthAPI = {
                 console.log('⚠️ Failed to update lastLoginAt:', updateError.message);
               }
             } else {
+              // Document doesn't exist, create it
               console.log('📝 Creating new user document for:', user.uid);
               const firestoreUserData = createUserDocumentForFirestore(user, {
                 registrationMethod: 'existing_auth'
@@ -239,10 +223,11 @@ export const firebaseAuthAPI = {
               try {
                 await setDoc(userDocRef, firestoreUserData);
                 console.log('✅ Created new user document');
-                rawFirestoreData = firestoreUserData;
+                firestoreData = firestoreUserData;
               } catch (createError) {
                 console.log('⚠️ Failed to create user document:', createError.message);
-                rawFirestoreData = {
+                // Use basic data if creation fails
+                firestoreData = {
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
                   lastLoginAt: new Date().toISOString()
@@ -250,20 +235,8 @@ export const firebaseAuthAPI = {
               }
             }
             
-            // Create base user data from Firebase Auth
-            const baseUserData = {
-              uid: user.uid,
-              email: user.email,
-              displayName: user.displayName,
-              emailVerified: user.emailVerified,
-              photoURL: user.photoURL
-            };
-            
-            // Merge with cleaned Firestore data
-            const completeUserData = {
-              ...baseUserData,
-              ...deepCleanForRedux(rawFirestoreData)
-            };
+            // Create serializable user data for Redux
+            const completeUser = createUserDataForRedux(user, firestoreData);
             
             // Get token safely
             let token = null;
@@ -273,13 +246,14 @@ export const firebaseAuthAPI = {
               console.log('⚠️ Failed to get ID token:', tokenError.message);
             }
             
-            callback({ user: completeUserData, token });
+            callback({ user: completeUser, token });
           } else {
             console.log('Auth state changed - user signed out');
             callback({ user: null, token: null });
           }
         } catch (error) {
           console.error('Error in auth state listener:', error);
+          // Don't fail completely - provide fallback
           if (user) {
             const fallbackUser = {
               uid: user.uid,
@@ -312,13 +286,15 @@ export const firebaseAuthAPI = {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
+      // Check if user document exists, create if not
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
       
-      let rawFirestoreData = {};
+      let firestoreData = {};
       
       if (userDoc.exists()) {
-        rawFirestoreData = userDoc.data();
+        firestoreData = userDoc.data();
+        // Update last login time safely
         try {
           await updateDoc(userDocRef, {
             lastLoginAt: serverTimestamp()
@@ -327,6 +303,7 @@ export const firebaseAuthAPI = {
           console.log('⚠️ Could not update lastLoginAt:', updateError.message);
         }
       } else {
+        // Create user document if it doesn't exist
         const firestoreUserData = createUserDocumentForFirestore(user, {
           registrationMethod: 'sign_in'
         });
@@ -334,10 +311,11 @@ export const firebaseAuthAPI = {
         try {
           await setDoc(userDocRef, firestoreUserData);
           console.log('✅ Created user document during sign in');
-          rawFirestoreData = firestoreUserData;
+          firestoreData = firestoreUserData;
         } catch (createError) {
           console.log('⚠️ Could not create user document:', createError.message);
-          rawFirestoreData = {
+          // Use basic data if creation fails
+          firestoreData = {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             lastLoginAt: new Date().toISOString()
@@ -347,26 +325,16 @@ export const firebaseAuthAPI = {
       
       const token = await user.getIdToken();
       
-      // Create clean user data for Redux
-      const baseUserData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        emailVerified: user.emailVerified
-      };
-      
-      const cleanUserData = {
-        ...baseUserData,
-        ...deepCleanForRedux(rawFirestoreData)
-      };
+      // Create serializable user data for Redux
+      const userData = createUserDataForRedux(user, firestoreData);
       
       // Store in AsyncStorage
       await AsyncStorage.setItem('authToken', token);
-      await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
       
       return {
         data: {
-          user: cleanUserData,
+          user: userData,
           token
         }
       };
@@ -380,6 +348,7 @@ export const firebaseAuthAPI = {
         throw new Error('Firebase authentication is not properly initialized');
       }
 
+      // Check if email already exists
       const existingUsers = await getDocs(
         query(collection(db, 'users'), where('email', '==', email))
       );
@@ -391,9 +360,13 @@ export const firebaseAuthAPI = {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
+      // Update Firebase Auth profile
       await updateProfile(user, { displayName: fullName });
+      
+      // Send email verification
       await sendEmailVerification(user);
       
+      // Create comprehensive user document in Firestore
       const firestoreUserData = createUserDocumentForFirestore(user, {
         fullName,
         phoneNumber,
@@ -405,28 +378,20 @@ export const firebaseAuthAPI = {
       
       const token = await user.getIdToken();
       
-      // Create clean user data for Redux
-      const baseUserData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: fullName,
-        emailVerified: user.emailVerified
-      };
-      
-      const cleanUserData = {
-        ...baseUserData,
-        ...deepCleanForRedux(firestoreUserData),
+      // Create serializable user data for Redux
+      const userData = createUserDataForRedux(user, firestoreUserData, {
         fullName,
         phoneNumber,
         city
-      };
+      });
       
+      // Store in AsyncStorage
       await AsyncStorage.setItem('authToken', token);
-      await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
       
       return {
         data: {
-          user: cleanUserData,
+          user: userData,
           token,
           message: 'Account created successfully! Please check your email for verification.'
         }
@@ -441,22 +406,25 @@ export const firebaseAuthAPI = {
       const userCredential = await signInWithCredential(auth, credential);
       const user = userCredential.user;
       
+      // Check if user document exists
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
-      let rawFirestoreData;
+      let firestoreData;
       
       if (!userDoc.exists()) {
-        rawFirestoreData = createUserDocumentForFirestore(user, {
+        // Create new user document for Google sign-in
+        firestoreData = createUserDocumentForFirestore(user, {
           registrationMethod: 'google',
           isEmailVerified: user.emailVerified
         });
-        await setDoc(userDocRef, rawFirestoreData);
+        await setDoc(userDocRef, firestoreData);
       } else {
-        rawFirestoreData = userDoc.data();
+        // Update existing user data
+        firestoreData = userDoc.data();
         try {
           await updateDoc(userDocRef, {
             lastLoginAt: serverTimestamp(),
-            profilePicture: user.photoURL || rawFirestoreData.profilePicture
+            profilePicture: user.photoURL || firestoreData.profilePicture
           });
         } catch (updateError) {
           console.log('⚠️ Could not update user data:', updateError.message);
@@ -465,25 +433,16 @@ export const firebaseAuthAPI = {
       
       const token = await user.getIdToken();
       
-      const baseUserData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        emailVerified: user.emailVerified,
-        photoURL: user.photoURL
-      };
+      // Create serializable user data for Redux
+      const userData = createUserDataForRedux(user, firestoreData);
       
-      const cleanUserData = {
-        ...baseUserData,
-        ...deepCleanForRedux(rawFirestoreData)
-      };
-      
+      // Store in AsyncStorage
       await AsyncStorage.setItem('authToken', token);
-      await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
       
       return {
         data: {
-          user: cleanUserData,
+          user: userData,
           token
         }
       };
@@ -516,32 +475,37 @@ export const firebaseAuthAPI = {
       const user = auth.currentUser;
       if (!user) throw new Error('No authenticated user');
       
+      // Update Firebase Auth profile if display name changed
       if (userData.displayName && userData.displayName !== user.displayName) {
         await updateProfile(user, { displayName: userData.displayName });
       }
       
+      // Update Firestore document safely
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
       
       if (userDoc.exists()) {
+        // Document exists, safe to update
         const updateData = {
           ...userData,
           updatedAt: serverTimestamp()
         };
         await updateDoc(userDocRef, updateData);
       } else {
+        // Document doesn't exist, create it
         const newUserData = createUserDocumentForFirestore(user, userData);
         await setDoc(userDocRef, newUserData);
       }
       
+      // Update AsyncStorage with serializable data
       const storedUser = await AsyncStorage.getItem('user');
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
-        const updatedUser = deepCleanForRedux({ 
+        const updatedUser = { 
           ...parsedUser, 
           ...userData,
           updatedAt: new Date().toISOString()
-        });
+        };
         await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       }
       
@@ -555,10 +519,14 @@ export const firebaseAuthAPI = {
       const user = auth.currentUser;
       if (!user) throw new Error('No authenticated user');
       
+      // Re-authenticate user
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, credential);
+      
+      // Update password
       await updatePassword(user, newPassword);
       
+      // Update user document safely
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
       
@@ -595,27 +563,20 @@ export const firebaseAuthAPI = {
         return { data: null };
       }
       
+      // Verify token is still valid
       const currentToken = await user.getIdToken(true);
       
+      // Get user data safely
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
-      const rawFirestoreData = userDoc.exists() ? userDoc.data() : {};
+      const firestoreData = userDoc.exists() ? userDoc.data() : {};
       
-      const baseUserData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        emailVerified: user.emailVerified
-      };
-      
-      const cleanUserData = {
-        ...baseUserData,
-        ...deepCleanForRedux(rawFirestoreData)
-      };
+      // Create serializable user data
+      const userData = createUserDataForRedux(user, firestoreData);
       
       return {
         data: {
-          user: cleanUserData,
+          user: userData,
           token: currentToken
         }
       };
@@ -645,7 +606,7 @@ export const firebaseAuthAPI = {
       'auth/user-token-expired': 'User token has expired. Please sign in again.'
     };
     
-    return errorMessages[errorCode] || `Authentication error: ${errorCode || 'Unknown error'}. Please try again.`;
+    return errorMessages[errorCode] || \`Authentication error: \${errorCode || 'Unknown error'}. Please try again.\`;
   }
 };
 
@@ -660,3 +621,22 @@ export const onAuthStateChange = (callback) => {
   }
   return onAuthStateChanged(auth, callback);
 };
+`;
+
+// Write the updated auth service
+fs.writeFileSync(path.join(__dirname, 'src/services/firebaseAuth.js'), authServiceContent);
+console.log('✅ Updated Firebase Auth service with serializable timestamps');
+
+console.log('\n🎉 Redux Serialization Error Fixed!');
+console.log('\n📋 What was fixed:');
+console.log('1. Separated Firestore data (with serverTimestamp) from Redux data');
+console.log('2. Created serializable timestamp conversion function');
+console.log('3. Use regular ISO strings for Redux state');
+console.log('4. Keep serverTimestamp only for Firestore operations');
+console.log('5. Proper data transformation between Firebase and Redux');
+
+console.log('\n🔧 The error should now be resolved:');
+console.log('- No more Redux serialization warnings');
+console.log('- Timestamps properly handled in Redux state');
+console.log('- Firebase operations still use serverTimestamp');
+console.log('- Clean separation between Firestore and Redux data');
