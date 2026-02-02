@@ -106,7 +106,7 @@ function MainTabs() {
 
 export default function AppNavigator() {
   const dispatch = useDispatch();
-  const { isAuthenticated, initializing } = useSelector(state => state.auth);
+  const { isAuthenticated, initializing, user } = useSelector(state => state.auth);
   const [showSplash, setShowSplash] = useState(true);
   
   useEffect(() => {
@@ -124,9 +124,25 @@ export default function AppNavigator() {
     return () => clearTimeout(splashTimer);
   }, [dispatch]);
 
+  // Debug authentication state
+  console.log('🔍 NAVIGATOR DEBUG: Auth state:', { 
+    isAuthenticated, 
+    initializing, 
+    hasUser: !!user,
+    showSplash 
+  });
+
   // Show splash screen first
   if (showSplash || initializing) {
+    console.log('🔍 NAVIGATOR DEBUG: Showing splash screen');
     return <SplashScreen />;
+  }
+
+  // Debug what screen should be shown
+  if (isAuthenticated) {
+    console.log('🔍 NAVIGATOR DEBUG: Rendering authenticated screens');
+  } else {
+    console.log('🔍 NAVIGATOR DEBUG: Rendering authentication screens');
   }
   
   return (
