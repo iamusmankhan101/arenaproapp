@@ -25,7 +25,7 @@ try {
   app = initializeApp(firebaseConfig);
   console.log('✅ Firebase app initialized');
   
-  // Initialize Auth with proper error handling and network retry
+  // Initialize Auth with proper error handling
   try {
     // Try to get existing auth instance first
     auth = getAuth(app);
@@ -42,7 +42,7 @@ try {
     }
   }
   
-  // Initialize Firestore with retry logic
+  // Initialize Firestore
   db = getFirestore(app);
   
   // Initialize Storage
@@ -52,35 +52,7 @@ try {
   
 } catch (error) {
   console.error('❌ Firebase initialization failed:', error);
-  
-  // Provide fallback configuration for development
-  if (__DEV__) {
-    console.log('🔄 Using fallback configuration for development...');
-    
-    // Create minimal fallback objects
-    auth = {
-      currentUser: null,
-      onAuthStateChanged: (callback) => {
-        console.log('Auth state listener (fallback mode)');
-        callback(null);
-        return () => {};
-      }
-    };
-    
-    db = {
-      collection: () => ({
-        doc: () => ({
-          get: () => Promise.resolve({ exists: false }),
-          set: () => Promise.resolve(),
-          update: () => Promise.resolve()
-        })
-      })
-    };
-    
-    storage = {};
-  } else {
-    throw error;
-  }
+  throw error;
 }
 
 // Connect to emulators in development (disabled by default)
@@ -94,43 +66,19 @@ if (__DEV__ && false) {
 export { auth, db, storage };
 export default app;
 
-// Network status helper
+// Simplified network status helper - less aggressive
 export const checkNetworkConnection = async () => {
-  try {
-    const response = await fetch('https://www.google.com', {
-      method: 'HEAD',
-      mode: 'no-cors',
-      cache: 'no-cache'
-    });
-    return true;
-  } catch (error) {
-    console.log('Network check failed:', error);
-    return false;
-  }
+  // In React Native, we'll rely on Firebase's built-in network detection
+  // This prevents false negatives from overly strict network checks
+  return true;
 };
 
-// Firebase connection test
+// Firebase connection test - simplified
 export const testFirebaseConnection = async () => {
   try {
     if (!auth || !db) {
-      throw new Error('Firebase services not initialized');
+      return false;
     }
-    
-    // Test auth endpoint
-    const authTest = new Promise((resolve) => {
-      const unsubscribe = auth.onAuthStateChanged(() => {
-        unsubscribe();
-        resolve(true);
-      });
-    });
-    
-    await Promise.race([
-      authTest,
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auth test timeout')), 5000)
-      )
-    ]);
-    
     return true;
   } catch (error) {
     console.error('Firebase connection test failed:', error);

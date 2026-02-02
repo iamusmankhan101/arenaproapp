@@ -24,35 +24,23 @@ import {
   serverTimestamp,
   increment
 } from 'firebase/firestore';
-import { auth, db, checkNetworkConnection, testFirebaseConnection } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Network retry configuration
+// Simplified retry configuration - less aggressive
 const RETRY_CONFIG = {
-  maxRetries: 3,
-  retryDelay: 1000, // 1 second
-  timeoutMs: 10000  // 10 seconds
+  maxRetries: 2,
+  retryDelay: 1500,
+  timeoutMs: 15000
 };
 
-// Network-aware wrapper for Firebase operations
-const withNetworkRetry = async (operation, operationName = 'Firebase operation') => {
+// Simplified network-aware wrapper
+const withRetry = async (operation, operationName = 'Firebase operation') => {
   let lastError;
   
   for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
     try {
-      console.log(`🔄 Attempting ${operationName} (attempt ${attempt}/${RETRY_CONFIG.maxRetries})`);
-      
-      // Check network connection first
-      const hasNetwork = await checkNetworkConnection();
-      if (!hasNetwork) {
-        throw new Error('No internet connection detected');
-      }
-      
-      // Test Firebase connection
-      const firebaseConnected = await testFirebaseConnection();
-      if (!firebaseConnected && attempt === 1) {
-        console.log('⚠️ Firebase connection test failed, but continuing...');
-      }
+      console.log(`🔄 ${operationName} (attempt ${attempt}/${RETRY_CONFIG.maxRetries})`);
       
       // Execute the operation with timeout
       const result = await Promise.race([
@@ -62,7 +50,7 @@ const withNetworkRetry = async (operation, operationName = 'Firebase operation')
         )
       ]);
       
-      console.log(`✅ ${operationName} succeeded on attempt ${attempt}`);
+      console.log(`✅ ${operationName} succeeded`);
       return result;
       
     } catch (error) {
@@ -74,7 +62,8 @@ const withNetworkRetry = async (operation, operationName = 'Firebase operation')
           error.code === 'auth/wrong-password' ||
           error.code === 'auth/email-already-in-use' ||
           error.code === 'auth/weak-password' ||
-          error.code === 'auth/invalid-email') {
+          error.code === 'auth/invalid-email' ||
+          error.code === 'auth/invalid-credential') {
         throw error;
       }
       
@@ -87,7 +76,7 @@ const withNetworkRetry = async (operation, operationName = 'Firebase operation')
   }
   
   // All retries failed
-  throw new Error(`${operationName} failed after ${RETRY_CONFIG.maxRetries} attempts: ${lastError.message}`);
+  throw lastError;
 };
 
 // User data structure for Firestore
@@ -127,11 +116,11 @@ const createUserDocument = (user, additionalData = {}) => ({
   ...additionalData
 });
 
-// Enhanced Firebase Auth API with network retry
+// Enhanced Firebase Auth API
 export const firebaseAuthAPI = {
-  // Initialize auth state listener with network handling
+  // Initialize auth state listener
   initializeAuthListener: (callback) => {
-    return withNetworkRetry(async () => {
+    try {
       return onAuthStateChanged(auth, async (user) => {
         try {
           if (user) {
@@ -162,17 +151,15 @@ export const firebaseAuthAPI = {
           callback({ user: null, token: null });
         }
       });
-    }, 'Initialize auth listener').catch(error => {
+    } catch (error) {
       console.error('Failed to initialize auth listener:', error);
-      // Return a dummy unsubscribe function
       return () => {};
-    });
+    }
   },
 
-  // Enhanced sign in with network retry
+  // Enhanced sign in
   signIn: async (email, password) => {
-    return withNetworkRetry(async () => {
-      // Verify Firebase is properly initialized
+    return withRetry(async () => {
       if (!auth) {
         throw new Error('Firebase authentication is not properly initialized');
       }
@@ -215,10 +202,9 @@ export const firebaseAuthAPI = {
     }, 'Sign in');
   },
 
-  // Enhanced sign up with network retry
+  // Enhanced sign up
   signUp: async (email, password, fullName, phoneNumber = '', city = '') => {
-    return withNetworkRetry(async () => {
-      // Verify Firebase is properly initialized
+    return withRetry(async () => {
       if (!auth) {
         throw new Error('Firebase authentication is not properly initialized');
       }
@@ -278,26 +264,147 @@ export const firebaseAuthAPI = {
     }, 'Sign up');
   },
 
-  // Enhanced forgot password with network retry
+  // Google Sign In
+  googleSignIn: async (googleToken) => {
+    return withRetry(async () => {
+      const credential = GoogleAuthProvider.credential(googleToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+      
+      // Check if user document exists
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      let userData;
+      
+      if (!userDoc.exists()) {
+        // Create new user document for Google sign-in
+        userData = createUserDocument(user, {
+          registrationMethod: 'google',
+          isEmailVerified: user.emailVerified
+        });
+        await setDoc(doc(db, 'users', user.uid), userData);
+      } else {
+        // Update existing user data
+        userData = userDoc.data();
+        await updateDoc(doc(db, 'users', user.uid), {
+          lastLoginAt: serverTimestamp(),
+          profilePicture: user.photoURL || userData.profilePicture
+        });
+      }
+      
+      const token = await user.getIdToken();
+      
+      // Store in AsyncStorage
+      await AsyncStorage.setItem('authToken', token);
+      await AsyncStorage.setItem('user', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        ...userData
+      }));
+      
+      return {
+        data: {
+          user: {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            emailVerified: user.emailVerified,
+            photoURL: user.photoURL,
+            ...userData
+          },
+          token
+        }
+      };
+    }, 'Google sign in');
+  },
+
+  // Enhanced sign out
+  signOut: async () => {
+    try {
+      await signOut(auth);
+      await AsyncStorage.multiRemove(['authToken', 'user']);
+      return { data: { message: 'Signed out successfully' } };
+    } catch (error) {
+      console.error('Sign out error:', error);
+      throw new Error('Failed to sign out');
+    }
+  },
+
+  // Enhanced forgot password
   forgotPassword: async (email) => {
-    return withNetworkRetry(async () => {
+    return withRetry(async () => {
       await sendPasswordResetEmail(auth, email);
       return { data: { message: 'Password reset email sent successfully' } };
     }, 'Forgot password');
   },
 
-  // Enhanced sign out
-  signOut: async () => {
-    return withNetworkRetry(async () => {
-      await signOut(auth);
-      await AsyncStorage.multiRemove(['authToken', 'user']);
-      return { data: { message: 'Signed out successfully' } };
-    }, 'Sign out');
+  // Enhanced profile update
+  updateProfile: async (userData) => {
+    return withRetry(async () => {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user');
+      
+      // Update Firebase Auth profile if display name changed
+      if (userData.displayName && userData.displayName !== user.displayName) {
+        await updateProfile(user, { displayName: userData.displayName });
+      }
+      
+      // Update Firestore document
+      const updateData = {
+        ...userData,
+        updatedAt: serverTimestamp()
+      };
+      
+      await updateDoc(doc(db, 'users', user.uid), updateData);
+      
+      // Update AsyncStorage
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        const updatedUser = { ...parsedUser, ...userData };
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+      
+      return { data: { message: 'Profile updated successfully' } };
+    }, 'Update profile');
   },
 
-  // Verify token with network retry
+  // Change password
+  changePassword: async (currentPassword, newPassword) => {
+    return withRetry(async () => {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user');
+      
+      // Re-authenticate user
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      
+      // Update password
+      await updatePassword(user, newPassword);
+      
+      // Update user document
+      await updateDoc(doc(db, 'users', user.uid), {
+        updatedAt: serverTimestamp()
+      });
+      
+      return { data: { message: 'Password changed successfully' } };
+    }, 'Change password');
+  },
+
+  // Resend email verification
+  resendEmailVerification: async () => {
+    return withRetry(async () => {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user');
+      
+      await sendEmailVerification(user);
+      return { data: { message: 'Verification email sent successfully' } };
+    }, 'Resend verification');
+  },
+
+  // Verify token
   verifyToken: async (token) => {
-    return withNetworkRetry(async () => {
+    try {
       const user = auth.currentUser;
       if (!user) {
         return { data: null };
@@ -321,17 +428,17 @@ export const firebaseAuthAPI = {
           token: currentToken
         }
       };
-    }, 'Verify token').catch(error => {
+    } catch (error) {
       console.error('Verify token error:', error);
       return { data: null };
-    });
+    }
   },
 
   // Helper function to get user-friendly error messages
   getErrorMessage: (errorCode) => {
     const errorMessages = {
-      'auth/network-request-failed': 'Network error. Please check your internet connection and try again.',
-      'auth/too-many-requests': 'Too many failed attempts. Please wait a few minutes and try again.',
+      'auth/network-request-failed': 'Please check your internet connection and try again.',
+      'auth/too-many-requests': 'Too many attempts. Please wait a few minutes and try again.',
       'auth/user-not-found': 'No account found with this email address',
       'auth/wrong-password': 'Incorrect password',
       'auth/email-already-in-use': 'An account with this email already exists',
@@ -347,7 +454,7 @@ export const firebaseAuthAPI = {
       'auth/user-token-expired': 'User token has expired. Please sign in again.'
     };
     
-    return errorMessages[errorCode] || `Authentication error: ${errorCode || 'Network or connection issue'}. Please check your internet connection and try again.`;
+    return errorMessages[errorCode] || `Authentication error: ${errorCode || 'Unknown error'}. Please try again.`;
   }
 };
 

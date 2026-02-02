@@ -35,17 +35,27 @@ export default function SignInScreen({ navigation }) {
     dispatch(clearError());
   }, [dispatch]);
 
-  // Show error alert
+  // Show error alert with network-specific handling
   useEffect(() => {
     if (error) {
       let errorTitle = 'Sign In Error';
       let errorMessage = error;
       let buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
       
-      // Special handling for configuration errors
-      if (error.includes('configuration-not-found') || error.includes('Firebase configuration')) {
-        errorTitle = 'Firebase Setup Required';
-        errorMessage = 'Firebase Authentication needs to be enabled in the Firebase Console. Would you like to continue as guest for testing?';
+      // Handle network-specific errors
+      if (error.includes('network') || error.includes('connection') || error.includes('internet')) {
+        errorTitle = 'Network Issue';
+        errorMessage = 'Having trouble connecting. Would you like to continue as guest for testing?';
+        buttons = [
+          { text: 'Retry', onPress: () => dispatch(clearError()) },
+          { text: 'Continue as Guest', onPress: () => {
+            dispatch(clearError());
+            dispatch(devBypassAuth());
+          }}
+        ];
+      } else if (error.includes('configuration-not-found') || error.includes('Firebase configuration')) {
+        errorTitle = 'Setup Required';
+        errorMessage = 'Firebase needs to be configured. Would you like to continue as guest for testing?';
         buttons = [
           { text: 'Cancel', style: 'cancel', onPress: () => dispatch(clearError()) },
           { text: 'Continue as Guest', onPress: () => {
