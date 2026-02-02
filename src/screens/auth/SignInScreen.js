@@ -91,6 +91,14 @@ export default function SignInScreen({ navigation }) {
         })).unwrap();
         
         console.log('🔍 DEBUG: Sign-in successful!', result);
+        
+        // Force navigation to main app after successful sign-in
+        console.log('🔍 DEBUG: Forcing navigation to MainTabs...');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' }],
+        });
+        
       } catch (error) {
         console.log('🔍 DEBUG: Sign-in failed with error:', error);
         console.log('🔍 DEBUG: Error type:', typeof error);
