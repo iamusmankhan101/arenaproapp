@@ -69,8 +69,8 @@ export const firebaseAuthAPI = {
   // Initialize auth state listener
   initializeAuthListener: (callback) => {
     return onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
+      try {
+        if (user) {
           // Update last login time
           await updateDoc(doc(db, 'users', user.uid), {
             lastLoginAt: serverTimestamp()
@@ -90,11 +90,13 @@ export const firebaseAuthAPI = {
           };
           
           callback({ user: completeUser, token: await user.getIdToken() });
-        } catch (error) {
-          console.error('Error updating user login:', error);
+        } else {
+          // No user - this is normal, not an error
           callback({ user: null, token: null });
         }
-      } else {
+      } catch (error) {
+        console.error('Error in auth state listener:', error);
+        // Even if there's an error, call callback with null to prevent hanging
         callback({ user: null, token: null });
       }
     });
@@ -427,7 +429,10 @@ export const firebaseAuthAPI = {
   verifyToken: async (token) => {
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error('No authenticated user');
+      if (!user) {
+        // No authenticated user - this is normal, just return null
+        return { data: null };
+      }
       
       // Verify token is still valid
       const currentToken = await user.getIdToken(true);
@@ -449,6 +454,10 @@ export const firebaseAuthAPI = {
       };
     } catch (error) {
       console.error('Verify token error:', error);
+      // Don't throw error for no authenticated user - this is expected
+      if (error.message && error.message.includes('No authenticated user')) {
+        return { data: null };
+      }
       throw new Error('Invalid or expired token');
     }
   },

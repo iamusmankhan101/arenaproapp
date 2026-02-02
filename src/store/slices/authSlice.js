@@ -127,7 +127,13 @@ export const loadStoredAuth = createAsyncThunk(
         try {
           // Verify token is still valid
           const response = await firebaseAuthAPI.verifyToken(token);
-          return { token: response.data.token, user: response.data.user };
+          if (response.data) {
+            return { token: response.data.token, user: response.data.user };
+          } else {
+            // Token verification returned null (no authenticated user)
+            await AsyncStorage.multiRemove(['authToken', 'user']);
+            return null;
+          }
         } catch (error) {
           // Token is invalid, clear storage
           await AsyncStorage.multiRemove(['authToken', 'user']);
@@ -138,7 +144,7 @@ export const loadStoredAuth = createAsyncThunk(
     } catch (error) {
       // Clear invalid stored data
       await AsyncStorage.multiRemove(['authToken', 'user']);
-      return rejectWithValue({ message: 'Invalid stored authentication' });
+      return null; // Don't reject, just return null for no auth
     }
   }
 );
