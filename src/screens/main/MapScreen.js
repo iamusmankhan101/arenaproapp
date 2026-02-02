@@ -1187,42 +1187,32 @@ export default function MapScreen({ navigation }) {
 
       {/* Enhanced Action Buttons with Location Prompt */}
       <View style={styles.fabContainer}>
-        <FAB
-          icon={isLoading ? "hourglass-empty" : location ? "my-location" : "location-off"}
+        <TouchableOpacity
           style={[
+            styles.fabButton,
             styles.locationFab, 
             { 
-              backgroundColor: location ? themeColors.colors.primary : '#FF9800'
+              backgroundColor: themeColors.colors.primary
             }
           ]}
-          onPress={location ? getCurrentLocation : requestLocationAccess}
+          onPress={requestLocationAccess}
           disabled={isLoading}
-          size="medium"
-        />
+          activeOpacity={0.8}
+        >
+          <MaterialIcons 
+            name={isLoading ? "hourglass-empty" : location ? "my-location" : "location-off"} 
+            size={24} 
+            color={themeColors.colors.secondary} 
+          />
+        </TouchableOpacity>
 
-        <FAB
-          icon="zoom-in"
-          style={[styles.zoomFab, { backgroundColor: '#4CAF50' }]}
-          onPress={() => {
-            console.log('🔍 Manual zoom to venues triggered');
-            zoomToFitMarkers(filteredVenues);
-          }}
-          size="small"
-        />
-
-        <FAB
-          icon="fullscreen"
-          style={styles.zoomFab}
-          onPress={zoomToFitMarkers}
-          size="small"
-        />
-
-        <FAB
-          icon="view-list"
-          style={styles.listFab}
+        <TouchableOpacity
+          style={[styles.fabButton, styles.listFab, { backgroundColor: themeColors.colors.primary }]}
           onPress={() => navigation.navigate('VenueList')}
-          size="small"
-        />
+          activeOpacity={0.8}
+        >
+          <MaterialIcons name="view-list" size={20} color={themeColors.colors.secondary} />
+        </TouchableOpacity>
       </View>
 
       {/* Location Permission Prompt */}
@@ -1670,20 +1660,25 @@ const styles = StyleSheet.create({
     bottom: 100,
     gap: 12,
   },
-  locationFab: {
+  fabButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
   },
-  zoomFab: {
-    backgroundColor: '#1976D2',
-    elevation: 4,
+  locationFab: {
+    // Additional styles for location FAB if needed
   },
   listFab: {
-    backgroundColor: '#FF9800',
-    elevation: 4,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   locationPrompt: {
     position: 'absolute',
