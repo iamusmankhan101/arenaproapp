@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { firebaseAuthAPI } from '../services/firebaseAuth';
+import { firebaseAuthAPI } from '../../services/firebaseAuth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { shouldBypassAuth, getMockCredentials } from '../config/devConfig';
+import { shouldBypassAuth, getMockCredentials } from '../../config/devConfig';
 
 // Enhanced async thunks for Firebase authentication
 export const signIn = createAsyncThunk(
