@@ -103,6 +103,11 @@ export const firebaseAuthAPI = {
   // Enhanced sign in with email/password
   signIn: async (email, password) => {
     try {
+      // Verify Firebase is properly initialized
+      if (!auth) {
+        throw new Error('Firebase authentication is not properly initialized');
+      }
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
@@ -150,6 +155,11 @@ export const firebaseAuthAPI = {
   // Enhanced sign up with email/password
   signUp: async (email, password, fullName, phoneNumber = '', city = '') => {
     try {
+      // Verify Firebase is properly initialized
+      if (!auth) {
+        throw new Error('Firebase authentication is not properly initialized');
+      }
+
       // Check if email already exists
       const existingUsers = await getDocs(
         query(collection(db, 'users'), where('email', '==', email))
@@ -459,7 +469,12 @@ export const firebaseAuthAPI = {
       'auth/operation-not-allowed': 'This operation is not allowed. Please contact support.',
       'auth/popup-closed-by-user': 'Sign-in popup was closed before completion',
       'auth/cancelled-popup-request': 'Sign-in was cancelled',
-      'auth/popup-blocked': 'Sign-in popup was blocked by the browser'
+      'auth/popup-blocked': 'Sign-in popup was blocked by the browser',
+      'auth/configuration-not-found': 'Firebase configuration error. Please check your setup.',
+      'auth/invalid-api-key': 'Invalid Firebase API key. Please check your configuration.',
+      'auth/app-not-authorized': 'This app is not authorized to use Firebase Authentication.',
+      'auth/invalid-user-token': 'User token is invalid. Please sign in again.',
+      'auth/user-token-expired': 'User token has expired. Please sign in again.'
     };
     
     return errorMessages[errorCode] || `Authentication error: ${errorCode || 'Unknown error'}. Please try again.`;

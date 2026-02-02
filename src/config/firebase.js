@@ -17,10 +17,23 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Auth with AsyncStorage persistence for React Native
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage)
-});
+// Initialize Auth with proper error handling
+let auth;
+try {
+  // Try to get existing auth instance first
+  auth = getAuth(app);
+} catch (error) {
+  // If that fails, initialize with AsyncStorage persistence
+  try {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+  } catch (initError) {
+    console.error('Firebase Auth initialization error:', initError);
+    // Fallback to basic auth
+    auth = getAuth(app);
+  }
+}
 
 // Initialize Firestore
 const db = getFirestore(app);
