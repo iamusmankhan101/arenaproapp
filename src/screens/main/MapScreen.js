@@ -147,7 +147,7 @@ export default function MapScreen({ navigation }) {
     return addressParts.join(', ') || 'Address not available';
   };
 
-  // Simplified coordinate validation and processing
+  // Enhanced coordinate validation and processing with priority system
   const isValidCoordinate = (lat, lng) => {
     return (
       lat && lng &&
@@ -158,51 +158,83 @@ export default function MapScreen({ navigation }) {
     );
   };
 
-  // Simplified function to get venue coordinates (synchronous version)
+  // Enhanced function to get venue coordinates with priority system
   const getVenueCoordinatesSync = (venue) => {
-    // Check if we have valid direct coordinates
+    // Priority 1: Check direct coordinates (latitude/longitude fields)
     if (isValidCoordinate(venue.latitude, venue.longitude)) {
+      console.log(`📍 Using direct coordinates for ${venue.name}: ${venue.latitude}, ${venue.longitude}`);
       return {
         latitude: venue.latitude,
         longitude: venue.longitude,
-        isValid: true
+        isValid: true,
+        source: 'direct'
       };
     }
     
-    // Check location object coordinates
+    // Priority 2: Check location object coordinates
     if (venue.location && isValidCoordinate(venue.location.latitude, venue.location.longitude)) {
+      console.log(`📍 Using location object coordinates for ${venue.name}: ${venue.location.latitude}, ${venue.location.longitude}`);
       return {
         latitude: venue.location.latitude,
         longitude: venue.location.longitude,
-        isValid: true
+        isValid: true,
+        source: 'location'
       };
     }
+
+    // Priority 3: Log venues without valid coordinates for debugging
+    console.warn(`⚠️ No valid coordinates found for venue ${venue.name}:`, {
+      directLat: venue.latitude,
+      directLng: venue.longitude,
+      locationLat: venue.location?.latitude,
+      locationLng: venue.location?.longitude,
+      address: getVenueAddress(venue)
+    });
 
     // Return invalid coordinates - this venue won't be shown on map
     return {
       latitude: null,
       longitude: null,
-      isValid: false
+      isValid: false,
+      source: 'none'
     };
   };
 
-  // Simplified function to get venue coordinates (async version for processing)
+  // Enhanced function to get venue coordinates (async version for processing)
   const getVenueCoordinates = async (venue) => {
     return getVenueCoordinatesSync(venue);
   };
 
-  // Process venues to ensure they have valid coordinates
+  // Enhanced venue coordinate processing with detailed logging
   const processVenuesCoordinates = async (venues) => {
     const processedVenues = [];
+    const invalidVenues = [];
+    
+    console.log(`🗺️ Processing coordinates for ${venues.length} venues...`);
     
     for (const venue of venues) {
-      const coords = await getVenueCoordinates(venue);
+      const coords = getVenueCoordinatesSync(venue);
       if (coords.isValid) {
         processedVenues.push({
           ...venue,
           coordinates: coords
         });
+        console.log(`✅ ${venue.name}: Valid coordinates (${coords.source}) - ${coords.latitude}, ${coords.longitude}`);
+      } else {
+        invalidVenues.push({
+          name: venue.name,
+          address: getVenueAddress(venue),
+          directCoords: { lat: venue.latitude, lng: venue.longitude },
+          locationCoords: { lat: venue.location?.latitude, lng: venue.location?.longitude }
+        });
+        console.warn(`❌ ${venue.name}: Invalid coordinates - will not appear on map`);
       }
+    }
+    
+    console.log(`📊 Coordinate processing complete: ${processedVenues.length}/${venues.length} venues have valid coordinates`);
+    
+    if (invalidVenues.length > 0) {
+      console.warn(`⚠️ ${invalidVenues.length} venues without valid coordinates:`, invalidVenues);
     }
     
     return processedVenues;
@@ -407,7 +439,7 @@ export default function MapScreen({ navigation }) {
     }
   };
 
-  // Debug function to log venues with missing coordinates
+  // Enhanced debug function to log venues with missing coordinates
   const logVenuesWithMissingCoords = () => {
     const missingCoords = nearbyTurfs.filter(venue => {
       const coords = getVenueCoordinatesSync(venue);
@@ -415,14 +447,35 @@ export default function MapScreen({ navigation }) {
     });
     
     if (missingCoords.length > 0) {
-      console.log('Venues with missing/invalid coordinates:', missingCoords.map(v => ({
-        id: v.id,
-        name: v.name,
-        address: getVenueAddress(v),
-        latitude: v.latitude,
-        longitude: v.longitude,
-        location: v.location
-      })));
+      console.group('🗺️ Venues with missing/invalid coordinates:');
+      missingCoords.forEach(venue => {
+        console.log(`❌ ${venue.name}:`, {
+          id: venue.id,
+          address: getVenueAddress(venue),
+          directCoordinates: {
+            latitude: venue.latitude,
+            longitude: venue.longitude,
+            valid: isValidCoordinate(venue.latitude, venue.longitude)
+          },
+          locationObject: {
+            latitude: venue.location?.latitude,
+            longitude: venue.location?.longitude,
+            valid: venue.location ? isValidCoordinate(venue.location.latitude, venue.location.longitude) : false
+          },
+          recommendation: venue.latitude && venue.longitude ? 
+            'Direct coordinates exist but may be invalid' : 
+            'No coordinates found - needs geocoding'
+        });
+      });
+      console.groupEnd();
+      
+      // Provide actionable recommendations
+      console.log(`💡 Recommendations for ${missingCoords.length} venues without coordinates:`);
+      console.log('1. Update venue coordinates in Firebase admin panel');
+      console.log('2. Use geocoding service to convert addresses to coordinates');
+      console.log('3. Verify coordinate accuracy for existing venues');
+    } else {
+      console.log('✅ All venues have valid coordinates!');
     }
   };
 
@@ -527,13 +580,13 @@ export default function MapScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* Results Counter */}
+            {/* Enhanced Results Counter with Coordinate Info */}
             <View style={styles.resultsContainer}>
               <Text style={styles.resultsText}>
                 {filteredVenues.length} venue{filteredVenues.length !== 1 ? 's' : ''} found
                 {venuesWithValidCoords.length !== nearbyTurfs.length && (
                   <Text style={styles.hiddenVenuesText}>
-                    {' '}({nearbyTurfs.length - venuesWithValidCoords.length} hidden - no location data)
+                    {' '}({nearbyTurfs.length - venuesWithValidCoords.length} hidden - missing coordinates)
                   </Text>
                 )}
               </Text>
