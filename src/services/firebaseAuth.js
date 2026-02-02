@@ -140,7 +140,10 @@ export const firebaseAuthAPI = {
       };
     } catch (error) {
       console.error('Sign in error:', error);
-      throw new Error(this.getErrorMessage(error.code));
+      const errorMessage = error?.code ? 
+        firebaseAuthAPI.getErrorMessage(error.code) : 
+        error?.message || 'Failed to sign in. Please try again.';
+      throw new Error(errorMessage);
     }
   },
 
@@ -201,7 +204,10 @@ export const firebaseAuthAPI = {
       };
     } catch (error) {
       console.error('Sign up error:', error);
-      throw new Error(this.getErrorMessage(error.code));
+      const errorMessage = error?.code ? 
+        firebaseAuthAPI.getErrorMessage(error.code) : 
+        error?.message || 'Failed to create account. Please try again.';
+      throw new Error(errorMessage);
     }
   },
 
@@ -258,7 +264,10 @@ export const firebaseAuthAPI = {
       };
     } catch (error) {
       console.error('Google sign in error:', error);
-      throw new Error(this.getErrorMessage(error.code));
+      const errorMessage = error?.code ? 
+        firebaseAuthAPI.getErrorMessage(error.code) : 
+        error?.message || 'Failed to sign in with Google. Please try again.';
+      throw new Error(errorMessage);
     }
   },
 
@@ -281,7 +290,10 @@ export const firebaseAuthAPI = {
       return { data: { message: 'Password reset email sent successfully' } };
     } catch (error) {
       console.error('Forgot password error:', error);
-      throw new Error(this.getErrorMessage(error.code));
+      const errorMessage = error?.code ? 
+        firebaseAuthAPI.getErrorMessage(error.code) : 
+        error?.message || 'Failed to send password reset email. Please try again.';
+      throw new Error(errorMessage);
     }
   },
 
@@ -340,7 +352,10 @@ export const firebaseAuthAPI = {
       return { data: { message: 'Password changed successfully' } };
     } catch (error) {
       console.error('Change password error:', error);
-      throw new Error(this.getErrorMessage(error.code));
+      const errorMessage = error?.code ? 
+        firebaseAuthAPI.getErrorMessage(error.code) : 
+        error?.message || 'Failed to change password. Please try again.';
+      throw new Error(errorMessage);
     }
   },
 
@@ -440,10 +455,14 @@ export const firebaseAuthAPI = {
       'auth/too-many-requests': 'Too many failed attempts. Please try again later',
       'auth/network-request-failed': 'Network error. Please check your connection',
       'auth/requires-recent-login': 'Please sign in again to complete this action',
-      'auth/invalid-credential': 'Invalid credentials provided'
+      'auth/invalid-credential': 'Invalid credentials provided',
+      'auth/operation-not-allowed': 'This operation is not allowed. Please contact support.',
+      'auth/popup-closed-by-user': 'Sign-in popup was closed before completion',
+      'auth/cancelled-popup-request': 'Sign-in was cancelled',
+      'auth/popup-blocked': 'Sign-in popup was blocked by the browser'
     };
     
-    return errorMessages[errorCode] || 'An unexpected error occurred. Please try again.';
+    return errorMessages[errorCode] || `Authentication error: ${errorCode || 'Unknown error'}. Please try again.`;
   }
 };
 
