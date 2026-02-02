@@ -102,13 +102,25 @@ export default function MapScreen({ navigation }) {
       }),
     ]).start();
 
-    getCurrentLocation();
-    // Load nearby turfs when component mounts
-    dispatch(fetchNearbyTurfs({
-      latitude: region.latitude,
-      longitude: region.longitude,
-      radius: 10000 // 10km radius
-    }));
+    // Automatically get user location and load nearby turfs
+    const initializeLocation = async () => {
+      console.log('🚀 Initializing MapScreen with user location...');
+      
+      try {
+        // Try to get user location first
+        await getCurrentLocation();
+      } catch (error) {
+        console.warn('⚠️ Could not get user location, using default location');
+        // Fallback to default location (Karachi) if location access fails
+        dispatch(fetchNearbyTurfs({
+          latitude: region.latitude,
+          longitude: region.longitude,
+          radius: 10000 // 10km radius
+        }));
+      }
+    };
+
+    initializeLocation();
   }, []);
 
   useEffect(() => {
@@ -240,18 +252,104 @@ export default function MapScreen({ navigation }) {
     return processedVenues;
   };
 
-  // Update venues with valid coordinates when nearbyTurfs changes
+  // Enhanced distance calculation function using Haversine formula
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
+  // Format distance for display
+  const formatDistance = (distanceKm) => {
+    if (distanceKm < 1) {
+      return `${Math.round(distanceKm * 1000)}m`;
+    } else if (distanceKm < 10) {
+      return `${distanceKm.toFixed(1)}km`;
+    } else {
+      return `${Math.round(distanceKm)}km`;
+    }
+  };
+
+  // Calculate distances from user location to venues
+  const calculateVenueDistances = (venues, userLocation) => {
+    if (!userLocation) {
+      console.log('📍 No user location available, using default distances');
+      return venues.map(venue => ({
+        ...venue,
+        distance: 'Unknown',
+        distanceKm: null
+      }));
+    }
+
+    console.log(`📏 Calculating distances from user location: ${userLocation.latitude}, ${userLocation.longitude}`);
+    
+    return venues.map(venue => {
+      const coords = venue.coordinates || getVenueCoordinatesSync(venue);
+      
+      if (!coords.isValid) {
+        return {
+          ...venue,
+          distance: 'Unknown',
+          distanceKm: null
+        };
+      }
+
+      const distanceKm = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        coords.latitude,
+        coords.longitude
+      );
+
+      const formattedDistance = formatDistance(distanceKm);
+      
+      console.log(`📏 ${venue.name}: ${formattedDistance} away`);
+      
+      return {
+        ...venue,
+        distance: formattedDistance,
+        distanceKm: distanceKm
+      };
+    });
+  };
+
+  // Update venues with valid coordinates and distances when nearbyTurfs or location changes
   useEffect(() => {
-    const updateVenuesWithCoords = async () => {
+    const updateVenuesWithCoordsAndDistances = async () => {
       if (nearbyTurfs.length > 0) {
+        console.log('🔄 Processing venues with coordinates and distances...');
+        
+        // First, process coordinates
         const validVenues = await processVenuesCoordinates(nearbyTurfs);
-        setVenuesWithValidCoords(validVenues);
-        setFilteredVenues(validVenues);
+        
+        // Then, calculate distances from user location
+        const venuesWithDistances = calculateVenueDistances(validVenues, location);
+        
+        // Sort by distance if user location is available
+        if (location) {
+          venuesWithDistances.sort((a, b) => {
+            if (a.distanceKm === null) return 1;
+            if (b.distanceKm === null) return -1;
+            return a.distanceKm - b.distanceKm;
+          });
+          console.log('📊 Venues sorted by distance from user location');
+        }
+        
+        setVenuesWithValidCoords(venuesWithDistances);
+        setFilteredVenues(venuesWithDistances);
+        
+        console.log(`✅ Updated ${venuesWithDistances.length} venues with coordinates and distances`);
       }
     };
     
-    updateVenuesWithCoords();
-  }, [nearbyTurfs]);
+    updateVenuesWithCoordsAndDistances();
+  }, [nearbyTurfs, location]); // Added location dependency
   const filterVenues = () => {
     if (!searchQuery.trim() && selectedSport === 'All') {
       setFilteredVenues(venuesWithValidCoords);
@@ -366,11 +464,12 @@ export default function MapScreen({ navigation }) {
   const getCurrentLocation = async () => {
     setIsLoading(true);
     try {
+      console.log('📍 Requesting location permissions...');
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
           'Location Permission Required',
-          'Please enable location access to find nearby venues and get accurate directions.',
+          'Please enable location access to find nearby venues and get accurate distances.',
           [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Settings', onPress: () => Location.requestForegroundPermissionsAsync() }
@@ -380,6 +479,7 @@ export default function MapScreen({ navigation }) {
         return;
       }
 
+      console.log('📍 Getting current location...');
       let currentLocation = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
@@ -390,6 +490,8 @@ export default function MapScreen({ navigation }) {
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
       };
+      
+      console.log(`📍 User location obtained: ${currentLocation.coords.latitude}, ${currentLocation.coords.longitude}`);
       
       setLocation(currentLocation.coords);
       setInitialRegion(newRegion);
@@ -406,9 +508,11 @@ export default function MapScreen({ navigation }) {
         radius: 10000 // 10km radius
       }));
       
+      console.log('✅ Location updated successfully, distances will be recalculated');
+      
     } catch (error) {
       Alert.alert('Location Error', 'Unable to get your current location. Please try again.');
-      console.error('Location error:', error);
+      console.error('❌ Location error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -652,6 +756,30 @@ export default function MapScreen({ navigation }) {
                   {showRadius ? 'Hide' : 'Show'} Search Radius
                 </Text>
               </TouchableOpacity>
+              
+              {location && (
+                <TouchableOpacity 
+                  style={styles.sortByDistanceButton}
+                  onPress={() => {
+                    const sorted = [...filteredVenues].sort((a, b) => {
+                      if (a.distanceKm === null) return 1;
+                      if (b.distanceKm === null) return -1;
+                      return a.distanceKm - b.distanceKm;
+                    });
+                    setFilteredVenues(sorted);
+                    console.log('📊 Venues sorted by distance');
+                  }}
+                >
+                  <MaterialIcons 
+                    name="sort" 
+                    size={18} 
+                    color={themeColors.colors.primary} 
+                  />
+                  <Text style={styles.sortByDistanceText}>
+                    Sort by Distance
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </Surface>
         </Animated.View>
@@ -739,6 +867,10 @@ export default function MapScreen({ navigation }) {
                         <MaterialIcons name="star" size={14} color="#FFD700" />
                         <Text style={styles.calloutRatingText}>{venue.rating || '4.0'}</Text>
                       </View>
+                      <View style={styles.calloutDistance}>
+                        <MaterialIcons name="location-on" size={14} color="#666" />
+                        <Text style={styles.calloutDistanceText}>{venue.distance || 'Distance unknown'}</Text>
+                      </View>
                       <Text style={styles.calloutPrice}>
                         PKR {venue.pricePerHour || venue.basePrice || 'N/A'}/hr
                       </Text>
@@ -800,7 +932,7 @@ export default function MapScreen({ navigation }) {
                       <MaterialIcons name="star" size={16} color="#FFD700" />
                       <Text style={styles.venueRatingText}>{selectedVenue.rating || '4.0'}</Text>
                     </View>
-                    <Text style={styles.venueDistance}>{selectedVenue.distance || '2.5 km'}</Text>
+                    <Text style={styles.venueDistance}>{selectedVenue.distance || 'Distance unknown'}</Text>
                   </View>
                   
                   <Text style={styles.venuePrice}>
@@ -982,7 +1114,10 @@ const styles = StyleSheet.create({
   },
   filterActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   toggleRadiusButton: {
     flexDirection: 'row',
@@ -993,6 +1128,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   toggleRadiusText: {
+    fontSize: 12,
+    color: '#004d43',
+    marginLeft: 6,
+    fontFamily: 'Montserrat_500Medium',
+  },
+  sortByDistanceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#F0F8FF',
+    borderWidth: 1,
+    borderColor: '#004d43',
+  },
+  sortByDistanceText: {
     fontSize: 12,
     color: '#004d43',
     marginLeft: 6,
@@ -1058,12 +1209,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
+    flexWrap: 'wrap',
   },
   calloutRating: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   calloutRatingText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+    fontFamily: 'Montserrat_500Medium',
+  },
+  calloutDistance: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  calloutDistanceText: {
     fontSize: 12,
     color: '#666',
     marginLeft: 4,
