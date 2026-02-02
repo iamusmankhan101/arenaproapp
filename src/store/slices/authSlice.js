@@ -227,11 +227,13 @@ const authSlice = createSlice({
       state.passwordResetSent = false;
     },
     setAuthData: (state, action) => {
+      console.log('🔍 REDUX DEBUG: setAuthData called with:', action.payload);
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = action.payload.isAuthenticated;
       state.loading = false;
       state.error = null;
+      console.log('🔍 REDUX DEBUG: setAuthData - isAuthenticated set to:', state.isAuthenticated);
     },
     clearError: (state) => {
       state.error = null;
@@ -282,10 +284,14 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(signIn.fulfilled, (state, action) => {
+        console.log('🔍 REDUX DEBUG: signIn.fulfilled triggered');
+        console.log('🔍 REDUX DEBUG: Payload:', action.payload);
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        console.log('🔍 REDUX DEBUG: Updated state - isAuthenticated:', state.isAuthenticated);
+        console.log('🔍 REDUX DEBUG: Updated state - hasUser:', !!state.user);
       })
       .addCase(signIn.rejected, (state, action) => {
         state.loading = false;
