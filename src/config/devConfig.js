@@ -3,6 +3,11 @@ export const DEV_CONFIG = {
   // Set to false to show login screen, true to bypass automatically
   BYPASS_AUTH: __DEV__ && false, // Changed to false
   
+  // Network fallback settings
+  ENABLE_NETWORK_FALLBACK: __DEV__ && true,
+  NETWORK_TIMEOUT: 10000, // 10 seconds
+  MAX_RETRY_ATTEMPTS: 3,
+  
   // Mock user for development bypass
   MOCK_USER: {
     id: 'dev_user_1',
@@ -72,4 +77,29 @@ export const getMockCredentials = () => {
     user: DEV_CONFIG.MOCK_USER,
     token: DEV_CONFIG.MOCK_TOKEN
   };
+};
+
+// Helper function to handle network fallback
+export const shouldUseNetworkFallback = () => {
+  return DEV_CONFIG.ENABLE_NETWORK_FALLBACK && __DEV__;
+};
+
+// Network status helper
+export const checkNetworkStatus = async () => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DEV_CONFIG.NETWORK_TIMEOUT);
+    
+    const response = await fetch('https://www.google.com', {
+      method: 'HEAD',
+      mode: 'no-cors',
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    return true;
+  } catch (error) {
+    console.log('Network check failed:', error.message);
+    return false;
+  }
 };
