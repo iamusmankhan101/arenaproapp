@@ -309,7 +309,10 @@ export const firebaseAuthAPI = {
         throw new Error('Firebase authentication is not properly initialized');
       }
 
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Normalize email to lowercase
+      const normalizedEmail = email.toLowerCase().trim();
+
+      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
       const user = userCredential.user;
       
       const userDocRef = doc(db, 'users', user.uid);
@@ -380,15 +383,18 @@ export const firebaseAuthAPI = {
         throw new Error('Firebase authentication is not properly initialized');
       }
 
+      // Normalize email to lowercase
+      const normalizedEmail = email.toLowerCase().trim();
+
       const existingUsers = await getDocs(
-        query(collection(db, 'users'), where('email', '==', email))
+        query(collection(db, 'users'), where('email', '==', normalizedEmail))
       );
       
       if (!existingUsers.empty) {
         throw new Error('An account with this email already exists');
       }
       
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
       const user = userCredential.user;
       
       await updateProfile(user, { displayName: fullName });
@@ -408,7 +414,7 @@ export const firebaseAuthAPI = {
       // Create clean user data for Redux
       const baseUserData = {
         uid: user.uid,
-        email: user.email,
+        email: normalizedEmail,
         displayName: fullName,
         emailVerified: user.emailVerified
       };
@@ -505,7 +511,9 @@ export const firebaseAuthAPI = {
   // Enhanced forgot password
   forgotPassword: async (email) => {
     return withRetry(async () => {
-      await sendPasswordResetEmail(auth, email);
+      // Normalize email to lowercase
+      const normalizedEmail = email.toLowerCase().trim();
+      await sendPasswordResetEmail(auth, normalizedEmail);
       return { data: { message: 'Password reset email sent successfully' } };
     }, 'Forgot password');
   },
