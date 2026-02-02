@@ -162,7 +162,14 @@ export const initializeAuth = createAsyncThunk(
         dispatch(setInitialized());
       });
       
-      return { unsubscribe };
+      // Store unsubscribe function outside Redux state
+      if (typeof window !== 'undefined') {
+        window.__authUnsubscribe = unsubscribe;
+      } else if (typeof global !== 'undefined') {
+        global.__authUnsubscribe = unsubscribe;
+      }
+      
+      return { success: true };
     } catch (error) {
       return rejectWithValue({ message: 'Failed to initialize authentication' });
     }
@@ -180,7 +187,6 @@ const authSlice = createSlice({
     initializing: true,
     emailVerificationSent: false,
     passwordResetSent: false,
-    authListener: null,
   },
   reducers: {
     logout: (state) => {
@@ -193,6 +199,14 @@ const authSlice = createSlice({
       AsyncStorage.multiRemove(['authToken', 'user']);
       // Sign out from Firebase
       firebaseAuthAPI.signOut();
+      // Clean up auth listener
+      if (typeof window !== 'undefined' && window.__authUnsubscribe) {
+        window.__authUnsubscribe();
+        window.__authUnsubscribe = null;
+      } else if (typeof global !== 'undefined' && global.__authUnsubscribe) {
+        global.__authUnsubscribe();
+        global.__authUnsubscribe = null;
+      }
     },
     clearAuth: (state) => {
       state.user = null;
@@ -226,8 +240,9 @@ const authSlice = createSlice({
       .addCase(initializeAuth.pending, (state) => {
         state.initializing = true;
       })
-      .addCase(initializeAuth.fulfilled, (state, action) => {
-        state.authListener = action.payload.unsubscribe;
+      .addCase(initializeAuth.fulfilled, (state) => {
+        // Auth listener is now stored outside Redux state
+        state.initializing = false;
       })
       .addCase(initializeAuth.rejected, (state, action) => {
         state.initializing = false;

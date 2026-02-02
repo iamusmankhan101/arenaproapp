@@ -16,8 +16,16 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        ignoredActions: [
+          'persist/PERSIST', 
+          'persist/REHYDRATE',
+          'auth/initializeAuth/fulfilled',
+          'auth/initializeAuth/pending',
+          'auth/initializeAuth/rejected'
+        ],
         ignoredPaths: ['_persist'],
+        // Don't check for non-serializable values in these action types
+        ignoredActionPaths: ['payload.unsubscribe', 'meta.arg.unsubscribe'],
       },
     }),
 });
