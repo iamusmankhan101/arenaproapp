@@ -15,7 +15,7 @@ import {
   ActivityIndicator 
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signUp, googleSignIn, clearError } from '../../store/slices/authSlice';
+import { signUp, googleSignIn, clearError, devBypassAuth } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SignUpScreen({ navigation }) {
@@ -54,9 +54,24 @@ export default function SignUpScreen({ navigation }) {
   // Show error alert
   useEffect(() => {
     if (error) {
-      Alert.alert('Sign Up Error', error, [
-        { text: 'OK', onPress: () => dispatch(clearError()) }
-      ]);
+      let errorTitle = 'Sign Up Error';
+      let errorMessage = error;
+      let buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
+      
+      // Special handling for configuration errors
+      if (error.includes('configuration-not-found') || error.includes('Firebase configuration')) {
+        errorTitle = 'Firebase Setup Required';
+        errorMessage = 'Firebase Authentication needs to be enabled in the Firebase Console. Would you like to continue as guest for testing?';
+        buttons = [
+          { text: 'Cancel', style: 'cancel', onPress: () => dispatch(clearError()) },
+          { text: 'Continue as Guest', onPress: () => {
+            dispatch(clearError());
+            dispatch(devBypassAuth());
+          }}
+        ];
+      }
+      
+      Alert.alert(errorTitle, errorMessage, buttons);
     }
   }, [error, dispatch]);
 
@@ -119,6 +134,20 @@ export default function SignUpScreen({ navigation }) {
   const handleSignUp = () => {
     if (validateForm()) {
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
+      
+      // Check if we're in development and Firebase is having issues
+      if (__DEV__ && !navigator.onLine) {
+        Alert.alert(
+          'Network Issue',
+          'No internet connection detected. Would you like to continue as guest for testing?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Continue as Guest', onPress: () => dispatch(devBypassAuth()) }
+          ]
+        );
+        return;
+      }
+      
       dispatch(signUp({ 
         email: email.trim().toLowerCase(),
         password,

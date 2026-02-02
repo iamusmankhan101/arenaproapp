@@ -38,9 +38,24 @@ export default function SignInScreen({ navigation }) {
   // Show error alert
   useEffect(() => {
     if (error) {
-      Alert.alert('Sign In Error', error, [
-        { text: 'OK', onPress: () => dispatch(clearError()) }
-      ]);
+      let errorTitle = 'Sign In Error';
+      let errorMessage = error;
+      let buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
+      
+      // Special handling for configuration errors
+      if (error.includes('configuration-not-found') || error.includes('Firebase configuration')) {
+        errorTitle = 'Firebase Setup Required';
+        errorMessage = 'Firebase Authentication needs to be enabled in the Firebase Console. Would you like to continue as guest for testing?';
+        buttons = [
+          { text: 'Cancel', style: 'cancel', onPress: () => dispatch(clearError()) },
+          { text: 'Continue as Guest', onPress: () => {
+            dispatch(clearError());
+            dispatch(devBypassAuth());
+          }}
+        ];
+      }
+      
+      Alert.alert(errorTitle, errorMessage, buttons);
     }
   }, [error, dispatch]);
 
