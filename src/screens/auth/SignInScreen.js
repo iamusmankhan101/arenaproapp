@@ -4,21 +4,19 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  Image,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  TextInput
 } from 'react-native';
 import { 
   Text, 
-  TextInput, 
   Button, 
   Switch,
-  ActivityIndicator,
-  Snackbar
+  ActivityIndicator
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signIn, googleSignIn, devBypassAuth, clearError } from '../../store/slices/authSlice';
+import { signIn, clearError } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SignInScreen({ navigation }) {
@@ -45,24 +43,12 @@ export default function SignInScreen({ navigation }) {
       // Handle network-specific errors
       if (error.includes('network') || error.includes('connection') || error.includes('internet')) {
         errorTitle = 'Network Issue';
-        errorMessage = 'Having trouble connecting. Would you like to continue as guest for testing?';
-        buttons = [
-          { text: 'Retry', onPress: () => dispatch(clearError()) },
-          { text: 'Continue as Guest', onPress: () => {
-            dispatch(clearError());
-            dispatch(devBypassAuth());
-          }}
-        ];
+        errorMessage = 'Having trouble connecting. Please check your internet connection and try again.';
+        buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
       } else if (error.includes('configuration-not-found') || error.includes('Firebase configuration')) {
         errorTitle = 'Setup Required';
-        errorMessage = 'Firebase needs to be configured. Would you like to continue as guest for testing?';
-        buttons = [
-          { text: 'Cancel', style: 'cancel', onPress: () => dispatch(clearError()) },
-          { text: 'Continue as Guest', onPress: () => {
-            dispatch(clearError());
-            dispatch(devBypassAuth());
-          }}
-        ];
+        errorMessage = 'Firebase needs to be configured. Please contact support.';
+        buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
       }
       
       Alert.alert(errorTitle, errorMessage, buttons);
@@ -95,20 +81,11 @@ export default function SignInScreen({ navigation }) {
   };
 
   const handleGoogleSignIn = () => {
-    // For now, we'll use dev bypass for Google sign in
-    // In production, you would integrate with Google Sign-In SDK
     Alert.alert(
       'Google Sign In',
-      'Google Sign In will be available in the next update. Would you like to continue as guest?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Continue as Guest', onPress: handleGuestLogin }
-      ]
+      'Google Sign In will be available in the next update.',
+      [{ text: 'OK' }]
     );
-  };
-
-  const handleGuestLogin = () => {
-    dispatch(devBypassAuth());
   };
 
   const handleForgotPassword = () => {
@@ -142,7 +119,7 @@ export default function SignInScreen({ navigation }) {
               <Text style={styles.logoText}>A</Text>
             </View>
             <Text style={styles.brandName}>Arena Pro</Text>
-            <Text style={styles.tagline}>Your Sports Booking Platform</Text>
+            <Text style={styles.tagline}>Play More . Stress Less</Text>
           </View>
         </View>
 
@@ -164,19 +141,11 @@ export default function SignInScreen({ navigation }) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                mode="flat"
-                dense={false}
+                autoCorrect={false}
+                returnKeyType="next"
                 selectionColor="#004d43"
-                cursorColor="#004d43"
-                theme={{
-                  colors: {
-                    primary: '#004d43',
-                    background: 'transparent',
-                    surface: 'transparent',
-                    onSurface: '#333',
-                    outline: 'transparent',
-                  }
-                }}
+                underlineColorAndroid="transparent"
+                textContentType="emailAddress"
               />
             </View>
           </View>
@@ -193,19 +162,11 @@ export default function SignInScreen({ navigation }) {
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoComplete="password"
-                mode="flat"
-                dense={false}
+                autoCorrect={false}
+                returnKeyType="done"
                 selectionColor="#004d43"
-                cursorColor="#004d43"
-                theme={{
-                  colors: {
-                    primary: '#004d43',
-                    background: 'transparent',
-                    surface: 'transparent',
-                    onSurface: '#333',
-                    outline: 'transparent',
-                  }
-                }}
+                underlineColorAndroid="transparent"
+                textContentType="password"
               />
               <TouchableOpacity 
                 onPress={() => setShowPassword(!showPassword)}
@@ -252,14 +213,7 @@ export default function SignInScreen({ navigation }) {
             {loading ? <ActivityIndicator color="#cdec6a" size="small" /> : 'SIGN IN'}
           </Button>
 
-          {/* Guest Login */}
-          <TouchableOpacity 
-            onPress={handleGuestLogin}
-            style={styles.guestButton}
-            disabled={loading}
-          >
-            <Text style={styles.guestButtonText}>Continue as Guest</Text>
-          </TouchableOpacity>
+
 
           {/* Divider */}
           <View style={styles.dividerContainer}>
@@ -286,21 +240,7 @@ export default function SignInScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Development Helper */}
-          {__DEV__ && (
-            <View style={styles.devHelper}>
-              <Text style={styles.devHelperTitle}>Development Helper</Text>
-              <TouchableOpacity 
-                style={styles.devButton}
-                onPress={() => {
-                  setEmail('test@example.com');
-                  setPassword('password123');
-                }}
-              >
-                <Text style={styles.devButtonText}>Fill Test Credentials</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -445,16 +385,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 1,
   },
-  guestButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginBottom: 24,
-  },
-  guestButtonText: {
-    fontSize: 16,
-    color: '#666',
-    textDecorationLine: 'underline',
-  },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -502,31 +432,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#004d43',
     fontWeight: '600',
-  },
-  devHelper: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: '#FFF3CD',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFEAA7',
-  },
-  devHelperTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#856404',
-    marginBottom: 8,
-  },
-  devButton: {
-    backgroundColor: '#FFC107',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  devButtonText: {
-    fontSize: 14,
-    color: '#212529',
-    fontWeight: '500',
   },
 });

@@ -1,21 +1,20 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  Image,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  TextInput
 } from 'react-native';
 import { 
   Text, 
-  TextInput, 
   ActivityIndicator 
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signUp, googleSignIn, clearError, devBypassAuth } from '../../store/slices/authSlice';
+import { signUp, clearError } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SignUpScreen({ navigation }) {
@@ -61,24 +60,12 @@ export default function SignUpScreen({ navigation }) {
       // Handle network-specific errors
       if (error.includes('network') || error.includes('connection') || error.includes('internet')) {
         errorTitle = 'Network Issue';
-        errorMessage = 'Having trouble connecting. Would you like to continue as guest for testing?';
-        buttons = [
-          { text: 'Retry', onPress: () => dispatch(clearError()) },
-          { text: 'Continue as Guest', onPress: () => {
-            dispatch(clearError());
-            dispatch(devBypassAuth());
-          }}
-        ];
+        errorMessage = 'Having trouble connecting. Please check your internet connection and try again.';
+        buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
       } else if (error.includes('configuration-not-found') || error.includes('Firebase configuration')) {
         errorTitle = 'Setup Required';
-        errorMessage = 'Firebase needs to be configured. Would you like to continue as guest for testing?';
-        buttons = [
-          { text: 'Cancel', style: 'cancel', onPress: () => dispatch(clearError()) },
-          { text: 'Continue as Guest', onPress: () => {
-            dispatch(clearError());
-            dispatch(devBypassAuth());
-          }}
-        ];
+        errorMessage = 'Firebase needs to be configured. Please contact support.';
+        buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
       }
       
       Alert.alert(errorTitle, errorMessage, buttons);
@@ -163,17 +150,6 @@ export default function SignUpScreen({ navigation }) {
     );
   };
 
-  const handleNetworkIssue = () => {
-    Alert.alert(
-      'Network Issue',
-      'No internet connection detected. Would you like to continue as guest for testing?',
-      [
-        { text: 'Retry', onPress: () => handleSignUp() },
-        { text: 'Continue as Guest', onPress: () => dispatch(devBypassAuth()) }
-      ]
-    );
-  };
-
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
@@ -217,19 +193,11 @@ export default function SignUpScreen({ navigation }) {
                 value={firstName}
                 onChangeText={setFirstName}
                 autoCapitalize="words"
-                mode="flat"
-                dense={false}
+                autoCorrect={false}
+                returnKeyType="next"
                 selectionColor="#004d43"
-                cursorColor="#004d43"
-                theme={{
-                  colors: {
-                    primary: '#004d43',
-                    background: 'transparent',
-                    surface: 'transparent',
-                    onSurface: '#333',
-                    outline: 'transparent',
-                  }
-                }}
+                underlineColorAndroid="transparent"
+                textContentType="givenName"
               />
             </View>
           </View>
@@ -245,19 +213,11 @@ export default function SignUpScreen({ navigation }) {
                 value={lastName}
                 onChangeText={setLastName}
                 autoCapitalize="words"
-                mode="flat"
-                dense={false}
+                autoCorrect={false}
+                returnKeyType="next"
                 selectionColor="#004d43"
-                cursorColor="#004d43"
-                theme={{
-                  colors: {
-                    primary: '#004d43',
-                    background: 'transparent',
-                    surface: 'transparent',
-                    onSurface: '#333',
-                    outline: 'transparent',
-                  }
-                }}
+                underlineColorAndroid="transparent"
+                textContentType="familyName"
               />
             </View>
           </View>
@@ -275,19 +235,11 @@ export default function SignUpScreen({ navigation }) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                mode="flat"
-                dense={false}
+                autoCorrect={false}
+                returnKeyType="next"
                 selectionColor="#004d43"
-                cursorColor="#004d43"
-                theme={{
-                  colors: {
-                    primary: '#004d43',
-                    background: 'transparent',
-                    surface: 'transparent',
-                    onSurface: '#333',
-                    outline: 'transparent',
-                  }
-                }}
+                underlineColorAndroid="transparent"
+                textContentType="emailAddress"
               />
             </View>
           </View>
@@ -343,19 +295,11 @@ export default function SignUpScreen({ navigation }) {
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"
-                mode="flat"
-                dense={false}
+                autoCorrect={false}
+                returnKeyType="next"
                 selectionColor="#004d43"
-                cursorColor="#004d43"
-                theme={{
-                  colors: {
-                    primary: '#004d43',
-                    background: 'transparent',
-                    surface: 'transparent',
-                    onSurface: '#333',
-                    outline: 'transparent',
-                  }
-                }}
+                underlineColorAndroid="transparent"
+                textContentType="telephoneNumber"
               />
             </View>
           </View>
@@ -371,19 +315,11 @@ export default function SignUpScreen({ navigation }) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                mode="flat"
-                dense={false}
+                autoCorrect={false}
+                returnKeyType="next"
                 selectionColor="#004d43"
-                cursorColor="#004d43"
-                theme={{
-                  colors: {
-                    primary: '#004d43',
-                    background: 'transparent',
-                    surface: 'transparent',
-                    onSurface: '#333',
-                    outline: 'transparent',
-                  }
-                }}
+                underlineColorAndroid="transparent"
+                textContentType="newPassword"
               />
               <TouchableOpacity 
                 onPress={() => setShowPassword(!showPassword)}
@@ -409,19 +345,11 @@ export default function SignUpScreen({ navigation }) {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
-                mode="flat"
-                dense={false}
+                autoCorrect={false}
+                returnKeyType="done"
                 selectionColor="#004d43"
-                cursorColor="#004d43"
-                theme={{
-                  colors: {
-                    primary: '#004d43',
-                    background: 'transparent',
-                    surface: 'transparent',
-                    onSurface: '#333',
-                    outline: 'transparent',
-                  }
-                }}
+                underlineColorAndroid="transparent"
+                textContentType="newPassword"
               />
               <TouchableOpacity 
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -498,33 +426,7 @@ export default function SignUpScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Development Helper */}
-          {__DEV__ && (
-            <View style={styles.devHelper}>
-              <Text style={styles.devHelperTitle}>Development Helper</Text>
-              <TouchableOpacity 
-                style={styles.devButton}
-                onPress={() => {
-                  setFirstName('John');
-                  setLastName('Doe');
-                  setEmail('john.doe@example.com');
-                  setSelectedCity('Lahore');
-                  setPhoneNumber('3001234567');
-                  setPassword('password123');
-                  setConfirmPassword('password123');
-                }}
-              >
-                <Text style={styles.devButtonText}>Fill Test Data</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.devButton, { backgroundColor: '#28a745', marginTop: 8 }]}
-                onPress={() => dispatch(devBypassAuth())}
-              >
-                <Text style={[styles.devButtonText, { color: 'white' }]}>Continue as Guest</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -770,31 +672,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#004d43',
     fontWeight: '600',
-  },
-  devHelper: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: '#FFF3CD',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFEAA7',
-  },
-  devHelperTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#856404',
-    marginBottom: 8,
-  },
-  devButton: {
-    backgroundColor: '#FFC107',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  devButtonText: {
-    fontSize: 14,
-    color: '#212529',
-    fontWeight: '500',
   },
 });

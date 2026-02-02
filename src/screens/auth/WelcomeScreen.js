@@ -1,21 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
 import { Text, Button } from 'react-native-paper';
-import { useDispatch } from 'react-redux';
-import { devBypassAuth } from '../../store/slices/authSlice';
 import { theme } from '../../theme/theme';
 
 export default function WelcomeScreen({ navigation }) {
-  const dispatch = useDispatch();
-
-  const handleDevBypass = async () => {
-    try {
-      await dispatch(devBypassAuth()).unwrap();
-    } catch (error) {
-      console.error('Dev bypass failed:', error);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <ImageBackground 
@@ -84,25 +72,6 @@ export default function WelcomeScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Development Bypass Button */}
-          {__DEV__ && (
-            <View style={styles.devBypassContainer}>
-              <TouchableOpacity 
-                style={styles.devBypassButton}
-                onPress={handleDevBypass}
-              >
-                <Text style={styles.devBypassText}>🚀 Dev Bypass</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.adminButton}
-                onPress={() => navigation.navigate('AdminLogin')}
-              >
-                <Text style={styles.adminButtonText}>🔧 Admin Panel</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       </ImageBackground>
     </View>
@@ -201,36 +170,5 @@ const styles = StyleSheet.create({
   googleIcon: {
     width: 50,
     height: 50,
-  },
-  devBypassContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    gap: 12,
-  },
-  devBypassButton: {
-    backgroundColor: 'rgba(255, 193, 7, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 193, 7, 0.5)',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  devBypassText: {
-    fontSize: 14,
-    color: '#FFC107',
-    fontWeight: '600',
-  },
-  adminButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.5)',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  adminButtonText: {
-    fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '600',
   },
 });
