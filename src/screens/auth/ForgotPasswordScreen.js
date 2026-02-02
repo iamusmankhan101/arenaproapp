@@ -88,7 +88,13 @@ export default function ForgotPasswordScreen({ navigation, route }) {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('SignIn');
+              }
+            }}
           >
             <MaterialIcons name="arrow-back" size={24} color="#000000" />
           </TouchableOpacity>

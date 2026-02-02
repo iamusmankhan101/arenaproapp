@@ -85,7 +85,13 @@ export default function AdminLoginScreen({ navigation }) {
 
       <Button
         mode="text"
-        onPress={() => navigation.goBack()}
+        onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('SignIn');
+          }
+        }}
         style={styles.backButton}
       >
         Back to App

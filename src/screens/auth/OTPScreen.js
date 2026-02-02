@@ -60,7 +60,16 @@ export default function OTPScreen({ route, navigation }) {
         <View style={styles.decorativeCircle3} />
         
         {/* Back button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('SignIn');
+            }
+          }}
+        >
           <MaterialIcons name="arrow-back" size={24} color="white" />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
