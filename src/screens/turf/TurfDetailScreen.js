@@ -394,7 +394,13 @@ export default function TurfDetailScreen({ route, navigation }) {
           <View style={styles.imageOverlay}>
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('MainTabs');
+              }
+            }}
             >
               <MaterialIcons name="arrow-back" size={24} color="black" />
             </TouchableOpacity>

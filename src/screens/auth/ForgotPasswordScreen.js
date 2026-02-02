@@ -116,7 +116,7 @@ export default function ForgotPasswordScreen({ navigation, route }) {
 
           {/* Email Input */}
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, email && styles.inputWrapperFocused]}>
               <MaterialIcons name="email" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -127,13 +127,17 @@ export default function ForgotPasswordScreen({ navigation, route }) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                contentStyle={styles.inputContent}
+                mode="flat"
+                dense={false}
+                selectionColor="#004d43"
+                cursorColor="#004d43"
                 theme={{
                   colors: {
-                    primary: 'transparent',
+                    primary: '#004d43',
                     background: 'transparent',
+                    surface: 'transparent',
+                    onSurface: '#333',
+                    outline: 'transparent',
                   }
                 }}
               />
@@ -243,6 +247,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 56,
   },
+  inputWrapperFocused: {
+    borderColor: '#004d43',
+    backgroundColor: '#FFFFFF',
+    elevation: 2,
+    shadowColor: '#004d43',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
   inputIcon: {
     marginRight: 12,
   },
@@ -252,12 +265,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     paddingHorizontal: 0,
-    paddingVertical: 0,
+    paddingVertical: 16,
     height: 56,
-  },
-  inputContent: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
+    textAlignVertical: 'center',
   },
   resetButton: {
     borderRadius: 12,

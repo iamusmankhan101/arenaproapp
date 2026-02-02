@@ -110,7 +110,13 @@ export default function BookingConfirmScreen({ route, navigation }) {
         [
           {
             text: 'Try Again',
-            onPress: () => navigation.goBack()
+            onPress: () => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('MainTabs');
+              }
+            }
           }
         ]
       );
@@ -168,7 +174,13 @@ export default function BookingConfirmScreen({ route, navigation }) {
         <View style={styles.headerContent}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('MainTabs');
+            }
+          }}
           >
             <MaterialIcons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>

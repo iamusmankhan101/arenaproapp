@@ -200,7 +200,7 @@ export default function SignUpScreen({ navigation }) {
         <View style={styles.formContainer}>
           {/* First Name */}
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, firstName && styles.inputWrapperFocused]}>
               <MaterialIcons name="person" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -209,13 +209,17 @@ export default function SignUpScreen({ navigation }) {
                 value={firstName}
                 onChangeText={setFirstName}
                 autoCapitalize="words"
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                contentStyle={styles.inputContent}
+                mode="flat"
+                dense={false}
+                selectionColor="#004d43"
+                cursorColor="#004d43"
                 theme={{
                   colors: {
-                    primary: 'transparent',
+                    primary: '#004d43',
                     background: 'transparent',
+                    surface: 'transparent',
+                    onSurface: '#333',
+                    outline: 'transparent',
                   }
                 }}
               />
@@ -224,7 +228,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Last Name */}
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, lastName && styles.inputWrapperFocused]}>
               <MaterialIcons name="person" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -233,13 +237,17 @@ export default function SignUpScreen({ navigation }) {
                 value={lastName}
                 onChangeText={setLastName}
                 autoCapitalize="words"
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                contentStyle={styles.inputContent}
+                mode="flat"
+                dense={false}
+                selectionColor="#004d43"
+                cursorColor="#004d43"
                 theme={{
                   colors: {
-                    primary: 'transparent',
+                    primary: '#004d43',
                     background: 'transparent',
+                    surface: 'transparent',
+                    onSurface: '#333',
+                    outline: 'transparent',
                   }
                 }}
               />
@@ -248,7 +256,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Email */}
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, email && styles.inputWrapperFocused]}>
               <MaterialIcons name="email" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -259,13 +267,17 @@ export default function SignUpScreen({ navigation }) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                contentStyle={styles.inputContent}
+                mode="flat"
+                dense={false}
+                selectionColor="#004d43"
+                cursorColor="#004d43"
                 theme={{
                   colors: {
-                    primary: 'transparent',
+                    primary: '#004d43',
                     background: 'transparent',
+                    surface: 'transparent',
+                    onSurface: '#333',
+                    outline: 'transparent',
                   }
                 }}
               />
@@ -311,7 +323,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Phone Number */}
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, phoneNumber && styles.inputWrapperFocused]}>
               <View style={styles.countryCodeContainer}>
                 <Text style={styles.flagEmoji}>🇵🇰</Text>
                 <Text style={styles.countryCode}>+92</Text>
@@ -323,13 +335,17 @@ export default function SignUpScreen({ navigation }) {
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                contentStyle={styles.inputContent}
+                mode="flat"
+                dense={false}
+                selectionColor="#004d43"
+                cursorColor="#004d43"
                 theme={{
                   colors: {
-                    primary: 'transparent',
+                    primary: '#004d43',
                     background: 'transparent',
+                    surface: 'transparent',
+                    onSurface: '#333',
+                    outline: 'transparent',
                   }
                 }}
               />
@@ -338,7 +354,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Password */}
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, password && styles.inputWrapperFocused]}>
               <MaterialIcons name="lock" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -347,13 +363,17 @@ export default function SignUpScreen({ navigation }) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                contentStyle={styles.inputContent}
+                mode="flat"
+                dense={false}
+                selectionColor="#004d43"
+                cursorColor="#004d43"
                 theme={{
                   colors: {
-                    primary: 'transparent',
+                    primary: '#004d43',
                     background: 'transparent',
+                    surface: 'transparent',
+                    onSurface: '#333',
+                    outline: 'transparent',
                   }
                 }}
               />
@@ -372,7 +392,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Confirm Password */}
           <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, confirmPassword && styles.inputWrapperFocused]}>
               <MaterialIcons name="lock" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -381,13 +401,17 @@ export default function SignUpScreen({ navigation }) {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                contentStyle={styles.inputContent}
+                mode="flat"
+                dense={false}
+                selectionColor="#004d43"
+                cursorColor="#004d43"
                 theme={{
                   colors: {
-                    primary: 'transparent',
+                    primary: '#004d43',
                     background: 'transparent',
+                    surface: 'transparent',
+                    onSurface: '#333',
+                    outline: 'transparent',
                   }
                 }}
               />
@@ -539,6 +563,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 56,
   },
+  inputWrapperFocused: {
+    borderColor: '#004d43',
+    backgroundColor: '#FFFFFF',
+    elevation: 2,
+    shadowColor: '#004d43',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
   inputIcon: {
     marginRight: 12,
   },
@@ -548,8 +581,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     paddingHorizontal: 0,
-    paddingVertical: 0,
+    paddingVertical: 16,
     height: 56,
+    textAlignVertical: 'center',
   },
   phoneInput: {
     flex: 1,
@@ -557,13 +591,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     paddingHorizontal: 0,
-    paddingVertical: 0,
+    paddingVertical: 16,
     height: 56,
     marginLeft: 12,
-  },
-  inputContent: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
+    textAlignVertical: 'center',
   },
   eyeIcon: {
     padding: 8,
