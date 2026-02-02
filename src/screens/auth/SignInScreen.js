@@ -74,9 +74,46 @@ export default function SignInScreen({ navigation }) {
     return true;
   };
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
+    console.log('🔍 DEBUG: Starting sign-in process...');
+    console.log('🔍 DEBUG: Email:', email);
+    console.log('🔍 DEBUG: Password length:', password.length);
+    console.log('🔍 DEBUG: Normalized email:', email.trim().toLowerCase());
+    
     if (validateForm()) {
-      dispatch(signIn({ email: email.trim().toLowerCase(), password }));
+      console.log('🔍 DEBUG: Form validation passed');
+      
+      try {
+        console.log('🔍 DEBUG: Dispatching signIn action...');
+        const result = await dispatch(signIn({ 
+          email: email.trim().toLowerCase(), 
+          password 
+        })).unwrap();
+        
+        console.log('🔍 DEBUG: Sign-in successful!', result);
+      } catch (error) {
+        console.log('🔍 DEBUG: Sign-in failed with error:', error);
+        console.log('🔍 DEBUG: Error type:', typeof error);
+        console.log('🔍 DEBUG: Error message:', error.message || error);
+        console.log('🔍 DEBUG: Full error object:', JSON.stringify(error, null, 2));
+        
+        // Check for specific Firebase error codes
+        if (error.message) {
+          if (error.message.includes('auth/user-not-found')) {
+            console.log('🔍 DEBUG: User not found in Firebase Auth');
+          } else if (error.message.includes('auth/wrong-password')) {
+            console.log('🔍 DEBUG: Wrong password provided');
+          } else if (error.message.includes('auth/invalid-email')) {
+            console.log('🔍 DEBUG: Invalid email format');
+          } else if (error.message.includes('auth/user-disabled')) {
+            console.log('🔍 DEBUG: User account is disabled');
+          } else if (error.message.includes('auth/too-many-requests')) {
+            console.log('🔍 DEBUG: Too many failed attempts');
+          }
+        }
+      }
+    } else {
+      console.log('🔍 DEBUG: Form validation failed');
     }
   };
 

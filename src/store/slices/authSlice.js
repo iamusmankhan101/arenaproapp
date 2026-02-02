@@ -8,9 +8,14 @@ export const signIn = createAsyncThunk(
   'auth/signIn',
   async ({ email, password }, { rejectWithValue }) => {
     try {
+      console.log('🔍 REDUX DEBUG: signIn thunk called with:', { email, passwordLength: password.length });
       const response = await firebaseAuthAPI.signIn(email, password);
+      console.log('🔍 REDUX DEBUG: firebaseAuthAPI.signIn response:', response);
       return response.data;
     } catch (error) {
+      console.log('🔍 REDUX DEBUG: signIn thunk error:', error);
+      console.log('🔍 REDUX DEBUG: Error message:', error.message);
+      console.log('🔍 REDUX DEBUG: Error code:', error.code);
       return rejectWithValue({ message: error.message });
     }
   }

@@ -305,74 +305,103 @@ export const firebaseAuthAPI = {
   // Enhanced sign in
   signIn: async (email, password) => {
     return withRetry(async () => {
+      console.log('🔍 FIREBASE DEBUG: signIn called with:', { email, passwordLength: password.length });
+      
       if (!auth) {
+        console.log('🔍 FIREBASE DEBUG: Auth not initialized');
         throw new Error('Firebase authentication is not properly initialized');
       }
 
       // Normalize email to lowercase
       const normalizedEmail = email.toLowerCase().trim();
+      console.log('🔍 FIREBASE DEBUG: Normalized email:', normalizedEmail);
 
-      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
-      const user = userCredential.user;
-      
-      const userDocRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-      
-      let rawFirestoreData = {};
-      
-      if (userDoc.exists()) {
-        rawFirestoreData = userDoc.data();
-        try {
-          await updateDoc(userDocRef, {
-            lastLoginAt: serverTimestamp()
-          });
-        } catch (updateError) {
-          console.log('⚠️ Could not update lastLoginAt:', updateError.message);
-        }
-      } else {
-        const firestoreUserData = createUserDocumentForFirestore(user, {
-          registrationMethod: 'sign_in'
+      try {
+        console.log('🔍 FIREBASE DEBUG: Calling signInWithEmailAndPassword...');
+        const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+        console.log('🔍 FIREBASE DEBUG: signInWithEmailAndPassword successful');
+        const user = userCredential.user;
+        console.log('🔍 FIREBASE DEBUG: User object:', {
+          uid: user.uid,
+          email: user.email,
+          emailVerified: user.emailVerified
         });
         
-        try {
-          await setDoc(userDocRef, firestoreUserData);
-          console.log('✅ Created user document during sign in');
-          rawFirestoreData = firestoreUserData;
-        } catch (createError) {
-          console.log('⚠️ Could not create user document:', createError.message);
-          rawFirestoreData = {
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString()
-          };
+        const userDocRef = doc(db, 'users', user.uid);
+        console.log('🔍 FIREBASE DEBUG: Getting user document...');
+        const userDoc = await getDoc(userDocRef);
+        
+        let rawFirestoreData = {};
+        
+        if (userDoc.exists()) {
+          console.log('🔍 FIREBASE DEBUG: User document exists');
+          rawFirestoreData = userDoc.data();
+          try {
+            await updateDoc(userDocRef, {
+              lastLoginAt: serverTimestamp()
+            });
+            console.log('🔍 FIREBASE DEBUG: Updated lastLoginAt');
+          } catch (updateError) {
+            console.log('🔍 FIREBASE DEBUG: Could not update lastLoginAt:', updateError.message);
+          }
+        } else {
+          console.log('🔍 FIREBASE DEBUG: User document does not exist, creating...');
+          const firestoreUserData = createUserDocumentForFirestore(user, {
+            registrationMethod: 'sign_in'
+          });
+          
+          try {
+            await setDoc(userDocRef, firestoreUserData);
+            console.log('🔍 FIREBASE DEBUG: Created user document during sign in');
+            rawFirestoreData = firestoreUserData;
+          } catch (createError) {
+            console.log('🔍 FIREBASE DEBUG: Could not create user document:', createError.message);
+            rawFirestoreData = {
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              lastLoginAt: new Date().toISOString()
+            };
+          }
         }
+        
+        console.log('🔍 FIREBASE DEBUG: Getting ID token...');
+        const token = await user.getIdToken();
+        console.log('🔍 FIREBASE DEBUG: Got ID token');
+        
+        // Create clean user data for Redux
+        const baseUserData = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          emailVerified: user.emailVerified
+        };
+        
+        const cleanUserData = {
+          ...baseUserData,
+          ...deepCleanForRedux(rawFirestoreData)
+        };
+        
+        console.log('🔍 FIREBASE DEBUG: Clean user data:', cleanUserData);
+        
+        // Store in AsyncStorage
+        console.log('🔍 FIREBASE DEBUG: Storing in AsyncStorage...');
+        await AsyncStorage.setItem('authToken', token);
+        await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
+        console.log('🔍 FIREBASE DEBUG: Stored in AsyncStorage');
+        
+        console.log('🔍 FIREBASE DEBUG: Sign-in process completed successfully');
+        return {
+          data: {
+            user: cleanUserData,
+            token
+          }
+        };
+      } catch (firebaseError) {
+        console.log('🔍 FIREBASE DEBUG: Firebase error occurred:', firebaseError);
+        console.log('🔍 FIREBASE DEBUG: Firebase error code:', firebaseError.code);
+        console.log('🔍 FIREBASE DEBUG: Firebase error message:', firebaseError.message);
+        throw firebaseError;
       }
-      
-      const token = await user.getIdToken();
-      
-      // Create clean user data for Redux
-      const baseUserData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        emailVerified: user.emailVerified
-      };
-      
-      const cleanUserData = {
-        ...baseUserData,
-        ...deepCleanForRedux(rawFirestoreData)
-      };
-      
-      // Store in AsyncStorage
-      await AsyncStorage.setItem('authToken', token);
-      await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
-      
-      return {
-        data: {
-          user: cleanUserData,
-          token
-        }
-      };
     }, 'Sign in');
   },
 
