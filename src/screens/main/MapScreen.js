@@ -102,29 +102,79 @@ export default function MapScreen({ navigation }) {
       }),
     ]).start();
 
-    // Automatically get user location and load nearby turfs
-    const initializeLocation = async () => {
-      console.log('🚀 Initializing MapScreen with user location...');
+    // Proactively request location and load venues
+    const initializeMapScreen = async () => {
+      console.log('🚀 MapScreen: Initializing...');
       
+      // Always load venues first (regardless of location)
+      console.log('📍 MapScreen: Loading all venues...');
       try {
-        // Try to get user location first
-        await getCurrentLocation();
-      } catch (error) {
-        console.warn('⚠️ Could not get user location, using default location');
-        // Fallback to default location (Karachi) if location access fails
-        dispatch(fetchNearbyTurfs({
+        const result = await dispatch(fetchNearbyTurfs({
           latitude: region.latitude,
           longitude: region.longitude,
-          radius: 10000 // 10km radius
+          radius: 50000 // Large radius to get all venues
         }));
+        console.log('✅ MapScreen: Venues loaded successfully:', result);
+      } catch (error) {
+        console.error('❌ MapScreen: Failed to load venues:', error);
+      }
+      
+      // Then try to get user location for distance calculations
+      try {
+        console.log('📍 MapScreen: Requesting location access...');
+        await requestLocationAccess();
+      } catch (error) {
+        console.log('⚠️ MapScreen: Location access denied or failed, continuing without location');
+        // App continues to work without location
       }
     };
 
-    initializeLocation();
+    initializeMapScreen();
   }, []);
+
+  // Enhanced location access request function
+  const requestLocationAccess = async () => {
+    try {
+      console.log('📍 Checking location permissions...');
+      
+      // Request permission first
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status === 'granted') {
+        console.log('✅ Location permission granted');
+        await getCurrentLocation();
+      } else {
+        console.log('❌ Location permission denied');
+        // Show user-friendly message but don't block the app
+        Alert.alert(
+          'Location Access',
+          'Location access will help us show nearby venues and calculate distances. You can still browse all venues without it.',
+          [
+            { text: 'Maybe Later', style: 'cancel' },
+            { 
+              text: 'Enable Location', 
+              onPress: async () => {
+                const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+                if (newStatus === 'granted') {
+                  await getCurrentLocation();
+                }
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('📍 Location request error:', error);
+      // Continue without location
+    }
+  };
 
   useEffect(() => {
     // Update filtered venues when nearbyTurfs changes
+    console.log('🔄 MapScreen: nearbyTurfs updated, count:', nearbyTurfs.length);
+    if (nearbyTurfs.length > 0) {
+      console.log('📊 MapScreen: Sample venues:', nearbyTurfs.slice(0, 2).map(v => ({ name: v.name, id: v.id })));
+    }
     setFilteredVenues(nearbyTurfs);
   }, [nearbyTurfs]);
 
@@ -322,11 +372,33 @@ export default function MapScreen({ navigation }) {
   // Update venues with valid coordinates and distances when nearbyTurfs or location changes
   useEffect(() => {
     const updateVenuesWithCoordsAndDistances = async () => {
+      console.log('🔄 MapScreen: Processing venues with coordinates and distances...');
+      console.log('📊 MapScreen: nearbyTurfs count:', nearbyTurfs.length);
+      
       if (nearbyTurfs.length > 0) {
         console.log('🔄 Processing venues with coordinates and distances...');
         
         // First, process coordinates
         const validVenues = await processVenuesCoordinates(nearbyTurfs);
+        console.log('✅ MapScreen: Valid venues after coordinate processing:', validVenues.length);
+        
+        // If no venues have valid coordinates, show all venues with default coordinates
+        if (validVenues.length === 0) {
+          console.warn('⚠️ MapScreen: No venues with valid coordinates found, showing all venues with default locations');
+          const venuesWithDefaults = nearbyTurfs.map((venue, index) => ({
+            ...venue,
+            coordinates: {
+              latitude: 31.5204 + (index * 0.01), // Spread venues around Lahore
+              longitude: 74.3587 + (index * 0.01),
+              isValid: true,
+              source: 'default'
+            }
+          }));
+          setVenuesWithValidCoords(venuesWithDefaults);
+          setFilteredVenues(venuesWithDefaults);
+          console.log(`✅ MapScreen: Showing ${venuesWithDefaults.length} venues with default coordinates`);
+          return;
+        }
         
         // Then, calculate distances from user location
         const venuesWithDistances = calculateVenueDistances(validVenues, location);
@@ -338,18 +410,27 @@ export default function MapScreen({ navigation }) {
             if (b.distanceKm === null) return -1;
             return a.distanceKm - b.distanceKm;
           });
-          console.log('📊 Venues sorted by distance from user location');
+          console.log('📊 MapScreen: Venues sorted by distance from user location');
         }
         
         setVenuesWithValidCoords(venuesWithDistances);
         setFilteredVenues(venuesWithDistances);
         
-        console.log(`✅ Updated ${venuesWithDistances.length} venues with coordinates and distances`);
+        console.log(`✅ MapScreen: Updated ${venuesWithDistances.length} venues with coordinates and distances`);
+      } else {
+        console.log('⚠️ MapScreen: No venues found in nearbyTurfs array');
+        // Force a reload if no venues are found
+        console.log('🔄 MapScreen: Attempting to reload venues...');
+        dispatch(fetchNearbyTurfs({
+          latitude: region.latitude,
+          longitude: region.longitude,
+          radius: 50000
+        }));
       }
     };
     
     updateVenuesWithCoordsAndDistances();
-  }, [nearbyTurfs, location]); // Added location dependency
+  }, [nearbyTurfs, location]);
   const filterVenues = () => {
     if (!searchQuery.trim() && selectedSport === 'All') {
       setFilteredVenues(venuesWithValidCoords);
@@ -684,7 +765,7 @@ export default function MapScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* Enhanced Results Counter with Coordinate Info */}
+            {/* Enhanced Results Counter with Debug Info */}
             <View style={styles.resultsContainer}>
               <Text style={styles.resultsText}>
                 {filteredVenues.length} venue{filteredVenues.length !== 1 ? 's' : ''} found
@@ -694,13 +775,48 @@ export default function MapScreen({ navigation }) {
                   </Text>
                 )}
               </Text>
-              {loading && (
-                <ActivityIndicator 
-                  size="small" 
-                  color={themeColors.colors.primary} 
-                  style={styles.loadingIndicator}
-                />
-              )}
+              <View style={styles.resultsActions}>
+                {loading && (
+                  <ActivityIndicator 
+                    size="small" 
+                    color={themeColors.colors.primary} 
+                    style={styles.loadingIndicator}
+                  />
+                )}
+                <TouchableOpacity 
+                  style={styles.debugButton}
+                  onPress={() => {
+                    console.log('🔍 MapScreen DEBUG INFO:');
+                    console.log('nearbyTurfs:', nearbyTurfs.length);
+                    console.log('venuesWithValidCoords:', venuesWithValidCoords.length);
+                    console.log('filteredVenues:', filteredVenues.length);
+                    console.log('location:', location);
+                    console.log('loading:', loading);
+                    console.log('isMapReady:', isMapReady);
+                    console.log('Sample venues:', nearbyTurfs.slice(0, 2));
+                    
+                    // Force reload venues
+                    console.log('🔄 Force reloading venues...');
+                    dispatch(fetchNearbyTurfs({
+                      latitude: region.latitude,
+                      longitude: region.longitude,
+                      radius: 50000
+                    }));
+                    
+                    Alert.alert('Debug Info', 
+                      `Total: ${nearbyTurfs.length} venues\n` +
+                      `Valid: ${venuesWithValidCoords.length} venues\n` +
+                      `Filtered: ${filteredVenues.length} venues\n` +
+                      `Location: ${location ? 'Yes' : 'No'}\n` +
+                      `Loading: ${loading ? 'Yes' : 'No'}\n` +
+                      `Map Ready: ${isMapReady ? 'Yes' : 'No'}\n\n` +
+                      `Check console for detailed logs.`
+                    );
+                  }}
+                >
+                  <MaterialIcons name="bug-report" size={16} color="#666" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </SafeAreaView>
@@ -819,88 +935,96 @@ export default function MapScreen({ navigation }) {
         )}
 
         {/* Enhanced Markers */}
-        {filteredVenues.map((venue) => {
-          const coordinates = venue.coordinates || getVenueCoordinatesSync(venue);
-          
-          // Only render markers for venues with valid coordinates
-          if (!coordinates.isValid) {
-            return null;
-          }
+        {filteredVenues.length > 0 ? (
+          filteredVenues.map((venue) => {
+            const coordinates = venue.coordinates || getVenueCoordinatesSync(venue);
+            
+            // Only render markers for venues with valid coordinates
+            if (!coordinates.isValid) {
+              console.warn(`⚠️ MapScreen: Skipping venue ${venue.name} - invalid coordinates`);
+              return null;
+            }
 
-          return (
-            <Marker
-              key={venue.id}
-              coordinate={{
-                latitude: coordinates.latitude,
-                longitude: coordinates.longitude
-              }}
-              onPress={() => handleMarkerPress(venue)}
-            >
-              <View style={[
-                styles.customMarker,
-                { 
-                  backgroundColor: getMarkerColor(venue),
-                  borderColor: selectedVenue?.id === venue.id ? themeColors.colors.secondary : 'white',
-                  borderWidth: selectedVenue?.id === venue.id ? 3 : 2,
-                }
-              ]}>
-                <MaterialIcons 
-                  name="sports-soccer" 
-                  size={16} 
-                  color="white" 
-                />
-                {venue.availableSlots > 0 && (
-                  <View style={styles.slotsBadge}>
-                    <Text style={styles.slotsBadgeText}>{venue.availableSlots}</Text>
-                  </View>
-                )}
-              </View>
+            console.log(`📍 MapScreen: Rendering marker for ${venue.name} at ${coordinates.latitude}, ${coordinates.longitude}`);
 
-              <Callout onPress={() => handleVenueSelect(venue)} tooltip>
-                <Surface style={styles.calloutContainer} elevation={4}>
-                  <View style={styles.calloutContent}>
-                    <Text style={styles.calloutTitle}>{venue.name}</Text>
-                    <Text style={styles.calloutAddress}>{getVenueAddress(venue)}</Text>
-                    
-                    <View style={styles.calloutDetails}>
-                      <View style={styles.calloutRating}>
-                        <MaterialIcons name="star" size={14} color="#FFD700" />
-                        <Text style={styles.calloutRatingText}>{venue.rating || '4.0'}</Text>
+            return (
+              <Marker
+                key={venue.id}
+                coordinate={{
+                  latitude: coordinates.latitude,
+                  longitude: coordinates.longitude
+                }}
+                onPress={() => handleMarkerPress(venue)}
+              >
+                <View style={[
+                  styles.customMarker,
+                  { 
+                    backgroundColor: getMarkerColor(venue),
+                    borderColor: selectedVenue?.id === venue.id ? themeColors.colors.secondary : 'white',
+                    borderWidth: selectedVenue?.id === venue.id ? 3 : 2,
+                  }
+                ]}>
+                  <MaterialIcons 
+                    name="sports-soccer" 
+                    size={16} 
+                    color="white" 
+                  />
+                  {venue.availableSlots > 0 && (
+                    <View style={styles.slotsBadge}>
+                      <Text style={styles.slotsBadgeText}>{venue.availableSlots}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <Callout onPress={() => handleVenueSelect(venue)} tooltip>
+                  <Surface style={styles.calloutContainer} elevation={4}>
+                    <View style={styles.calloutContent}>
+                      <Text style={styles.calloutTitle}>{venue.name}</Text>
+                      <Text style={styles.calloutAddress}>{getVenueAddress(venue)}</Text>
+                      
+                      <View style={styles.calloutDetails}>
+                        <View style={styles.calloutRating}>
+                          <MaterialIcons name="star" size={14} color="#FFD700" />
+                          <Text style={styles.calloutRatingText}>{venue.rating || '4.0'}</Text>
+                        </View>
+                        <View style={styles.calloutDistance}>
+                          <MaterialIcons name="location-on" size={14} color="#666" />
+                          <Text style={styles.calloutDistanceText}>{venue.distance || 'Distance unknown'}</Text>
+                        </View>
+                        <Text style={styles.calloutPrice}>
+                          PKR {venue.pricePerHour || venue.basePrice || 'N/A'}/hr
+                        </Text>
                       </View>
-                      <View style={styles.calloutDistance}>
-                        <MaterialIcons name="location-on" size={14} color="#666" />
-                        <Text style={styles.calloutDistanceText}>{venue.distance || 'Distance unknown'}</Text>
-                      </View>
-                      <Text style={styles.calloutPrice}>
-                        PKR {venue.pricePerHour || venue.basePrice || 'N/A'}/hr
+                      
+                      <Text style={[
+                        styles.calloutAvailability,
+                        { color: venue.openNow && venue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
+                      ]}>
+                        {getAvailabilityText(venue)}
                       </Text>
+                      
+                      <View style={styles.calloutSports}>
+                        {venue.sports?.slice(0, 3).map((sport, index) => (
+                          <Chip 
+                            key={sport} 
+                            style={styles.sportTag}
+                            textStyle={styles.sportTagText}
+                            compact
+                          >
+                            {sport}
+                          </Chip>
+                        ))}
+                      </View>
                     </View>
-                    
-                    <Text style={[
-                      styles.calloutAvailability,
-                      { color: venue.openNow && venue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
-                    ]}>
-                      {getAvailabilityText(venue)}
-                    </Text>
-                    
-                    <View style={styles.calloutSports}>
-                      {venue.sports?.slice(0, 3).map((sport, index) => (
-                        <Chip 
-                          key={sport} 
-                          style={styles.sportTag}
-                          textStyle={styles.sportTagText}
-                          compact
-                        >
-                          {sport}
-                        </Chip>
-                      ))}
-                    </View>
-                  </View>
-                </Surface>
-              </Callout>
-            </Marker>
-          );
-        })}
+                  </Surface>
+                </Callout>
+              </Marker>
+            );
+          })
+        ) : (
+          // Show a message when no venues are found
+          console.log('⚠️ MapScreen: No venues to display on map')
+        )}
       </MapView>
 
       {/* Enhanced Selected Venue Card */}
@@ -959,12 +1083,17 @@ export default function MapScreen({ navigation }) {
         </Animated.View>
       )}
 
-      {/* Enhanced Action Buttons */}
+      {/* Enhanced Action Buttons with Location Prompt */}
       <View style={styles.fabContainer}>
         <FAB
-          icon={isLoading ? "hourglass-empty" : "my-location"}
-          style={[styles.locationFab, { backgroundColor: themeColors.colors.primary }]}
-          onPress={getCurrentLocation}
+          icon={isLoading ? "hourglass-empty" : location ? "my-location" : "location-off"}
+          style={[
+            styles.locationFab, 
+            { 
+              backgroundColor: location ? themeColors.colors.primary : '#FF9800'
+            }
+          ]}
+          onPress={location ? getCurrentLocation : requestLocationAccess}
           disabled={isLoading}
           size="medium"
         />
@@ -983,6 +1112,29 @@ export default function MapScreen({ navigation }) {
           size="small"
         />
       </View>
+
+      {/* Location Permission Prompt */}
+      {!location && (
+        <View style={styles.locationPrompt}>
+          <Surface style={styles.locationPromptCard} elevation={4}>
+            <View style={styles.locationPromptContent}>
+              <MaterialIcons name="location-on" size={24} color={themeColors.colors.primary} />
+              <View style={styles.locationPromptText}>
+                <Text style={styles.locationPromptTitle}>Enable Location</Text>
+                <Text style={styles.locationPromptSubtitle}>
+                  Get accurate distances and find nearby venues
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.locationPromptButton}
+                onPress={requestLocationAccess}
+              >
+                <Text style={styles.locationPromptButtonText}>Enable</Text>
+              </TouchableOpacity>
+            </View>
+          </Surface>
+        </View>
+      )}
     </View>
   );
 }
@@ -1063,6 +1215,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     fontFamily: 'Montserrat_500Medium',
+    flex: 1,
+  },
+  resultsActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  debugButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: '#F0F0F0',
   },
   hiddenVenuesText: {
     fontSize: 11,
@@ -1354,5 +1517,48 @@ const styles = StyleSheet.create({
   listFab: {
     backgroundColor: '#FF9800',
     elevation: 4,
+  },
+  locationPrompt: {
+    position: 'absolute',
+    bottom: 180,
+    left: 16,
+    right: 16,
+  },
+  locationPromptCard: {
+    borderRadius: 12,
+    backgroundColor: 'white',
+  },
+  locationPromptContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  locationPromptText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  locationPromptTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  locationPromptSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  locationPromptButton: {
+    backgroundColor: '#004d43',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  locationPromptButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
   },
 });
