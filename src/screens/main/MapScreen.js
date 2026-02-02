@@ -1084,7 +1084,7 @@ export default function MapScreen({ navigation }) {
         )}
       </MapView>
 
-      {/* Enhanced Selected Venue Card */}
+      {/* Enhanced Selected Venue Card with Image */}
       {selectedVenue && (
         <Animated.View
           style={[
@@ -1100,39 +1100,127 @@ export default function MapScreen({ navigation }) {
               activeOpacity={0.9}
             >
               <View style={styles.venueCardContent}>
-                <Image 
-                  source={selectedVenue.image || { uri: 'https://via.placeholder.com/80x80' }} 
-                  style={styles.venueImage} 
-                />
-                <View style={styles.venueInfo}>
-                  <Text style={styles.venueName}>{selectedVenue.name}</Text>
-                  <Text style={styles.venueAddress}>{getVenueAddress(selectedVenue)}</Text>
+                {/* Venue Image */}
+                <View style={styles.venueImageContainer}>
+                  <Image 
+                    source={
+                      selectedVenue.images && selectedVenue.images.length > 0 
+                        ? { uri: selectedVenue.images[0] }
+                        : selectedVenue.image 
+                        ? { uri: selectedVenue.image }
+                        : require('../../images/indoor-football-court-turf.jpeg') // Default image
+                    }
+                    style={styles.venueImage} 
+                    defaultSource={require('../../images/indoor-football-court-turf.jpeg')}
+                  />
                   
-                  <View style={styles.venueDetails}>
+                  {/* Status Badge */}
+                  <View style={[
+                    styles.statusBadge,
+                    { 
+                      backgroundColor: selectedVenue.openNow && selectedVenue.availableSlots > 0 
+                        ? '#4CAF50' 
+                        : '#F44336' 
+                    }
+                  ]}>
+                    <Text style={styles.statusBadgeText}>
+                      {selectedVenue.openNow && selectedVenue.availableSlots > 0 ? 'OPEN' : 'CLOSED'}
+                    </Text>
+                  </View>
+
+                  {/* Sports Icons Overlay */}
+                  <View style={styles.sportsOverlay}>
+                    {selectedVenue.sports?.slice(0, 3).map((sport, index) => (
+                      <View key={sport} style={styles.sportIcon}>
+                        <MaterialIcons 
+                          name={
+                            sport.toLowerCase() === 'football' ? 'sports-soccer' :
+                            sport.toLowerCase() === 'cricket' ? 'sports-cricket' :
+                            sport.toLowerCase() === 'padel' ? 'sports-tennis' :
+                            sport.toLowerCase() === 'tennis' ? 'sports-tennis' :
+                            'sports'
+                          } 
+                          size={16} 
+                          color="white" 
+                        />
+                      </View>
+                    ))}
+                  </View>
+                </View>
+                
+                {/* Venue Info */}
+                <View style={styles.venueInfo}>
+                  <View style={styles.venueHeader}>
+                    <Text style={styles.venueName} numberOfLines={1}>
+                      {selectedVenue.name}
+                    </Text>
                     <View style={styles.venueRating}>
                       <MaterialIcons name="star" size={16} color="#FFD700" />
                       <Text style={styles.venueRatingText}>{selectedVenue.rating || '4.0'}</Text>
                     </View>
-                    <Text style={styles.venueDistance}>{selectedVenue.distance || 'Distance unknown'}</Text>
                   </View>
                   
-                  <Text style={styles.venuePrice}>
-                    PKR {selectedVenue.pricePerHour || selectedVenue.basePrice || 'N/A'}/hr
+                  <Text style={styles.venueAddress} numberOfLines={1}>
+                    {getVenueAddress(selectedVenue)}
                   </Text>
                   
-                  <Text style={[
-                    styles.venueAvailability,
-                    { color: selectedVenue.openNow && selectedVenue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
-                  ]}>
-                    {getAvailabilityText(selectedVenue)}
-                  </Text>
+                  <View style={styles.venueDetails}>
+                    <View style={styles.venueDistance}>
+                      <MaterialIcons name="location-on" size={14} color="#666" />
+                      <Text style={styles.venueDistanceText}>{selectedVenue.distance || 'Distance unknown'}</Text>
+                    </View>
+                    
+                    <Text style={styles.venuePrice}>
+                      PKR {selectedVenue.pricePerHour || selectedVenue.basePrice || 'N/A'}/hr
+                    </Text>
+                  </View>
+                  
+                  {/* Availability and Slots */}
+                  <View style={styles.availabilityContainer}>
+                    <Text style={[
+                      styles.venueAvailability,
+                      { color: selectedVenue.openNow && selectedVenue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
+                    ]}>
+                      {getAvailabilityText(selectedVenue)}
+                    </Text>
+                    
+                    {selectedVenue.availableSlots > 0 && (
+                      <View style={styles.slotsIndicator}>
+                        <MaterialIcons name="schedule" size={14} color="#4CAF50" />
+                        <Text style={styles.slotsText}>
+                          {selectedVenue.availableSlots} slots available
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Sports Tags */}
+                  <View style={styles.sportsContainer}>
+                    {selectedVenue.sports?.slice(0, 3).map((sport, index) => (
+                      <View key={sport} style={styles.sportTag}>
+                        <Text style={styles.sportTagText}>{sport}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
                 
+                {/* Close Button */}
                 <TouchableOpacity 
                   style={styles.closeButton}
                   onPress={() => setSelectedVenue(null)}
                 >
-                  <MaterialIcons name="close" size={24} color="#666" />
+                  <MaterialIcons name="close" size={20} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Action Button */}
+              <View style={styles.cardActions}>
+                <TouchableOpacity 
+                  style={styles.viewDetailsButton}
+                  onPress={() => handleVenueSelect(selectedVenue)}
+                >
+                  <Text style={styles.viewDetailsText}>View Details & Book</Text>
+                  <MaterialIcons name="arrow-forward" size={16} color="white" />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -1495,74 +1583,195 @@ const styles = StyleSheet.create({
     right: 16,
   },
   venueCard: {
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: 'white',
+    overflow: 'hidden',
   },
   venueCardContent: {
     flexDirection: 'row',
-    padding: 16,
-    alignItems: 'center',
+    position: 'relative',
+  },
+  venueImageContainer: {
+    width: 120,
+    height: 140,
+    position: 'relative',
   },
   venueImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 12,
-    marginRight: 16,
+    width: '100%',
+    height: '100%',
     backgroundColor: '#F0F0F0',
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  sportsOverlay: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    flexDirection: 'row',
+    gap: 4,
+  },
+  sportIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   venueInfo: {
     flex: 1,
+    padding: 16,
+    paddingRight: 40, // Space for close button
+  },
+  venueHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
   },
   venueName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 8,
     fontFamily: 'Montserrat_700Bold',
   },
   venueAddress: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
-    marginBottom: 6,
+    marginBottom: 8,
     fontFamily: 'Montserrat_400Regular',
   },
   venueDetails: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   venueRating: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   venueRatingText: {
+    fontSize: 12,
+    color: '#F57C00',
+    marginLeft: 4,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  venueDistance: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  venueDistanceText: {
     fontSize: 12,
     color: '#666',
     marginLeft: 4,
     fontFamily: 'Montserrat_500Medium',
   },
-  venueDistance: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'Montserrat_400Regular',
-  },
   venuePrice: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#004d43',
-    marginBottom: 4,
-    fontFamily: 'Montserrat_600SemiBold',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  availabilityContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   venueAvailability: {
     fontSize: 12,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  slotsIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  slotsText: {
+    fontSize: 11,
+    color: '#4CAF50',
+    marginLeft: 4,
+    fontWeight: '500',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  sportsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  sportTag: {
+    backgroundColor: '#F0F8FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
+  },
+  sportTagText: {
+    fontSize: 10,
+    color: '#1976D2',
     fontWeight: '500',
     fontFamily: 'Montserrat_500Medium',
   },
   closeButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#F8F9FA',
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  cardActions: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  viewDetailsButton: {
+    backgroundColor: '#004d43',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    gap: 8,
+  },
+  viewDetailsText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   fabContainer: {
     position: 'absolute',
