@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -148,28 +148,6 @@ export default function CustomersPage() {
       dataLength: customers.data?.length || 0
     });
   }, [customers, customersLoading]);
-
-  // Enhanced debugging for customers loading
-  useEffect(() => {
-    console.log('🔍 CustomersPage: Component state debug:', {
-      customersData: customers.data,
-      customersDataType: typeof customers.data,
-      customersDataIsArray: Array.isArray(customers.data),
-      customersTotal: customers.total,
-      customersLoading,
-      customersError: customersError, // Add error from selector if available
-      dataLength: customers.data?.length || 0,
-      firstCustomer: customers.data?.[0] || null
-    });
-    
-    // Force re-render if data exists but DataGrid is empty
-    if (customers.data && customers.data.length > 0 && !customersLoading) {
-      console.log('✅ CustomersPage: Data available, should display in DataGrid');
-    } else if (!customersLoading && (!customers.data || customers.data.length === 0)) {
-      console.log('⚠️ CustomersPage: No data available after loading complete');
-    }
-  }, [customers, customersLoading]);
-
 
   // Enhanced debugging for customers loading
   useEffect(() => {
