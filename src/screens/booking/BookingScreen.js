@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserBookings } from '../../store/slices/bookingSlice';
 import BookingCard from '../../components/BookingCard';
 import { MaterialIcons } from '@expo/vector-icons';
+import { safeDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -83,9 +84,9 @@ export default function BookingScreen() {
           // Handle both dateTime and separate date/time fields
           let bookingDate;
           if (booking.dateTime) {
-            bookingDate = new Date(booking.dateTime);
+            bookingDate = safeDate(booking.dateTime);
           } else if (booking.date && booking.startTime) {
-            bookingDate = new Date(`${booking.date}T${booking.startTime}:00`);
+            bookingDate = safeDate(`${booking.date}T${booking.startTime}:00`);
           } else {
             console.warn('📱 BOOKING_SCREEN: Booking missing date/time info:', booking);
             return false;
@@ -108,9 +109,9 @@ export default function BookingScreen() {
           // Handle both dateTime and separate date/time fields
           let bookingDate;
           if (booking.dateTime) {
-            bookingDate = new Date(booking.dateTime);
+            bookingDate = safeDate(booking.dateTime);
           } else if (booking.date && booking.startTime) {
-            bookingDate = new Date(`${booking.date}T${booking.startTime}:00`);
+            bookingDate = safeDate(`${booking.date}T${booking.startTime}:00`);
           } else {
             console.warn('📱 BOOKING_SCREEN: Booking missing date/time info:', booking);
             return true; // Show in past if we can't determine time
@@ -195,7 +196,7 @@ export default function BookingScreen() {
   const getBookingStats = () => {
     const total = userBookings.length;
     const upcoming = userBookings.filter(b => 
-      new Date(b.dateTime) > new Date() && b.status !== 'cancelled'
+      safeDate(b.dateTime) > safeDate() && b.status !== 'cancelled'
     ).length;
     const completed = userBookings.filter(b => b.status === 'completed').length;
     const totalSpent = userBookings

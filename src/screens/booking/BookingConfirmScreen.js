@@ -24,6 +24,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { createBooking, fetchUserBookings } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
+import { safeDate, safeFormatDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 
 const { width, height } = Dimensions.get('window');
@@ -134,7 +135,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
   const formatDateTime = () => {
     try {
-      const bookingDate = new Date(date);
+      const bookingDate = safeDate(date);
       
       // Validate the date
       if (isNaN(bookingDate.getTime())) {
@@ -147,12 +148,12 @@ export default function BookingConfirmScreen({ route, navigation }) {
       }
       
       return {
-        date: bookingDate.toLocaleDateString('en-US', {
+        date: safeFormatDate(bookingDate, {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
           day: 'numeric'
-        }),
+        }, 'Invalid Date'),
         time: `${slot.startTime} - ${slot.endTime}`
       };
     } catch (error) {

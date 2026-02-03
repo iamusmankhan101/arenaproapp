@@ -12,6 +12,8 @@ import { Text, Card, Button, Chip, Avatar, Divider } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { acceptChallenge, joinTournament } from '../../store/slices/teamSlice';
 import { MaterialIcons } from '@expo/vector-icons';
+import { safeDate, safeFormatDate } from '../../utils/dateUtils';
+import { safeFormatDate } from '../../utils/dateUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -145,8 +147,14 @@ export default function ChallengeDetailScreen({ route, navigation }) {
 
   const handleShareChallenge = async () => {
     try {
+      const formattedDate = safeFormatDate(challenge.proposedDateTime, { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }, 'a future date');
+      
       await Share.share({
-        message: `Check out this ${challenge.sport} challenge: "${challenge.title}" on ${new Date(challenge.proposedDateTime).toLocaleDateString()}. Join the competition!`,
+        message: `Check out this ${challenge.sport} challenge: "${challenge.title}" on ${formattedDate}. Join the competition!`,
         title: challenge.title
       });
     } catch (error) {
@@ -155,18 +163,18 @@ export default function ChallengeDetailScreen({ route, navigation }) {
   };
 
   const formatDateTime = (dateTime) => {
-    const date = new Date(dateTime);
+    const date = safeDate(dateTime);
     return {
-      date: date.toLocaleDateString('en-US', {
+      date: safeFormatDate(date, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-      }),
-      time: date.toLocaleTimeString('en-US', {
+      }, 'Invalid Date'),
+      time: safeFormatDate(date, {
         hour: '2-digit',
         minute: '2-digit'
-      })
+      }, 'Invalid Time')
     };
   };
 
@@ -383,7 +391,11 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                     </Text>
                   </View>
                   <Text style={styles.participantJoinTime}>
-                    {new Date(team.joinedAt).toLocaleDateString()}
+                    {safeFormatDate(team.joinedAt, { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    }, 'Unknown Date')}
                   </Text>
                 </View>
               ))}
@@ -409,7 +421,11 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                 <View key={index} style={styles.historyItem}>
                   <View style={styles.historyDate}>
                     <Text style={styles.historyDateText}>
-                      {new Date(match.date).toLocaleDateString()}
+                      {safeFormatDate(match.date, { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      }, 'Unknown Date')}
                     </Text>
                   </View>
                   <View style={styles.historyMatch}>

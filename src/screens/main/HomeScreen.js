@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-nat
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
+import { safeFormatDate } from '../../utils/dateUtils';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
 import { fetchChallenges } from '../../store/slices/teamSlice';
@@ -337,12 +338,12 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.challengeDetailRow}>
           <MaterialIcons name="event" size={14} color="#666" />
           <Text style={styles.challengeDetailText}>
-            {new Date(challenge.proposedDateTime).toLocaleDateString('en-US', {
+            {safeFormatDate(challenge.proposedDateTime, {
               month: 'short',
               day: 'numeric',
               hour: '2-digit',
               minute: '2-digit'
-            })}
+            }, 'TBD')}
           </Text>
         </View>
         <View style={styles.challengeDetailRow}>

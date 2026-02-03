@@ -204,6 +204,11 @@ const api = {
         Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
       },
     });
+    
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.status}`);
+    }
+    
     return response.blob();
   },
 
@@ -214,6 +219,11 @@ const api = {
         Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
       },
     });
+    
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.status}`);
+    }
+    
     return response.blob();
   },
 
@@ -224,6 +234,11 @@ const api = {
         Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
       },
     });
+    
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.status}`);
+    }
+    
     return response.blob();
   },
 };
