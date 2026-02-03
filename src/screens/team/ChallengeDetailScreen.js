@@ -13,7 +13,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { acceptChallenge, joinTournament } from '../../store/slices/teamSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeDate, safeFormatDate } from '../../utils/dateUtils';
-import { safeFormatDate } from '../../utils/dateUtils';
 
 const { width } = Dimensions.get('window');
 
