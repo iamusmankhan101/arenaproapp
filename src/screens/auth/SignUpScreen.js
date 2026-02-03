@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -28,6 +28,14 @@ export default function SignUpScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  
+  // Focus states to prevent keyboard closing
+  const [firstNameFocused, setFirstNameFocused] = useState(false);
+  const [lastNameFocused, setLastNameFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [phoneNumberFocused, setPhoneNumberFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
   
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
@@ -187,7 +195,7 @@ export default function SignUpScreen({ navigation }) {
         <View style={styles.formContainer}>
           {/* First Name */}
           <View style={styles.inputContainer}>
-            <View style={[styles.inputWrapper, firstName && styles.inputWrapperFocused]}>
+            <View style={[styles.inputWrapper, (firstNameFocused || firstName) && styles.inputWrapperFocused]}>
               <MaterialIcons name="person" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -195,6 +203,8 @@ export default function SignUpScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={firstName}
                 onChangeText={setFirstName}
+                onFocus={() => setFirstNameFocused(true)}
+                onBlur={() => setFirstNameFocused(false)}
                 autoCapitalize="words"
                 autoCorrect={false}
                 returnKeyType="next"
@@ -207,7 +217,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Last Name */}
           <View style={styles.inputContainer}>
-            <View style={[styles.inputWrapper, lastName && styles.inputWrapperFocused]}>
+            <View style={[styles.inputWrapper, (lastNameFocused || lastName) && styles.inputWrapperFocused]}>
               <MaterialIcons name="person" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -215,6 +225,8 @@ export default function SignUpScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={lastName}
                 onChangeText={setLastName}
+                onFocus={() => setLastNameFocused(true)}
+                onBlur={() => setLastNameFocused(false)}
                 autoCapitalize="words"
                 autoCorrect={false}
                 returnKeyType="next"
@@ -227,7 +239,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Email */}
           <View style={styles.inputContainer}>
-            <View style={[styles.inputWrapper, email && styles.inputWrapperFocused]}>
+            <View style={[styles.inputWrapper, (emailFocused || email) && styles.inputWrapperFocused]}>
               <MaterialIcons name="email" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -235,6 +247,8 @@ export default function SignUpScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
@@ -286,7 +300,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Phone Number */}
           <View style={styles.inputContainer}>
-            <View style={[styles.inputWrapper, phoneNumber && styles.inputWrapperFocused]}>
+            <View style={[styles.inputWrapper, (phoneNumberFocused || phoneNumber) && styles.inputWrapperFocused]}>
               <View style={styles.countryCodeContainer}>
                 <Text style={styles.flagEmoji}>🇵🇰</Text>
                 <Text style={styles.countryCode}>+92</Text>
@@ -297,6 +311,8 @@ export default function SignUpScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
+                onFocus={() => setPhoneNumberFocused(true)}
+                onBlur={() => setPhoneNumberFocused(false)}
                 keyboardType="phone-pad"
                 autoCorrect={false}
                 returnKeyType="next"
@@ -309,7 +325,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Password */}
           <View style={styles.inputContainer}>
-            <View style={[styles.inputWrapper, password && styles.inputWrapperFocused]}>
+            <View style={[styles.inputWrapper, (passwordFocused || password) && styles.inputWrapperFocused]}>
               <MaterialIcons name="lock" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -317,6 +333,8 @@ export default function SignUpScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 secureTextEntry={!showPassword}
                 autoCorrect={false}
                 returnKeyType="next"
@@ -339,7 +357,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* Confirm Password */}
           <View style={styles.inputContainer}>
-            <View style={[styles.inputWrapper, confirmPassword && styles.inputWrapperFocused]}>
+            <View style={[styles.inputWrapper, (confirmPasswordFocused || confirmPassword) && styles.inputWrapperFocused]}>
               <MaterialIcons name="lock" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -347,6 +365,8 @@ export default function SignUpScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
+                onFocus={() => setConfirmPasswordFocused(true)}
+                onBlur={() => setConfirmPasswordFocused(false)}
                 secureTextEntry={!showConfirmPassword}
                 autoCorrect={false}
                 returnKeyType="done"

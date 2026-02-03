@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, Card } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';

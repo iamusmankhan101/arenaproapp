@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -24,6 +24,8 @@ export default function SignInScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
@@ -194,7 +196,7 @@ export default function SignInScreen({ navigation }) {
           
           {/* Email Input */}
           <View style={styles.inputContainer}>
-            <View style={[styles.inputWrapper, email && styles.inputWrapperFocused]}>
+            <View style={[styles.inputWrapper, (emailFocused || email) && styles.inputWrapperFocused]}>
               <MaterialIcons name="email" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -202,6 +204,8 @@ export default function SignInScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={email}
                 onChangeText={setEmail}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
@@ -216,7 +220,7 @@ export default function SignInScreen({ navigation }) {
 
           {/* Password Input */}
           <View style={styles.inputContainer}>
-            <View style={[styles.inputWrapper, password && styles.inputWrapperFocused]}>
+            <View style={[styles.inputWrapper, (passwordFocused || password) && styles.inputWrapperFocused]}>
               <MaterialIcons name="lock" size={20} color="#999" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
@@ -224,6 +228,8 @@ export default function SignInScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 secureTextEntry={!showPassword}
                 autoComplete="password"
                 autoCorrect={false}
