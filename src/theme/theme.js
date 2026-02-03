@@ -5,7 +5,7 @@ export const theme = {
   colors: {
     ...MD3LightTheme.colors,
     primary: '#004d43', // Brand primary - dark teal
-    secondary: '#cdec6a', // Brand secondary - light green
+    secondary: '#e8ee26', // Brand secondary - bright lime
     tertiary: '#006b5a', // Darker teal variation
     surface: '#FFFFFF',
     background: '#F5F5F5',

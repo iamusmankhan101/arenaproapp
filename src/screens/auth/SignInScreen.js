@@ -268,13 +268,13 @@ export default function SignInScreen({ navigation }) {
             onPress={handleSignIn}
             style={styles.signInButton}
             buttonColor="#004d43"
-            textColor="#cdec6a"
+            textColor="#e8ee26"
             contentStyle={styles.signInButtonContent}
             labelStyle={styles.signInButtonText}
             disabled={loading}
-            icon={loading ? undefined : () => <MaterialIcons name="arrow-forward" size={20} color="#cdec6a" />}
+            icon={loading ? undefined : () => <MaterialIcons name="arrow-forward" size={20} color="#e8ee26" />}
           >
-            {loading ? <ActivityIndicator color="#cdec6a" size="small" /> : 'SIGN IN'}
+            {loading ? <ActivityIndicator color="#e8ee26" size="small" /> : 'SIGN IN'}
           </Button>
 
 
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#cdec6a',
+    backgroundColor: '#e8ee26',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,

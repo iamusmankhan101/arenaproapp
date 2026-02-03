@@ -150,13 +150,13 @@ export default function ForgotPasswordScreen({ navigation, route }) {
             onPress={handleResetPassword}
             style={styles.resetButton}
             buttonColor="#004d43"
-            textColor="#cdec6a"
+            textColor="#e8ee26"
             contentStyle={styles.resetButtonContent}
             labelStyle={styles.resetButtonText}
             disabled={loading}
-            icon={loading ? undefined : () => <MaterialIcons name="send" size={20} color="#cdec6a" />}
+            icon={loading ? undefined : () => <MaterialIcons name="send" size={20} color="#e8ee26" />}
           >
-            {loading ? <ActivityIndicator color="#cdec6a" size="small" /> : 'SEND RESET EMAIL'}
+            {loading ? <ActivityIndicator color="#e8ee26" size="small" /> : 'SEND RESET EMAIL'}
           </Button>
 
           {/* Help Text */}

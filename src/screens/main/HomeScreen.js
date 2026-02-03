@@ -518,7 +518,7 @@ export default function HomeScreen({ navigation }) {
             style={styles.createChallengeButton}
             onPress={() => navigation.navigate('Lalkaar')}
           >
-            <MaterialIcons name="add" size={24} color="#cdec6a" />
+            <MaterialIcons name="add" size={24} color="#e8ee26" />
             <Text style={styles.createChallengeText}>Create Your Challenge</Text>
           </TouchableOpacity>
         </View>
@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: '#cdec6a', // Secondary brand color
+    backgroundColor: '#e8ee26', // Secondary brand color
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
   },
   createChallengeText: {
     fontSize: 16,
-    color: '#cdec6a',
+    color: '#e8ee26',
     marginLeft: 8,
     fontFamily: 'Montserrat_600SemiBold',
   },

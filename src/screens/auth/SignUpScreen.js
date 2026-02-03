@@ -392,8 +392,8 @@ export default function SignUpScreen({ navigation }) {
             disabled={loading}
           >
             <Text style={styles.signUpButtonText}>CREATE ACCOUNT</Text>
-            {!loading && <MaterialIcons name="arrow-forward" size={20} color="#cdec6a" style={styles.buttonIcon} />}
-            {loading && <ActivityIndicator color="#cdec6a" size="small" />}
+            {!loading && <MaterialIcons name="arrow-forward" size={20} color="#e8ee26" style={styles.buttonIcon} />}
+            {loading && <ActivityIndicator color="#e8ee26" size="small" />}
           </TouchableOpacity>
 
           {/* Terms and Privacy */}
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 1,
-    color: '#cdec6a',
+    color: '#e8ee26',
   },
   termsText: {
     fontSize: 12,

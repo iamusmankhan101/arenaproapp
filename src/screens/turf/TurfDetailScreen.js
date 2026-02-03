@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_500Medium',
   },
   selectedSlotSummary: {
-    backgroundColor: 'rgba(205, 236, 106, 0.2)',
+    backgroundColor: 'rgba(232, 238, 38, 0.2)',
     padding: 16,
     borderRadius: 12,
     marginBottom: 20,

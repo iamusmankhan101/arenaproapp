@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   avatar: {
-    backgroundColor: '#cdec6a', // Primary brand color
+    backgroundColor: '#e8ee26', // Primary brand color
     marginRight: 16,
   },
   avatarLabel: {

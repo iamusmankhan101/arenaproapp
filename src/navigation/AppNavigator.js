@@ -57,8 +57,8 @@ function MainTabs() {
           }
           return null;
         },
-        tabBarActiveTintColor: '#cdec6a', // Secondary color for active icons
-        tabBarInactiveTintColor: 'rgba(205, 236, 106, 0.6)', // Dimmed secondary color for inactive
+        tabBarActiveTintColor: '#e8ee26', // Secondary color for active icons
+        tabBarInactiveTintColor: 'rgba(232, 238, 38, 0.6)', // Dimmed secondary color for inactive
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',

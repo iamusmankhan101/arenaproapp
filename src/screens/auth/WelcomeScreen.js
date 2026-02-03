@@ -42,7 +42,7 @@ export default function WelcomeScreen({ navigation }) {
               style={styles.primaryButton}
               contentStyle={styles.buttonContent}
               textColor="#004d43"
-              buttonColor="#cdec6a"
+              buttonColor="#e8ee26"
             >
               Get Started
             </Button>

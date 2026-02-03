@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   ratedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#cdec6a', // Secondary brand color
+    backgroundColor: '#e8ee26', // Secondary brand color
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,

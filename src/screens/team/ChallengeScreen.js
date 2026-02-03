@@ -102,7 +102,7 @@ export default function ChallengeScreen({ navigation }) {
           style={styles.quickActionCard}
           onPress={() => setShowCreateModal(true)}
         >
-          <MaterialIcons name="add-circle" size={32} color="#cdec6a" />
+          <MaterialIcons name="add-circle" size={32} color="#e8ee26" />
           <Text style={styles.quickActionTitle}>Create Challenge</Text>
           <Text style={styles.quickActionSubtitle}>Start a new match</Text>
         </TouchableOpacity>
@@ -111,7 +111,7 @@ export default function ChallengeScreen({ navigation }) {
           style={styles.quickActionCard}
           onPress={() => navigation.navigate('VenueList')}
         >
-          <MaterialIcons name="location-on" size={32} color="#cdec6a" />
+          <MaterialIcons name="location-on" size={32} color="#e8ee26" />
           <Text style={styles.quickActionTitle}>Find Venue</Text>
           <Text style={styles.quickActionSubtitle}>Book a ground</Text>
         </TouchableOpacity>

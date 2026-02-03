@@ -3,7 +3,7 @@ import { createTheme } from '@mui/material/styles';
 // Brand colors
 const brandColors = {
   primary: '#004d43',
-  secondary: '#cdec6a',
+  secondary: '#e8ee26',
   primaryLight: '#e8f5f3',
   secondaryLight: '#f7fce8',
   primaryDark: '#003832',

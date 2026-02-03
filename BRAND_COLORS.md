@@ -9,9 +9,9 @@
 - **Usage**: Primary buttons, headers, navigation, key UI elements
 
 ### Secondary Color
-- **Hex**: `#cdec6a`
-- **RGB**: `rgb(205, 236, 106)`
-- **Description**: Light green/lime - accent color
+- **Hex**: `#e8ee26`
+- **RGB**: `rgb(232, 238, 38)`
+- **Description**: Bright lime - accent color
 - **Usage**: Secondary buttons, highlights, success states, accents
 
 ## Color Variations
@@ -32,7 +32,7 @@
 // src/theme/theme.js
 colors: {
   primary: '#004d43',
-  secondary: '#cdec6a',
+  secondary: '#e8ee26',
   primaryLight: '#e8f5f3',
   secondaryLight: '#f7fce8',
   primaryDark: '#003832',
@@ -50,7 +50,7 @@ palette: {
     dark: '#003832',
   },
   secondary: {
-    main: '#cdec6a',
+    main: '#e8ee26',
     light: '#f7fce8',
     dark: '#a8c555',
   },
@@ -64,7 +64,7 @@ palette: {
 - ✅ **Good contrast with**: White, light backgrounds, secondary color
 - ❌ **Avoid**: Using on dark backgrounds without sufficient contrast
 
-### Secondary Color (#cdec6a)
+### Secondary Color (#e8ee26)
 - ✅ **Use for**: Accent elements, success states, highlights, call-to-action
 - ✅ **Good contrast with**: Dark text, primary color
 - ❌ **Avoid**: Large text areas, insufficient contrast combinations
