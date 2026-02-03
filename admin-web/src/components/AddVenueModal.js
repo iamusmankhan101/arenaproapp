@@ -22,7 +22,7 @@ import {
   IconButton,
   Checkbox
 } from '@mui/material';
-import { Schedule, DateRange, CloudUpload, Close } from '@mui/icons-material';
+import { DateRange, CloudUpload, Close } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue, updateVenue } from '../store/slices/adminSlice';
 

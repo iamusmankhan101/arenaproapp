@@ -443,8 +443,6 @@ export default function CustomersPage() {
           loading={customersLoading}
           disableRowSelectionOnClick
           key={`customers-${customers.data?.length || 0}-${customersLoading}`}
-          // Force re-render when data changes
-          key={`customers-${customers.data?.length || 0}-${customersLoading}`}
           sx={{
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
@@ -478,8 +476,6 @@ export default function CustomersPage() {
               Data: {JSON.stringify(customers.data?.slice(0, 2) || [], null, 2)}
             </Typography>
           </Box>
-        )}
-      </Box>
         )}
       </Box>
     </Box>
