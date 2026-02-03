@@ -92,6 +92,22 @@ export default function SignInScreen({ navigation }) {
         
         console.log('🔍 DEBUG: Sign-in successful!', result);
         
+        // Request location permission after successful sign-in
+        console.log('� DEBUG: Requesting location permission...');
+        try {
+          const { locationService } = await import('../../services/locationService');
+          const locationResult = await locationService.handleLocationPermissionFlow();
+          
+          if (locationResult.granted) {
+            console.log('📍 DEBUG: Location permission granted:', locationResult.location);
+          } else {
+            console.log('📍 DEBUG: Location permission denied or declined');
+          }
+        } catch (locationError) {
+          console.log('📍 DEBUG: Location permission error:', locationError);
+          // Don't block navigation if location fails
+        }
+        
         // Force navigation to main app after successful sign-in
         console.log('🔍 DEBUG: Forcing navigation to MainTabs...');
         navigation.reset({
@@ -151,11 +167,14 @@ export default function SignInScreen({ navigation }) {
     <KeyboardAvoidingView 
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled={false}
+        scrollEnabled={true}
       >
         {/* Logo Section */}
         <View style={styles.logoContainer}>
