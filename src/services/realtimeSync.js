@@ -8,6 +8,7 @@ import {
 import { db } from '../config/firebase';
 import { store } from '../store/store';
 import { setNearbyTurfs } from '../store/slices/turfSlice';
+import { safeDate, safeCompareDate, isValidDate } from '../utils/dateUtils';
 
 class RealtimeSyncService {
   constructor() {
@@ -64,18 +65,18 @@ class RealtimeSyncService {
             // Convert Firestore timestamps to ISO strings to avoid Redux serialization issues
             createdAt: (() => {
               try {
-                return data.createdAt?.toDate()?.toISOString() || new Date().toISOString();
+                return data.createdAt?.toDate()?.toISOString() || safeToISOString(new Date());
               } catch (error) {
                 console.error('❌ RealtimeSync: Error converting createdAt timestamp:', error);
-                return new Date().toISOString();
+                return safeToISOString(new Date());
               }
             })(),
             updatedAt: (() => {
               try {
-                return data.updatedAt?.toDate()?.toISOString() || new Date().toISOString();
+                return data.updatedAt?.toDate()?.toISOString() || safeToISOString(new Date());
               } catch (error) {
                 console.error('❌ RealtimeSync: Error converting updatedAt timestamp:', error);
-                return new Date().toISOString();
+                return safeToISOString(new Date());
               }
             })(),
             // Add compatibility fields for existing components
@@ -88,16 +89,16 @@ class RealtimeSyncService {
         // Sort manually by creation date (newest first) - handle both Date objects and ISO strings
         turfs.sort((a, b) => {
           try {
-            const dateA = new Date(a.createdAt);
-            const dateB = new Date(b.createdAt);
+            const dateA = safeDate(a.createdAt);
+            const dateB = safeDate(b.createdAt);
             
             // Validate dates before comparing
-            if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+            if (!isValidDate(dateA) || !isValidDate(dateB)) {
               console.warn('❌ RealtimeSync: Invalid dates in sorting, using fallback');
               return 0; // Keep original order if dates are invalid
             }
             
-            return dateB - dateA; // Newest first
+            return safeCompareDate(dateB, dateA); // Newest first
           } catch (error) {
             console.error('❌ RealtimeSync: Error sorting turfs by date:', error);
             return 0; // Keep original order on error
@@ -178,18 +179,18 @@ class RealtimeSyncService {
               // Convert Firestore timestamps to ISO strings to avoid Redux serialization issues
               createdAt: (() => {
                 try {
-                  return data.createdAt?.toDate()?.toISOString() || new Date().toISOString();
+                  return data.createdAt?.toDate()?.toISOString() || safeToISOString(new Date());
                 } catch (error) {
                   console.error('❌ RealtimeSync: Error converting createdAt timestamp:', error);
-                  return new Date().toISOString();
+                  return safeToISOString(new Date());
                 }
               })(),
               updatedAt: (() => {
                 try {
-                  return data.updatedAt?.toDate()?.toISOString() || new Date().toISOString();
+                  return data.updatedAt?.toDate()?.toISOString() || safeToISOString(new Date());
                 } catch (error) {
                   console.error('❌ RealtimeSync: Error converting updatedAt timestamp:', error);
-                  return new Date().toISOString();
+                  return safeToISOString(new Date());
                 }
               })(),
               // Add compatibility fields for existing components
@@ -203,16 +204,16 @@ class RealtimeSyncService {
         // Sort manually by creation date (newest first) - handle both Date objects and ISO strings
         turfs.sort((a, b) => {
           try {
-            const dateA = new Date(a.createdAt);
-            const dateB = new Date(b.createdAt);
+            const dateA = safeDate(a.createdAt);
+            const dateB = safeDate(b.createdAt);
             
             // Validate dates before comparing
-            if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+            if (!isValidDate(dateA) || !isValidDate(dateB)) {
               console.warn('❌ RealtimeSync: Invalid dates in sorting, using fallback');
               return 0; // Keep original order if dates are invalid
             }
             
-            return dateB - dateA; // Newest first
+            return safeCompareDate(dateB, dateA); // Newest first
           } catch (error) {
             console.error('❌ RealtimeSync: Error sorting turfs by date:', error);
             return 0; // Keep original order on error
@@ -260,9 +261,9 @@ class RealtimeSyncService {
           bookings.push({
             id: doc.id,
             ...data,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            startTime: data.startTime?.toDate() || new Date(),
-            endTime: data.endTime?.toDate() || new Date()
+            createdAt: safeFirestoreTimestampToISO(data.createdAt),
+            startTime: safeFirestoreTimestampToISO(data.startTime),
+            endTime: safeFirestoreTimestampToISO(data.endTime)
           });
         });
         
@@ -296,8 +297,8 @@ class RealtimeSyncService {
           challenges.push({
             id: doc.id,
             ...data,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            proposedDateTime: data.proposedDateTime?.toDate() || new Date()
+            createdAt: safeFirestoreTimestampToISO(data.createdAt),
+            proposedDateTime: safeFirestoreTimestampToISO(data.proposedDateTime)
           });
         });
         

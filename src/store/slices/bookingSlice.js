@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getAPIConfig } from '../../config/backendConfig';
+import { safeDate, isValidDate } from '../../utils/dateUtils';
 
 // Dynamic API import based on backend configuration
 const getAPI = async () => {
@@ -48,22 +49,22 @@ export const createBooking = createAsyncThunk(
         console.log('🔄 REDUX: Extracted date from ISO string:', dateString);
       }
       
-      // Validate date format
-      const testDate = new Date(dateString);
-      if (isNaN(testDate.getTime())) {
+      // Validate date format using safe utilities
+      const testDate = safeDate(dateString);
+      if (!isValidDate(testDate)) {
         throw new Error('Invalid date format in booking data');
       }
       
-      // Validate time formats
-      const testStartTime = new Date(`2000-01-01T${bookingData.startTime}:00`);
-      const testEndTime = new Date(`2000-01-01T${bookingData.endTime}:00`);
-      if (isNaN(testStartTime.getTime()) || isNaN(testEndTime.getTime())) {
+      // Validate time formats using safe utilities
+      const testStartTime = safeDate(`2000-01-01T${bookingData.startTime}:00`);
+      const testEndTime = safeDate(`2000-01-01T${bookingData.endTime}:00`);
+      if (!isValidDate(testStartTime) || !isValidDate(testEndTime)) {
         throw new Error('Invalid time format in booking data');
       }
       
-      // Test the final dateTime creation
-      const testDateTime = new Date(`${dateString}T${bookingData.startTime}:00`);
-      if (isNaN(testDateTime.getTime())) {
+      // Test the final dateTime creation using safe utilities
+      const testDateTime = safeDate(`${dateString}T${bookingData.startTime}:00`);
+      if (!isValidDate(testDateTime)) {
         throw new Error('Invalid date/time combination in booking data');
       }
       

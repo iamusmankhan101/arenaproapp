@@ -16,6 +16,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { safeDate, isValidDate, safeDateString, safeToISOString, safeFirestoreTimestampToISO } from '../utils/dateUtils';
 
 // Helper function to serialize Firestore data and handle timestamps
 const serializeFirestoreData = (data) => {
@@ -255,9 +256,9 @@ export const bookingAPI = {
       let bookedSlots = [];
       try {
         const bookingsRef = collection(db, 'bookings');
-        const startOfDay = new Date(date);
+        const startOfDay = safeDate(date);
         startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
+        const endOfDay = safeDate(date);
         endOfDay.setHours(23, 59, 59, 999);
         
         const q = query(bookingsRef, 
@@ -418,11 +419,11 @@ export const bookingAPI = {
         console.log('🔥 FIREBASE: Extracted date from ISO string:', dateString);
       }
       
-      // Create dateTime with proper validation
-      const bookingDateTime = new Date(`${dateString}T${bookingData.startTime}:00`);
+      // Create dateTime with proper validation using safe utilities
+      const bookingDateTime = safeDate(`${dateString}T${bookingData.startTime}:00`);
       
-      // Check if the created date is valid
-      if (isNaN(bookingDateTime.getTime())) {
+      // Check if the created date is valid using safe utilities
+      if (!isValidDate(bookingDateTime)) {
         console.error('❌ FIREBASE: Invalid date created from:', { 
           originalDate: bookingData.date, 
           extractedDate: dateString, 
@@ -438,11 +439,11 @@ export const bookingAPI = {
         throw new Error('Invalid booking data: startTime and endTime are required');
       }
       
-      const startTime = new Date(`2000-01-01T${bookingData.startTime}:00`);
-      const endTime = new Date(`2000-01-01T${bookingData.endTime}:00`);
+      const startTime = safeDate(`2000-01-01T${bookingData.startTime}:00`);
+      const endTime = safeDate(`2000-01-01T${bookingData.endTime}:00`);
       
-      // Validate time objects
-      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+      // Validate time objects using safe utilities
+      if (!isValidDate(startTime) || !isValidDate(endTime)) {
         console.error('❌ FIREBASE: Invalid time format:', { startTime: bookingData.startTime, endTime: bookingData.endTime });
         throw new Error('Invalid time format in booking data');
       }
@@ -672,12 +673,13 @@ export const adminAPI = {
       const bookingsSnapshot = await getDocs(bookingsRef);
       const bookings = bookingsSnapshot.docs.map(doc => doc.data());
       
-      // Get today's bookings
-      const today = new Date();
+      // Get today's bookings using safe date utilities
+      const today = safeDate();
       today.setHours(0, 0, 0, 0);
       const todayBookings = bookings.filter(booking => {
-        const bookingDate = booking.createdAt?.toDate() || new Date();
-        return bookingDate >= today;
+        const bookingDate = safeFirestoreTimestampToISO(booking.createdAt);
+        const bookingDateObj = safeDate(bookingDate);
+        return isValidDate(bookingDateObj) && bookingDateObj >= today;
       });
       
       // Calculate revenue
