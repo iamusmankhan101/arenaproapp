@@ -89,6 +89,12 @@ class RealtimeSyncService {
         // Sort manually by creation date (newest first) - handle both Date objects and ISO strings
         turfs.sort((a, b) => {
           try {
+            // Check for undefined values before calling safeDate
+            if (!a.createdAt || !b.createdAt) {
+              console.warn('❌ RealtimeSync: Missing createdAt timestamps in sorting');
+              return 0; // Keep original order if timestamps are missing
+            }
+            
             const dateA = safeDate(a.createdAt);
             const dateB = safeDate(b.createdAt);
             
@@ -204,6 +210,12 @@ class RealtimeSyncService {
         // Sort manually by creation date (newest first) - handle both Date objects and ISO strings
         turfs.sort((a, b) => {
           try {
+            // Check for undefined values before calling safeDate
+            if (!a.createdAt || !b.createdAt) {
+              console.warn('❌ RealtimeSync: Missing createdAt timestamps in sorting');
+              return 0; // Keep original order if timestamps are missing
+            }
+            
             const dateA = safeDate(a.createdAt);
             const dateB = safeDate(b.createdAt);
             

@@ -149,10 +149,7 @@ export default function TurfDetailScreen({ route, navigation }) {
     // Handle images
     images: rawVenue.images && rawVenue.images.length > 0 
       ? rawVenue.images 
-      : [getDefaultImage(rawVenue.sports?.[0] || 'Football')],
-    
-    // Generate time slots if not available
-    timeSlots: rawVenue.timeSlots || generateDefaultTimeSlots(rawVenue.pricing?.basePrice || 2000)
+      : [getDefaultImage(rawVenue.sports?.[0] || 'Football')]
   };
 
   // Helper functions
@@ -209,28 +206,6 @@ export default function TurfDetailScreen({ route, navigation }) {
       'Tennis': require('../../images/padel.jpg')
     };
     return images[sport] || require('../../images/football.jpg');
-  }
-
-  function generateDefaultTimeSlots(basePrice) {
-    const slots = [];
-    for (let hour = 6; hour <= 22; hour++) {
-      const startTime = `${hour.toString().padStart(2, '0')}:00`;
-      const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
-      
-      // Vary pricing based on time
-      let price = basePrice;
-      if (hour >= 17 && hour <= 21) price = Math.round(basePrice * 1.25); // Peak hours
-      if (hour >= 6 && hour <= 8) price = Math.round(basePrice * 0.9); // Morning discount
-      
-      slots.push({
-        id: `slot-${hour}`,
-        time: startTime,
-        endTime: endTime,
-        price: price,
-        available: Math.random() > 0.3 // Random availability for demo
-      });
-    }
-    return slots;
   }
 
   const getVenueImageType = () => {
@@ -323,7 +298,8 @@ export default function TurfDetailScreen({ route, navigation }) {
     const dates = [];
     const today = new Date();
     
-    for (let i = 0; i < 7; i++) {
+    // Only show dates for the next 30 days to allow admin to configure them
+    for (let i = 0; i < 30; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       dates.push(date);
@@ -610,16 +586,14 @@ export default function TurfDetailScreen({ route, navigation }) {
                 <ScrollView style={styles.timeSlotsScroll} showsVerticalScrollIndicator={false}>
                   <View style={styles.timeSlotsGrid}>
                     {(() => {
-                      const slotsToShow = availableSlots && availableSlots.length > 0 ? availableSlots : venue.timeSlots || [];
-                      console.log(`🕐 TurfDetailScreen: Displaying ${slotsToShow.length} time slots`);
+                      // Only use admin-configured date-specific slots from Redux - no fallback
+                      const slotsToShow = availableSlots || [];
+                      console.log(`🕐 TurfDetailScreen: Displaying ${slotsToShow.length} admin-configured time slots`);
                       console.log(`   - Redux availableSlots: ${availableSlots?.length || 0}`);
-                      console.log(`   - Venue timeSlots: ${venue.timeSlots?.length || 0}`);
-                      console.log(`   - Using: ${availableSlots && availableSlots.length > 0 ? 'Redux slots' : 'Venue slots'}`);
+                      console.log(`   - Using: Admin-configured date-specific slots only`);
                       
                       if (slotsToShow.length === 0) {
-                        console.log('❌ TurfDetailScreen: No slots to display!');
-                        console.log('   - availableSlots:', availableSlots);
-                        console.log('   - venue.timeSlots:', venue.timeSlots);
+                        console.log('⚠️ TurfDetailScreen: No admin-configured slots for this date');
                       }
                       
                       return slotsToShow.map((slot) => (
@@ -654,10 +628,10 @@ export default function TurfDetailScreen({ route, navigation }) {
                       ));
                     })()}
                   </View>
-                  {(!availableSlots || availableSlots.length === 0) && (!venue.timeSlots || venue.timeSlots.length === 0) && (
+                  {(!availableSlots || availableSlots.length === 0) && (
                     <View style={styles.noSlotsContainer}>
-                      <Text style={styles.noSlotsText}>No time slots available for this date</Text>
-                      <Text style={styles.noSlotsSubtext}>Please try selecting a different date</Text>
+                      <Text style={styles.noSlotsText}>No time slots configured for this date</Text>
+                      <Text style={styles.noSlotsSubtext}>Admin needs to configure slots for this date in the admin panel</Text>
                     </View>
                   )}
                 </ScrollView>

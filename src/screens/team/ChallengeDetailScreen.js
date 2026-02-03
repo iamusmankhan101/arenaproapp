@@ -162,6 +162,13 @@ export default function ChallengeDetailScreen({ route, navigation }) {
   };
 
   const formatDateTime = (dateTime) => {
+    if (!dateTime) {
+      return {
+        date: 'Invalid Date',
+        time: 'Invalid Time'
+      };
+    }
+    
     const date = safeDate(dateTime);
     return {
       date: safeFormatDate(date, {

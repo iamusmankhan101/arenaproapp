@@ -195,9 +195,12 @@ export default function BookingScreen() {
 
   const getBookingStats = () => {
     const total = userBookings.length;
-    const upcoming = userBookings.filter(b => 
-      safeDate(b.dateTime) > safeDate() && b.status !== 'cancelled'
-    ).length;
+    const upcoming = userBookings.filter(b => {
+      if (!b.dateTime) return false; // Skip bookings without dateTime
+      const bookingDate = safeDate(b.dateTime);
+      const now = safeDate();
+      return bookingDate > now && b.status !== 'cancelled';
+    }).length;
     const completed = userBookings.filter(b => b.status === 'completed').length;
     const totalSpent = userBookings
       .filter(b => b.paymentStatus === 'paid')
