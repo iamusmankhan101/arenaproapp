@@ -45,7 +45,14 @@ export default function FavoritesScreen({ navigation }) {
             <Text style={styles.venueName}>{item.name}</Text>
             <View style={styles.locationRow}>
               <Icon name="location-on" size={14} color="#666" />
-              <Text style={styles.locationText}>{item.location}</Text>
+              <Text style={styles.locationText}>
+                {typeof item.location === 'string' 
+                  ? item.location 
+                  : item.location?.city 
+                    ? `${item.location.city}` 
+                    : 'Location not specified'
+                }
+              </Text>
             </View>
             <View style={styles.priceRow}>
               <Text style={styles.priceText}>From PKR {item.priceFrom}</Text>
