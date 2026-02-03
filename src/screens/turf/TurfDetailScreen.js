@@ -398,7 +398,8 @@ export default function TurfDetailScreen({ route, navigation }) {
               if (navigation.canGoBack()) {
                 navigation.goBack();
               } else {
-                navigation.navigate('MainTabs');
+                // Navigate to Home tab within MainTabs
+                navigation.navigate('Home');
               }
             }}
             >

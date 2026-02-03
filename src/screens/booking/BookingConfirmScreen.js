@@ -94,7 +94,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
             {
               text: 'Later',
               style: 'cancel',
-              onPress: () => navigation.navigate('MainTabs', { screen: 'Home' })
+              onPress: () => navigation.navigate('Home')
             }
           ]
         );
@@ -114,7 +114,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
               if (navigation.canGoBack()) {
                 navigation.goBack();
               } else {
-                navigation.navigate('MainTabs');
+                navigation.navigate('Home');
               }
             }
           }
@@ -129,7 +129,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
     setShowSuccessModal(false);
     // Refresh bookings data before navigating
     dispatch(fetchUserBookings());
-    navigation.navigate('MainTabs', { screen: 'Bookings' });
+    navigation.navigate('Bookings');
   };
 
   const formatDateTime = () => {
