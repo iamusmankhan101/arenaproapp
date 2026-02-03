@@ -57,21 +57,34 @@ function MainTabs() {
           }
           return null;
         },
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: '#cdec6a', // Secondary color for active icons
+        tabBarInactiveTintColor: 'rgba(205, 236, 106, 0.6)', // Dimmed secondary color for inactive
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: 'white',
-          borderTopWidth: 1,
-          borderTopColor: '#E9ECEF',
-          elevation: 8,
+          position: 'absolute',
+          bottom: 20,
+          left: 20,
+          right: 20,
+          backgroundColor: '#004d43', // Primary color background
+          borderRadius: 25,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
+          paddingHorizontal: 10,
+          borderTopWidth: 0,
+          elevation: 10,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          shadowOffset: { width: 0, height: 5 },
+          shadowOpacity: 0.3,
+          shadowRadius: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+          marginTop: 4,
+        },
+        tabBarIconStyle: {
+          marginBottom: 2,
         },
       })}
     >
@@ -124,17 +137,8 @@ export default function AppNavigator() {
     return () => clearTimeout(splashTimer);
   }, [dispatch]);
 
-  // Debug authentication state
-  console.log('🔍 NAVIGATOR DEBUG: Auth state:', { 
-    isAuthenticated, 
-    initializing, 
-    hasUser: !!user,
-    showSplash 
-  });
-
   // Show splash screen first
   if (showSplash || initializing) {
-    console.log('🔍 NAVIGATOR DEBUG: Showing splash screen');
     return <SplashScreen />;
   }
 
