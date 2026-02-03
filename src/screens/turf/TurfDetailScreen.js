@@ -18,7 +18,8 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleFavorite, fetchFavorites, fetchTurfDetails } from '../../store/slices/turfSlice';
 import { fetchAvailableSlots, clearAvailableSlots } from '../../store/slices/bookingSlice';
-import { safeDateString, safeToISOString, isValidDate } from '../utils/dateUtils';
+import { MaterialIcons } from '@expo/vector-icons';
+import { safeDateString, safeToISOString, isValidDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import { TurfCardSkeleton } from '../../components/SkeletonLoader';
 
