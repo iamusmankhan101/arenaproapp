@@ -32,20 +32,24 @@ export default function BookingScreen() {
   const { userBookings, loading } = useSelector(state => state.booking);
 
   useEffect(() => {
+    console.log('📱 BOOKING_SCREEN: Component mounted, fetching user bookings...');
     dispatch(fetchUserBookings());
   }, [dispatch]);
 
   // Refresh bookings when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
+      console.log('📱 BOOKING_SCREEN: Screen focused, refreshing bookings...');
       dispatch(fetchUserBookings());
     }, [dispatch])
   );
 
   const onRefresh = async () => {
+    console.log('📱 BOOKING_SCREEN: Pull-to-refresh triggered');
     setRefreshing(true);
     await dispatch(fetchUserBookings());
     setRefreshing(false);
+    console.log('📱 BOOKING_SCREEN: Pull-to-refresh completed');
   };
 
   useEffect(() => {
@@ -53,22 +57,52 @@ export default function BookingScreen() {
   }, [dispatch]);
 
   const filterBookings = (bookings, filter) => {
+    console.log('📱 BOOKING_SCREEN: Filtering bookings...', {
+      totalBookings: bookings.length,
+      selectedTab: filter,
+      searchQuery
+    });
+    
     const now = new Date();
     
     let filtered = [];
     switch (filter) {
       case 'upcoming':
-        filtered = bookings.filter(booking => 
-          new Date(booking.dateTime) > now && booking.status !== 'cancelled'
-        );
+        filtered = bookings.filter(booking => {
+          const bookingDate = new Date(booking.dateTime);
+          const isUpcoming = bookingDate > now && booking.status !== 'cancelled';
+          console.log('📱 BOOKING_SCREEN: Checking upcoming booking:', {
+            id: booking.id,
+            dateTime: booking.dateTime,
+            status: booking.status,
+            isUpcoming
+          });
+          return isUpcoming;
+        });
         break;
       case 'past':
-        filtered = bookings.filter(booking => 
-          new Date(booking.dateTime) <= now || booking.status === 'completed'
-        );
+        filtered = bookings.filter(booking => {
+          const bookingDate = new Date(booking.dateTime);
+          const isPast = bookingDate <= now || booking.status === 'completed';
+          console.log('📱 BOOKING_SCREEN: Checking past booking:', {
+            id: booking.id,
+            dateTime: booking.dateTime,
+            status: booking.status,
+            isPast
+          });
+          return isPast;
+        });
         break;
       case 'cancelled':
-        filtered = bookings.filter(booking => booking.status === 'cancelled');
+        filtered = bookings.filter(booking => {
+          const isCancelled = booking.status === 'cancelled';
+          console.log('📱 BOOKING_SCREEN: Checking cancelled booking:', {
+            id: booking.id,
+            status: booking.status,
+            isCancelled
+          });
+          return isCancelled;
+        });
         break;
       default:
         filtered = bookings;
@@ -76,18 +110,52 @@ export default function BookingScreen() {
 
     // Apply search filter
     if (searchQuery.trim()) {
-      filtered = filtered.filter(booking =>
-        booking.turfName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.turfArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.sport?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.bookingId.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      console.log('📱 BOOKING_SCREEN: Applying search filter:', searchQuery);
+      filtered = filtered.filter(booking => {
+        const matchesSearch = booking.turfName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          booking.turfArea?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          booking.sport?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          booking.bookingId?.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        console.log('📱 BOOKING_SCREEN: Search match for booking:', {
+          id: booking.id,
+          turfName: booking.turfName,
+          matchesSearch
+        });
+        
+        return matchesSearch;
+      });
     }
+
+    console.log('📱 BOOKING_SCREEN: Final filtered bookings:', {
+      filteredCount: filtered.length,
+      bookings: filtered.map(b => ({ 
+        id: b.id, 
+        turfName: b.turfName, 
+        dateTime: b.dateTime,
+        status: b.status 
+      }))
+    });
 
     return filtered;
   };
 
-  const filteredBookings = filterBookings(userBookings, selectedTab);
+  const filteredBookings = React.useMemo(() => {
+    console.log('📱 BOOKING_SCREEN: Calculating filteredBookings...', {
+      userBookingsCount: userBookings.length,
+      selectedTab,
+      searchQuery
+    });
+    
+    const result = filterBookings(userBookings, selectedTab);
+    
+    console.log('📱 BOOKING_SCREEN: filteredBookings result:', {
+      count: result.length,
+      bookings: result.map(b => ({ id: b.id, turfName: b.turfName }))
+    });
+    
+    return result;
+  }, [userBookings, selectedTab, searchQuery]);
 
   const getBookingStats = () => {
     const total = userBookings.length;

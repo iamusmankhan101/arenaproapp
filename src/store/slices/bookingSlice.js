@@ -32,11 +32,18 @@ export const fetchAvailableSlots = createAsyncThunk(
 export const createBooking = createAsyncThunk(
   'booking/create',
   async (bookingData, { rejectWithValue }) => {
+    console.log('🔄 REDUX: createBooking action called with data:', bookingData);
+    
     try {
       const bookingAPI = await getAPI();
+      console.log('🔄 REDUX: Got booking API instance for createBooking');
+      
       const response = await bookingAPI.createBooking(bookingData);
+      console.log('🔄 REDUX: createBooking response:', response);
+      
       return response.data;
     } catch (error) {
+      console.error('❌ REDUX: createBooking error:', error);
       return rejectWithValue(error.response?.data || error.message);
     }
   }
@@ -45,11 +52,19 @@ export const createBooking = createAsyncThunk(
 export const fetchUserBookings = createAsyncThunk(
   'booking/fetchUserBookings',
   async (_, { rejectWithValue }) => {
+    console.log('🔄 REDUX: fetchUserBookings action called');
+    
     try {
       const bookingAPI = await getAPI();
+      console.log('🔄 REDUX: Got booking API instance');
+      
       const response = await bookingAPI.getUserBookings();
+      console.log('🔄 REDUX: getUserBookings response:', response);
+      console.log('🔄 REDUX: Bookings data count:', response.data.length);
+      
       return response.data;
     } catch (error) {
+      console.error('❌ REDUX: fetchUserBookings error:', error);
       return rejectWithValue(error.response?.data || error.message);
     }
   }
@@ -102,19 +117,33 @@ const bookingSlice = createSlice({
         state.error = action.payload?.message || 'Failed to fetch slots';
       })
       .addCase(createBooking.pending, (state) => {
+        console.log('🔄 REDUX: createBooking.pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(createBooking.fulfilled, (state, action) => {
+        console.log('🔄 REDUX: createBooking.fulfilled with payload:', action.payload);
         state.loading = false;
         state.currentBooking = action.payload;
       })
       .addCase(createBooking.rejected, (state, action) => {
+        console.log('❌ REDUX: createBooking.rejected with error:', action.payload);
         state.loading = false;
         state.error = action.payload?.message || 'Booking failed - slot may be taken';
       })
+      .addCase(fetchUserBookings.pending, (state) => {
+        console.log('🔄 REDUX: fetchUserBookings.pending');
+        state.loading = true;
+      })
       .addCase(fetchUserBookings.fulfilled, (state, action) => {
+        console.log('🔄 REDUX: fetchUserBookings.fulfilled with bookings:', action.payload.length);
+        state.loading = false;
         state.userBookings = action.payload;
+      })
+      .addCase(fetchUserBookings.rejected, (state, action) => {
+        console.log('❌ REDUX: fetchUserBookings.rejected with error:', action.payload);
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to fetch bookings';
       });
   },
 });

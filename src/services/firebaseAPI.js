@@ -312,12 +312,16 @@ export const bookingAPI = {
     }
   },
 
-  // Create booking
+  // Create booking with extensive debugging
   async createBooking(bookingData) {
+    console.log('🔥 FIREBASE: createBooking called with data:', bookingData);
+    
     try {
       const user = auth.currentUser;
+      console.log('🔥 FIREBASE: Current user:', user ? { uid: user.uid, email: user.email } : 'No user');
+      
       if (!user) {
-        console.log('⚠️ User not authenticated, creating guest booking');
+        console.log('⚠️ FIREBASE: User not authenticated, creating guest booking');
         // For guest bookings, we'll use a temporary guest ID
         const guestId = `guest_${Date.now()}`;
         
@@ -335,6 +339,8 @@ export const bookingAPI = {
           }
         });
         
+        console.log('🔥 FIREBASE: Guest booking created with ID:', bookingRef.id);
+        
         return { 
           data: { 
             id: bookingRef.id, 
@@ -348,12 +354,23 @@ export const bookingAPI = {
         };
       }
       
+      console.log('🔥 FIREBASE: Authenticated user booking - fetching venue details...');
+      
       // Get venue details to enrich booking data
       let venueDetails = {};
       try {
+        console.log('🔥 FIREBASE: Fetching venue document for turfId:', bookingData.turfId);
         const venueDoc = await getDoc(doc(db, 'venues', bookingData.turfId));
+        
         if (venueDoc.exists()) {
           const venueData = venueDoc.data();
+          console.log('🔥 FIREBASE: Venue data found:', {
+            name: venueData.name,
+            area: venueData.area,
+            address: venueData.address,
+            sport: venueData.sport
+          });
+          
           venueDetails = {
             turfName: venueData.name,
             turfArea: venueData.area || venueData.address,
@@ -361,10 +378,18 @@ export const bookingAPI = {
             phoneNumber: venueData.phoneNumber,
             address: venueData.address
           };
+        } else {
+          console.log('⚠️ FIREBASE: Venue document not found for turfId:', bookingData.turfId);
+          venueDetails = {
+            turfName: 'Sports Venue',
+            turfArea: 'Unknown Area',
+            sport: 'Football',
+            phoneNumber: 'N/A',
+            address: 'N/A'
+          };
         }
       } catch (venueError) {
-        console.warn('Could not fetch venue details:', venueError);
-        // Use fallback data if venue fetch fails
+        console.error('❌ FIREBASE: Error fetching venue details:', venueError);
         venueDetails = {
           turfName: 'Sports Venue',
           turfArea: 'Unknown Area',
@@ -374,14 +399,24 @@ export const bookingAPI = {
         };
       }
       
+      console.log('🔥 FIREBASE: Venue details prepared:', venueDetails);
+      
       // Create proper dateTime from date and startTime
+      console.log('🔥 FIREBASE: Creating dateTime from:', { date: bookingData.date, startTime: bookingData.startTime });
       const bookingDateTime = new Date(`${bookingData.date}T${bookingData.startTime}:00`);
+      console.log('🔥 FIREBASE: Created dateTime:', bookingDateTime.toISOString());
       
       // Calculate duration
       const startTime = new Date(`2000-01-01T${bookingData.startTime}:00`);
       const endTime = new Date(`2000-01-01T${bookingData.endTime}:00`);
       const durationMs = endTime - startTime;
       const durationHours = Math.round(durationMs / (1000 * 60 * 60));
+      const duration = `${durationHours} hour${durationHours !== 1 ? 's' : ''}`;
+      console.log('🔥 FIREBASE: Calculated duration:', duration);
+      
+      // Generate unique booking ID
+      const bookingId = `PIT${Date.now().toString().slice(-6)}`;
+      console.log('🔥 FIREBASE: Generated booking ID:', bookingId);
       
       // Authenticated user booking with enriched data
       const enrichedBookingData = {
@@ -391,16 +426,23 @@ export const bookingAPI = {
         userType: 'authenticated',
         status: 'confirmed',
         paymentStatus: 'paid',
-        bookingReference: `PIT${Date.now().toString().slice(-6)}`,
-        bookingId: `PIT${Date.now().toString().slice(-6)}`,
+        bookingReference: bookingId,
+        bookingId: bookingId,
         dateTime: bookingDateTime.toISOString(),
-        duration: `${durationHours} hour${durationHours !== 1 ? 's' : ''}`,
+        duration: duration,
         createdAt: serverTimestamp()
       };
       
-      const bookingRef = await addDoc(collection(db, 'bookings'), enrichedBookingData);
+      console.log('🔥 FIREBASE: Final enriched booking data:', {
+        ...enrichedBookingData,
+        createdAt: '[ServerTimestamp]' // Don't log the actual timestamp object
+      });
       
-      return { 
+      console.log('🔥 FIREBASE: Saving booking to Firestore...');
+      const bookingRef = await addDoc(collection(db, 'bookings'), enrichedBookingData);
+      console.log('🔥 FIREBASE: Booking saved successfully with ID:', bookingRef.id);
+      
+      const finalResult = { 
         data: { 
           id: bookingRef.id, 
           ...enrichedBookingData,
@@ -408,20 +450,35 @@ export const bookingAPI = {
           message: 'Booking confirmed successfully!'
         } 
       };
+      
+      console.log('🔥 FIREBASE: Returning booking result with ID:', bookingRef.id);
+      
+      return finalResult;
     } catch (error) {
-      console.error('Error creating booking:', error);
+      console.error('❌ FIREBASE: Error creating booking:', error);
+      console.error('❌ FIREBASE: Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
       throw error;
     }
   },
 
-  // Get user bookings
+  // Get user bookings with extensive debugging
   async getUserBookings() {
+    console.log('🔥 FIREBASE: getUserBookings called');
+    
     try {
       const user = auth.currentUser;
+      console.log('🔥 FIREBASE: Current user for getUserBookings:', user ? { uid: user.uid, email: user.email } : 'No user');
+      
       if (!user) {
-        console.log('⚠️ User not authenticated, returning empty bookings');
+        console.log('⚠️ FIREBASE: User not authenticated, returning empty bookings');
         return { data: [] };
       }
+      
+      console.log('🔥 FIREBASE: Querying bookings for userId:', user.uid);
       
       const bookingsRef = collection(db, 'bookings');
       const q = query(bookingsRef, 
@@ -429,15 +486,37 @@ export const bookingAPI = {
         orderBy('createdAt', 'desc')
       );
       
+      console.log('🔥 FIREBASE: Executing Firestore query...');
       const snapshot = await getDocs(q);
-      const bookings = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      console.log('🔥 FIREBASE: Query completed. Document count:', snapshot.docs.length);
+      
+      const bookings = snapshot.docs.map(doc => {
+        const data = { id: doc.id, ...doc.data() };
+        console.log('🔥 FIREBASE: Processing booking document:', {
+          id: data.id,
+          turfName: data.turfName,
+          dateTime: data.dateTime,
+          status: data.status,
+          userId: data.userId
+        });
+        return data;
+      });
+      
+      console.log('🔥 FIREBASE: Final bookings array:', bookings.map(b => ({
+        id: b.id,
+        turfName: b.turfName,
+        dateTime: b.dateTime,
+        status: b.status
+      })));
       
       return { data: bookings };
     } catch (error) {
-      console.error('Error fetching user bookings:', error);
+      console.error('❌ FIREBASE: Error fetching user bookings:', error);
+      console.error('❌ FIREBASE: Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
       return { data: [] };
     }
   },
