@@ -25,13 +25,19 @@ export const store = configureStore({
           'auth/signIn/fulfilled',
           'auth/signUp/fulfilled',
           'auth/googleSignIn/fulfilled',
-          'auth/loadStoredAuth/fulfilled'
+          'auth/loadStoredAuth/fulfilled',
+          'booking/create/pending',
+          'booking/create/fulfilled',
+          'booking/create/rejected'
         ],
         ignoredPaths: [
           '_persist',
           'auth.user.createdAt',
           'auth.user.updatedAt', 
-          'auth.user.lastLoginAt'
+          'auth.user.lastLoginAt',
+          'booking.currentBooking.createdAt',
+          'booking.currentBooking.dateTime',
+          'booking.userBookings'
         ],
         // Don't check for non-serializable values in these action types
         ignoredActionPaths: [
@@ -39,7 +45,12 @@ export const store = configureStore({
           'meta.arg.unsubscribe',
           'payload.user.createdAt',
           'payload.user.updatedAt',
-          'payload.user.lastLoginAt'
+          'payload.user.lastLoginAt',
+          'payload.createdAt',
+          'payload.dateTime',
+          'meta.arg.date',
+          'meta.arg.startTime',
+          'meta.arg.endTime'
         ],
         // Custom function to check if a value is serializable
         isSerializable: (value) => {
@@ -47,8 +58,17 @@ export const store = configureStore({
           if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
             return true;
           }
+          // Allow valid Date objects by converting them to ISO strings
+          if (value instanceof Date && !isNaN(value.getTime())) {
+            return true;
+          }
           // Reject Firebase serverTimestamp objects
           if (value && typeof value === 'object' && value._methodName === 'serverTimestamp') {
+            return false;
+          }
+          // Reject invalid Date objects
+          if (value instanceof Date && isNaN(value.getTime())) {
+            console.error('❌ Redux: Invalid Date object detected:', value);
             return false;
           }
           return true;

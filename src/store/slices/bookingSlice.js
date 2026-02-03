@@ -35,6 +35,24 @@ export const createBooking = createAsyncThunk(
     console.log('🔄 REDUX: createBooking action called with data:', bookingData);
     
     try {
+      // Validate booking data before processing
+      if (!bookingData.date || !bookingData.startTime || !bookingData.endTime) {
+        throw new Error('Missing required booking data: date, startTime, or endTime');
+      }
+      
+      // Validate date format
+      const testDate = new Date(bookingData.date);
+      if (isNaN(testDate.getTime())) {
+        throw new Error('Invalid date format in booking data');
+      }
+      
+      // Validate time formats
+      const testStartTime = new Date(`2000-01-01T${bookingData.startTime}:00`);
+      const testEndTime = new Date(`2000-01-01T${bookingData.endTime}:00`);
+      if (isNaN(testStartTime.getTime()) || isNaN(testEndTime.getTime())) {
+        throw new Error('Invalid time format in booking data');
+      }
+      
       const bookingAPI = await getAPI();
       console.log('🔄 REDUX: Got booking API instance for createBooking');
       

@@ -401,15 +401,44 @@ export const bookingAPI = {
       
       console.log('🔥 FIREBASE: Venue details prepared:', venueDetails);
       
-      // Create proper dateTime from date and startTime
+      // Create proper dateTime from date and startTime with validation
       console.log('🔥 FIREBASE: Creating dateTime from:', { date: bookingData.date, startTime: bookingData.startTime });
-      const bookingDateTime = new Date(`${bookingData.date}T${bookingData.startTime}:00`);
-      console.log('🔥 FIREBASE: Created dateTime:', bookingDateTime.toISOString());
       
-      // Calculate duration
+      // Validate date and time inputs
+      if (!bookingData.date || !bookingData.startTime) {
+        throw new Error('Invalid booking data: date and startTime are required');
+      }
+      
+      // Create dateTime with proper validation
+      const bookingDateTime = new Date(`${bookingData.date}T${bookingData.startTime}:00`);
+      
+      // Check if the created date is valid
+      if (isNaN(bookingDateTime.getTime())) {
+        console.error('❌ FIREBASE: Invalid date created from:', { date: bookingData.date, startTime: bookingData.startTime });
+        throw new Error('Invalid date format in booking data');
+      }
+      
+      console.log('🔥 FIREBASE: Created valid dateTime:', bookingDateTime.toISOString());
+      
+      // Calculate duration with validation
+      if (!bookingData.startTime || !bookingData.endTime) {
+        throw new Error('Invalid booking data: startTime and endTime are required');
+      }
+      
       const startTime = new Date(`2000-01-01T${bookingData.startTime}:00`);
       const endTime = new Date(`2000-01-01T${bookingData.endTime}:00`);
+      
+      // Validate time objects
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        console.error('❌ FIREBASE: Invalid time format:', { startTime: bookingData.startTime, endTime: bookingData.endTime });
+        throw new Error('Invalid time format in booking data');
+      }
+      
       const durationMs = endTime - startTime;
+      if (durationMs <= 0) {
+        throw new Error('Invalid booking duration: end time must be after start time');
+      }
+      
       const durationHours = Math.round(durationMs / (1000 * 60 * 60));
       const duration = `${durationHours} hour${durationHours !== 1 ? 's' : ''}`;
       console.log('🔥 FIREBASE: Calculated duration:', duration);
