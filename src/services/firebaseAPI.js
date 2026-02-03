@@ -370,12 +370,16 @@ export const bookingAPI = {
           });
           
           venueDetails = {
-            turfName: venueData.name,
-            turfArea: venueData.area || venueData.address,
-            sport: venueData.sport || 'Football',
-            phoneNumber: venueData.phoneNumber,
-            address: venueData.address
+            turfName: venueData.name || 'Sports Venue',
+            turfArea: venueData.area || venueData.address || 'Unknown Area',
+            sport: venueData.sport || (Array.isArray(venueData.sports) ? venueData.sports[0] : 'Football'),
+            address: venueData.address || 'N/A'
           };
+          
+          // Only add phoneNumber if it exists and is not empty
+          if (venueData.phoneNumber && venueData.phoneNumber.trim()) {
+            venueDetails.phoneNumber = venueData.phoneNumber;
+          }
         } else {
           console.log('⚠️ FIREBASE: Venue document not found for turfId:', bookingData.turfId);
           venueDetails = {
@@ -392,7 +396,6 @@ export const bookingAPI = {
           turfName: 'Sports Venue',
           turfArea: 'Unknown Area',
           sport: 'Football',
-          phoneNumber: 'N/A',
           address: 'N/A'
         };
       }
@@ -472,19 +475,24 @@ export const bookingAPI = {
         createdAt: serverTimestamp()
       };
       
-      console.log('🔥 FIREBASE: Final enriched booking data:', {
-        ...enrichedBookingData,
+      // Filter out undefined values to prevent Firestore errors
+      const cleanBookingData = Object.fromEntries(
+        Object.entries(enrichedBookingData).filter(([key, value]) => value !== undefined)
+      );
+      
+      console.log('🔥 FIREBASE: Final enriched booking data (cleaned):', {
+        ...cleanBookingData,
         createdAt: '[ServerTimestamp]' // Don't log the actual timestamp object
       });
       
       console.log('🔥 FIREBASE: Saving booking to Firestore...');
-      const bookingRef = await addDoc(collection(db, 'bookings'), enrichedBookingData);
+      const bookingRef = await addDoc(collection(db, 'bookings'), cleanBookingData);
       console.log('🔥 FIREBASE: Booking saved successfully with ID:', bookingRef.id);
       
       const finalResult = { 
         data: { 
           id: bookingRef.id, 
-          ...enrichedBookingData,
+          ...cleanBookingData,
           requiresSignIn: false,
           message: 'Booking confirmed successfully!'
         } 

@@ -70,7 +70,11 @@ export default function BookingScreen() {
     });
     
     const now = new Date();
-    console.log('📱 BOOKING_SCREEN: Current time for filtering:', now.toISOString());
+    try {
+      console.log('📱 BOOKING_SCREEN: Current time for filtering:', now.toISOString());
+    } catch (error) {
+      console.error('❌ BookingScreen: Error getting current time ISO string:', error);
+    }
     
     let filtered = [];
     switch (filter) {

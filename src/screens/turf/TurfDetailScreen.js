@@ -18,7 +18,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleFavorite, fetchFavorites, fetchTurfDetails } from '../../store/slices/turfSlice';
 import { fetchAvailableSlots, clearAvailableSlots } from '../../store/slices/bookingSlice';
-import { MaterialIcons } from '@expo/vector-icons';
+import { safeDateString, safeToISOString, isValidDate } from '../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import { TurfCardSkeleton } from '../../components/SkeletonLoader';
 
@@ -28,7 +28,15 @@ export default function TurfDetailScreen({ route, navigation }) {
   const { turfId } = route.params;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showTimeSlots, setShowTimeSlots] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    // Ensure we have a valid date
+    if (isNaN(today.getTime())) {
+      console.error('❌ TurfDetailScreen: Invalid initial date, using fallback');
+      return new Date(Date.now()); // Fallback to current timestamp
+    }
+    return today;
+  });
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   
   const dispatch = useDispatch();
@@ -58,11 +66,15 @@ export default function TurfDetailScreen({ route, navigation }) {
   // Load available slots when date changes
   useEffect(() => {
     if (showTimeSlots && selectedDate) {
-      const dateString = selectedDate.toISOString().split('T')[0];
-      console.log(`🔄 TurfDetailScreen: Fetching slots for ${turfId} on ${dateString}`);
-      // Clear previous slots before fetching new ones
-      dispatch(clearAvailableSlots());
-      dispatch(fetchAvailableSlots({ turfId, date: dateString }));
+      const dateString = safeDateString(selectedDate);
+      if (dateString) {
+        console.log(`🔄 TurfDetailScreen: Fetching slots for ${turfId} on ${dateString}`);
+        // Clear previous slots before fetching new ones
+        dispatch(clearAvailableSlots());
+        dispatch(fetchAvailableSlots({ turfId, date: dateString }));
+      } else {
+        console.error('❌ TurfDetailScreen: Could not get valid date string from selectedDate:', selectedDate);
+      }
     }
   }, [dispatch, turfId, selectedDate, showTimeSlots]);
 
@@ -266,6 +278,23 @@ export default function TurfDetailScreen({ route, navigation }) {
       return;
     }
 
+    // Validate selectedDate using safe utilities
+    if (!isValidDate(selectedDate)) {
+      console.error('❌ TurfDetailScreen: Invalid selected date:', selectedDate);
+      Alert.alert('Error', 'Please select a valid date');
+      return;
+    }
+    
+    // Convert date to YYYY-MM-DD format using safe utility
+    const dateString = safeDateString(selectedDate);
+    if (!dateString) {
+      console.error('❌ TurfDetailScreen: Could not get date string from selectedDate:', selectedDate);
+      Alert.alert('Error', 'Invalid date selected');
+      return;
+    }
+    
+    console.log('🎯 TurfDetailScreen: Date string for booking:', dateString);
+
     const bookingData = {
       turf: {
         id: venue.id,
@@ -279,7 +308,7 @@ export default function TurfDetailScreen({ route, navigation }) {
         price: selectedTimeSlot.price,
         priceType: getPriceType(selectedTimeSlot.time)
       },
-      date: selectedDate.toISOString()
+      date: dateString // Use safe date string
     };
 
     setShowTimeSlots(false);
@@ -537,7 +566,14 @@ export default function TurfDetailScreen({ route, navigation }) {
                       styles.dateOption,
                       selectedDate.toDateString() === date.toDateString() && { backgroundColor: theme.colors.primary }
                     ]}
-                    onPress={() => setSelectedDate(date)}
+                    onPress={() => {
+                      // Validate date before setting it using safe utilities
+                      if (isValidDate(date)) {
+                        setSelectedDate(date);
+                      } else {
+                        console.error('❌ TurfDetailScreen: Invalid date selected:', date);
+                      }
+                    }}
                   >
                     <Text style={[
                       styles.dateOptionText,

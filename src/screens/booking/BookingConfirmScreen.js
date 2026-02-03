@@ -133,16 +133,35 @@ export default function BookingConfirmScreen({ route, navigation }) {
   };
 
   const formatDateTime = () => {
-    const bookingDate = new Date(date);
-    return {
-      date: bookingDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }),
-      time: `${slot.startTime} - ${slot.endTime}`
-    };
+    try {
+      const bookingDate = new Date(date);
+      
+      // Validate the date
+      if (isNaN(bookingDate.getTime())) {
+        console.error('❌ BookingConfirmScreen: Invalid date:', date);
+        // Return fallback formatting
+        return {
+          date: 'Invalid Date',
+          time: `${slot.startTime} - ${slot.endTime}`
+        };
+      }
+      
+      return {
+        date: bookingDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        time: `${slot.startTime} - ${slot.endTime}`
+      };
+    } catch (error) {
+      console.error('❌ BookingConfirmScreen: Error formatting date:', error);
+      return {
+        date: 'Invalid Date',
+        time: `${slot.startTime} - ${slot.endTime}`
+      };
+    }
   };
 
   const getPaymentIcon = (method) => {
