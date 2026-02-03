@@ -25,7 +25,7 @@ import { theme } from '../../theme/theme';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function BookingScreen() {
-  const [selectedTab, setSelectedTab] = useState('upcoming');
+  const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
@@ -60,35 +60,66 @@ export default function BookingScreen() {
     console.log('📱 BOOKING_SCREEN: Filtering bookings...', {
       totalBookings: bookings.length,
       selectedTab: filter,
-      searchQuery
+      searchQuery,
+      sampleBooking: bookings[0] ? {
+        id: bookings[0].id,
+        dateTime: bookings[0].dateTime,
+        status: bookings[0].status,
+        turfName: bookings[0].turfName
+      } : 'No bookings'
     });
     
     const now = new Date();
+    console.log('📱 BOOKING_SCREEN: Current time for filtering:', now.toISOString());
     
     let filtered = [];
     switch (filter) {
       case 'upcoming':
         filtered = bookings.filter(booking => {
-          const bookingDate = new Date(booking.dateTime);
+          // Handle both dateTime and separate date/time fields
+          let bookingDate;
+          if (booking.dateTime) {
+            bookingDate = new Date(booking.dateTime);
+          } else if (booking.date && booking.startTime) {
+            bookingDate = new Date(`${booking.date}T${booking.startTime}:00`);
+          } else {
+            console.warn('📱 BOOKING_SCREEN: Booking missing date/time info:', booking);
+            return false;
+          }
+          
           const isUpcoming = bookingDate > now && booking.status !== 'cancelled';
           console.log('📱 BOOKING_SCREEN: Checking upcoming booking:', {
             id: booking.id,
             dateTime: booking.dateTime,
+            calculatedDate: bookingDate.toISOString(),
             status: booking.status,
-            isUpcoming
+            isUpcoming,
+            timeDiff: (bookingDate - now) / (1000 * 60 * 60) // hours
           });
           return isUpcoming;
         });
         break;
       case 'past':
         filtered = bookings.filter(booking => {
-          const bookingDate = new Date(booking.dateTime);
+          // Handle both dateTime and separate date/time fields
+          let bookingDate;
+          if (booking.dateTime) {
+            bookingDate = new Date(booking.dateTime);
+          } else if (booking.date && booking.startTime) {
+            bookingDate = new Date(`${booking.date}T${booking.startTime}:00`);
+          } else {
+            console.warn('📱 BOOKING_SCREEN: Booking missing date/time info:', booking);
+            return true; // Show in past if we can't determine time
+          }
+          
           const isPast = bookingDate <= now || booking.status === 'completed';
           console.log('📱 BOOKING_SCREEN: Checking past booking:', {
             id: booking.id,
             dateTime: booking.dateTime,
+            calculatedDate: bookingDate.toISOString(),
             status: booking.status,
-            isPast
+            isPast,
+            timeDiff: (bookingDate - now) / (1000 * 60 * 60) // hours
           });
           return isPast;
         });
@@ -182,6 +213,8 @@ export default function BookingScreen() {
     }
     
     switch (selectedTab) {
+      case 'all':
+        return 'No bookings yet. Time to book a ground!';
       case 'upcoming':
         return 'No upcoming bookings. Time to book a ground!';
       case 'past':
@@ -244,6 +277,11 @@ export default function BookingScreen() {
             onValueChange={setSelectedTab}
             buttons={[
               { 
+                value: 'all', 
+                label: 'All',
+                icon: () => <MaterialIcons name="list" size={18} color={selectedTab === 'all' ? theme.colors.primary : '#666'} />
+              },
+              { 
                 value: 'upcoming', 
                 label: 'Upcoming',
                 icon: () => <MaterialIcons name="schedule" size={18} color={selectedTab === 'upcoming' ? theme.colors.primary : '#666'} />
@@ -295,7 +333,7 @@ export default function BookingScreen() {
               <Text style={styles.emptyTitle}>
                 {getEmptyMessage()}
               </Text>
-              {selectedTab === 'upcoming' && !searchQuery.trim() && (
+              {(selectedTab === 'upcoming' || selectedTab === 'all') && !searchQuery.trim() && (
                 <Button 
                   mode="contained" 
                   style={styles.bookNowButton}

@@ -108,9 +108,12 @@ export default function SignInScreen({ navigation }) {
           // Don't block navigation if location fails
         }
         
-        // Don't manually navigate - let AppNavigator handle it automatically
-        // when the authentication state changes
-        console.log('🔍 DEBUG: Sign-in complete, AppNavigator will handle navigation automatically');
+        // Force navigation to main app after successful sign-in
+        console.log('🔍 DEBUG: Forcing navigation to MainTabs...');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' }],
+        });
         
       } catch (error) {
         console.log('🔍 DEBUG: Sign-in failed with error:', error);

@@ -43,7 +43,18 @@ export default function BookingCard({ booking }) {
   };
 
   const formatDateTime = (dateTime) => {
+    if (!dateTime) {
+      return { date: 'Unknown', time: 'Unknown' };
+    }
+    
     const date = new Date(dateTime);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid dateTime in booking:', dateTime);
+      return { date: 'Invalid Date', time: 'Invalid Time' };
+    }
+    
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
     const tomorrow = new Date(now);
@@ -73,7 +84,11 @@ export default function BookingCard({ booking }) {
   };
 
   const canCancel = () => {
+    if (!booking.dateTime) return false;
+    
     const bookingTime = new Date(booking.dateTime);
+    if (isNaN(bookingTime.getTime())) return false;
+    
     const now = new Date();
     const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
     
@@ -113,20 +128,20 @@ export default function BookingCard({ booking }) {
               />
             </View>
             <View style={styles.venueDetails}>
-              <Text style={styles.venueName}>{booking.turfName}</Text>
-              <Text style={styles.venueLocation}>{booking.turfArea}</Text>
+              <Text style={styles.venueName}>{booking.turfName || 'Unknown Venue'}</Text>
+              <Text style={styles.venueLocation}>{booking.turfArea || 'Unknown Area'}</Text>
             </View>
           </View>
           
           <View style={[
             styles.statusChip, 
-            { backgroundColor: getStatusBgColor(booking.status) }
+            { backgroundColor: getStatusBgColor(booking.status || 'pending') }
           ]}>
             <Text style={[
               styles.statusText, 
-              { color: getStatusColor(booking.status) }
+              { color: getStatusColor(booking.status || 'pending') }
             ]}>
-              {booking.status.toUpperCase()}
+              {(booking.status || 'pending').toUpperCase()}
             </Text>
           </View>
         </View>
@@ -147,11 +162,11 @@ export default function BookingCard({ booking }) {
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
               <MaterialIcons name="timer" size={16} color="#666" />
-              <Text style={styles.detailText}>{booking.duration}h • {booking.slotType}</Text>
+              <Text style={styles.detailText}>{booking.duration || '1h'} • {booking.slotType || 'Standard'}</Text>
             </View>
             <View style={styles.detailItem}>
               <MaterialIcons name="payments" size={16} color="#666" />
-              <Text style={styles.detailText}>PKR {booking.totalAmount.toLocaleString()}</Text>
+              <Text style={styles.detailText}>PKR {(booking.totalAmount || 0).toLocaleString()}</Text>
             </View>
           </View>
           

@@ -143,6 +143,13 @@ export default function AppNavigator() {
   }
 
   // Debug what screen should be shown
+  console.log('🔍 NAVIGATOR DEBUG: Auth state:', { 
+    isAuthenticated, 
+    initializing, 
+    hasUser: !!user,
+    showSplash 
+  });
+  
   if (isAuthenticated) {
     console.log('🔍 NAVIGATOR DEBUG: Rendering authenticated screens');
   } else {
