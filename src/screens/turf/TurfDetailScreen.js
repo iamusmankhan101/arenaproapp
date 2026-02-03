@@ -19,7 +19,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toggleFavorite, fetchFavorites, fetchTurfDetails } from '../../store/slices/turfSlice';
 import { fetchAvailableSlots, clearAvailableSlots } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
-import { safeDateString, safeToISOString, isValidDate } from '../../utils/dateUtils';
+import { safeDateString, isValidDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import { TurfCardSkeleton } from '../../components/SkeletonLoader';
 
@@ -101,10 +101,13 @@ export default function TurfDetailScreen({ route, navigation }) {
   // Transform the venue data to match component expectations
   const venue = {
     ...rawVenue,
-    // Handle location display
+    // Handle location display - ensure it's always a string
     location: rawVenue.area && rawVenue.city 
       ? `${rawVenue.area}, ${rawVenue.city}` 
-      : rawVenue.address || rawVenue.location || 'Location not specified',
+      : rawVenue.address || 
+        (typeof rawVenue.location === 'string' ? rawVenue.location : 
+         rawVenue.location?.city ? `${rawVenue.location.city}` : 
+         'Location not specified'),
     
     // Handle operating hours
     hours: rawVenue.operatingHours 
@@ -457,7 +460,7 @@ export default function TurfDetailScreen({ route, navigation }) {
             
             <View style={styles.locationRow}>
               <MaterialIcons name="location-on" size={16} color="#666" />
-              <Text style={styles.locationText}>{venue.location}</Text>
+              <Text style={styles.locationText}>{typeof venue.location === 'string' ? venue.location : `${venue.location?.city || 'Unknown City'}`}</Text>
               <MaterialIcons name="schedule" size={16} color="#666" style={{ marginLeft: 20 }} />
               <Text style={styles.hoursText}>{venue.hours}</Text>
             </View>
