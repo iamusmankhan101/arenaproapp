@@ -22,12 +22,31 @@ import { fetchUserBookings } from '../../store/slices/bookingSlice';
 import BookingCard from '../../components/BookingCard';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function BookingScreen() {
   const [selectedTab, setSelectedTab] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
   const { userBookings, loading } = useSelector(state => state.booking);
+
+  useEffect(() => {
+    dispatch(fetchUserBookings());
+  }, [dispatch]);
+
+  // Refresh bookings when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      dispatch(fetchUserBookings());
+    }, [dispatch])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await dispatch(fetchUserBookings());
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     dispatch(fetchUserBookings());
@@ -193,8 +212,8 @@ export default function BookingScreen() {
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl
-              refreshing={loading}
-              onRefresh={() => dispatch(fetchUserBookings())}
+              refreshing={refreshing || loading}
+              onRefresh={onRefresh}
               colors={[theme.colors.primary]}
               tintColor={theme.colors.primary}
             />

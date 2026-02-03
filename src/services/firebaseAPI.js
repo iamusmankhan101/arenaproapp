@@ -348,24 +348,62 @@ export const bookingAPI = {
         };
       }
       
-      // Authenticated user booking
-      const bookingRef = await addDoc(collection(db, 'bookings'), {
+      // Get venue details to enrich booking data
+      let venueDetails = {};
+      try {
+        const venueDoc = await getDoc(doc(db, 'venues', bookingData.turfId));
+        if (venueDoc.exists()) {
+          const venueData = venueDoc.data();
+          venueDetails = {
+            turfName: venueData.name,
+            turfArea: venueData.area || venueData.address,
+            sport: venueData.sport || 'Football',
+            phoneNumber: venueData.phoneNumber,
+            address: venueData.address
+          };
+        }
+      } catch (venueError) {
+        console.warn('Could not fetch venue details:', venueError);
+        // Use fallback data if venue fetch fails
+        venueDetails = {
+          turfName: 'Sports Venue',
+          turfArea: 'Unknown Area',
+          sport: 'Football',
+          phoneNumber: 'N/A',
+          address: 'N/A'
+        };
+      }
+      
+      // Create proper dateTime from date and startTime
+      const bookingDateTime = new Date(`${bookingData.date}T${bookingData.startTime}:00`);
+      
+      // Calculate duration
+      const startTime = new Date(`2000-01-01T${bookingData.startTime}:00`);
+      const endTime = new Date(`2000-01-01T${bookingData.endTime}:00`);
+      const durationMs = endTime - startTime;
+      const durationHours = Math.round(durationMs / (1000 * 60 * 60));
+      
+      // Authenticated user booking with enriched data
+      const enrichedBookingData = {
         ...bookingData,
+        ...venueDetails,
         userId: user.uid,
         userType: 'authenticated',
         status: 'confirmed',
         paymentStatus: 'paid',
         bookingReference: `PIT${Date.now().toString().slice(-6)}`,
+        bookingId: `PIT${Date.now().toString().slice(-6)}`,
+        dateTime: bookingDateTime.toISOString(),
+        duration: `${durationHours} hour${durationHours !== 1 ? 's' : ''}`,
         createdAt: serverTimestamp()
-      });
+      };
+      
+      const bookingRef = await addDoc(collection(db, 'bookings'), enrichedBookingData);
       
       return { 
         data: { 
           id: bookingRef.id, 
-          ...bookingData,
-          status: 'confirmed',
-          paymentStatus: 'paid',
-          bookingReference: `PIT${Date.now().toString().slice(-6)}`,
+          ...enrichedBookingData,
           requiresSignIn: false,
           message: 'Booking confirmed successfully!'
         } 

@@ -22,7 +22,7 @@ import {
   Modal
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { createBooking } from '../../store/slices/bookingSlice';
+import { createBooking, fetchUserBookings } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 
@@ -127,6 +127,8 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
+    // Refresh bookings data before navigating
+    dispatch(fetchUserBookings());
     navigation.navigate('MainTabs', { screen: 'Bookings' });
   };
 
