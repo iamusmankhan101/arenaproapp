@@ -225,7 +225,7 @@ export const bookingAPI = {
       
       const venueData = venueSnap.data();
       
-      // Check if there are date-specific slots for the requested date
+      // Only use date-specific slots - no fallback to general time slots
       let venueTimeSlots = [];
       
       if (venueData.dateSpecificSlots && venueData.dateSpecificSlots[date]) {
@@ -233,10 +233,8 @@ export const bookingAPI = {
         venueTimeSlots = venueData.dateSpecificSlots[date];
         console.log(`📊 Mobile: Using date-specific slots for ${date}: ${venueTimeSlots.length} slots configured`);
       } else {
-        // Fall back to general time slots
-        venueTimeSlots = venueData.timeSlots || venueData.availableSlots || [];
-        console.log(`📊 Mobile: Using general time slots: ${venueTimeSlots.length} slots configured`);
-        console.log(`📊 Mobile: Using ${venueData.timeSlots ? 'timeSlots' : 'availableSlots'} field`);
+        console.log(`⚠️ Mobile: No date-specific slots configured for ${date}`);
+        return { data: [] };
       }
       
       if (venueTimeSlots.length === 0) {
@@ -296,7 +294,7 @@ export const bookingAPI = {
         };
       });
       
-      console.log(`✅ Mobile: Returning ${availableSlots.length} selected time slots (${availableSlots.filter(s => s.available).length} available)`);
+      console.log(`✅ Mobile: Returning ${availableSlots.length} date-specific time slots (${availableSlots.filter(s => s.available).length} available)`);
       
       // Log sample slots for debugging
       if (availableSlots.length > 0) {
