@@ -35,7 +35,7 @@ authScreens.forEach((screenPath, index) => {
     
     // Test 2: Check for focus state management (for input screens)
     if (screenPath.includes('SignIn') || screenPath.includes('SignUp')) {
-      const hasFocusStates = content.includes('Focused') && content.includes('setFocused');
+      const hasFocusStates = content.includes('Focused, set') && content.includes('useState(false)');
       if (hasFocusStates) {
         console.log('✅ Focus state management implemented');
       } else {
