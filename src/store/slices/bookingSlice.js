@@ -40,8 +40,16 @@ export const createBooking = createAsyncThunk(
         throw new Error('Missing required booking data: date, startTime, or endTime');
       }
       
+      // Extract date part if it's an ISO string, otherwise use as-is
+      let dateString = bookingData.date;
+      if (typeof dateString === 'string' && dateString.includes('T')) {
+        // If it's an ISO timestamp, extract just the date part
+        dateString = dateString.split('T')[0];
+        console.log('🔄 REDUX: Extracted date from ISO string:', dateString);
+      }
+      
       // Validate date format
-      const testDate = new Date(bookingData.date);
+      const testDate = new Date(dateString);
       if (isNaN(testDate.getTime())) {
         throw new Error('Invalid date format in booking data');
       }
@@ -52,6 +60,14 @@ export const createBooking = createAsyncThunk(
       if (isNaN(testStartTime.getTime()) || isNaN(testEndTime.getTime())) {
         throw new Error('Invalid time format in booking data');
       }
+      
+      // Test the final dateTime creation
+      const testDateTime = new Date(`${dateString}T${bookingData.startTime}:00`);
+      if (isNaN(testDateTime.getTime())) {
+        throw new Error('Invalid date/time combination in booking data');
+      }
+      
+      console.log('🔄 REDUX: All validations passed for booking data');
       
       const bookingAPI = await getAPI();
       console.log('🔄 REDUX: Got booking API instance for createBooking');

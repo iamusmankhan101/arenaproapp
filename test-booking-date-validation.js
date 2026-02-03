@@ -12,8 +12,16 @@ function validateBookingData(bookingData) {
     throw new Error('Missing required booking data: date, startTime, or endTime');
   }
   
+  // Extract date part if it's an ISO string, otherwise use as-is
+  let dateString = bookingData.date;
+  if (typeof dateString === 'string' && dateString.includes('T')) {
+    // If it's an ISO timestamp, extract just the date part
+    dateString = dateString.split('T')[0];
+    console.log('🔧 Extracted date from ISO string:', dateString);
+  }
+  
   // Validate date format
-  const testDate = new Date(bookingData.date);
+  const testDate = new Date(dateString);
   if (isNaN(testDate.getTime())) {
     throw new Error('Invalid date format in booking data');
   }
@@ -31,7 +39,7 @@ function validateBookingData(bookingData) {
   });
   
   // Create booking dateTime
-  const bookingDateTime = new Date(`${bookingData.date}T${bookingData.startTime}:00`);
+  const bookingDateTime = new Date(`${dateString}T${bookingData.startTime}:00`);
   if (isNaN(bookingDateTime.getTime())) {
     throw new Error('Invalid date format in booking data');
   }
@@ -50,7 +58,8 @@ function validateBookingData(bookingData) {
   return {
     isValid: true,
     dateTime: bookingDateTime.toISOString(),
-    duration: duration
+    duration: duration,
+    extractedDate: dateString
   };
 }
 
@@ -62,6 +71,15 @@ const testCases = [
       date: '2024-02-05',
       startTime: '10:00',
       endTime: '11:00',
+      turfId: 'test-turf-123'
+    }
+  },
+  {
+    name: 'Valid booking data with ISO timestamp date',
+    data: {
+      date: '2026-02-04T18:18:29.658Z',
+      startTime: '13:00',
+      endTime: '14:00',
       turfId: 'test-turf-123'
     }
   },

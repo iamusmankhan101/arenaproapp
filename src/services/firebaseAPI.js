@@ -409,12 +409,24 @@ export const bookingAPI = {
         throw new Error('Invalid booking data: date and startTime are required');
       }
       
+      // Extract date part if it's an ISO string, otherwise use as-is
+      let dateString = bookingData.date;
+      if (typeof dateString === 'string' && dateString.includes('T')) {
+        // If it's an ISO timestamp, extract just the date part
+        dateString = dateString.split('T')[0];
+        console.log('🔥 FIREBASE: Extracted date from ISO string:', dateString);
+      }
+      
       // Create dateTime with proper validation
-      const bookingDateTime = new Date(`${bookingData.date}T${bookingData.startTime}:00`);
+      const bookingDateTime = new Date(`${dateString}T${bookingData.startTime}:00`);
       
       // Check if the created date is valid
       if (isNaN(bookingDateTime.getTime())) {
-        console.error('❌ FIREBASE: Invalid date created from:', { date: bookingData.date, startTime: bookingData.startTime });
+        console.error('❌ FIREBASE: Invalid date created from:', { 
+          originalDate: bookingData.date, 
+          extractedDate: dateString, 
+          startTime: bookingData.startTime 
+        });
         throw new Error('Invalid date format in booking data');
       }
       
