@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import * as ImagePicker from 'expo-image-picker';
+import { updateProfile } from '../../store/slices/authSlice';
 
 // Brand colors
 const COLORS = {
@@ -107,12 +108,36 @@ export default function ManageProfileScreen({ navigation }) {
     setDatePickerMode('calendar');
   };
 
-  const handleSave = () => {
-    Alert.alert(
-      'Profile Updated',
-      'Your profile has been updated successfully!',
-      [{ text: 'OK', onPress: () => setIsEditing(false) }]
-    );
+
+
+  // ... (inside component)
+
+  const handleSave = async () => {
+    try {
+      // Map form data to user object structure
+      // Note: profileImage is local state, mapping to photoURL for auth slice
+      const userData = {
+        fullName: formData.fullName,
+        displayName: formData.fullName, // Ensure consistency
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        location: formData.location,
+        city: formData.location, // Map location to city for consistency
+        photoURL: formData.profileImage
+      };
+
+      await dispatch(updateProfile(userData)).unwrap();
+
+      Alert.alert(
+        'Profile Updated',
+        'Your profile has been updated successfully!',
+        [{ text: 'OK', onPress: () => setIsEditing(false) }]
+      );
+    } catch (error) {
+      Alert.alert('Update Failed', error.message || 'Could not update profile');
+    }
   };
 
   const pickImage = async () => {

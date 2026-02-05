@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Modal } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Modal, Image } from 'react-native';
 import { Text, Avatar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
@@ -87,12 +87,21 @@ export default function ProfileScreen({ navigation }) {
         {/* Avatar Section */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
-            <Avatar.Text
-              size={100}
-              label={userData?.fullName?.charAt(0) || 'U'}
-              style={styles.avatar}
-              labelStyle={styles.avatarLabel}
-            />
+            {userData?.photoURL ? (
+              <View style={[styles.avatar, { overflow: 'hidden', borderRadius: 50, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }]}>
+                <Image
+                  source={{ uri: userData.photoURL }}
+                  style={{ width: 100, height: 100 }}
+                />
+              </View>
+            ) : (
+              <Avatar.Text
+                size={100}
+                label={userData?.fullName?.charAt(0) || 'U'}
+                style={styles.avatar}
+                labelStyle={styles.avatarLabel}
+              />
+            )}
             <TouchableOpacity style={styles.editAvatarButton}>
               <Edit size={16} color="#004d43" />
             </TouchableOpacity>
