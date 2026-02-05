@@ -19,7 +19,7 @@ import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
+import * as AuthSession from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -41,7 +41,7 @@ export default function SignInScreen({ navigation }) {
     // iOS client ID - used in standalone iOS builds
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
     // Required for Expo Go to work with Google Auth
-    redirectUri: makeRedirectUri({
+    redirectUri: AuthSession.makeRedirectUri({
       scheme: 'arenapropk.online',
       useProxy: true,
     }),
@@ -84,25 +84,29 @@ export default function SignInScreen({ navigation }) {
   };
 
   const handleLogin = async () => {
+    console.log('🔐 handleLogin called');
     if (validateForm()) {
       try {
-        console.log('Attempting sign in...');
+        console.log('✅ Form validated, attempting sign in with:', { email: email.trim().toLowerCase() });
         const resultAction = await dispatch(signIn({ email: email.trim().toLowerCase(), password }));
+        console.log('📦 Sign in result action:', resultAction);
 
         if (signIn.fulfilled.match(resultAction)) {
-          console.log('Sign in successful');
+          console.log('✅ Sign in successful, payload:', resultAction.payload);
           // Navigation is handled by auth state change in AppNavigator
         } else {
-          console.log('Sign in failed:', resultAction.payload);
+          console.log('❌ Sign in failed:', resultAction.payload);
           // Error is handled by useEffect listening to state.error
           if (resultAction.payload) {
             Alert.alert('Sign In Failed', resultAction.payload.message || 'Authentication failed');
           }
         }
       } catch (err) {
-        console.error('Sign in exception:', err);
+        console.error('💥 Sign in exception:', err);
         Alert.alert('Error', 'An unexpected error occurred during sign in.');
       }
+    } else {
+      console.log('❌ Form validation failed');
     }
   };
 

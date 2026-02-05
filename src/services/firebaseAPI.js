@@ -1,14 +1,14 @@
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  getDoc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
   limit,
   startAfter,
   GeoPoint,
@@ -21,9 +21,9 @@ import { safeDate, isValidDate, safeDateString, safeToISOString, safeFirestoreTi
 // Helper function to serialize Firestore data and handle timestamps
 const serializeFirestoreData = (data) => {
   if (!data) return data;
-  
+
   const serialized = { ...data };
-  
+
   // Handle timestamp fields
   if (data.createdAt?.toDate) {
     serialized.createdAt = data.createdAt.toDate().toISOString();
@@ -31,21 +31,37 @@ const serializeFirestoreData = (data) => {
   if (data.updatedAt?.toDate) {
     serialized.updatedAt = data.updatedAt.toDate().toISOString();
   }
-  
-  // Handle nested objects that might contain timestamps
+
+  // Handle GeoPoint (coordinates field)
+  if (data.coordinates && typeof data.coordinates.latitude === 'number' && typeof data.coordinates.longitude === 'number') {
+    serialized.coordinates = {
+      latitude: data.coordinates.latitude,
+      longitude: data.coordinates.longitude
+    };
+  }
+
+  // Handle nested objects that might contain timestamps or GeoPoints
   Object.keys(serialized).forEach(key => {
     const value = serialized[key];
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       // Check if it's a timestamp
       if (value.toDate && typeof value.toDate === 'function') {
         serialized[key] = value.toDate().toISOString();
-      } else {
-        // Recursively serialize nested objects
+      }
+      // Check if it's a GeoPoint
+      else if (typeof value.latitude === 'number' && typeof value.longitude === 'number') {
+        serialized[key] = {
+          latitude: value.latitude,
+          longitude: value.longitude
+        };
+      }
+      // Recursively serialize nested objects
+      else {
         serialized[key] = serializeFirestoreData(value);
       }
     }
   });
-  
+
   return serialized;
 };
 
@@ -54,11 +70,11 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Radius of the Earth in kilometers
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in kilometers
 };
 
@@ -71,15 +87,15 @@ export const turfAPI = {
       const turfsRef = collection(db, 'venues');
       const q = query(turfsRef, where('isActive', '==', true));
       const snapshot = await getDocs(q);
-      
+
       console.log(`📊 Mobile app: Found ${snapshot.size} total active venues in database`);
-      
+
       const turfs = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
-        
+
         console.log(`📍 Mobile app: Adding venue ${data.name} to results`);
-        
+
         const serializedData = serializeFirestoreData({
           id: doc.id,
           ...data,
@@ -89,13 +105,13 @@ export const turfAPI = {
           pricePerHour: data.pricing?.basePrice || 0,
           time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
         });
-        
+
         turfs.push(serializedData);
       });
-      
+
       // Sort by name instead of distance
       turfs.sort((a, b) => a.name.localeCompare(b.name));
-      
+
       console.log(`✅ Mobile app: Returning ${turfs.length} venues (all active venues)`);
       return { data: turfs };
     } catch (error) {
@@ -109,17 +125,17 @@ export const turfAPI = {
     try {
       const turfRef = doc(db, 'venues', turfId);
       const turfSnap = await getDoc(turfRef);
-      
+
       if (!turfSnap.exists()) {
         throw new Error('Turf not found');
       }
-      
+
       const data = turfSnap.data();
       const serializedData = serializeFirestoreData({
         id: turfSnap.id,
         ...data
       });
-      
+
       return { data: serializedData };
     } catch (error) {
       console.error('Error fetching turf details:', error);
@@ -136,14 +152,14 @@ export const turfAPI = {
         console.log('⚠️ User not authenticated, cannot toggle favorite');
         return { data: { isFavorite: false, message: 'Please sign in to add favorites' } };
       }
-      
+
       const favoritesRef = collection(db, 'favorites');
-      const q = query(favoritesRef, 
-        where('userId', '==', user.uid), 
+      const q = query(favoritesRef,
+        where('userId', '==', user.uid),
         where('turfId', '==', turfId)
       );
       const snapshot = await getDocs(q);
-      
+
       if (snapshot.empty) {
         // Add to favorites
         await addDoc(favoritesRef, {
@@ -174,21 +190,21 @@ export const turfAPI = {
         console.log('⚠️ User not authenticated, returning empty favorites');
         return { data: [] };
       }
-      
+
       const favoritesRef = collection(db, 'favorites');
       const q = query(favoritesRef, where('userId', '==', user.uid));
       const snapshot = await getDocs(q);
-      
+
       const favoriteIds = snapshot.docs.map(doc => doc.data().turfId);
-      
+
       if (favoriteIds.length === 0) {
         return { data: [] };
       }
-      
+
       // Get turf details for favorites
       const turfsRef = collection(db, 'venues');
       const favorites = [];
-      
+
       for (const turfId of favoriteIds) {
         const turfDoc = await getDoc(doc(turfsRef, turfId));
         if (turfDoc.exists()) {
@@ -198,7 +214,7 @@ export const turfAPI = {
           });
         }
       }
-      
+
       return { data: favorites };
     } catch (error) {
       console.error('Error fetching favorites:', error);
@@ -214,21 +230,21 @@ export const bookingAPI = {
   async getAvailableSlots(turfId, date) {
     try {
       console.log(`🕐 Mobile: Fetching available slots for venue ${turfId} on ${date}`);
-      
+
       // First, get the venue's time slots from the venue document
       const venueRef = doc(db, 'venues', turfId);
       const venueSnap = await getDoc(venueRef);
-      
+
       if (!venueSnap.exists()) {
         console.log(`❌ Mobile: Venue ${turfId} not found`);
         throw new Error('Venue not found');
       }
-      
+
       const venueData = venueSnap.data();
-      
+
       // Only use date-specific slots - no fallback to general time slots
       let venueTimeSlots = [];
-      
+
       if (venueData.dateSpecificSlots && venueData.dateSpecificSlots[date]) {
         // Use date-specific slots if they exist for this date
         venueTimeSlots = venueData.dateSpecificSlots[date];
@@ -237,21 +253,21 @@ export const bookingAPI = {
         console.log(`⚠️ Mobile: No date-specific slots configured for ${date}`);
         return { data: [] };
       }
-      
+
       if (venueTimeSlots.length === 0) {
         console.log('⚠️ Mobile: No time slots configured for this venue/date');
         return { data: [] };
       }
-      
+
       // Filter to only show selected slots (admin-configured availability)
       const selectedSlots = venueTimeSlots.filter(slot => slot.selected !== false);
       console.log(`📊 Mobile: ${selectedSlots.length}/${venueTimeSlots.length} slots are selected by admin`);
-      
+
       if (selectedSlots.length === 0) {
         console.log('⚠️ Mobile: No slots selected by admin for this venue/date');
         return { data: [] };
       }
-      
+
       // Try to get existing bookings for this date (with fallback for index issues)
       let bookedSlots = [];
       try {
@@ -260,32 +276,32 @@ export const bookingAPI = {
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = safeDate(date);
         endOfDay.setHours(23, 59, 59, 999);
-        
-        const q = query(bookingsRef, 
+
+        const q = query(bookingsRef,
           where('turfId', '==', turfId),
           where('date', '>=', startOfDay),
           where('date', '<=', endOfDay),
           where('status', 'in', ['confirmed', 'pending'])
         );
-        
+
         const snapshot = await getDocs(q);
         bookedSlots = snapshot.docs.map(doc => {
           const booking = doc.data();
           return booking.timeSlot || booking.slot?.startTime;
         }).filter(Boolean);
-        
+
         console.log(`📋 Mobile: Found ${bookedSlots.length} booked slots:`, bookedSlots);
       } catch (indexError) {
         console.warn('⚠️ Mobile: Firestore index not ready yet, showing all slots as available:', indexError.message);
         // If index is not ready, show all slots as available
         bookedSlots = [];
       }
-      
+
       // Mark selected slots as available/unavailable based on bookings
       const availableSlots = selectedSlots.map(slot => {
         const slotTime = slot.time || slot.startTime;
         const isBooked = bookedSlots.includes(slotTime);
-        
+
         return {
           ...slot,
           // Ensure both time and startTime fields exist for compatibility
@@ -294,16 +310,16 @@ export const bookingAPI = {
           available: !isBooked
         };
       });
-      
+
       console.log(`✅ Mobile: Returning ${availableSlots.length} date-specific time slots (${availableSlots.filter(s => s.available).length} available)`);
-      
+
       // Log sample slots for debugging
       if (availableSlots.length > 0) {
-        console.log(`📋 Mobile: Sample slots:`, availableSlots.slice(0, 3).map(slot => 
+        console.log(`📋 Mobile: Sample slots:`, availableSlots.slice(0, 3).map(slot =>
           `${slot.time} - ${slot.endTime} (PKR ${slot.price}) [Available: ${slot.available}]`
         ));
       }
-      
+
       return { data: availableSlots };
     } catch (error) {
       console.error('❌ Mobile: Error fetching available slots:', error);
@@ -314,16 +330,16 @@ export const bookingAPI = {
   // Create booking with extensive debugging
   async createBooking(bookingData) {
     console.log('🔥 FIREBASE: createBooking called with data:', bookingData);
-    
+
     try {
       const user = auth.currentUser;
       console.log('🔥 FIREBASE: Current user:', user ? { uid: user.uid, email: user.email } : 'No user');
-      
+
       if (!user) {
         console.log('⚠️ FIREBASE: User not authenticated, creating guest booking');
         // For guest bookings, we'll use a temporary guest ID
         const guestId = `guest_${Date.now()}`;
-        
+
         const bookingRef = await addDoc(collection(db, 'bookings'), {
           ...bookingData,
           userId: guestId,
@@ -337,30 +353,30 @@ export const bookingAPI = {
             message: 'Please sign in to complete your booking'
           }
         });
-        
+
         console.log('🔥 FIREBASE: Guest booking created with ID:', bookingRef.id);
-        
-        return { 
-          data: { 
-            id: bookingRef.id, 
+
+        return {
+          data: {
+            id: bookingRef.id,
             ...bookingData,
             status: 'pending',
             paymentStatus: 'pending',
             bookingReference: `PIT${Date.now().toString().slice(-6)}`,
             requiresSignIn: true,
             message: 'Booking created! Please sign in to complete your booking.'
-          } 
+          }
         };
       }
-      
+
       console.log('🔥 FIREBASE: Authenticated user booking - fetching venue details...');
-      
+
       // Get venue details to enrich booking data
       let venueDetails = {};
       try {
         console.log('🔥 FIREBASE: Fetching venue document for turfId:', bookingData.turfId);
         const venueDoc = await getDoc(doc(db, 'venues', bookingData.turfId));
-        
+
         if (venueDoc.exists()) {
           const venueData = venueDoc.data();
           console.log('🔥 FIREBASE: Venue data found:', {
@@ -369,14 +385,14 @@ export const bookingAPI = {
             address: venueData.address,
             sport: venueData.sport
           });
-          
+
           venueDetails = {
             turfName: venueData.name || 'Sports Venue',
             turfArea: venueData.area || venueData.address || 'Unknown Area',
             sport: venueData.sport || (Array.isArray(venueData.sports) ? venueData.sports[0] : 'Football'),
             address: venueData.address || 'N/A'
           };
-          
+
           // Only add phoneNumber if it exists and is not empty
           if (venueData.phoneNumber && venueData.phoneNumber.trim()) {
             venueDetails.phoneNumber = venueData.phoneNumber;
@@ -400,17 +416,17 @@ export const bookingAPI = {
           address: 'N/A'
         };
       }
-      
+
       console.log('🔥 FIREBASE: Venue details prepared:', venueDetails);
-      
+
       // Create proper dateTime from date and startTime with validation
       console.log('🔥 FIREBASE: Creating dateTime from:', { date: bookingData.date, startTime: bookingData.startTime });
-      
+
       // Validate date and time inputs
       if (!bookingData.date || !bookingData.startTime) {
         throw new Error('Invalid booking data: date and startTime are required');
       }
-      
+
       // Extract date part if it's an ISO string, otherwise use as-is
       let dateString = bookingData.date;
       if (typeof dateString === 'string' && dateString.includes('T')) {
@@ -418,49 +434,49 @@ export const bookingAPI = {
         dateString = dateString.split('T')[0];
         console.log('🔥 FIREBASE: Extracted date from ISO string:', dateString);
       }
-      
+
       // Create dateTime with proper validation using safe utilities
       const bookingDateTime = safeDate(`${dateString}T${bookingData.startTime}:00`);
-      
+
       // Check if the created date is valid using safe utilities
       if (!isValidDate(bookingDateTime)) {
-        console.error('❌ FIREBASE: Invalid date created from:', { 
-          originalDate: bookingData.date, 
-          extractedDate: dateString, 
-          startTime: bookingData.startTime 
+        console.error('❌ FIREBASE: Invalid date created from:', {
+          originalDate: bookingData.date,
+          extractedDate: dateString,
+          startTime: bookingData.startTime
         });
         throw new Error('Invalid date format in booking data');
       }
-      
+
       console.log('🔥 FIREBASE: Created valid dateTime:', bookingDateTime.toISOString());
-      
+
       // Calculate duration with validation
       if (!bookingData.startTime || !bookingData.endTime) {
         throw new Error('Invalid booking data: startTime and endTime are required');
       }
-      
+
       const startTime = safeDate(`2000-01-01T${bookingData.startTime}:00`);
       const endTime = safeDate(`2000-01-01T${bookingData.endTime}:00`);
-      
+
       // Validate time objects using safe utilities
       if (!isValidDate(startTime) || !isValidDate(endTime)) {
         console.error('❌ FIREBASE: Invalid time format:', { startTime: bookingData.startTime, endTime: bookingData.endTime });
         throw new Error('Invalid time format in booking data');
       }
-      
+
       const durationMs = endTime - startTime;
       if (durationMs <= 0) {
         throw new Error('Invalid booking duration: end time must be after start time');
       }
-      
+
       const durationHours = Math.round(durationMs / (1000 * 60 * 60));
       const duration = `${durationHours} hour${durationHours !== 1 ? 's' : ''}`;
       console.log('🔥 FIREBASE: Calculated duration:', duration);
-      
+
       // Generate unique booking ID
       const bookingId = `PIT${Date.now().toString().slice(-6)}`;
       console.log('🔥 FIREBASE: Generated booking ID:', bookingId);
-      
+
       // Authenticated user booking with enriched data
       const enrichedBookingData = {
         ...bookingData,
@@ -475,32 +491,32 @@ export const bookingAPI = {
         duration: duration,
         createdAt: serverTimestamp()
       };
-      
+
       // Filter out undefined values to prevent Firestore errors
       const cleanBookingData = Object.fromEntries(
         Object.entries(enrichedBookingData).filter(([key, value]) => value !== undefined)
       );
-      
+
       console.log('🔥 FIREBASE: Final enriched booking data (cleaned):', {
         ...cleanBookingData,
         createdAt: '[ServerTimestamp]' // Don't log the actual timestamp object
       });
-      
+
       console.log('🔥 FIREBASE: Saving booking to Firestore...');
       const bookingRef = await addDoc(collection(db, 'bookings'), cleanBookingData);
       console.log('🔥 FIREBASE: Booking saved successfully with ID:', bookingRef.id);
-      
-      const finalResult = { 
-        data: { 
-          id: bookingRef.id, 
+
+      const finalResult = {
+        data: {
+          id: bookingRef.id,
           ...cleanBookingData,
           requiresSignIn: false,
           message: 'Booking confirmed successfully!'
-        } 
+        }
       };
-      
+
       console.log('🔥 FIREBASE: Returning booking result with ID:', bookingRef.id);
-      
+
       return finalResult;
     } catch (error) {
       console.error('❌ FIREBASE: Error creating booking:', error);
@@ -516,28 +532,28 @@ export const bookingAPI = {
   // Get user bookings with extensive debugging
   async getUserBookings() {
     console.log('🔥 FIREBASE: getUserBookings called');
-    
+
     try {
       const user = auth.currentUser;
       console.log('🔥 FIREBASE: Current user for getUserBookings:', user ? { uid: user.uid, email: user.email } : 'No user');
-      
+
       if (!user) {
         console.log('⚠️ FIREBASE: User not authenticated, returning empty bookings');
         return { data: [] };
       }
-      
+
       console.log('🔥 FIREBASE: Querying bookings for userId:', user.uid);
-      
+
       const bookingsRef = collection(db, 'bookings');
-      const q = query(bookingsRef, 
+      const q = query(bookingsRef,
         where('userId', '==', user.uid),
         orderBy('createdAt', 'desc')
       );
-      
+
       console.log('🔥 FIREBASE: Executing Firestore query...');
       const snapshot = await getDocs(q);
       console.log('🔥 FIREBASE: Query completed. Document count:', snapshot.docs.length);
-      
+
       const bookings = snapshot.docs.map(doc => {
         const data = { id: doc.id, ...doc.data() };
         console.log('🔥 FIREBASE: Processing booking document:', {
@@ -549,14 +565,14 @@ export const bookingAPI = {
         });
         return data;
       });
-      
+
       console.log('🔥 FIREBASE: Final bookings array:', bookings.map(b => ({
         id: b.id,
         turfName: b.turfName,
         dateTime: b.dateTime,
         status: b.status
       })));
-      
+
       return { data: bookings };
     } catch (error) {
       console.error('❌ FIREBASE: Error fetching user bookings:', error);
@@ -578,7 +594,7 @@ export const bookingAPI = {
         paymentStatus: 'refunded',
         cancelledAt: serverTimestamp()
       });
-      
+
       return { data: { success: true, message: 'Booking cancelled successfully' } };
     } catch (error) {
       console.error('Error cancelling booking:', error);
@@ -593,18 +609,18 @@ export const teamAPI = {
   async getChallenges() {
     try {
       const challengesRef = collection(db, 'challenges');
-      const q = query(challengesRef, 
+      const q = query(challengesRef,
         where('status', '==', 'open'),
         orderBy('createdAt', 'desc'),
         limit(10)
       );
-      
+
       const snapshot = await getDocs(q);
       const challenges = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      
+
       return { data: challenges };
     } catch (error) {
       console.error('Error fetching challenges:', error);
@@ -620,14 +636,14 @@ export const teamAPI = {
         console.log('⚠️ User not authenticated, cannot create challenge');
         throw new Error('Please sign in to create a challenge');
       }
-      
+
       const challengeRef = await addDoc(collection(db, 'challenges'), {
         ...challengeData,
         createdBy: user.uid,
         status: 'open',
         createdAt: serverTimestamp()
       });
-      
+
       return { data: { id: challengeRef.id, ...challengeData } };
     } catch (error) {
       console.error('Error creating challenge:', error);
@@ -643,14 +659,14 @@ export const teamAPI = {
         console.log('⚠️ User not authenticated, cannot accept challenge');
         throw new Error('Please sign in to accept a challenge');
       }
-      
+
       const challengeRef = doc(db, 'challenges', challengeId);
       await updateDoc(challengeRef, {
         acceptedBy: user.uid,
         status: 'accepted',
         acceptedAt: serverTimestamp()
       });
-      
+
       const updatedChallenge = await getDoc(challengeRef);
       return { data: { id: updatedChallenge.id, ...updatedChallenge.data() } };
     } catch (error) {
@@ -668,11 +684,11 @@ export const adminAPI = {
       const bookingsRef = collection(db, 'bookings');
       const turfsRef = collection(db, 'turfs');
       const usersRef = collection(db, 'users');
-      
+
       // Get all bookings
       const bookingsSnapshot = await getDocs(bookingsRef);
       const bookings = bookingsSnapshot.docs.map(doc => doc.data());
-      
+
       // Get today's bookings using safe date utilities
       const today = safeDate();
       today.setHours(0, 0, 0, 0);
@@ -681,21 +697,21 @@ export const adminAPI = {
         const bookingDateObj = safeDate(bookingDate);
         return isValidDate(bookingDateObj) && bookingDateObj >= today;
       });
-      
+
       // Calculate revenue
       const totalRevenue = bookings
         .filter(b => b.paymentStatus === 'paid')
         .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
-      
+
       // Get active turfs count
       const turfsSnapshot = await getDocs(query(turfsRef, where('isActive', '==', true)));
-      
+
       // Get total users count
       const usersSnapshot = await getDocs(usersRef);
-      
+
       // Get pending bookings
       const pendingBookings = bookings.filter(b => b.status === 'pending');
-      
+
       return {
         data: {
           totalBookings: bookings.length,
@@ -720,21 +736,21 @@ export const adminAPI = {
     try {
       const bookingsRef = collection(db, 'bookings');
       let q = query(bookingsRef, orderBy('createdAt', 'desc'));
-      
+
       if (params.filter && params.filter !== 'all') {
         q = query(q, where('status', '==', params.filter));
       }
-      
+
       if (params.pageSize) {
         q = query(q, limit(parseInt(params.pageSize)));
       }
-      
+
       const snapshot = await getDocs(q);
       const bookings = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      
+
       return {
         data: {
           data: bookings,

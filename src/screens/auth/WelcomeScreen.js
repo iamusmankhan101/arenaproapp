@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { googleSignIn } from '../../store/slices/authSlice';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
+import * as AuthSession from 'expo-auth-session';
 import { theme } from '../../theme/theme';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -22,7 +22,7 @@ export default function WelcomeScreen({ navigation }) {
     // iOS client ID - used in standalone iOS builds
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
     // Required for Expo Go to work with Google Auth
-    redirectUri: makeRedirectUri({
+    redirectUri: AuthSession.makeRedirectUri({
       scheme: 'arenapropk.online',
       useProxy: true,
     }),
