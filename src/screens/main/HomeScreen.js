@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Alert, Share } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -84,6 +85,7 @@ export default function HomeScreen({ navigation }) {
   const [filteredVenues, setFilteredVenues] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [showReferralModal, setShowReferralModal] = useState(false);
 
   const { user } = useSelector(state => state.auth);
   const { nearbyTurfs, loading: turfsLoading } = useSelector(state => state.turf);
@@ -157,6 +159,26 @@ export default function HomeScreen({ navigation }) {
     setSearchQuery('');
     setShowSearchResults(false);
     setFilteredVenues(nearbyTurfs);
+  };
+
+  const handleCopyReferralCode = async () => {
+    if (user?.myReferralCode) {
+      await Clipboard.setStringAsync(user.myReferralCode);
+      Alert.alert('Copied!', 'Referral code copied to clipboard');
+    }
+  };
+
+  const handleShareReferralCode = async () => {
+    if (user?.myReferralCode) {
+      try {
+        await Share.share({
+          message: `Join Arena Pro and get Rs. 300 off your first booking! Use my referral code: ${user.myReferralCode}\n\nDownload the app now and start booking sports venues easily!`,
+          title: 'Join Arena Pro',
+        });
+      } catch (error) {
+        console.error('Error sharing referral code:', error);
+      }
+    }
   };
 
   const renderImageDots = () => {
@@ -537,6 +559,96 @@ export default function HomeScreen({ navigation }) {
           onHide={() => setNotification(null)}
         />
       )}
+
+      {/* Floating Referral Button */}
+      {user?.myReferralCode && (
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => setShowReferralModal(true)}
+          activeOpacity={0.8}
+        >
+          <MaterialIcons name="card-giftcard" size={28} color="#e8ee26" />
+        </TouchableOpacity>
+      )}
+
+      {/* Referral Modal */}
+      <Modal
+        visible={showReferralModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowReferralModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowReferralModal(false)}
+          />
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalIconContainer}>
+                <MaterialIcons name="card-giftcard" size={40} color="#004d43" />
+              </View>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowReferralModal(false)}
+              >
+                <MaterialIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Modal Body */}
+            <View style={styles.modalBody}>
+              <Text style={styles.modalTitle}>Refer & Earn!</Text>
+              <Text style={styles.modalSubtitle}>
+                Share your referral code with friends and both get Rs. 300 off your first booking!
+              </Text>
+
+              {/* Referral Code Display */}
+              <View style={styles.referralCodeContainer}>
+                <Text style={styles.referralCodeLabel}>Your Referral Code</Text>
+                <View style={styles.referralCodeBox}>
+                  <Text style={styles.referralCodeText}>{user?.myReferralCode}</Text>
+                </View>
+              </View>
+
+              {/* Benefits */}
+              <View style={styles.benefitsContainer}>
+                <View style={styles.benefitItem}>
+                  <MaterialIcons name="check-circle" size={20} color="#6BCF7F" />
+                  <Text style={styles.benefitText}>Your friend gets Rs. 300 off</Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <MaterialIcons name="check-circle" size={20} color="#6BCF7F" />
+                  <Text style={styles.benefitText}>You earn Rs. 500 reward</Text>
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.copyButton}
+                  onPress={handleCopyReferralCode}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="content-copy" size={20} color="#004d43" />
+                  <Text style={styles.copyButtonText}>Copy Code</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.shareButton}
+                  onPress={handleShareReferralCode}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="share" size={20} color="#fff" />
+                  <Text style={styles.shareButtonText}>Share</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
