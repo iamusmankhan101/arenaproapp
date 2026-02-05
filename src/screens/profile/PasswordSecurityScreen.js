@@ -10,7 +10,7 @@ const mockBiometricAuth = {
     // Simulate biometric availability check
     return Platform.OS === 'ios' || Platform.OS === 'android';
   },
-  
+
   authenticate: async () => {
     return new Promise((resolve) => {
       // Simulate biometric authentication
@@ -72,8 +72,8 @@ export default function PasswordSecurityScreen({ navigation }) {
     Alert.alert(
       'Password Changed',
       'Your password has been updated successfully!',
-      [{ 
-        text: 'OK', 
+      [{
+        text: 'OK',
         onPress: () => {
           setFormData({
             currentPassword: '',
@@ -96,7 +96,7 @@ export default function PasswordSecurityScreen({ navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -116,21 +116,21 @@ export default function PasswordSecurityScreen({ navigation }) {
               <View style={styles.passwordContainer}>
                 <TextInput
                   value={formData.currentPassword}
-                  onChangeText={(text) => setFormData({...formData, currentPassword: text})}
+                  onChangeText={(text) => setFormData({ ...formData, currentPassword: text })}
                   style={styles.passwordInput}
                   mode="outlined"
                   secureTextEntry={!showPasswords.current}
                   outlineColor="#E0E0E0"
                   activeOutlineColor="#229a60"
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.eyeButton}
                   onPress={() => togglePasswordVisibility('current')}
                 >
-                  <MaterialIcons 
-                    name={showPasswords.current ? "visibility_off" : "visibility"} 
-                    size={20} 
-                    color="#666" 
+                  <MaterialIcons
+                    name={showPasswords.current ? "visibility_off" : "visibility"}
+                    size={20}
+                    color="#666"
                   />
                 </TouchableOpacity>
               </View>
@@ -141,21 +141,21 @@ export default function PasswordSecurityScreen({ navigation }) {
               <View style={styles.passwordContainer}>
                 <TextInput
                   value={formData.newPassword}
-                  onChangeText={(text) => setFormData({...formData, newPassword: text})}
+                  onChangeText={(text) => setFormData({ ...formData, newPassword: text })}
                   style={styles.passwordInput}
                   mode="outlined"
                   secureTextEntry={!showPasswords.new}
                   outlineColor="#E0E0E0"
                   activeOutlineColor="#229a60"
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.eyeButton}
                   onPress={() => togglePasswordVisibility('new')}
                 >
-                  <MaterialIcons 
-                    name={showPasswords.new ? "visibility_off" : "visibility"} 
-                    size={20} 
-                    color="#666" 
+                  <MaterialIcons
+                    name={showPasswords.new ? "visibility_off" : "visibility"}
+                    size={20}
+                    color="#666"
                   />
                 </TouchableOpacity>
               </View>
@@ -166,21 +166,21 @@ export default function PasswordSecurityScreen({ navigation }) {
               <View style={styles.passwordContainer}>
                 <TextInput
                   value={formData.confirmPassword}
-                  onChangeText={(text) => setFormData({...formData, confirmPassword: text})}
+                  onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
                   style={styles.passwordInput}
                   mode="outlined"
                   secureTextEntry={!showPasswords.confirm}
                   outlineColor="#E0E0E0"
                   activeOutlineColor="#229a60"
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.eyeButton}
                   onPress={() => togglePasswordVisibility('confirm')}
                 >
-                  <MaterialIcons 
-                    name={showPasswords.confirm ? "visibility_off" : "visibility"} 
-                    size={20} 
-                    color="#666" 
+                  <MaterialIcons
+                    name={showPasswords.confirm ? "visibility_off" : "visibility"}
+                    size={20}
+                    color="#666"
                   />
                 </TouchableOpacity>
               </View>
@@ -190,7 +190,8 @@ export default function PasswordSecurityScreen({ navigation }) {
               mode="contained"
               onPress={handlePasswordChange}
               style={styles.changePasswordButton}
-              buttonColor="#229a60"
+              buttonColor="#004d43"
+              textColor="#e8ee26"
             >
               Change Password
             </Button>

@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  FlatList, 
-  ScrollView, 
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  ScrollView,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
   RefreshControl
 } from 'react-native';
-import { 
-  Text, 
-  Chip, 
-  Button, 
-  SegmentedButtons, 
+import {
+  Text,
+  Chip,
+  Button,
+  SegmentedButtons,
   Searchbar,
   Surface
 } from 'react-native-paper';
@@ -69,14 +69,14 @@ export default function BookingScreen() {
         turfName: bookings[0].turfName
       } : 'No bookings'
     });
-    
+
     const now = new Date();
     try {
       console.log('📱 BOOKING_SCREEN: Current time for filtering:', now.toISOString());
     } catch (error) {
       console.error('❌ BookingScreen: Error getting current time ISO string:', error);
     }
-    
+
     let filtered = [];
     switch (filter) {
       case 'upcoming':
@@ -91,7 +91,7 @@ export default function BookingScreen() {
             console.warn('📱 BOOKING_SCREEN: Booking missing date/time info:', booking);
             return false;
           }
-          
+
           const isUpcoming = bookingDate > now && booking.status !== 'cancelled';
           console.log('📱 BOOKING_SCREEN: Checking upcoming booking:', {
             id: booking.id,
@@ -116,7 +116,7 @@ export default function BookingScreen() {
             console.warn('📱 BOOKING_SCREEN: Booking missing date/time info:', booking);
             return true; // Show in past if we can't determine time
           }
-          
+
           const isPast = bookingDate <= now || booking.status === 'completed';
           console.log('📱 BOOKING_SCREEN: Checking past booking:', {
             id: booking.id,
@@ -152,24 +152,24 @@ export default function BookingScreen() {
           booking.turfArea?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           booking.sport?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           booking.bookingId?.toLowerCase().includes(searchQuery.toLowerCase());
-        
+
         console.log('📱 BOOKING_SCREEN: Search match for booking:', {
           id: booking.id,
           turfName: booking.turfName,
           matchesSearch
         });
-        
+
         return matchesSearch;
       });
     }
 
     console.log('📱 BOOKING_SCREEN: Final filtered bookings:', {
       filteredCount: filtered.length,
-      bookings: filtered.map(b => ({ 
-        id: b.id, 
-        turfName: b.turfName, 
+      bookings: filtered.map(b => ({
+        id: b.id,
+        turfName: b.turfName,
         dateTime: b.dateTime,
-        status: b.status 
+        status: b.status
       }))
     });
 
@@ -182,14 +182,14 @@ export default function BookingScreen() {
       selectedTab,
       searchQuery
     });
-    
+
     const result = filterBookings(userBookings, selectedTab);
-    
+
     console.log('📱 BOOKING_SCREEN: filteredBookings result:', {
       count: result.length,
       bookings: result.map(b => ({ id: b.id, turfName: b.turfName }))
     });
-    
+
     return result;
   }, [userBookings, selectedTab, searchQuery]);
 
@@ -219,7 +219,7 @@ export default function BookingScreen() {
     if (searchQuery.trim()) {
       return `No bookings found for "${searchQuery}"`;
     }
-    
+
     switch (selectedTab) {
       case 'all':
         return 'No bookings yet. Time to book a ground!';
@@ -237,15 +237,15 @@ export default function BookingScreen() {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
-      
-      {/* Enhanced Header */}
+
+      {/* Enhanced Header with Gradient */}
       <SafeAreaView style={[styles.header, { backgroundColor: theme.colors.primary }]}>
         <View style={styles.headerContent}>
           <Text style={styles.title}>My Bookings</Text>
           <Text style={styles.subtitle}>Manage your ground reservations</Text>
         </View>
-        
-        {/* Quick Stats */}
+
+        {/* Simplified Quick Stats */}
         <View style={styles.quickStats}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{stats.upcoming}</Text>
@@ -258,7 +258,7 @@ export default function BookingScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>PKR {stats.totalSpent.toLocaleString()}</Text>
+            <Text style={styles.statNumber}>₨{stats.totalSpent.toLocaleString()}</Text>
             <Text style={styles.statLabel}>Spent</Text>
           </View>
         </View>
@@ -284,23 +284,23 @@ export default function BookingScreen() {
             value={selectedTab}
             onValueChange={setSelectedTab}
             buttons={[
-              { 
-                value: 'all', 
+              {
+                value: 'all',
                 label: 'All',
                 icon: () => <MaterialIcons name="list" size={18} color={selectedTab === 'all' ? theme.colors.primary : '#666'} />
               },
-              { 
-                value: 'upcoming', 
+              {
+                value: 'upcoming',
                 label: 'Upcoming',
                 icon: () => <MaterialIcons name="schedule" size={18} color={selectedTab === 'upcoming' ? theme.colors.primary : '#666'} />
               },
-              { 
-                value: 'past', 
+              {
+                value: 'past',
                 label: 'Past',
                 icon: () => <MaterialIcons name="history" size={18} color={selectedTab === 'past' ? theme.colors.primary : '#666'} />
               },
-              { 
-                value: 'cancelled', 
+              {
+                value: 'cancelled',
                 label: 'Cancelled',
                 icon: () => <MaterialIcons name="cancel" size={18} color={selectedTab === 'cancelled' ? theme.colors.primary : '#666'} />
               },
@@ -335,18 +335,22 @@ export default function BookingScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}>
-                <MaterialIcons name="event-busy" size={64} color="#E0E0E0" />
-              </View>
+              <MaterialIcons name="event-busy" size={80} color="#ccc" style={{ marginBottom: 20 }} />
               <Text style={styles.emptyTitle}>
                 {getEmptyMessage()}
               </Text>
+              <Text style={styles.emptySubtitle}>
+                {selectedTab === 'upcoming' || selectedTab === 'all'
+                  ? 'Discover amazing sports venues near you'
+                  : 'Your booking history will appear here'}
+              </Text>
               {(selectedTab === 'upcoming' || selectedTab === 'all') && !searchQuery.trim() && (
-                <Button 
-                  mode="contained" 
-                  style={styles.bookNowButton}
+                <Button
+                  mode="contained"
+                  style={[styles.bookNowButton, { backgroundColor: theme.colors.primary }]}
                   contentStyle={styles.bookNowButtonContent}
-                  onPress={() => {/* Navigate to venue list */}}
+                  labelStyle={{ color: theme.colors.secondary, fontFamily: 'Montserrat_700Bold' }}
+                  onPress={() => {/* Navigate to venue list */ }}
                 >
                   Book a Ground
                 </Button>
@@ -391,7 +395,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
     padding: 20,
-    margin: 16,
+    marginHorizontal: 20,
+    marginBottom: 16,
     alignItems: 'center',
     justifyContent: 'space-around',
   },
@@ -400,16 +405,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statNumber: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
     fontFamily: 'Montserrat_700Bold',
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2,
-    fontFamily: 'Montserrat_400Regular',
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 4,
+    fontFamily: 'Montserrat_500Medium',
   },
   statDivider: {
     width: 1,
@@ -428,12 +433,12 @@ const styles = StyleSheet.create({
   },
   searchbar: {
     backgroundColor: 'white',
-    borderRadius: 16,
-    elevation: 2,
+    borderRadius: 20,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   searchInput: {
     fontFamily: 'Montserrat_400Regular',
@@ -444,12 +449,12 @@ const styles = StyleSheet.create({
   },
   segmentedButtons: {
     backgroundColor: 'white',
-    borderRadius: 16,
-    elevation: 2,
+    borderRadius: 20,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   resultsContainer: {
     paddingHorizontal: 20,
@@ -469,23 +474,27 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 40,
   },
-  emptyIcon: {
-    marginBottom: 20,
-  },
   emptyTitle: {
     fontSize: 18,
-    color: '#666',
+    color: '#333',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
     fontFamily: 'Montserrat_600SemiBold',
     lineHeight: 24,
   },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 32,
+    fontFamily: 'Montserrat_400Regular',
+    lineHeight: 20,
+  },
   bookNowButton: {
-    backgroundColor: theme.colors.primary,
     borderRadius: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
   },
   bookNowButtonContent: {
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
 });

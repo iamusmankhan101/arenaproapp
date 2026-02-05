@@ -10,12 +10,12 @@ import { fetchChallenges } from '../../store/slices/teamSlice';
 import RealtimeNotification from '../../components/RealtimeNotification';
 import realtimeSyncService from '../../services/realtimeSync';
 import { SportsIcon } from '../../components/SportsIcons';
-import { 
-  HeaderSkeleton, 
-  SearchBarSkeleton, 
-  SportCategorySkeleton, 
-  VenueCardSkeleton, 
-  ChallengeCardSkeleton 
+import {
+  HeaderSkeleton,
+  SearchBarSkeleton,
+  SportCategorySkeleton,
+  VenueCardSkeleton,
+  ChallengeCardSkeleton
 } from '../../components/SkeletonLoader';
 
 // Header slider images
@@ -29,7 +29,7 @@ const headerImages = [
 const getVenueImageBySport = (venue) => {
   // Get the first sport from the venue data
   let primarySport = 'Football'; // default
-  
+
   if (Array.isArray(venue.sports) && venue.sports.length > 0) {
     primarySport = venue.sports[0];
   } else if (typeof venue.sports === 'string') {
@@ -37,7 +37,7 @@ const getVenueImageBySport = (venue) => {
   } else if (venue.sport) {
     primarySport = venue.sport;
   }
-  
+
   const sportImages = {
     'Cricket': require('../../images/cricket.jpg'),
     'Football': require('../../images/football.jpg'),
@@ -64,7 +64,13 @@ const sportCategories = [
     id: 3,
     name: 'Padel',
     color: '#004d43',
+  },
+  {
+    id: 4,
+    name: 'Pickleball',
+    color: '#004d43',
   }
+
 ];
 
 // Venues will be loaded from Redux store
@@ -78,19 +84,19 @@ export default function HomeScreen({ navigation }) {
   const [filteredVenues, setFilteredVenues] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [notification, setNotification] = useState(null);
-  
+
   const { user } = useSelector(state => state.auth);
   const { nearbyTurfs, loading: turfsLoading } = useSelector(state => state.turf);
   const { challenges, loading: challengesLoading } = useSelector(state => state.team);
-  
+
   // Load data on component mount and when screen comes into focus
   useEffect(() => {
     // Fetch all active venues (no location filtering)
     dispatch(fetchNearbyTurfs({ latitude: 0, longitude: 0, radius: 0 })); // Dummy values since location filtering is removed
-    
+
     // Fetch recent challenges
     dispatch(fetchChallenges());
-    
+
     // Setup notification callback for real-time sync
     realtimeSyncService.setNotificationCallback((message, type) => {
       setNotification({ message, type });
@@ -106,11 +112,11 @@ export default function HomeScreen({ navigation }) {
       }
     }, [dispatch, nearbyTurfs.length])
   );
-  
+
   // Auto-slide functionality
   useEffect(() => {
     const slideInterval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
+      setCurrentImageIndex((prevIndex) =>
         prevIndex === headerImages.length - 1 ? 0 : prevIndex + 1
       );
     }, 3000); // Change image every 3 seconds
@@ -124,13 +130,13 @@ export default function HomeScreen({ navigation }) {
       setFilteredVenues(nearbyTurfs);
       setShowSearchResults(false);
     } else {
-      const filtered = nearbyTurfs.filter(venue => 
+      const filtered = nearbyTurfs.filter(venue =>
         venue.area?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (Array.isArray(venue.sports) ? venue.sports.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) : 
-         typeof venue.sports === 'string' ? venue.sports.toLowerCase().includes(searchQuery.toLowerCase()) :
-         venue.sport?.toLowerCase().includes(searchQuery.toLowerCase()))
+        (Array.isArray(venue.sports) ? venue.sports.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) :
+          typeof venue.sports === 'string' ? venue.sports.toLowerCase().includes(searchQuery.toLowerCase()) :
+            venue.sport?.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredVenues(filtered);
       setShowSearchResults(true);
@@ -195,8 +201,8 @@ export default function HomeScreen({ navigation }) {
       activeOpacity={0.8}
     >
       <View style={styles.venueImageContainer}>
-        <Image 
-          source={venue.image || getVenueImageBySport(venue)} 
+        <Image
+          source={venue.image || getVenueImageBySport(venue)}
           style={styles.venueImage}
           resizeMode="cover"
         />
@@ -215,11 +221,11 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.venueFooter}>
           <View style={styles.venueIcons}>
             <Text style={styles.venueIconText}>
-              {Array.isArray(venue.sports) && venue.sports.length > 0 ? 
+              {Array.isArray(venue.sports) && venue.sports.length > 0 ?
                 (venue.sports[0] === 'Cricket' ? '🏏' : venue.sports[0] === 'Football' ? '⚽' : venue.sports[0] === 'Padel' ? '🏓' : '⚽') :
-                typeof venue.sports === 'string' ? 
-                (venue.sports.includes('Cricket') ? '🏏' : venue.sports.includes('Football') ? '⚽' : venue.sports.includes('Padel') ? '🏓' : '⚽') :
-                venue.sport === 'Cricket' ? '🏏' : venue.sport === 'Football' ? '⚽' : venue.sport === 'Padel' ? '🏓' : '⚽'}
+                typeof venue.sports === 'string' ?
+                  (venue.sports.includes('Cricket') ? '🏏' : venue.sports.includes('Football') ? '⚽' : venue.sports.includes('Padel') ? '🏓' : '⚽') :
+                  venue.sport === 'Cricket' ? '🏏' : venue.sport === 'Football' ? '⚽' : venue.sport === 'Padel' ? '🏓' : '⚽'}
             </Text>
           </View>
           <TouchableOpacity style={styles.bookableButton}>
@@ -250,15 +256,12 @@ export default function HomeScreen({ navigation }) {
   const padelVenues = getVenuesBySport('Padel');
   const futsalVenues = getVenuesBySport('Futsal');
 
-  const renderSportSection = (sportName, venues, icon) => {
+  const renderSportSection = (sportName, venues) => {
     if (turfsLoading) {
       return (
         <View key={sportName} style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <Text style={styles.sectionIcon}>{icon}</Text>
-              <Text style={styles.sectionTitle}>{sportName} Venues</Text>
-            </View>
+            <Text style={styles.sectionTitle}>{sportName} Venues</Text>
             <TouchableOpacity onPress={() => navigation.navigate('VenueList', { sport: sportName })}>
               <Text style={styles.seeMoreText}>See all</Text>
             </TouchableOpacity>
@@ -271,16 +274,13 @@ export default function HomeScreen({ navigation }) {
         </View>
       );
     }
-    
+
     if (venues.length === 0) return null;
-    
+
     return (
       <View key={sportName} style={styles.section}>
         <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleContainer}>
-            <Text style={styles.sectionIcon}>{icon}</Text>
-            <Text style={styles.sectionTitle}>{sportName} Venues</Text>
-          </View>
+          <Text style={styles.sectionTitle}>{sportName} Venues</Text>
           <TouchableOpacity onPress={() => navigation.navigate('VenueList', { sport: sportName })}>
             <Text style={styles.seeMoreText}>See all</Text>
           </TouchableOpacity>
@@ -309,19 +309,19 @@ export default function HomeScreen({ navigation }) {
             <MaterialIcons name="people" size={16} color="#229a60" />
           )}
           <Text style={styles.challengeType}>
-            {challenge.type === 'tournament' ? 'Tournament' : 
-             challenge.type === 'private' ? 'Private' : 'Open'}
+            {challenge.type === 'tournament' ? 'Tournament' :
+              challenge.type === 'private' ? 'Private' : 'Open'}
           </Text>
         </View>
         <View style={styles.sportBadge}>
           <Text style={styles.sportBadgeText}>{challenge.sport}</Text>
         </View>
       </View>
-      
+
       <Text style={styles.challengeTitle} numberOfLines={2}>
         {challenge.title}
       </Text>
-      
+
       <View style={styles.challengeTeamInfo}>
         <Text style={styles.challengeTeamName}>by {challenge.teamName}</Text>
         <View style={styles.challengeStats}>
@@ -333,7 +333,7 @@ export default function HomeScreen({ navigation }) {
           </Text>
         </View>
       </View>
-      
+
       <View style={styles.challengeDetails}>
         <View style={styles.challengeDetailRow}>
           <MaterialIcons name="event" size={14} color="#666" />
@@ -353,7 +353,7 @@ export default function HomeScreen({ navigation }) {
           </Text>
         </View>
       </View>
-      
+
       {challenge.type === 'tournament' && (
         <View style={styles.tournamentProgress}>
           <Text style={styles.tournamentProgressText}>
@@ -361,7 +361,7 @@ export default function HomeScreen({ navigation }) {
           </Text>
         </View>
       )}
-      
+
       <View style={styles.challengeFooter}>
         <Text style={styles.challengeTimeAgo}>{challenge.timeAgo}</Text>
         <View style={styles.challengeActionButton}>
@@ -374,158 +374,158 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-      {/* Header Section with Full-Width Image Slider */}
-      {turfsLoading ? (
-        <HeaderSkeleton />
-      ) : (
-        <View style={styles.headerContainer}>
-          <Image 
-            source={headerImages[currentImageIndex]} 
-            style={styles.fullWidthImage}
-            resizeMode="cover"
-          />
-          <View style={styles.headerOverlay}>
-            <View style={styles.header}>
-              <View style={styles.userSection}>
-                <Text style={styles.greeting}>Hi, {user?.fullName?.split(' ')[0] || 'Eman'}</Text>
-                <Text style={styles.tagline}>Plan Your Sports</Text>
-                <Text style={styles.tagline}>Activates to be</Text>
-                <View style={styles.bestContainer}>
-                  <Text style={styles.bestText}>the </Text>
-                  <Text style={styles.bestHighlight}>Best</Text>
+        {/* Header Section with Full-Width Image Slider */}
+        {turfsLoading ? (
+          <HeaderSkeleton />
+        ) : (
+          <View style={styles.headerContainer}>
+            <Image
+              source={headerImages[currentImageIndex]}
+              style={styles.fullWidthImage}
+              resizeMode="cover"
+            />
+            <View style={styles.headerOverlay}>
+              <View style={styles.header}>
+                <View style={styles.userSection}>
+                  <Text style={styles.greeting}>Hi, {user?.fullName?.split(' ')[0] || 'Eman'}</Text>
+                  <Text style={styles.tagline}>Plan Your Sports</Text>
+                  <Text style={styles.tagline}>Activities to be</Text>
+                  <View style={styles.bestContainer}>
+                    <Text style={styles.bestText}>the </Text>
+                    <Text style={styles.bestHighlight}>Best</Text>
+                  </View>
                 </View>
+                <TouchableOpacity
+                  style={styles.favoritesIcon}
+                  onPress={() => navigation.navigate('Favorites')}
+                >
+                  <MaterialIcons name="favorite" size={24} color="white" />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity 
-                style={styles.favoritesIcon}
-                onPress={() => navigation.navigate('Favorites')}
-              >
-                <MaterialIcons name="favorite" size={24} color="white" />
-              </TouchableOpacity>
+              {renderImageDots()}
             </View>
-            {renderImageDots()}
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Search Section */}
-      {turfsLoading ? (
-        <SearchBarSkeleton />
-      ) : (
-        <View style={styles.searchSection}>
-          <Searchbar
-            placeholder="Search areas, venues, sports..."
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            style={styles.searchbar}
-            iconColor="#229a60"
-            inputStyle={styles.searchInput}
-            onSubmitEditing={handleSearchSubmit}
-            right={() => searchQuery ? (
-              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-                <MaterialIcons name="close" size={20} color="#666" />
-              </TouchableOpacity>
-            ) : null}
-          />
-          {showSearchResults && (
-            <Text style={styles.searchResultsText}>
-              {filteredVenues.length} venues found {searchQuery ? `for "${searchQuery}"` : ''}
-            </Text>
-          )}
-        </View>
-      )}
-
-      {/* Sports Categories - Hide when searching */}
-      {!showSearchResults && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sports</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsScroll}>
-            {turfsLoading ? (
-              [1, 2, 3, 4].map((index) => (
-                <SportCategorySkeleton key={index} />
-              ))
-            ) : (
-              sportCategories.map(renderSportCategory)
+        {/* Search Section */}
+        {turfsLoading ? (
+          <SearchBarSkeleton />
+        ) : (
+          <View style={styles.searchSection}>
+            <Searchbar
+              placeholder="Search areas, venues, sports..."
+              onChangeText={setSearchQuery}
+              value={searchQuery}
+              style={styles.searchbar}
+              iconColor="#004d43"
+              inputStyle={styles.searchInput}
+              onSubmitEditing={handleSearchSubmit}
+              right={() => searchQuery ? (
+                <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                  <MaterialIcons name="close" size={20} color="#666" />
+                </TouchableOpacity>
+              ) : null}
+            />
+            {showSearchResults && (
+              <Text style={styles.searchResultsText}>
+                {filteredVenues.length} venues found {searchQuery ? `for "${searchQuery}"` : ''}
+              </Text>
             )}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Search Results or Sport-Specific Venues Sections */}
-      {showSearchResults ? (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Search Results</Text>
           </View>
-          
-          {turfsLoading ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venuesScroll}>
-              {[1, 2, 3].map((index) => (
-                <VenueCardSkeleton key={index} />
-              ))}
-            </ScrollView>
-          ) : filteredVenues.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venuesScroll}>
-              {filteredVenues.map(renderRecommendedVenue)}
-            </ScrollView>
-          ) : (
-            <View style={styles.noResultsContainer}>
-              <MaterialIcons name="search-off" size={48} color="#ccc" />
-              <Text style={styles.noResultsText}>No venues found</Text>
-              <Text style={styles.noResultsSubtext}>Try searching for a different area or sport</Text>
-            </View>
-          )}
-        </View>
-      ) : (
-        <>
-          {/* Cricket Venues Section */}
-          {renderSportSection('Cricket', cricketVenues, '🏏')}
-          
-          {/* Futsal Venues Section */}
-          {renderSportSection('Futsal', futsalVenues, '⚽')}
-          
-          {/* Padel Venues Section */}
-          {renderSportSection('Padel', padelVenues, '🏓')}
-          
-          {/* Football Venues Section */}
-          {renderSportSection('Football', footballVenues, '🏈')}
-        </>
-      )}
+        )}
 
-          {/* Challenge Section - Only show when not searching */}
-      {!showSearchResults && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Latest Challenges</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Lalkaar')}>
-              <Text style={styles.seeMoreText}>See all</Text>
+        {/* Sports Categories - Hide when searching */}
+        {!showSearchResults && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sports</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsScroll}>
+              {turfsLoading ? (
+                [1, 2, 3, 4].map((index) => (
+                  <SportCategorySkeleton key={index} />
+                ))
+              ) : (
+                sportCategories.map(renderSportCategory)
+              )}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Search Results or Sport-Specific Venues Sections */}
+        {showSearchResults ? (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Search Results</Text>
+            </View>
+
+            {turfsLoading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venuesScroll}>
+                {[1, 2, 3].map((index) => (
+                  <VenueCardSkeleton key={index} />
+                ))}
+              </ScrollView>
+            ) : filteredVenues.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.venuesScroll}>
+                {filteredVenues.map(renderRecommendedVenue)}
+              </ScrollView>
+            ) : (
+              <View style={styles.noResultsContainer}>
+                <MaterialIcons name="search-off" size={48} color="#ccc" />
+                <Text style={styles.noResultsText}>No venues found</Text>
+                <Text style={styles.noResultsSubtext}>Try searching for a different area or sport</Text>
+              </View>
+            )}
+          </View>
+        ) : (
+          <>
+            {/* Cricket Venues Section */}
+            {renderSportSection('Cricket', cricketVenues)}
+
+            {/* Futsal Venues Section */}
+            {renderSportSection('Futsal', futsalVenues)}
+
+            {/* Padel Venues Section */}
+            {renderSportSection('Padel', padelVenues)}
+
+            {/* Football Venues Section */}
+            {renderSportSection('Football', footballVenues)}
+          </>
+        )}
+
+        {/* Challenge Section - Only show when not searching */}
+        {!showSearchResults && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Latest Challenges</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Lalkaar')}>
+                <Text style={styles.seeMoreText}>See all</Text>
+              </TouchableOpacity>
+            </View>
+
+            {challengesLoading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.challengesScroll}>
+                {[1, 2, 3].map((index) => (
+                  <ChallengeCardSkeleton key={index} />
+                ))}
+              </ScrollView>
+            ) : challenges.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.challengesScroll}>
+                {challenges.slice(0, 4).map(renderChallengeCard)}
+              </ScrollView>
+            ) : (
+              <Text style={styles.noDataText}>No challenges available</Text>
+            )}
+
+            <TouchableOpacity
+              style={styles.createChallengeButton}
+              onPress={() => navigation.navigate('Lalkaar')}
+            >
+              <MaterialIcons name="add" size={24} color="#e8ee26" />
+              <Text style={styles.createChallengeText}>Create Your Challenge</Text>
             </TouchableOpacity>
           </View>
-          
-          {challengesLoading ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.challengesScroll}>
-              {[1, 2, 3].map((index) => (
-                <ChallengeCardSkeleton key={index} />
-              ))}
-            </ScrollView>
-          ) : challenges.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.challengesScroll}>
-              {challenges.slice(0, 4).map(renderChallengeCard)}
-            </ScrollView>
-          ) : (
-            <Text style={styles.noDataText}>No challenges available</Text>
-          )}
-          
-          <TouchableOpacity 
-            style={styles.createChallengeButton}
-            onPress={() => navigation.navigate('Lalkaar')}
-          >
-            <MaterialIcons name="add" size={24} color="#e8ee26" />
-            <Text style={styles.createChallengeText}>Create Your Challenge</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        )}
       </ScrollView>
-      
+
       {/* Real-time Notification */}
       {notification && (
         <RealtimeNotification
@@ -561,7 +561,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(34, 154, 96, 0.7)',
+    background: 'linear-gradient(135deg, rgba(0,77,67,0.85) 0%, rgba(34,154,96,0.75) 100%)',
+    backgroundColor: 'rgba(0,77,67,0.85)', // Fallback for gradient
     justifyContent: 'space-between',
   },
   header: {
@@ -582,10 +583,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
-    fontFamily: 'Montserrat_600SemiBold',
+    fontFamily: 'Montserrat_700Bold',
+    letterSpacing: 0.5,
   },
   tagline: {
     fontSize: 18,
@@ -641,13 +643,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   searchbar: {
-    elevation: 2,
+    elevation: 4,
     backgroundColor: 'white',
     borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
   },
   searchInput: {
     fontFamily: 'Montserrat_400Regular',
@@ -662,11 +664,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_500Medium',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1a1a1a',
     marginBottom: 15,
-    fontFamily: 'Montserrat_600SemiBold',
+    fontFamily: 'Montserrat_700Bold',
+    letterSpacing: 0.3,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -684,9 +687,9 @@ const styles = StyleSheet.create({
   },
   seeMoreText: {
     fontSize: 14,
-    color: '#FF8C00',
-    fontWeight: '500',
-    fontFamily: 'Montserrat_500Medium',
+    color: '#004d43',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   sportsScroll: {
     marginHorizontal: -20,
@@ -695,24 +698,24 @@ const styles = StyleSheet.create({
   },
   sportCard: {
     alignItems: 'center',
-    marginRight: 15, // Reduced margin
-    width: 70,
+    marginRight: 18,
+    width: 90,
   },
   lastSportCard: {
     marginRight: 20, // Extra margin for last card to match container padding
   },
   sportIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 15,
+    width: 80,
+    height: 80,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
-    elevation: 2,
+    marginBottom: 10,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   sportIcon: {
     fontSize: 24,
@@ -732,19 +735,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   venueCard: {
-    width: 280,
-    marginRight: 15,
+    width: 300,
+    marginRight: 16,
     backgroundColor: 'white',
-    borderRadius: 15,
-    elevation: 3,
+    borderRadius: 16,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
     overflow: 'hidden',
   },
   venueImageContainer: {
-    height: 160,
+    height: 180,
     width: '100%',
     position: 'relative',
   },

@@ -1,6 +1,6 @@
 // Working Firebase Admin API
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, orderBy, collectionGroup, deleteDoc } from 'firebase/firestore';
 
 // Firebase config
 const firebaseConfig = {
@@ -33,15 +33,15 @@ export const workingAdminAPI = {
     try {
       console.log('🔥 Fetching dashboard stats...');
       const firestore = initFirebase();
-      
+
       // Fetch venues count
       const venuesQuery = collection(firestore, 'venues');
       const venuesSnapshot = await getDocs(venuesQuery);
       const totalVenues = venuesSnapshot.size;
-      const activeVenues = venuesSnapshot.docs.filter(doc => 
+      const activeVenues = venuesSnapshot.docs.filter(doc =>
         doc.data().status === 'active'
       ).length;
-      
+
       // Fetch bookings count (if bookings collection exists)
       let totalBookings = 0;
       let todayBookings = 0;
@@ -50,19 +50,19 @@ export const workingAdminAPI = {
         const bookingsQuery = collection(firestore, 'bookings');
         const bookingsSnapshot = await getDocs(bookingsQuery);
         totalBookings = bookingsSnapshot.size;
-        
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         bookingsSnapshot.docs.forEach(doc => {
           const booking = doc.data();
           const bookingDate = booking.createdAt?.toDate?.() || new Date(booking.createdAt);
-          
+
           // Count today's bookings
           if (bookingDate >= today) {
             todayBookings++;
           }
-          
+
           // Count pending bookings
           if (booking.status === 'pending') {
             pendingBookings++;
@@ -71,7 +71,7 @@ export const workingAdminAPI = {
       } catch (bookingError) {
         console.log('📅 No bookings collection found, using default values');
       }
-      
+
       // Fetch customers count (if users collection exists)
       let totalCustomers = 0;
       try {
@@ -81,10 +81,10 @@ export const workingAdminAPI = {
       } catch (userError) {
         console.log('👥 No users collection found, using default values');
       }
-      
+
       // Calculate revenue (mock for now, can be enhanced later)
       const totalRevenue = totalBookings * 1500; // Assuming average booking of 1500 PKR
-      
+
       const stats = {
         totalBookings,
         todayBookings,
@@ -105,10 +105,10 @@ export const workingAdminAPI = {
           { day: 'Sun', bookings: 0, revenue: 0 },
         ]
       };
-      
+
       console.log('✅ Dashboard stats fetched:', stats);
       return stats;
-      
+
     } catch (error) {
       console.error('❌ Error in dashboard stats:', error);
       return {
@@ -130,16 +130,16 @@ export const workingAdminAPI = {
     try {
       console.log('🏟️ Fetching venues...');
       const firestore = initFirebase();
-      
+
       // Create query for venues collection
       let venuesQuery = collection(firestore, 'venues');
-      
+
       // Add ordering
       venuesQuery = query(venuesQuery, orderBy('createdAt', 'desc'));
-      
+
       // Execute query
       const querySnapshot = await getDocs(venuesQuery);
-      
+
       // Process results
       const venues = [];
       querySnapshot.forEach((doc) => {
@@ -166,17 +166,17 @@ export const workingAdminAPI = {
           images: Array.isArray(venueData.images) ? venueData.images : []
         });
       });
-      
+
       const result = {
         data: venues,
         total: venues.length,
         page: parseInt(params.page) || 0,
         pageSize: parseInt(params.pageSize) || 25
       };
-      
+
       console.log(`✅ Venues fetched: ${venues.length} venues found`);
       return result;
-      
+
     } catch (error) {
       console.error('❌ Error fetching venues:', error);
       return {
@@ -193,10 +193,10 @@ export const workingAdminAPI = {
     try {
       console.log('📅 Admin: Fetching bookings...');
       const firestore = initFirebase();
-      
+
       // Create query for bookings collection
       let bookingsQuery = collection(firestore, 'bookings');
-      
+
       // Add ordering by creation date (newest first)
       try {
         bookingsQuery = query(bookingsQuery, orderBy('createdAt', 'desc'));
@@ -204,13 +204,13 @@ export const workingAdminAPI = {
         console.warn('⚠️ Admin: Could not order by createdAt, using simple query');
         // If ordering fails, use simple query
       }
-      
+
       // Execute query
       const querySnapshot = await getDocs(bookingsQuery);
-      
+
       // Process results
       const bookings = [];
-      
+
       // Get venue names for better display
       const venuesRef = collection(firestore, 'venues');
       const venuesSnapshot = await getDocs(venuesRef);
@@ -218,13 +218,13 @@ export const workingAdminAPI = {
       venuesSnapshot.forEach((doc) => {
         venuesMap[doc.id] = doc.data();
       });
-      
+
       querySnapshot.forEach((doc) => {
         const bookingData = doc.data();
-        
+
         // Get venue information
         const venue = venuesMap[bookingData.turfId] || {};
-        
+
         // Transform booking data for admin panel display
         const transformedBooking = {
           id: doc.id,
@@ -249,20 +249,20 @@ export const workingAdminAPI = {
           userType: bookingData.userType || 'guest',
           turfId: bookingData.turfId,
         };
-        
+
         bookings.push(transformedBooking);
       });
-      
+
       // Apply filters if specified
       let filteredBookings = bookings;
-      
+
       if (params.filter && params.filter !== 'all') {
         if (params.filter === 'today') {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const tomorrow = new Date(today);
           tomorrow.setDate(tomorrow.getDate() + 1);
-          
+
           filteredBookings = bookings.filter(booking => {
             const bookingDate = new Date(booking.dateTime);
             return bookingDate >= today && bookingDate < tomorrow;
@@ -271,33 +271,33 @@ export const workingAdminAPI = {
           filteredBookings = bookings.filter(booking => booking.status === params.filter);
         }
       }
-      
+
       // Apply search if specified
       if (params.search) {
         const searchLower = params.search.toLowerCase();
-        filteredBookings = filteredBookings.filter(booking => 
+        filteredBookings = filteredBookings.filter(booking =>
           booking.customerName.toLowerCase().includes(searchLower) ||
           booking.turfName.toLowerCase().includes(searchLower) ||
           booking.bookingId.toLowerCase().includes(searchLower) ||
           booking.customerPhone.includes(params.search)
         );
       }
-      
+
       // Apply pagination
       const startIndex = (parseInt(params.page) || 0) * (parseInt(params.pageSize) || 25);
       const endIndex = startIndex + (parseInt(params.pageSize) || 25);
       const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
-      
+
       const result = {
         data: paginatedBookings,
         total: filteredBookings.length,
         page: parseInt(params.page) || 0,
         pageSize: parseInt(params.pageSize) || 25
       };
-      
+
       console.log(`✅ Admin: Bookings fetched: ${paginatedBookings.length}/${filteredBookings.length} bookings (${bookings.length} total)`);
       return result;
-      
+
     } catch (error) {
       console.error('❌ Admin: Error fetching bookings:', error);
       return {
@@ -314,10 +314,10 @@ export const workingAdminAPI = {
     try {
       console.log('👥 Admin: Fetching customers...');
       const firestore = initFirebase();
-      
+
       // Create query for users collection
       let usersQuery = collection(firestore, 'users');
-      
+
       // Add ordering by creation date (newest first)
       try {
         usersQuery = query(usersQuery, orderBy('createdAt', 'desc'));
@@ -325,23 +325,23 @@ export const workingAdminAPI = {
         console.warn('⚠️ Admin: Could not order users by createdAt, using simple query');
         // If ordering fails, use simple query
       }
-      
+
       // Execute query
       const querySnapshot = await getDocs(usersQuery);
-      
+
       // Process results
       const customers = [];
-      
+
       // Get bookings data to calculate customer stats
       let bookingsMap = {};
       try {
         const bookingsRef = collection(firestore, 'bookings');
         const bookingsSnapshot = await getDocs(bookingsRef);
-        
+
         bookingsSnapshot.forEach((doc) => {
           const booking = doc.data();
           const userId = booking.userId;
-          
+
           if (!bookingsMap[userId]) {
             bookingsMap[userId] = {
               totalBookings: 0,
@@ -350,29 +350,29 @@ export const workingAdminAPI = {
               preferredSports: new Set()
             };
           }
-          
+
           bookingsMap[userId].totalBookings++;
           bookingsMap[userId].totalSpent += booking.totalAmount || 0;
-          
+
           const bookingDate = booking.createdAt?.toDate?.() || new Date(booking.createdAt);
           if (!bookingsMap[userId].lastBooking || bookingDate > bookingsMap[userId].lastBooking) {
             bookingsMap[userId].lastBooking = bookingDate;
           }
-          
+
           if (booking.sport) {
             bookingsMap[userId].preferredSports.add(booking.sport);
           }
         });
-        
+
         // Convert Sets to Arrays
         Object.keys(bookingsMap).forEach(userId => {
           bookingsMap[userId].preferredSports = Array.from(bookingsMap[userId].preferredSports);
         });
-        
+
       } catch (bookingError) {
         console.log('📅 Admin: No bookings found for customer stats calculation');
       }
-      
+
       querySnapshot.forEach((doc) => {
         const userData = doc.data();
         const userId = doc.id;
@@ -382,7 +382,7 @@ export const workingAdminAPI = {
           lastBooking: null,
           preferredSports: []
         };
-        
+
         // Transform user data for admin panel display
         const transformedCustomer = {
           id: userId,
@@ -405,13 +405,13 @@ export const workingAdminAPI = {
           createdAt: userData.createdAt?.toDate?.() || new Date(),
           updatedAt: userData.updatedAt?.toDate?.() || new Date(),
         };
-        
+
         customers.push(transformedCustomer);
       });
-      
+
       // Apply filters if specified
       let filteredCustomers = customers;
-      
+
       if (params.filter && params.filter !== 'all') {
         if (params.filter === 'active') {
           filteredCustomers = customers.filter(customer => customer.status === 'active');
@@ -422,37 +422,37 @@ export const workingAdminAPI = {
         } else if (params.filter === 'new') {
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          filteredCustomers = customers.filter(customer => 
+          filteredCustomers = customers.filter(customer =>
             new Date(customer.joinDate) >= thirtyDaysAgo
           );
         }
       }
-      
+
       // Apply search if specified
       if (params.search) {
         const searchLower = params.search.toLowerCase();
-        filteredCustomers = filteredCustomers.filter(customer => 
+        filteredCustomers = filteredCustomers.filter(customer =>
           customer.name.toLowerCase().includes(searchLower) ||
           customer.email.toLowerCase().includes(searchLower) ||
           customer.phone.includes(params.search)
         );
       }
-      
+
       // Apply pagination
       const startIndex = (parseInt(params.page) || 0) * (parseInt(params.pageSize) || 25);
       const endIndex = startIndex + (parseInt(params.pageSize) || 25);
       const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
-      
+
       const result = {
         data: paginatedCustomers,
         total: filteredCustomers.length,
         page: parseInt(params.page) || 0,
         pageSize: parseInt(params.pageSize) || 25
       };
-      
+
       console.log(`✅ Admin: Customers fetched: ${paginatedCustomers.length}/${filteredCustomers.length} customers (${customers.length} total)`);
       return result;
-      
+
     } catch (error) {
       console.error('❌ Admin: Error fetching customers:', error);
       return {
@@ -473,7 +473,7 @@ export const workingAdminAPI = {
         selectedSlots: venueData.availableSlots?.filter(slot => slot.selected !== false).length || 0
       });
       const firestore = initFirebase();
-      
+
       // Process time slots - filter to only include selected slots and ensure proper structure
       let processedTimeSlots = [];
       if (venueData.availableSlots && Array.isArray(venueData.availableSlots)) {
@@ -488,10 +488,10 @@ export const workingAdminAPI = {
             available: true,
             selected: true // Mark as selected since we filtered for selected slots
           }));
-        
+
         console.log(`📊 Admin: Processed ${processedTimeSlots.length} selected time slots for new venue`);
       }
-      
+
       // Prepare venue data for Firestore with consistent structure
       const venueToAdd = {
         name: venueData.name,
@@ -531,18 +531,18 @@ export const workingAdminAPI = {
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
+
       // Add to Firestore
       const docRef = await addDoc(collection(firestore, 'venues'), venueToAdd);
-      
+
       console.log(`✅ Admin: Venue added successfully with ID: ${docRef.id} and ${processedTimeSlots.length} time slots`);
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Venue added successfully',
         id: docRef.id,
         data: { ...venueToAdd, id: docRef.id }
       };
-      
+
     } catch (error) {
       console.error('❌ Admin: Error adding venue:', error);
       throw new Error(`Failed to add venue: ${error.message}`);
@@ -554,13 +554,13 @@ export const workingAdminAPI = {
     try {
       console.log('🔄 Updating venue status:', venueId, status);
       const firestore = initFirebase();
-      
+
       const venueRef = doc(firestore, 'venues', venueId);
       await updateDoc(venueRef, {
         status: status,
         updatedAt: new Date()
       });
-      
+
       console.log('✅ Venue status updated successfully');
       return { success: true, message: 'Venue status updated successfully' };
     } catch (error) {
@@ -578,9 +578,9 @@ export const workingAdminAPI = {
         selectedSlots: venueData.availableSlots?.filter(slot => slot.selected !== false).length || 0
       });
       const firestore = initFirebase();
-      
+
       const venueRef = doc(firestore, 'venues', venueId);
-      
+
       // Process time slots - filter to only include selected slots and ensure proper structure
       let processedTimeSlots = [];
       if (venueData.availableSlots && Array.isArray(venueData.availableSlots)) {
@@ -595,10 +595,10 @@ export const workingAdminAPI = {
             available: true,
             selected: true // Mark as selected since we filtered for selected slots
           }));
-        
+
         console.log(`📊 Admin: Processed ${processedTimeSlots.length} selected time slots for venue update`);
       }
-      
+
       // Prepare update data with proper structure
       const updateData = {
         name: venueData.name,
@@ -637,15 +637,15 @@ export const workingAdminAPI = {
         status: 'active',
         updatedAt: new Date()
       };
-      
+
       await updateDoc(venueRef, updateData);
-      
+
       console.log(`✅ Admin: Venue updated successfully with ${processedTimeSlots.length} time slots`);
-      return { 
-        id: venueId, 
+      return {
+        id: venueId,
         ...updateData,
-        success: true, 
-        message: 'Venue updated successfully' 
+        success: true,
+        message: 'Venue updated successfully'
       };
     } catch (error) {
       console.error('❌ Admin: Error updating venue:', error);
@@ -658,7 +658,7 @@ export const workingAdminAPI = {
     try {
       console.log('🔄 Admin: Updating booking status:', bookingId, status);
       const firestore = initFirebase();
-      
+
       const bookingRef = doc(firestore, 'bookings', bookingId);
       await updateDoc(bookingRef, {
         status: status,
@@ -667,7 +667,7 @@ export const workingAdminAPI = {
         ...(status === 'confirmed' && { paymentStatus: 'paid' }),
         ...(status === 'cancelled' && { paymentStatus: 'refunded' })
       });
-      
+
       console.log('✅ Admin: Booking status updated successfully');
       return { success: true, message: 'Booking status updated successfully' };
     } catch (error) {
@@ -681,19 +681,91 @@ export const workingAdminAPI = {
     try {
       console.log('🔄 Admin: Updating customer status:', customerId, status);
       const firestore = initFirebase();
-      
+
       const customerRef = doc(firestore, 'users', customerId);
       await updateDoc(customerRef, {
         isActive: status === 'active',
         status: status,
         updatedAt: new Date()
       });
-      
+
       console.log('✅ Admin: Customer status updated successfully');
       return { success: true, message: 'Customer status updated successfully' };
     } catch (error) {
       console.error('❌ Admin: Error updating customer status:', error);
       throw new Error(`Failed to update customer status: ${error.message}`);
+    }
+  }
+  ,
+
+  // Get all reviews (using Collection Group Query)
+  async getReviews(params = {}) {
+    try {
+      console.log('⭐ Admin: Fetching all reviews...');
+      const firestore = initFirebase();
+
+      // Query 'reviews' collection group across all venues
+      let reviewsQuery = collectionGroup(firestore, 'reviews');
+
+      // Order by date desc
+      try {
+        reviewsQuery = query(reviewsQuery, orderBy('date', 'desc'));
+      } catch (e) {
+        console.warn('Could not order reviews by date (might need index)', e);
+      }
+
+      const snapshot = await getDocs(reviewsQuery);
+      const reviews = [];
+
+      // We need to fetch venue names effectively.
+      // Since reviews are subcollections of venues, the parent doc of a review is the venue.
+      // However, we can't easily get parent data from collectionGroup query result directly in a single shot without refs.
+      // For optimization, we might just show Venue ID or fetch venues if needed.
+      // Let's try to map them if we have venues cached or just fetch them.
+
+      // For now, let's fetch all venues to map IDs to Names (assuming < 100 venues this is fine)
+      const venuesRef = collection(firestore, 'venues');
+      const venuesSnap = await getDocs(venuesRef);
+      const venueMap = {};
+      venuesSnap.forEach(v => venueMap[v.id] = v.data().name);
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        // Construct venueId from ref path: venues/{venueId}/reviews/{reviewId}
+        const venueId = doc.ref.parent.parent?.id;
+
+        reviews.push({
+          id: doc.id,
+          ...data,
+          venueId: venueId,
+          venueName: venueMap[venueId] || 'Unknown Venue',
+          date: data.date?.toDate?.() || new Date(),
+        });
+      });
+
+      console.log(`✅ Admin: Fetched ${reviews.length} reviews`);
+      return {
+        data: reviews,
+        total: reviews.length
+      };
+
+    } catch (error) {
+      console.error('❌ Admin: Error fetching reviews:', error);
+      return { data: [], total: 0 };
+    }
+  },
+
+  // Delete review (moderation)
+  async deleteReview(venueId, reviewId) {
+    try {
+      console.log(`🗑️ Admin: Deleting review ${reviewId} from venue ${venueId}`);
+      const firestore = initFirebase();
+      const reviewRef = doc(firestore, 'venues', venueId, 'reviews', reviewId);
+      await deleteDoc(reviewRef);
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Admin: Error deleting review:', error);
+      throw error;
     }
   }
 };

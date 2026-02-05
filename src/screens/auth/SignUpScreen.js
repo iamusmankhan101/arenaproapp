@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Alert,
-  TextInput
+  TextInput,
+  Image
 } from 'react-native';
-import { 
-  Text, 
-  ActivityIndicator 
+import {
+  Text,
+  ActivityIndicator
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { signUp, clearError } from '../../store/slices/authSlice';
@@ -28,7 +29,7 @@ export default function SignUpScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
-  
+
   // Focus states to prevent keyboard closing
   const [firstNameFocused, setFirstNameFocused] = useState(false);
   const [lastNameFocused, setLastNameFocused] = useState(false);
@@ -36,13 +37,13 @@ export default function SignUpScreen({ navigation }) {
   const [phoneNumberFocused, setPhoneNumberFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
-  
+
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
 
   const cities = [
     'Lahore',
-    'Karachi', 
+    'Karachi',
     'Islamabad',
     'Rawalpindi',
     'Faisalabad',
@@ -64,7 +65,7 @@ export default function SignUpScreen({ navigation }) {
       let errorTitle = 'Sign Up Error';
       let errorMessage = error;
       let buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
-      
+
       // Handle network-specific errors
       if (error.includes('network') || error.includes('connection') || error.includes('internet')) {
         errorTitle = 'Network Issue';
@@ -75,7 +76,7 @@ export default function SignUpScreen({ navigation }) {
         errorMessage = 'Firebase needs to be configured. Please contact support.';
         buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
       }
-      
+
       Alert.alert(errorTitle, errorMessage, buttons);
     }
   }, [error, dispatch]);
@@ -139,11 +140,11 @@ export default function SignUpScreen({ navigation }) {
   const handleSignUp = () => {
     if (validateForm()) {
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
-      
-      dispatch(signUp({ 
+
+      dispatch(signUp({
         email: email.trim().toLowerCase(),
         password,
-        fullName, 
+        fullName,
         phoneNumber: phoneNumber.trim(),
         city: selectedCity
       }));
@@ -159,12 +160,12 @@ export default function SignUpScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -173,7 +174,7 @@ export default function SignUpScreen({ navigation }) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => {
               if (navigation.canGoBack()) {
@@ -263,7 +264,7 @@ export default function SignUpScreen({ navigation }) {
 
           {/* City Selector */}
           <View style={styles.inputContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.inputWrapper}
               onPress={() => setShowCityDropdown(!showCityDropdown)}
             >
@@ -271,13 +272,13 @@ export default function SignUpScreen({ navigation }) {
               <Text style={[styles.cityText, !selectedCity && styles.placeholderText]}>
                 {selectedCity || 'Select City'}
               </Text>
-              <MaterialIcons 
-                name={showCityDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                size={20} 
-                color="#999" 
+              <MaterialIcons
+                name={showCityDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+                size={20}
+                color="#999"
               />
             </TouchableOpacity>
-            
+
             {showCityDropdown && (
               <View style={styles.dropdown}>
                 <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
@@ -342,14 +343,14 @@ export default function SignUpScreen({ navigation }) {
                 underlineColorAndroid="transparent"
                 textContentType="newPassword"
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeIcon}
               >
-                <MaterialIcons 
-                  name={showPassword ? "visibility" : "visibility-off"} 
-                  size={20} 
-                  color="#999" 
+                <MaterialIcons
+                  name={showPassword ? "visibility" : "visibility-off"}
+                  size={20}
+                  color="#999"
                 />
               </TouchableOpacity>
             </View>
@@ -374,14 +375,14 @@ export default function SignUpScreen({ navigation }) {
                 underlineColorAndroid="transparent"
                 textContentType="newPassword"
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 style={styles.eyeIcon}
               >
-                <MaterialIcons 
-                  name={showConfirmPassword ? "visibility" : "visibility-off"} 
-                  size={20} 
-                  color="#999" 
+                <MaterialIcons
+                  name={showConfirmPassword ? "visibility" : "visibility-off"}
+                  size={20}
+                  color="#999"
                 />
               </TouchableOpacity>
             </View>
@@ -393,14 +394,14 @@ export default function SignUpScreen({ navigation }) {
               Password strength: {password.length < 6 ? 'Weak' : password.length < 8 ? 'Medium' : 'Strong'}
             </Text>
             <View style={styles.strengthBar}>
-              <View 
+              <View
                 style={[
-                  styles.strengthFill, 
-                  { 
+                  styles.strengthFill,
+                  {
                     width: password.length < 6 ? '33%' : password.length < 8 ? '66%' : '100%',
                     backgroundColor: password.length < 6 ? '#FF6B6B' : password.length < 8 ? '#FFD93D' : '#6BCF7F'
                   }
-                ]} 
+                ]}
               />
             </View>
           </View>
@@ -432,12 +433,15 @@ export default function SignUpScreen({ navigation }) {
           </View>
 
           {/* Google Sign Up */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.googleButton}
             onPress={handleGoogleSignUp}
             disabled={loading}
           >
-            <MaterialIcons name="account-circle" size={24} color="#4285F4" />
+            <Image
+              source={require('../../images/2a5758d6-4edb-4047-87bb-e6b94dbbbab0-cover.png')}
+              style={styles.googleIcon}
+            />
             <Text style={styles.googleButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
@@ -680,6 +684,10 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
     marginLeft: 12,
+  },
+  googleIcon: {
+    width: 24,
+    height: 24,
   },
   signInContainer: {
     flexDirection: 'row',

@@ -30,6 +30,7 @@ import {
   Settings,
   Logout,
   AccountCircle,
+  RateReview,
 } from '@mui/icons-material';
 import { logoutAdmin, loadStoredAuth } from '../store/slices/authSlice';
 
@@ -41,6 +42,7 @@ const menuItems = [
   { text: 'Venues', icon: <LocationOn />, path: '/venues' },
   { text: 'Customers', icon: <People />, path: '/customers' },
   { text: 'Reports', icon: <Analytics />, path: '/reports' },
+  { text: 'Reviews', icon: <RateReview />, path: '/reviews' },
   { text: 'Settings', icon: <Settings />, path: '/settings' },
 ];
 

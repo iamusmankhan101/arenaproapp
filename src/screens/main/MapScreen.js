@@ -1,22 +1,23 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  Alert, 
-  TouchableOpacity, 
-  Dimensions, 
-  Image, 
+import {
+  View,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  Dimensions,
+  Image,
   Animated,
   StatusBar,
   SafeAreaView,
-  Platform
+  Platform,
+  ScrollView
 } from 'react-native';
-import { 
-  Text, 
-  Card, 
-  FAB, 
-  Searchbar, 
-  Chip, 
+import {
+  Text,
+  Card,
+  FAB,
+  Searchbar,
+  Chip,
   Surface,
   Badge,
   ActivityIndicator
@@ -32,16 +33,93 @@ import SkeletonLoader from '../../components/SkeletonLoader';
 const { width, height } = Dimensions.get('window');
 
 // Custom map style for better branding
+// Custom map style for clean, modern look (matching reference)
 const customMapStyle = [
   {
-    featureType: 'poi',
-    elementType: 'labels',
-    stylers: [{ visibility: 'off' }]
+    "elementType": "geometry",
+    "stylers": [{ "color": "#f5f5f5" }]
   },
   {
-    featureType: 'transit',
-    elementType: 'labels',
-    stylers: [{ visibility: 'off' }]
+    "elementType": "labels.icon",
+    "stylers": [{ "visibility": "off" }]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#616161" }]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [{ "color": "#f5f5f5" }]
+  },
+  {
+    "featureType": "administrative.land_parcel",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#bdbdbd" }]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#eeeeee" }]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#757575" }]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#e5e5e5" }]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#9e9e9e" }]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#ffffff" }]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#757575" }]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#dadada" }]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#616161" }]
+  },
+  {
+    "featureType": "road.local",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#9e9e9e" }]
+  },
+  {
+    "featureType": "transit.line",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#e5e5e5" }]
+  },
+  {
+    "featureType": "transit.station",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#eeeeee" }]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#e9e9e9" }]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#9e9e9e" }]
   }
 ];
 
@@ -70,7 +148,7 @@ export default function MapScreen({ navigation }) {
   const [geocodedCoordinates, setGeocodedCoordinates] = useState(new Map());
   const [isMapReady, setIsMapReady] = useState(false);
   const [venuesWithValidCoords, setVenuesWithValidCoords] = useState([]);
-  
+
   const mapRef = useRef(null);
   const dispatch = useDispatch();
   const { nearbyTurfs, loading } = useSelector(state => state.turf);
@@ -108,7 +186,7 @@ export default function MapScreen({ navigation }) {
     // Proactively request location and load venues
     const initializeMapScreen = async () => {
       console.log('🚀 MapScreen: Initializing...');
-      
+
       // Always load venues first (regardless of location)
       console.log('📍 MapScreen: Loading all venues...');
       try {
@@ -121,7 +199,7 @@ export default function MapScreen({ navigation }) {
       } catch (error) {
         console.error('❌ MapScreen: Failed to load venues:', error);
       }
-      
+
       // Then try to get user location for distance calculations
       try {
         console.log('📍 MapScreen: Requesting location access...');
@@ -139,10 +217,10 @@ export default function MapScreen({ navigation }) {
   const requestLocationAccess = async () => {
     try {
       console.log('📍 Checking location permissions...');
-      
+
       // Request permission first
       let { status } = await Location.requestForegroundPermissionsAsync();
-      
+
       if (status === 'granted') {
         console.log('✅ Location permission granted');
         await getCurrentLocation();
@@ -154,8 +232,8 @@ export default function MapScreen({ navigation }) {
           'Location access will help us show nearby venues and calculate distances. You can still browse all venues without it.',
           [
             { text: 'Maybe Later', style: 'cancel' },
-            { 
-              text: 'Enable Location', 
+            {
+              text: 'Enable Location',
               onPress: async () => {
                 const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
                 if (newStatus === 'granted') {
@@ -177,7 +255,7 @@ export default function MapScreen({ navigation }) {
     console.log('🔄 MapScreen: nearbyTurfs updated, count:', nearbyTurfs.length);
     if (nearbyTurfs.length > 0) {
       console.log('📊 MapScreen: Sample venues:', nearbyTurfs.slice(0, 2).map(v => ({ name: v.name, id: v.id })));
-      
+
       // Auto-zoom to fit venues after a short delay
       setTimeout(() => {
         if (mapRef.current && isMapReady) {
@@ -243,7 +321,7 @@ export default function MapScreen({ navigation }) {
         source: 'direct'
       };
     }
-    
+
     // Priority 2: Check location object coordinates
     if (venue.location && isValidCoordinate(venue.location.latitude, venue.location.longitude)) {
       console.log(`📍 Using location object coordinates for ${venue.name}: ${venue.location.latitude}, ${venue.location.longitude}`);
@@ -283,16 +361,16 @@ export default function MapScreen({ navigation }) {
     const processedVenues = [];
     const invalidVenues = [];
     const coordinateMap = new Map(); // Track duplicate coordinates
-    
+
     console.log(`🗺️ Processing coordinates for ${venues.length} venues...`);
-    
+
     for (let i = 0; i < venues.length; i++) {
       const venue = venues[i];
       const coords = getVenueCoordinatesSync(venue);
-      
+
       if (coords.isValid) {
         let finalCoords = { ...coords };
-        
+
         // Check for duplicate coordinates and spread them out slightly
         const coordKey = `${coords.latitude.toFixed(4)},${coords.longitude.toFixed(4)}`;
         if (coordinateMap.has(coordKey)) {
@@ -300,20 +378,20 @@ export default function MapScreen({ navigation }) {
           // Spread duplicates in a small circle around the original point
           const angle = (duplicateCount * 60) * (Math.PI / 180); // 60 degrees apart
           const offset = 0.002; // Small offset (~200m)
-          
+
           finalCoords = {
             latitude: coords.latitude + (Math.cos(angle) * offset),
             longitude: coords.longitude + (Math.sin(angle) * offset),
             isValid: true,
             source: `${coords.source}-spread-${duplicateCount}`
           };
-          
+
           coordinateMap.set(coordKey, duplicateCount + 1);
           console.log(`📍 Spread venue "${venue.name}" to avoid overlap: ${finalCoords.latitude}, ${finalCoords.longitude}`);
         } else {
           coordinateMap.set(coordKey, 1);
         }
-        
+
         processedVenues.push({
           ...venue,
           coordinates: finalCoords
@@ -329,13 +407,13 @@ export default function MapScreen({ navigation }) {
         console.warn(`❌ ${venue.name}: Invalid coordinates - will not appear on map`);
       }
     }
-    
+
     console.log(`📊 Coordinate processing complete: ${processedVenues.length}/${venues.length} venues have valid coordinates`);
-    
+
     if (invalidVenues.length > 0) {
       console.warn(`⚠️ ${invalidVenues.length} venues without valid coordinates:`, invalidVenues);
     }
-    
+
     return processedVenues;
   };
 
@@ -344,11 +422,11 @@ export default function MapScreen({ navigation }) {
     const R = 6371; // Radius of the Earth in kilometers
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in kilometers
   };
 
@@ -375,10 +453,10 @@ export default function MapScreen({ navigation }) {
     }
 
     console.log(`📏 Calculating distances from user location: ${userLocation.latitude}, ${userLocation.longitude}`);
-    
+
     return venues.map(venue => {
       const coords = venue.coordinates || getVenueCoordinatesSync(venue);
-      
+
       if (!coords.isValid) {
         return {
           ...venue,
@@ -395,9 +473,9 @@ export default function MapScreen({ navigation }) {
       );
 
       const formattedDistance = formatDistance(distanceKm);
-      
+
       console.log(`📏 ${venue.name}: ${formattedDistance} away`);
-      
+
       return {
         ...venue,
         distance: formattedDistance,
@@ -411,14 +489,14 @@ export default function MapScreen({ navigation }) {
     const updateVenuesWithCoordsAndDistances = async () => {
       console.log('🔄 MapScreen: Processing venues with coordinates and distances...');
       console.log('📊 MapScreen: nearbyTurfs count:', nearbyTurfs.length);
-      
+
       if (nearbyTurfs.length > 0) {
         console.log('🔄 Processing venues with coordinates and distances...');
-        
+
         // First, process coordinates
         const validVenues = await processVenuesCoordinates(nearbyTurfs);
         console.log('✅ MapScreen: Valid venues after coordinate processing:', validVenues.length);
-        
+
         // If no venues have valid coordinates, show all venues with default coordinates
         if (validVenues.length === 0) {
           console.warn('⚠️ MapScreen: No venues with valid coordinates found, showing all venues with default locations');
@@ -436,10 +514,10 @@ export default function MapScreen({ navigation }) {
           console.log(`✅ MapScreen: Showing ${venuesWithDefaults.length} venues with default coordinates`);
           return;
         }
-        
+
         // Then, calculate distances from user location
         const venuesWithDistances = calculateVenueDistances(validVenues, location);
-        
+
         // Sort by distance if user location is available
         if (location) {
           venuesWithDistances.sort((a, b) => {
@@ -449,10 +527,10 @@ export default function MapScreen({ navigation }) {
           });
           console.log('📊 MapScreen: Venues sorted by distance from user location');
         }
-        
+
         setVenuesWithValidCoords(venuesWithDistances);
         setFilteredVenues(venuesWithDistances);
-        
+
         console.log(`✅ MapScreen: Updated ${venuesWithDistances.length} venues with coordinates and distances`);
       } else {
         console.log('⚠️ MapScreen: No venues found in nearbyTurfs array');
@@ -465,7 +543,7 @@ export default function MapScreen({ navigation }) {
         }));
       }
     };
-    
+
     updateVenuesWithCoordsAndDistances();
   }, [nearbyTurfs, location]);
   const filterVenues = () => {
@@ -484,7 +562,7 @@ export default function MapScreen({ navigation }) {
         const addressMatch = getVenueAddress(venue).toLowerCase().includes(query);
         const areaMatch = venue.area && venue.area.toLowerCase().includes(query);
         const cityMatch = venue.city && venue.city.toLowerCase().includes(query);
-        const sportsMatch = venue.sports && venue.sports.some(sport => 
+        const sportsMatch = venue.sports && venue.sports.some(sport =>
           sport.toLowerCase().includes(query)
         );
         matches = matches && (nameMatch || addressMatch || areaMatch || cityMatch || sportsMatch);
@@ -508,11 +586,11 @@ export default function MapScreen({ navigation }) {
 
   const handleSearchChange = (query) => {
     setSearchQuery(query);
-    
+
     // If the query looks like a location (contains common location words), 
     // try to search by location after a delay
     if (query.trim() && (
-      query.toLowerCase().includes('area') || 
+      query.toLowerCase().includes('area') ||
       query.toLowerCase().includes('sector') ||
       query.toLowerCase().includes('town') ||
       query.toLowerCase().includes('city') ||
@@ -523,7 +601,7 @@ export default function MapScreen({ navigation }) {
         searchByLocation(query);
       }, 1000);
     }
-    
+
     // Always do immediate local filtering
     filterVenues();
   };
@@ -531,13 +609,13 @@ export default function MapScreen({ navigation }) {
   const searchByLocation = async (locationQuery) => {
     try {
       setIsLoading(true);
-      
+
       // Try to geocode the search query to get coordinates
       const geocodeResult = await Location.geocodeAsync(locationQuery);
-      
+
       if (geocodeResult && geocodeResult.length > 0) {
         const { latitude, longitude } = geocodeResult[0];
-        
+
         // Update map region to show the searched location
         const newRegion = {
           latitude,
@@ -601,33 +679,33 @@ export default function MapScreen({ navigation }) {
       let currentLocation = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
-      
+
       const newRegion = {
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
       };
-      
+
       console.log(`📍 User location obtained: ${currentLocation.coords.latitude}, ${currentLocation.coords.longitude}`);
-      
+
       setLocation(currentLocation.coords);
       setInitialRegion(newRegion);
-      
+
       // Animate to user location with smooth transition
       if (mapRef.current && isMapReady) {
         mapRef.current.animateToRegion(newRegion, 1500);
       }
-      
+
       // Fetch nearby venues based on current location
       dispatch(fetchNearbyTurfs({
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
         radius: 10000 // 10km radius
       }));
-      
+
       console.log('✅ Location updated successfully, distances will be recalculated');
-      
+
     } catch (error) {
       Alert.alert('Location Error', 'Unable to get your current location. Please try again.');
       console.error('❌ Location error:', error);
@@ -667,7 +745,7 @@ export default function MapScreen({ navigation }) {
       const coords = getVenueCoordinatesSync(venue);
       return !coords.isValid;
     });
-    
+
     if (missingCoords.length > 0) {
       console.group('🗺️ Venues with missing/invalid coordinates:');
       missingCoords.forEach(venue => {
@@ -684,13 +762,13 @@ export default function MapScreen({ navigation }) {
             longitude: venue.location?.longitude,
             valid: venue.location ? isValidCoordinate(venue.location.latitude, venue.location.longitude) : false
           },
-          recommendation: venue.latitude && venue.longitude ? 
-            'Direct coordinates exist but may be invalid' : 
+          recommendation: venue.latitude && venue.longitude ?
+            'Direct coordinates exist but may be invalid' :
             'No coordinates found - needs geocoding'
         });
       });
       console.groupEnd();
-      
+
       // Provide actionable recommendations
       console.log(`💡 Recommendations for ${missingCoords.length} venues without coordinates:`);
       console.log('1. Update venue coordinates in Firebase admin panel');
@@ -751,117 +829,68 @@ export default function MapScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={themeColors.colors.primary} barStyle="light-content" />
-      
-      {/* Enhanced Header with Animation */}
-      <Animated.View 
-        style={[
-          styles.headerContainer,
-          {
-            transform: [{ translateY: slideAnim }],
-            opacity: fadeAnim,
-          }
-        ]}
-      >
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.headerContent}>
-            <View style={styles.searchContainer}>
-              <Searchbar
-                placeholder="Search venues, sports, or areas..."
-                onChangeText={handleSearchChange}
-                value={searchQuery}
-                style={styles.searchBar}
-                inputStyle={styles.searchInput}
-                iconColor={themeColors.colors.primary}
-                placeholderTextColor="#999"
-                elevation={2}
-              />
-              
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.filterButton]}
-                onPress={toggleFilters}
-              >
-                <MaterialIcons 
-                  name="tune" 
-                  size={22} 
-                  color={showFilters ? themeColors.colors.primary : '#666'} 
-                />
-                {filteredVenues.length !== nearbyTurfs.length && (
-                  <Badge size={8} style={styles.filterBadge} />
-                )}
-              </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.mapTypeButton]}
-                onPress={toggleMapType}
-              >
-                <MaterialIcons 
-                  name={mapTypes.find(type => type.key === mapType)?.icon || 'map'} 
-                  size={22} 
-                  color="#666" 
-                />
-              </TouchableOpacity>
-            </View>
+      {/* Floating Sports Categories */}
+      <View style={styles.floatingSportsContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.sportsScrollContent}
+        >
+          {sportFilters.map((sport) => (
+            <Chip
+              key={sport}
+              selected={selectedSport === sport}
+              onPress={() => setSelectedSport(sport)}
+              style={[
+                styles.floatingSportChip,
+                selectedSport === sport && {
+                  backgroundColor: themeColors.colors.primary,
+                }
+              ]}
+              textStyle={[
+                styles.floatingSportChipText,
+                selectedSport === sport && { color: themeColors.colors.secondary }
+              ]}
+              mode={selectedSport === sport ? 'flat' : 'outlined'}
+            >
+              {sport}
+            </Chip>
+          ))}
+        </ScrollView>
+      </View>
 
-            {/* Enhanced Results Counter with Debug Info */}
-            <View style={styles.resultsContainer}>
-              <Text style={styles.resultsText}>
-                {filteredVenues.length} venue{filteredVenues.length !== 1 ? 's' : ''} found
-                {venuesWithValidCoords.length !== nearbyTurfs.length && (
-                  <Text style={styles.hiddenVenuesText}>
-                    {' '}({nearbyTurfs.length - venuesWithValidCoords.length} hidden - missing coordinates)
-                  </Text>
-                )}
-              </Text>
-              <View style={styles.resultsActions}>
-                {loading && (
-                  <ActivityIndicator 
-                    size="small" 
-                    color={themeColors.colors.primary} 
-                    style={styles.loadingIndicator}
-                  />
-                )}
-                <TouchableOpacity 
-                  style={styles.debugButton}
-                  onPress={() => {
-                    console.log('🔍 MapScreen DEBUG INFO:');
-                    console.log('nearbyTurfs:', nearbyTurfs.length);
-                    console.log('venuesWithValidCoords:', venuesWithValidCoords.length);
-                    console.log('filteredVenues:', filteredVenues.length);
-                    console.log('location:', location);
-                    console.log('loading:', loading);
-                    console.log('isMapReady:', isMapReady);
-                    console.log('Sample venues:', nearbyTurfs.slice(0, 2));
-                    
-                    // Force reload venues
-                    console.log('🔄 Force reloading venues...');
-                    dispatch(fetchNearbyTurfs({
-                      latitude: region.latitude,
-                      longitude: region.longitude,
-                      radius: 50000
-                    }));
-                    
-                    Alert.alert('Debug Info', 
-                      `Total: ${nearbyTurfs.length} venues\n` +
-                      `Valid: ${venuesWithValidCoords.length} venues\n` +
-                      `Filtered: ${filteredVenues.length} venues\n` +
-                      `Location: ${location ? 'Yes' : 'No'}\n` +
-                      `Loading: ${loading ? 'Yes' : 'No'}\n` +
-                      `Map Ready: ${isMapReady ? 'Yes' : 'No'}\n\n` +
-                      `Check console for detailed logs.`
-                    );
-                  }}
-                >
-                  <MaterialIcons name="bug-report" size={16} color="#666" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </SafeAreaView>
-      </Animated.View>
+      {/* Search Bar */}
+      <View style={styles.floatingSearchContainer}>
+        <Surface style={styles.searchSurface} elevation={4}>
+          <TouchableOpacity style={styles.searchIconContainer} activeOpacity={0.7}>
+            <MaterialIcons name="search" size={24} color="#757575" />
+          </TouchableOpacity>
+
+          <Searchbar
+            placeholder="Search venues..."
+            onChangeText={handleSearchChange}
+            value={searchQuery}
+            style={styles.cleanSearchBar}
+            inputStyle={styles.cleanSearchInput}
+            iconColor="transparent"
+            placeholderTextColor="#9e9e9e"
+            elevation={0}
+          />
+
+          <TouchableOpacity
+            style={styles.filterIconContainer}
+            activeOpacity={0.7}
+            onPress={toggleFilters}
+          >
+            <MaterialIcons name="tune" size={24} color="#757575" />
+          </TouchableOpacity>
+        </Surface>
+      </View>
 
       {/* Enhanced Sport Filters */}
       {showFilters && (
-        <Animated.View 
+        <Animated.View
           style={[
             styles.filtersContainer,
             {
@@ -879,7 +908,7 @@ export default function MapScreen({ navigation }) {
                   onPress={() => setSelectedSport(sport)}
                   style={[
                     styles.sportChip,
-                    selectedSport === sport && { 
+                    selectedSport === sport && {
                       backgroundColor: themeColors.colors.primary,
                       borderColor: themeColors.colors.primary,
                     }
@@ -894,24 +923,24 @@ export default function MapScreen({ navigation }) {
                 </Chip>
               ))}
             </View>
-            
+
             <View style={styles.filterActions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.toggleRadiusButton}
                 onPress={() => setShowRadius(!showRadius)}
               >
-                <MaterialIcons 
-                  name={showRadius ? 'visibility-off' : 'visibility'} 
-                  size={18} 
-                  color={themeColors.colors.primary} 
+                <MaterialIcons
+                  name={showRadius ? 'visibility-off' : 'visibility'}
+                  size={18}
+                  color={themeColors.colors.primary}
                 />
                 <Text style={styles.toggleRadiusText}>
                   {showRadius ? 'Hide' : 'Show'} Search Radius
                 </Text>
               </TouchableOpacity>
-              
+
               {location && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.sortByDistanceButton}
                   onPress={() => {
                     const sorted = [...filteredVenues].sort((a, b) => {
@@ -923,10 +952,10 @@ export default function MapScreen({ navigation }) {
                     console.log('📊 Venues sorted by distance');
                   }}
                 >
-                  <MaterialIcons 
-                    name="sort" 
-                    size={18} 
-                    color={themeColors.colors.primary} 
+                  <MaterialIcons
+                    name="sort"
+                    size={18}
+                    color={themeColors.colors.primary}
                   />
                   <Text style={styles.sortByDistanceText}>
                     Sort by Distance
@@ -975,7 +1004,7 @@ export default function MapScreen({ navigation }) {
         {filteredVenues.length > 0 ? (
           filteredVenues.map((venue, index) => {
             const coordinates = venue.coordinates || getVenueCoordinatesSync(venue);
-            
+
             // Only render markers for venues with valid coordinates
             if (!coordinates.isValid) {
               console.warn(`⚠️ MapScreen: Skipping venue ${venue.name} - invalid coordinates`);
@@ -985,7 +1014,7 @@ export default function MapScreen({ navigation }) {
             // Ensure coordinates are numbers
             const lat = Number(coordinates.latitude);
             const lng = Number(coordinates.longitude);
-            
+
             if (isNaN(lat) || isNaN(lng)) {
               console.warn(`⚠️ MapScreen: Invalid coordinate numbers for ${venue.name}: ${lat}, ${lng}`);
               return null;
@@ -1004,34 +1033,26 @@ export default function MapScreen({ navigation }) {
                 title={venue.name}
                 description={`${venue.sports?.join(', ') || 'Sports'} - PKR ${venue.pricePerHour || venue.basePrice || 'N/A'}/hr`}
               >
-                {/* Simplified, stable marker design */}
-                <View style={[
-                  styles.customMarker,
-                  { 
-                    backgroundColor: '#FF4444', // Bright red for visibility
-                    borderColor: selectedVenue?.id === venue.id ? '#FFD700' : 'white',
-                    borderWidth: selectedVenue?.id === venue.id ? 3 : 2,
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                  }
-                ]}>
-                  <MaterialIcons 
-                    name="place" 
-                    size={20} 
-                    color="white" 
-                  />
-                  {/* Venue number for debugging */}
-                  <View style={[styles.slotsBadge, { 
-                    backgroundColor: '#000',
-                    top: -6,
-                    right: -6,
-                    minWidth: 18,
-                    height: 18,
-                    borderRadius: 9
-                  }]}>
-                    <Text style={[styles.slotsBadgeText, { fontSize: 10 }]}>{index + 1}</Text>
+                {/* Custom Pin Marker */}
+                <View style={styles.markerContainer}>
+                  <View style={[
+                    styles.markerPin,
+                    {
+                      backgroundColor: selectedVenue?.id === venue.id ? themeColors.colors.primary : themeColors.colors.secondary,
+                      borderColor: selectedVenue?.id === venue.id ? themeColors.colors.secondary : themeColors.colors.primary,
+                      transform: [{ scale: selectedVenue?.id === venue.id ? 1.2 : 1 }],
+                    }
+                  ]}>
+                    <MaterialIcons
+                      name="location-on"
+                      size={selectedVenue?.id === venue.id ? 22 : 18}
+                      color={selectedVenue?.id === venue.id ? themeColors.colors.secondary : themeColors.colors.primary}
+                    />
                   </View>
+                  <View style={[
+                    styles.markerShadow,
+                    { opacity: selectedVenue?.id === venue.id ? 0.4 : 0.3 }
+                  ]} />
                 </View>
               </Marker>
             );
@@ -1043,7 +1064,7 @@ export default function MapScreen({ navigation }) {
       </MapView>
 
       {/* Enhanced Selected Venue Card with Image */}
-      {loading && !selectedVenue ? (
+      {loading && !selectedVenue && (
         <Animated.View
           style={[
             styles.venueCardContainer,
@@ -1077,7 +1098,9 @@ export default function MapScreen({ navigation }) {
             <SkeletonLoader width="100%" height={40} borderRadius={20} style={{ margin: 16 }} />
           </Surface>
         </Animated.View>
-      ) : selectedVenue && (
+      )}
+      {/* Clean Modern Venue Card */}
+      {selectedVenue && (
         <Animated.View
           style={[
             styles.venueCardContainer,
@@ -1086,192 +1109,69 @@ export default function MapScreen({ navigation }) {
             }
           ]}
         >
-          <Surface style={styles.venueCard} elevation={8}>
-            <TouchableOpacity 
+          <Surface style={styles.venueCard} elevation={6}>
+            <TouchableOpacity
               onPress={() => handleVenueSelect(selectedVenue)}
               activeOpacity={0.9}
+              style={styles.cardTouchable}
             >
-              <View style={styles.venueCardContent}>
-                {/* Venue Image */}
-                <View style={styles.venueImageContainer}>
-                  <Image 
-                    source={
-                      selectedVenue.images && selectedVenue.images.length > 0 
-                        ? { uri: selectedVenue.images[0] }
-                        : selectedVenue.image 
-                        ? { uri: selectedVenue.image }
-                        : require('../../images/indoor-football-court-turf.jpeg') // Default image
-                    }
-                    style={styles.venueImage} 
-                    defaultSource={require('../../images/indoor-football-court-turf.jpeg')}
-                  />
-                  
-                  {/* Status Badge */}
-                  <View style={[
-                    styles.statusBadge,
-                    { 
-                      backgroundColor: selectedVenue.openNow && selectedVenue.availableSlots > 0 
-                        ? '#4CAF50' 
-                        : '#F44336' 
-                    }
-                  ]}>
-                    <Text style={styles.statusBadgeText}>
-                      {selectedVenue.openNow && selectedVenue.availableSlots > 0 ? 'OPEN' : 'CLOSED'}
-                    </Text>
-                  </View>
+              {/* Venue Image */}
+              <Image
+                source={
+                  selectedVenue.images && selectedVenue.images.length > 0
+                    ? { uri: selectedVenue.images[0] }
+                    : selectedVenue.image
+                      ? { uri: selectedVenue.image }
+                      : require('../../images/indoor-football-court-turf.jpeg')
+                }
+                style={styles.cleanVenueImage}
+                resizeMode="cover"
+              />
 
-                  {/* Sports Icons Overlay */}
-                  <View style={styles.sportsOverlay}>
-                    {selectedVenue.sports?.slice(0, 3).map((sport, index) => (
-                      <View key={sport} style={styles.sportIcon}>
-                        <MaterialIcons 
-                          name={
-                            sport.toLowerCase() === 'football' ? 'sports-soccer' :
-                            sport.toLowerCase() === 'cricket' ? 'sports-cricket' :
-                            sport.toLowerCase() === 'padel' ? 'sports-tennis' :
-                            sport.toLowerCase() === 'tennis' ? 'sports-tennis' :
-                            'sports'
-                          } 
-                          size={16} 
-                          color="white" 
-                        />
-                      </View>
-                    ))}
-                  </View>
-                </View>
-                
-                {/* Venue Info */}
-                <View style={styles.venueInfo}>
-                  <View style={styles.venueHeader}>
-                    <Text style={styles.venueName} numberOfLines={1}>
-                      {selectedVenue.name}
-                    </Text>
-                    <View style={styles.venueRating}>
-                      <MaterialIcons name="star" size={16} color="#FFD700" />
-                      <Text style={styles.venueRatingText}>{selectedVenue.rating || '4.0'}</Text>
-                    </View>
-                  </View>
-                  
-                  <Text style={styles.venueAddress} numberOfLines={1}>
-                    {getVenueAddress(selectedVenue)}
+              {/* Venue Details */}
+              <View style={styles.cleanVenueInfo}>
+                <View style={styles.cleanHeaderRow}>
+                  <Text style={styles.cleanVenueName} numberOfLines={1}>
+                    {selectedVenue.name}
                   </Text>
-                  
-                  <View style={styles.venueDetails}>
-                    <View style={styles.venueDistance}>
-                      <MaterialIcons name="location-on" size={14} color="#666" />
-                      <Text style={styles.venueDistanceText}>{selectedVenue.distance || 'Distance unknown'}</Text>
-                    </View>
-                    
-                    <Text style={styles.venuePrice}>
-                      PKR {selectedVenue.pricePerHour || selectedVenue.basePrice || 'N/A'}/hr
-                    </Text>
-                  </View>
-                  
-                  {/* Availability and Slots */}
-                  <View style={styles.availabilityContainer}>
-                    <Text style={[
-                      styles.venueAvailability,
-                      { color: selectedVenue.openNow && selectedVenue.availableSlots > 0 ? '#4CAF50' : '#F44336' }
-                    ]}>
-                      {getAvailabilityText(selectedVenue)}
-                    </Text>
-                    
-                    {selectedVenue.availableSlots > 0 && (
-                      <View style={styles.slotsIndicator}>
-                        <MaterialIcons name="schedule" size={14} color="#4CAF50" />
-                        <Text style={styles.slotsText}>
-                          {selectedVenue.availableSlots} slots available
-                        </Text>
-                      </View>
-                    )}
+                  <TouchableOpacity style={styles.heartButton}>
+                    <MaterialIcons name="favorite-border" size={20} color="#757575" />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.cleanAddress} numberOfLines={1}>
+                  {selectedVenue.area ? `${selectedVenue.area}, ${selectedVenue.city}` : selectedVenue.city || 'Unknown Location'}
+                </Text>
+
+                <View style={styles.cleanRatingRow}>
+                  <MaterialIcons name="star" size={14} color="#FFD700" />
+                  <Text style={styles.cleanRatingText}>{selectedVenue.rating || '4.5'} (356 reviews)</Text>
+                </View>
+
+                {/* Footer Info Row */}
+                <View style={styles.cleanFooterRow}>
+                  <View style={styles.infoItem}>
+                    <MaterialIcons name="directions-run" size={14} color="#5E35B1" />
+                    <Text style={styles.infoText}>01 hour</Text>
                   </View>
 
-                  {/* Sports Tags */}
-                  <View style={styles.sportsContainer}>
-                    {selectedVenue.sports?.slice(0, 3).map((sport, index) => (
-                      <View key={sport} style={styles.sportTag}>
-                        <Text style={styles.sportTagText}>{sport}</Text>
-                      </View>
-                    ))}
+                  <View style={styles.infoItem}>
+                    <MaterialIcons name="location-on" size={14} color="#5E35B1" />
+                    <Text style={styles.infoText}>{selectedVenue.distance || '1.2 km'}</Text>
+                  </View>
+
+                  <View style={styles.infoItem}>
+                    <MaterialIcons name="schedule" size={14} color="#5E35B1" />
+                    <Text style={styles.infoText}>Open</Text>
                   </View>
                 </View>
-                
-                {/* Close Button */}
-                <TouchableOpacity 
-                  style={styles.closeButton}
-                  onPress={() => setSelectedVenue(null)}
-                >
-                  <MaterialIcons name="close" size={20} color="#666" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Action Button */}
-              <View style={styles.cardActions}>
-                <TouchableOpacity 
-                  style={styles.viewDetailsButton}
-                  onPress={() => handleVenueSelect(selectedVenue)}
-                >
-                  <Text style={styles.viewDetailsText}>View Details & Book</Text>
-                  <MaterialIcons name="arrow-forward" size={16} color="white" />
-                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           </Surface>
         </Animated.View>
       )}
 
-      {/* Enhanced Action Buttons with Location Prompt */}
-      <View style={styles.fabContainer}>
-        <TouchableOpacity
-          style={[
-            styles.fabButton,
-            styles.locationFab, 
-            { 
-              backgroundColor: themeColors.colors.primary
-            }
-          ]}
-          onPress={requestLocationAccess}
-          disabled={isLoading}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons 
-            name={isLoading ? "hourglass-empty" : location ? "my-location" : "location-off"} 
-            size={24} 
-            color={themeColors.colors.secondary} 
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.fabButton, styles.listFab, { backgroundColor: themeColors.colors.primary }]}
-          onPress={() => navigation.navigate('VenueList')}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons name="view-list" size={20} color={themeColors.colors.secondary} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Location Permission Prompt */}
-      {!location && (
-        <View style={styles.locationPrompt}>
-          <Surface style={styles.locationPromptCard} elevation={4}>
-            <View style={styles.locationPromptContent}>
-              <MaterialIcons name="location-on" size={24} color={themeColors.colors.primary} />
-              <View style={styles.locationPromptText}>
-                <Text style={styles.locationPromptTitle}>Enable Location</Text>
-                <Text style={styles.locationPromptSubtitle}>
-                  Get accurate distances and find nearby venues
-                </Text>
-              </View>
-              <TouchableOpacity 
-                style={styles.locationPromptButton}
-                onPress={requestLocationAccess}
-              >
-                <Text style={styles.locationPromptButtonText}>Enable</Text>
-              </TouchableOpacity>
-            </View>
-          </Surface>
-        </View>
-      )}
+      {/* FABs Removed for Cleaner UI */}
     </View>
   );
 }
@@ -1281,321 +1181,201 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
-  headerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    backgroundColor: 'white',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-  },
-  safeArea: {
-    backgroundColor: 'transparent',
-  },
-  headerContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  searchBar: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    elevation: 0,
-  },
-  searchInput: {
-    fontSize: 14,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  actionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  filterButton: {
-    position: 'relative',
-  },
-  mapTypeButton: {
-    // Additional styles if needed
-  },
-  filterBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: '#FF4444',
-  },
-  resultsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-  },
-  resultsText: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'Montserrat_500Medium',
-    flex: 1,
-  },
-  resultsActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  debugButton: {
-    padding: 4,
-    borderRadius: 4,
-    backgroundColor: '#F0F0F0',
-  },
-  hiddenVenuesText: {
-    fontSize: 11,
-    color: '#999',
-    fontStyle: 'italic',
-    fontFamily: 'Montserrat_400Regular',
-  },
-  loadingIndicator: {
-    marginLeft: 8,
-  },
-  filtersContainer: {
-    position: 'absolute',
-    top: 140,
-    left: 0,
-    right: 0,
-    zIndex: 999,
-    paddingHorizontal: 16,
-  },
-  filtersSurface: {
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: 'white',
-  },
-  filterTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-  },
-  sportChip: {
-    backgroundColor: '#F8F9FA',
-    borderColor: '#E0E0E0',
-  },
-  chipText: {
-    color: '#666',
-    fontSize: 12,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  selectedChipText: {
-    color: 'white',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  filterActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  toggleRadiusButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F8F9FA',
-  },
-  toggleRadiusText: {
-    fontSize: 12,
-    color: '#004d43',
-    marginLeft: 6,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  sortByDistanceButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F0F8FF',
-    borderWidth: 1,
-    borderColor: '#004d43',
-  },
-  sortByDistanceText: {
-    fontSize: 12,
-    color: '#004d43',
-    marginLeft: 6,
-    fontFamily: 'Montserrat_500Medium',
-  },
   map: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
-  customMarker: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 50,
+    height: 50,
+  },
+  markerPin: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+    elevation: 5,
   },
-  slotsBadge: {
+  markerShadow: {
+    width: 20,
+    height: 8,
+    borderRadius: 10,
+    backgroundColor: '#000',
+    marginTop: -4,
+  },
+  floatingSearchContainer: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: '#FF4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'white',
+    top: Platform.OS === 'ios' ? 110 : 90,
+    left: 20,
+    right: 20,
+    zIndex: 999,
   },
-  slotsBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  sportTag: {
-    backgroundColor: '#F0F0F0',
-    height: 24,
-  },
-  sportTagText: {
-    fontSize: 10,
-    color: '#666',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  venueCardContainer: {
+  floatingSportsContainer: {
     position: 'absolute',
-    bottom: 20,
-    left: 16,
-    right: 16,
+    top: Platform.OS === 'ios' ? 60 : 40,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
   },
-  venueCard: {
-    borderRadius: 20,
+  sportsScrollContent: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  floatingSportChip: {
+    marginRight: 8,
     backgroundColor: 'white',
-    overflow: 'hidden',
+    borderRadius: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
-  venueCardContent: {
+  floatingSportChipText: {
+    fontFamily: 'Montserrat_600SemiBold',
+    fontSize: 14,
+  },
+  searchSurface: {
     flexDirection: 'row',
-    position: 'relative',
-  },
-  venueImageContainer: {
-    width: 120,
-    height: 140,
-    position: 'relative',
-  },
-  venueImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#F0F0F0',
-  },
-  statusBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  sportsOverlay: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    flexDirection: 'row',
-    gap: 4,
-  },
-  sportIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 16, // Softer corners
+    height: 54,
+    paddingHorizontal: 12,
   },
-  venueInfo: {
+  searchIconContainer: {
+    padding: 8,
+  },
+  cleanSearchBar: {
     flex: 1,
-    padding: 16,
-    paddingRight: 40, // Space for close button
+    backgroundColor: 'transparent',
+    height: 50,
   },
-  venueHeader: {
+  cleanSearchInput: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Montserrat_400Regular',
+    minHeight: 0, // Fix alignment on some devices
+  },
+  filterIconContainer: {
+    padding: 8,
+  },
+  cardTouchable: {
+    flexDirection: 'row',
+    padding: 12,
+  },
+  cleanVenueImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+    marginRight: 16,
+    backgroundColor: '#f5f5f5',
+  },
+  cleanVenueInfo: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  cleanHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 4,
   },
-  venueName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+  cleanVenueName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#212121',
     flex: 1,
     marginRight: 8,
     fontFamily: 'Montserrat_700Bold',
   },
-  venueAddress: {
+  heartButton: {
+    padding: 4,
+  },
+  cleanAddress: {
     fontSize: 13,
-    color: '#666',
-    marginBottom: 8,
+    color: '#757575',
     fontFamily: 'Montserrat_400Regular',
+    marginTop: 2,
   },
-  venueDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  venueRating: {
+  cleanRatingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    marginTop: 6,
   },
-  venueRatingText: {
+  cleanRatingText: {
     fontSize: 12,
-    color: '#F57C00',
+    color: '#424242',
     marginLeft: 4,
     fontWeight: '600',
     fontFamily: 'Montserrat_600SemiBold',
   },
-  venueDistance: {
+  cleanFooterRow: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 16,
+  },
+  infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
+  infoText: {
+    fontSize: 11,
+    color: '#424242',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  venueCardContainer: {
+    position: 'absolute',
+    bottom: 100, // Move up to clear floating nav bar
+    left: 20,
+    right: 20,
+    zIndex: 999,
+  },
+  venueCard: {
+    borderRadius: 16,
+    backgroundColor: 'white',
+    overflow: 'hidden',
+  },
+  // Removed unneeded styles for cleaner file
+  headerContainer: {},
+  safeArea: {},
+  headerContent: {},
+  searchContainer: {},
+  searchBar: {},
+  searchInput: {},
+  actionButton: {},
+  filterButton: {},
+  mapTypeButton: {},
+  filterBadge: {},
+  resultsContainer: {},
+  resultsText: {},
+  resultsActions: {},
+  debugButton: {},
+  hiddenVenuesText: {},
+  loadingIndicator: {},
+  venueCardContent: {},
+  venueImageContainer: {},
+  venueImage: {},
+  statusBadge: {},
+  statusBadgeText: {},
+  sportsOverlay: {},
+  sportIcon: {},
+  venueInfo: {},
+  venueHeader: {},
+  venueName: {},
+  venueAddress: {},
+  venueDetails: {},
+  venueDistance: {},
   venueDistanceText: {
     fontSize: 12,
     color: '#666',
@@ -1689,32 +1469,94 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'Montserrat_600SemiBold',
   },
-  fabContainer: {
-    position: 'absolute',
-    right: 16,
-    bottom: 100,
-    gap: 12,
-  },
-  fabButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
+  venueDistance: {
+    flexDirection: 'row',
     alignItems: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
   },
-  locationFab: {
-    // Additional styles for location FAB if needed
+  venueDistanceText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+    fontFamily: 'Montserrat_400Regular',
   },
-  listFab: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  venueCardContainer: {
+    position: 'absolute',
+    bottom: 100, // Move up to clear floating nav bar
+    left: 20,
+    right: 20,
+    zIndex: 999,
   },
+  venueCard: {
+    borderRadius: 16,
+    backgroundColor: 'white',
+    overflow: 'hidden',
+  },
+  cardTouchable: {
+    flexDirection: 'row',
+    padding: 12,
+  },
+  cleanVenueImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+    marginRight: 16,
+    backgroundColor: '#f5f5f5',
+  },
+  cleanVenueInfo: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  cleanHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  cleanVenueName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#212121',
+    flex: 1,
+    marginRight: 8,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  heartButton: {
+    padding: 4,
+  },
+  cleanAddress: {
+    fontSize: 13,
+    color: '#757575',
+    fontFamily: 'Montserrat_400Regular',
+    marginTop: 2,
+  },
+  cleanRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  cleanRatingText: {
+    fontSize: 12,
+    color: '#424242',
+    marginLeft: 4,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  cleanFooterRow: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 16,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  infoText: {
+    fontSize: 11,
+    color: '#424242',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  // Keep required legacy styles to prevent crash
   locationPrompt: {
     position: 'absolute',
     bottom: 180,

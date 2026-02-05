@@ -12,7 +12,20 @@
           "package_name": "arenapropk.online"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "arenapropk.online",
+            "certificate_hash": "e67455e84f0df4e3694d38abb8929c5942eb3646"
+          }
+        },
+        {
+          "client_id": "960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyA7G3uLmKNCDhiyTuwK6GBbTxRJFvmGNpY"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -1,10 +1,22 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import { Text, Card } from 'react-native-paper';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  StatusBar,
+  Platform
+} from 'react-native';
+import { Text } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchFavorites, toggleFavorite } from '../../store/slices/turfSlice';
-import { MaterialIcons } from '@expo/vector-icons';
 import { Icon } from '../../components/Icons';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 48) / 2; // 2 columns with padding
+const CARD_HEIGHT = CARD_WIDTH * 1.4; // Aspect ratio similar to book covers
 
 // Image mapping
 const getVenueImage = (imageType) => {
@@ -36,64 +48,113 @@ export default function FavoritesScreen({ navigation }) {
     navigation.navigate('TurfDetail', { turfId: venue.id });
   };
 
-  const renderFavoriteItem = ({ item }) => (
-    <Card style={styles.favoriteCard}>
-      <TouchableOpacity onPress={() => handleVenuePress(item)}>
-        <View style={styles.cardContent}>
-          <Image source={getVenueImage(item.imageType)} style={styles.venueImage} />
-          <View style={styles.venueInfo}>
-            <Text style={styles.venueName}>{item.name}</Text>
-            <View style={styles.locationRow}>
-              <Icon name="location-on" size={14} color="#666" />
-              <Text style={styles.locationText}>
-                {typeof item.location === 'string' 
-                  ? item.location 
-                  : item.location?.city 
-                    ? `${item.location.city}` 
-                    : 'Location not specified'
-                }
-              </Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceText}>From PKR {item.priceFrom}</Text>
-              <View style={styles.ratingRow}>
-                <Icon name="star" size={14} color="#FFD700" />
-                <Text style={styles.ratingText}>{item.rating}</Text>
-              </View>
-            </View>
-          </View>
-          <TouchableOpacity 
-            style={styles.favoriteButton}
-            onPress={() => handleRemoveFavorite(item)}
-          >
-            <Icon name="favorite" size={20} color="#F44336" />
-          </TouchableOpacity>
+  const renderFavoriteItem = ({ item, index }) => (
+    <View style={[
+      styles.cardWrapper,
+      index % 2 === 0 ? styles.cardLeft : styles.cardRight
+    ]}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => handleVenuePress(item)}
+        activeOpacity={0.9}
+      >
+        {/* Venue Image */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={getVenueImage(item.imageType)}
+            style={styles.venueImage}
+            resizeMode="cover"
+          />
+          {/* Gradient Overlay for better text readability */}
+          <View style={styles.gradientOverlay} />
         </View>
+
+        {/* Venue Info */}
+        <View style={styles.venueInfo}>
+          <Text style={styles.venueName} numberOfLines={2}>
+            {item.name}
+          </Text>
+          <Text style={styles.venueAuthor} numberOfLines={1}>
+            {typeof item.location === 'string'
+              ? item.location
+              : item.location?.city
+                ? item.location.city
+                : 'Location not specified'
+            }
+          </Text>
+        </View>
+
+        {/* Download/Bookmark Button */}
+        <TouchableOpacity
+          style={styles.downloadButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleRemoveFavorite(item);
+          }}
+          activeOpacity={0.7}
+        >
+          <Icon name="favorite" size={16} color="#004d43" />
+        </TouchableOpacity>
       </TouchableOpacity>
-    </Card>
+    </View>
   );
 
   if (favorites.length === 0 && !loading) {
     return (
-      <View style={styles.emptyContainer}>
-        <Icon name="favorite-border" size={64} color="#ccc" />
-        <Text style={styles.emptyTitle}>No Favorites Yet</Text>
-        <Text style={styles.emptySubtitle}>
-          Start adding venues to your favorites by tapping the heart icon
-        </Text>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Favorites</Text>
+          <TouchableOpacity style={styles.headerButton}>
+            <Icon name="search" size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Empty State */}
+        <View style={styles.emptyContainer}>
+          <Icon name="favorite-border" size={80} color="#ccc" />
+          <Text style={styles.emptyTitle}>No Favorites Yet</Text>
+          <Text style={styles.emptySubtitle}>
+            Start adding venues to your favorites by tapping the heart icon
+          </Text>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Favorites</Text>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Favorites</Text>
+        <TouchableOpacity style={styles.headerButton}>
+          <Icon name="search" size={24} color="#000" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Grid List */}
       <FlatList
         data={favorites}
         renderItem={renderFavoriteItem}
         keyExtractor={(item) => item.id}
+        numColumns={2}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        columnWrapperStyle={styles.row}
       />
     </View>
   );
@@ -102,73 +163,108 @@ export default function FavoritesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    margin: 20,
-    marginBottom: 10,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 50 : 16,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+    letterSpacing: 0.3,
   },
   listContainer: {
-    padding: 15,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
-  favoriteCard: {
-    marginBottom: 15,
+  row: {
+    justifyContent: 'space-between',
+  },
+  cardWrapper: {
+    marginBottom: 20,
+  },
+  cardLeft: {
+    marginRight: 8,
+  },
+  cardRight: {
+    marginLeft: 8,
+  },
+  card: {
+    width: CARD_WIDTH,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
-  cardContent: {
-    flexDirection: 'row',
-    padding: 15,
-    alignItems: 'center',
+  imageContainer: {
+    width: '100%',
+    height: CARD_HEIGHT * 0.75,
+    position: 'relative',
   },
   venueImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 15,
+    width: '100%',
+    height: '100%',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   venueInfo: {
-    flex: 1,
+    padding: 12,
+    paddingBottom: 8,
+    paddingRight: 48, // Extra padding to avoid overlap with favorite button
   },
   venueName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  locationText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  priceText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#229a60',
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 4,
+    lineHeight: 18,
   },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingText: {
+  venueAuthor: {
     fontSize: 12,
     color: '#666',
-    marginLeft: 2,
+    lineHeight: 16,
   },
-  favoriteButton: {
-    padding: 8,
+  downloadButton: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#e8ee26',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   emptyContainer: {
     flex: 1,
@@ -177,16 +273,17 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 20,
-    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#000',
+    marginTop: 24,
+    marginBottom: 12,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#666',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
+    maxWidth: 280,
   },
 });

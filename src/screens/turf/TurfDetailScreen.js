@@ -1,15 +1,27 @@
 import { useState, useEffect } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  Image, 
-  Dimensions, 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Dimensions,
   TouchableOpacity,
-  Alert 
+  Alert,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
-import { 
-  Text, 
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
+} from 'firebase/firestore';
+import { db } from '../../config/firebase';
+import {
+  Text,
   Button,
   Modal,
   Portal,
@@ -39,11 +51,19 @@ export default function TurfDetailScreen({ route, navigation }) {
     return today;
   });
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
-  
+
+  // Review states
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [reviews, setReviews] = useState([]);
+
+
   const dispatch = useDispatch();
   const { favorites, selectedTurf } = useSelector(state => state.turf);
   const { availableSlots, loading: slotsLoading, error: slotsError } = useSelector(state => state.booking);
-  
+  const { user } = useSelector(state => state.auth);
+
   // Debug Redux state
   useEffect(() => {
     console.log('🔍 TurfDetailScreen Redux State:', {
@@ -53,7 +73,7 @@ export default function TurfDetailScreen({ route, navigation }) {
       showTimeSlots
     });
   }, [availableSlots, slotsLoading, slotsError, showTimeSlots]);
-  
+
   // Check if current venue is in favorites
   const isFavorite = favorites.some(fav => fav.id === turfId);
 
@@ -64,12 +84,36 @@ export default function TurfDetailScreen({ route, navigation }) {
     dispatch(fetchFavorites());
   }, [dispatch, turfId]);
 
+  // Subscribe to real-time reviews
+  useEffect(() => {
+    if (!turfId) return;
+
+    const reviewsRef = collection(db, 'venues', turfId, 'reviews');
+    const q = query(reviewsRef, orderBy('date', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedReviews = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Convert Firestore timestamp to JS Date, fallback to now if missing
+          date: data.date?.toDate() || new Date(),
+        };
+      });
+      setReviews(fetchedReviews);
+    }, (error) => {
+      console.error('Error fetching reviews:', error);
+    });
+
+    return () => unsubscribe();
+  }, [turfId]);
+
   // Load available slots when date changes
   useEffect(() => {
     if (showTimeSlots && selectedDate) {
       const dateString = safeDateString(selectedDate);
       if (dateString) {
-        console.log(`🔄 TurfDetailScreen: Fetching slots for ${turfId} on ${dateString}`);
         // Clear previous slots before fetching new ones
         dispatch(clearAvailableSlots());
         dispatch(fetchAvailableSlots({ turfId, date: dateString }));
@@ -97,29 +141,29 @@ export default function TurfDetailScreen({ route, navigation }) {
 
   // Use selectedTurf from Redux or fallback to default, with proper data transformation
   const rawVenue = selectedTurf || defaultVenue;
-  
+
   // Transform the venue data to match component expectations
   const venue = {
     ...rawVenue,
     // Handle location display - ensure it's always a string
-    location: rawVenue.area && rawVenue.city 
-      ? `${rawVenue.area}, ${rawVenue.city}` 
-      : rawVenue.address || 
-        (typeof rawVenue.location === 'string' ? rawVenue.location : 
-         rawVenue.location?.city ? `${rawVenue.location.city}` : 
-         'Location not specified'),
-    
+    location: rawVenue.area && rawVenue.city
+      ? `${rawVenue.area}, ${rawVenue.city} `
+      : rawVenue.address ||
+      (typeof rawVenue.location === 'string' ? rawVenue.location :
+        rawVenue.location?.city ? `${rawVenue.location.city} ` :
+          'Location not specified'),
+
     // Handle operating hours
-    hours: rawVenue.operatingHours 
-      ? `${rawVenue.operatingHours.open} - ${rawVenue.operatingHours.close}` 
+    hours: rawVenue.operatingHours
+      ? `${rawVenue.operatingHours.open} - ${rawVenue.operatingHours.close} `
       : rawVenue.hours || '6:00 AM - 11:00 PM',
-    
+
     // Handle price
     priceFrom: rawVenue.pricing?.basePrice || rawVenue.priceFrom || 2000,
-    
+
     // Handle description
     description: rawVenue.description || 'A great venue for sports activities.',
-    
+
     // Transform sports array to expected format
     availableSports: (rawVenue.sports || rawVenue.availableSports || []).map(sport => {
       if (typeof sport === 'string') {
@@ -134,7 +178,7 @@ export default function TurfDetailScreen({ route, navigation }) {
         image: getSportImage(sport.name || sport)
       };
     }),
-    
+
     // Transform facilities array to expected format
     facilities: (rawVenue.facilities || []).map(facility => {
       if (typeof facility === 'string') {
@@ -145,10 +189,10 @@ export default function TurfDetailScreen({ route, navigation }) {
       }
       return facility;
     }),
-    
+
     // Handle images
-    images: rawVenue.images && rawVenue.images.length > 0 
-      ? rawVenue.images 
+    images: rawVenue.images && rawVenue.images.length > 0
+      ? rawVenue.images
       : [getDefaultImage(rawVenue.sports?.[0] || 'Football')]
   };
 
@@ -211,11 +255,11 @@ export default function TurfDetailScreen({ route, navigation }) {
   const getVenueImageType = () => {
     // Determine image type based on available sports
     if (!venue.availableSports || venue.availableSports.length === 0) return 'football';
-    
-    const sports = venue.availableSports.map(sport => 
+
+    const sports = venue.availableSports.map(sport =>
       typeof sport === 'string' ? sport.toLowerCase() : sport.name?.toLowerCase()
     );
-    
+
     if (sports.includes('padel')) return 'padel';
     if (sports.includes('cricket')) return 'cricket';
     if (sports.includes('football') || sports.includes('futsal')) return 'football';
@@ -263,7 +307,7 @@ export default function TurfDetailScreen({ route, navigation }) {
       Alert.alert('Error', 'Please select a valid date');
       return;
     }
-    
+
     // Convert date to YYYY-MM-DD format using safe utility
     const dateString = safeDateString(selectedDate);
     if (!dateString) {
@@ -271,7 +315,7 @@ export default function TurfDetailScreen({ route, navigation }) {
       Alert.alert('Error', 'Invalid date selected');
       return;
     }
-    
+
     console.log('🎯 TurfDetailScreen: Date string for booking:', dateString);
 
     const bookingData = {
@@ -297,14 +341,14 @@ export default function TurfDetailScreen({ route, navigation }) {
   const generateDateOptions = () => {
     const dates = [];
     const today = new Date();
-    
+
     // Only show dates for the next 30 days to allow admin to configure them
     for (let i = 0; i < 30; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       dates.push(date);
     }
-    
+
     return dates;
   };
 
@@ -320,16 +364,16 @@ export default function TurfDetailScreen({ route, navigation }) {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    
+
     if (date.toDateString() === today.toDateString()) {
       return 'Today';
     } else if (date.toDateString() === tomorrow.toDateString()) {
       return 'Tomorrow';
     } else {
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
       });
     }
   };
@@ -354,27 +398,96 @@ export default function TurfDetailScreen({ route, navigation }) {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
-    
+
     for (let i = 0; i < fullStars; i++) {
       stars.push(
         <MaterialIcons key={i} name="star" size={16} color={theme.colors.secondary} />
       );
     }
-    
+
     if (hasHalfStar) {
       stars.push(
         <MaterialIcons key="half" name="star-half" size={16} color={theme.colors.secondary} />
       );
     }
-    
+
     const remainingStars = 5 - Math.ceil(rating);
     for (let i = 0; i < remainingStars; i++) {
       stars.push(
-        <MaterialIcons key={`empty-${i}`} name="star-border" size={16} color={theme.colors.secondary} />
+        <MaterialIcons key={`empty - ${i} `} name="star-border" size={16} color={theme.colors.secondary} />
       );
     }
-    
+
     return stars;
+  };
+
+  // Review functions
+  const handleSubmitReview = async () => {
+    if (userRating === 0) {
+      Alert.alert('Rating Required', 'Please select a star rating before submitting.');
+      return;
+    }
+    if (!reviewText.trim()) {
+      Alert.alert('Review Required', 'Please write a review comment.');
+      return;
+    }
+
+    try {
+      const reviewsRef = collection(db, 'venues', turfId, 'reviews');
+      await addDoc(reviewsRef, {
+        userName: user?.name || user?.email || 'Anonymous User',
+        userId: user?.uid || 'anonymous',
+        rating: userRating,
+        comment: reviewText.trim(),
+        date: serverTimestamp(),
+      });
+
+      setShowReviewModal(false);
+      setUserRating(0);
+      setReviewText('');
+      Alert.alert('Success', 'Your review has been submitted!');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      Alert.alert('Error', 'Failed to submit review. Please try again.');
+    }
+  };
+
+  const calculateAverageRating = () => {
+    if (reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return (sum / reviews.length).toFixed(1);
+  };
+
+  const formatReviewDate = (date) => {
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const renderReviewStars = (rating, size = 20, interactive = false, onPress = null) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <TouchableOpacity
+          key={i}
+          onPress={() => interactive && onPress && onPress(i)}
+          disabled={!interactive}
+        >
+          <MaterialIcons
+            name={i <= rating ? 'star' : 'star-border'}
+            size={size}
+            color={i <= rating ? theme.colors.secondary : '#ccc'}
+          />
+        </TouchableOpacity>
+      );
+    }
+    return <View style={styles.starsRow}>{stars}</View>;
   };
 
   return (
@@ -386,123 +499,187 @@ export default function TurfDetailScreen({ route, navigation }) {
         </ScrollView>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header Image */}
-        <View style={styles.imageContainer}>
-          <TouchableOpacity 
-            onPress={() => {
-              const nextIndex = (currentImageIndex + 1) % venue.images.length;
-              setCurrentImageIndex(nextIndex);
-            }}
-          >
-            <Image 
-              source={venue.images[currentImageIndex]} 
-              style={styles.headerImage}
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
-          <View style={styles.imageOverlay}>
-            <TouchableOpacity 
-              style={styles.backButton}
+          {/* Header Image */}
+          <View style={styles.imageContainer}>
+            <TouchableOpacity
               onPress={() => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                // Navigate to Home tab within MainTabs
-                navigation.navigate('Home');
-              }
-            }}
+                const nextIndex = (currentImageIndex + 1) % venue.images.length;
+                setCurrentImageIndex(nextIndex);
+              }}
             >
-              <MaterialIcons name="arrow-back" size={24} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.favoriteButton}
-              onPress={handleFavoriteToggle}
-            >
-              <MaterialIcons 
-                name={isFavorite ? "favorite" : "favorite-border"} 
-                size={20} 
-                color={isFavorite ? "#F44336" : "black"} 
+              <Image
+                source={venue.images[currentImageIndex]}
+                style={styles.headerImage}
+                resizeMode="cover"
               />
             </TouchableOpacity>
-          </View>
-          {renderImageDots()}
-        </View>
-
-        {/* Content Container */}
-        <View style={styles.contentContainer}>
-          {/* Venue Info */}
-          <View style={styles.venueInfo}>
-            <Text style={styles.venueName}>{venue.name}</Text>
-            
-            <View style={styles.locationRow}>
-              <MaterialIcons name="location-on" size={16} color="#666" />
-              <Text style={styles.locationText}>{typeof venue.location === 'string' ? venue.location : `${venue.location?.city || 'Unknown City'}`}</Text>
-              <MaterialIcons name="schedule" size={16} color="#666" style={{ marginLeft: 20 }} />
-              <Text style={styles.hoursText}>{venue.hours}</Text>
+            <View style={styles.imageOverlay}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => {
+                  if (navigation.canGoBack()) {
+                    navigation.goBack();
+                  } else {
+                    // Navigate to Home tab within MainTabs
+                    navigation.navigate('Home');
+                  }
+                }}
+              >
+                <MaterialIcons name="arrow-back" size={24} color="black" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.favoriteButton}
+                onPress={handleFavoriteToggle}
+              >
+                <MaterialIcons
+                  name={isFavorite ? "favorite" : "favorite-border"}
+                  size={20}
+                  color={isFavorite ? "#F44336" : "black"}
+                />
+              </TouchableOpacity>
             </View>
-            
-            <View style={styles.ratingRow}>
-              <View style={[styles.starsContainer, { 
-                backgroundColor: theme.colors.primary, 
-                paddingHorizontal: 8, 
-                paddingVertical: 4, 
-                borderRadius: 12 
-              }]}>
-                {renderStars(venue.rating)}
+            {renderImageDots()}
+          </View>
+
+          {/* Content Container */}
+          <View style={styles.contentContainer}>
+            {/* Venue Info */}
+            <View style={styles.venueInfo}>
+              <Text style={styles.venueName}>{venue.name}</Text>
+
+              <View style={styles.locationRow}>
+                <MaterialIcons name="location-on" size={16} color="#666" />
+                <Text style={styles.locationText}>{typeof venue.location === 'string' ? venue.location : `${venue.location?.city || 'Unknown City'} `}</Text>
+                <MaterialIcons name="schedule" size={16} color="#666" style={{ marginLeft: 20 }} />
+                <Text style={styles.hoursText}>{venue.hours}</Text>
               </View>
-              <Text style={styles.ratingText}>• {venue.reviewCount} reviews</Text>
+
+              <View style={styles.ratingRow}>
+                <View style={[styles.starsContainer, {
+                  backgroundColor: theme.colors.primary,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 12
+                }]}>
+                  {renderStars(parseFloat(calculateAverageRating()))}
+                </View>
+                <Text style={[styles.ratingNumeric, { color: theme.colors.primary }]}>
+                  {calculateAverageRating()}
+                </Text>
+                <Text style={styles.ratingText}>• {reviews.length} reviews</Text>
+              </View>
+
+              <Text style={styles.priceText}>
+                Start From PKR {venue.priceFrom.toLocaleString()}
+              </Text>
             </View>
-            
-            <Text style={styles.priceText}>
-              Start From PKR {venue.priceFrom.toLocaleString()}
-            </Text>
-          </View>
 
-          {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.descriptionText}>{venue.description}</Text>
-          </View>
-
-          {/* Available Sports */}
-          {venue.availableSports && venue.availableSports.length > 0 && (
+            {/* Description */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Available Sports</Text>
-              <View style={styles.sportsContainer}>
-                {venue.availableSports.map((sport, index) => (
-                  <View key={index} style={styles.sportItem}>
-                    <View style={[styles.sportIcon, { backgroundColor: theme.colors.secondary }]}>
-                      <Image 
-                        source={sport.image} 
-                        style={[styles.sportImage, { tintColor: theme.colors.primary }]}
-                        resizeMode="contain"
-                      />
+              <Text style={styles.sectionTitle}>Description</Text>
+              <Text style={styles.descriptionText}>{venue.description}</Text>
+            </View>
+
+            {/* Available Sports */}
+            {venue.availableSports && venue.availableSports.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Available Sports</Text>
+                <View style={styles.sportsContainer}>
+                  {venue.availableSports.map((sport, index) => (
+                    <View key={index} style={styles.sportItem}>
+                      <View style={[styles.sportIcon, { backgroundColor: theme.colors.secondary }]}>
+                        <Image
+                          source={sport.image}
+                          style={[styles.sportImage, { tintColor: theme.colors.primary }]}
+                          resizeMode="contain"
+                        />
+                      </View>
+                      <Text style={styles.sportName}>{sport.name}</Text>
                     </View>
-                    <Text style={styles.sportName}>{sport.name}</Text>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Facilities */}
+            {venue.facilities && venue.facilities.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Facilities</Text>
+                <View style={styles.facilitiesContainer}>
+                  {venue.facilities.map((facility, index) => (
+                    <View key={index} style={styles.facilityItem}>
+                      <View style={styles.facilityIconContainer}>
+                        <MaterialIcons name={facility.icon} size={20} color={theme.colors.primary} />
+                      </View>
+                      <Text style={styles.facilityName}>{facility.name}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Reviews Section */}
+            <View style={styles.section}>
+              <View style={styles.reviewsHeader}>
+                <Text style={styles.sectionTitle}>Reviews</Text>
+                <TouchableOpacity
+                  style={[styles.writeReviewButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={() => setShowReviewModal(true)}
+                >
+                  <MaterialIcons name="rate-review" size={18} color={theme.colors.secondary} />
+                  <Text style={[styles.writeReviewText, { color: theme.colors.secondary }]}>
+                    Write Review
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Review Statistics */}
+              <View style={styles.reviewStats}>
+                <View style={styles.averageRatingContainer}>
+                  <Text style={[styles.averageRating, { color: theme.colors.primary }]}>
+                    {calculateAverageRating()}
+                  </Text>
+                  <View style={styles.averageStars}>
+                    {renderReviewStars(parseFloat(calculateAverageRating()), 16)}
+                  </View>
+                  <Text style={styles.totalReviews}>{reviews.length} reviews</Text>
+                </View>
+              </View>
+
+              {/* Reviews List */}
+              <View style={styles.reviewsList}>
+                {reviews.slice(0, 3).map((review) => (
+                  <View key={review.id} style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                      <View style={styles.reviewerInfo}>
+                        <View style={[styles.reviewerAvatar, { backgroundColor: theme.colors.secondary }]}>
+                          <Text style={[styles.reviewerInitial, { color: theme.colors.primary }]}>
+                            {review.userName.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View>
+                          <Text style={styles.reviewerName}>{review.userName}</Text>
+                          <Text style={styles.reviewDate}>{formatReviewDate(review.date)}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.reviewRating}>
+                        {renderReviewStars(review.rating, 14)}
+                      </View>
+                    </View>
+                    <Text style={styles.reviewComment}>{review.comment}</Text>
                   </View>
                 ))}
+                {reviews.length > 3 && (
+                  <TouchableOpacity style={styles.seeAllReviews}>
+                    <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
+                      See all {reviews.length} reviews
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
-          )}
-
-          {/* Facilities */}
-          {venue.facilities && venue.facilities.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Facilities</Text>
-              <View style={styles.facilitiesContainer}>
-                {venue.facilities.map((facility, index) => (
-                  <View key={index} style={styles.facilityItem}>
-                    <View style={styles.facilityIconContainer}>
-                      <MaterialIcons name={facility.icon} size={20} color={theme.colors.primary} />
-                    </View>
-                    <Text style={styles.facilityName}>{facility.name}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
       )}
 
       {/* Bottom Book Button */}
@@ -519,8 +696,8 @@ export default function TurfDetailScreen({ route, navigation }) {
 
       {/* Time Slot Selection Modal */}
       <Portal>
-        <Modal 
-          visible={showTimeSlots} 
+        <Modal
+          visible={showTimeSlots}
           onDismiss={() => setShowTimeSlots(false)}
           contentContainerStyle={styles.modalContainer}
         >
@@ -528,7 +705,7 @@ export default function TurfDetailScreen({ route, navigation }) {
             <Card.Content>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Select Time Slot</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setShowTimeSlots(false)}
                   style={styles.closeButton}
                 >
@@ -588,14 +765,14 @@ export default function TurfDetailScreen({ route, navigation }) {
                     {(() => {
                       // Only use admin-configured date-specific slots from Redux - no fallback
                       const slotsToShow = availableSlots || [];
-                      console.log(`🕐 TurfDetailScreen: Displaying ${slotsToShow.length} admin-configured time slots`);
-                      console.log(`   - Redux availableSlots: ${availableSlots?.length || 0}`);
-                      console.log(`   - Using: Admin-configured date-specific slots only`);
-                      
+                      console.log(`🕐 TurfDetailScreen: Displaying ${slotsToShow.length} admin - configured time slots`);
+                      console.log(`   - Redux availableSlots: ${availableSlots?.length || 0} `);
+                      console.log(`   - Using: Admin - configured date - specific slots only`);
+
                       if (slotsToShow.length === 0) {
                         console.log('⚠️ TurfDetailScreen: No admin-configured slots for this date');
                       }
-                      
+
                       return slotsToShow.map((slot) => (
                         <TouchableOpacity
                           key={slot.id}
@@ -639,7 +816,7 @@ export default function TurfDetailScreen({ route, navigation }) {
 
               {/* Selected Slot Summary */}
               {selectedTimeSlot && (
-                <View style={[styles.selectedSlotSummary, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                <View style={[styles.selectedSlotSummary, { backgroundColor: `${theme.colors.secondary} 20` }]}>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Selected Slot:</Text>
                     <Text style={styles.summaryValue}>
@@ -681,11 +858,11 @@ export default function TurfDetailScreen({ route, navigation }) {
                   mode="contained"
                   onPress={handleConfirmBooking}
                   style={[
-                    styles.confirmButton, 
-                    { 
-                      backgroundColor: !selectedTimeSlot 
-                        ? `${theme.colors.primary}80` // 50% opacity when disabled
-                        : theme.colors.primary 
+                    styles.confirmButton,
+                    {
+                      backgroundColor: !selectedTimeSlot
+                        ? `${theme.colors.primary} 80` // 50% opacity when disabled
+                        : theme.colors.primary
                     }
                   ]}
                   textColor={theme.colors.secondary}
@@ -697,6 +874,119 @@ export default function TurfDetailScreen({ route, navigation }) {
                 </Button>
               </View>
             </Card.Content>
+          </Card>
+        </Modal>
+
+        {/* Enhanced Review Submission Modal */}
+        <Modal
+          visible={showReviewModal}
+          onDismiss={() => {
+            setShowReviewModal(false);
+            setUserRating(0);
+            setReviewText('');
+          }}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Card style={styles.reviewModalCard}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+            >
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <Card.Content>
+                  {/* Header with close button */}
+                  <View style={styles.modalHeader}>
+                    <View>
+                      <Text style={styles.modalTitle}>Write a Review</Text>
+                      <Text style={styles.modalSubtitle}>{venue.name}</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowReviewModal(false);
+                        setUserRating(0);
+                        setReviewText('');
+                      }}
+                      style={styles.closeButton}
+                    >
+                      <MaterialIcons name="close" size={24} color="#666" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Enhanced Star Rating Selector */}
+                  <View style={styles.ratingSection}>
+                    <Text style={styles.ratingLabel}>How would you rate this venue?</Text>
+                    <View style={styles.starsWrapper}>
+                      {renderReviewStars(userRating, 40, true, setUserRating)}
+                    </View>
+                    {userRating > 0 && (
+                      <View style={[styles.ratingFeedback, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                        <MaterialIcons name="check-circle" size={20} color={theme.colors.primary} />
+                        <Text style={[styles.ratingFeedbackText, { color: theme.colors.primary }]}>
+                          {userRating === 5 && 'Excellent!'}
+                          {userRating === 4 && 'Very Good!'}
+                          {userRating === 3 && 'Good'}
+                          {userRating === 2 && 'Fair'}
+                          {userRating === 1 && 'Poor'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Enhanced Review Text Input */}
+                  <View style={styles.reviewTextSection}>
+                    <Text style={styles.reviewTextLabel}>Share your experience</Text>
+                    <Text style={styles.reviewTextHint}>
+                      Tell others about the facilities, staff, and overall experience
+                    </Text>
+                    <TextInput
+                      style={styles.reviewTextInput}
+                      placeholder="Write your review here..."
+                      placeholderTextColor="#999"
+                      multiline
+                      numberOfLines={4}
+                      value={reviewText}
+                      onChangeText={setReviewText}
+                      textAlignVertical="top"
+                    />
+                    <Text style={styles.characterCount}>
+                      {reviewText.length} characters
+                    </Text>
+                  </View>
+
+                  {/* Enhanced Action Buttons */}
+                  <View style={styles.reviewModalActions}>
+                    <Button
+                      mode="outlined"
+                      onPress={() => {
+                        setShowReviewModal(false);
+                        setUserRating(0);
+                        setReviewText('');
+                      }}
+                      style={[styles.reviewCancelButton, { borderColor: theme.colors.primary }]}
+                      textColor={theme.colors.primary}
+                      contentStyle={styles.buttonContent}
+                      labelStyle={{ fontFamily: 'Montserrat_600SemiBold' }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      mode="contained"
+                      onPress={handleSubmitReview}
+                      style={[styles.reviewSubmitButton, { backgroundColor: theme.colors.primary }]}
+                      textColor={theme.colors.secondary}
+                      contentStyle={styles.buttonContent}
+                      labelStyle={{ fontFamily: 'Montserrat_700Bold' }}
+                      icon="send"
+                    >
+                      Submit Review
+                    </Button>
+                  </View>
+                </Card.Content>
+              </ScrollView>
+            </KeyboardAvoidingView>
           </Card>
         </Modal>
       </Portal>
@@ -828,6 +1118,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  ratingNumeric: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
+    fontFamily: 'Montserrat_700Bold',
+  },
   ratingText: {
     fontSize: 14,
     color: '#666',
@@ -937,6 +1233,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 4,
   },
   modalTitle: {
     fontSize: 20,
@@ -1112,5 +1411,223 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     fontFamily: 'Montserrat_400Regular',
+  },
+  // Review styles
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  writeReviewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  writeReviewText: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  reviewStats: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  averageRatingContainer: {
+    alignItems: 'center',
+  },
+  averageRating: {
+    fontSize: 48,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 8,
+  },
+  averageStars: {
+    marginBottom: 4,
+  },
+  totalReviews: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  reviewsList: {
+    gap: 16,
+  },
+  reviewItem: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  reviewerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  reviewerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewerInitial: {
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  reviewerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  reviewRating: {
+    flexDirection: 'row',
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  seeAllReviews: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  // Review modal styles
+  reviewModalCard: {
+    borderRadius: 24,
+    maxHeight: '90%',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  ratingSection: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    marginBottom: 4,
+  },
+  ratingLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 18,
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  starsWrapper: {
+    marginVertical: 10,
+    paddingHorizontal: 10,
+  },
+  ratingFeedback: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    marginTop: 14,
+  },
+  ratingFeedbackText: {
+    fontSize: 15,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  ratingValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 8,
+    fontFamily: 'Montserrat_500Medium',
+  },
+  reviewTextSection: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  reviewTextLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  reviewTextHint: {
+    fontSize: 13,
+    color: '#999',
+    marginBottom: 14,
+    fontFamily: 'Montserrat_400Regular',
+    lineHeight: 19,
+  },
+  reviewTextInput: {
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    borderRadius: 14,
+    padding: 16,
+    fontSize: 15,
+    minHeight: 110,
+    maxHeight: 150,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#333',
+    backgroundColor: '#fafafa',
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
+    textAlign: 'right',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  reviewModalActions: {
+    flexDirection: 'row',
+    gap: 14,
+    marginTop: 24,
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  reviewCancelButton: {
+    flex: 1,
+    borderWidth: 2,
+    borderRadius: 14,
+  },
+  reviewSubmitButton: {
+    flex: 1,
+    borderRadius: 14,
   },
 });

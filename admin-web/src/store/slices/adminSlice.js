@@ -140,6 +140,31 @@ export const fetchBookingReport = createAsyncThunk(
       return rejectWithValue(error.message);
     }
   }
+
+);
+
+// Reviews
+export const fetchReviews = createAsyncThunk(
+  'admin/fetchReviews',
+  async (params, { rejectWithValue }) => {
+    try {
+      return await workingAdminAPI.getReviews(params);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteReview = createAsyncThunk(
+  'admin/deleteReview',
+  async ({ venueId, reviewId }, { rejectWithValue }) => {
+    try {
+      await workingAdminAPI.deleteReview(venueId, reviewId);
+      return { reviewId };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
 );
 
 const initialState = {
@@ -155,7 +180,7 @@ const initialState = {
     revenueGrowth: 0,
     weeklyStats: [],
   },
-  
+
   // Bookings
   bookings: {
     data: [],
@@ -165,7 +190,7 @@ const initialState = {
   },
   bookingsLoading: false,
   bookingsError: null,
-  
+
   // Venues
   venues: {
     data: [],
@@ -175,7 +200,7 @@ const initialState = {
   },
   venuesLoading: false,
   venuesError: null,
-  
+
   // Customers
   customers: {
     data: [],
@@ -185,13 +210,23 @@ const initialState = {
   },
   customersLoading: false,
   customersError: null,
-  
+
   // Reports
   revenueReport: null,
   bookingReport: null,
   reportsLoading: false,
   reportsError: null,
-  
+
+  // Reviews
+  reviews: {
+    data: [],
+    total: 0,
+    page: 0,
+    pageSize: 25,
+  },
+  reviewsLoading: false,
+  reviewsError: null,
+
   // General
   loading: false,
   error: null,
@@ -208,6 +243,7 @@ const adminSlice = createSlice({
       state.venuesError = null;
       state.customersError = null;
       state.reportsError = null;
+      state.reviewsError = null;
     },
     clearSuccessMessage: (state) => {
       state.successMessage = null;
@@ -223,6 +259,10 @@ const adminSlice = createSlice({
     setCustomersPagination: (state, action) => {
       state.customers.page = action.payload.page;
       state.customers.pageSize = action.payload.pageSize;
+    },
+    setReviewsPagination: (state, action) => {
+      state.reviews.page = action.payload.page;
+      state.reviews.pageSize = action.payload.pageSize;
     },
   },
   extraReducers: (builder) => {
@@ -240,7 +280,7 @@ const adminSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Bookings
       .addCase(fetchBookings.pending, (state) => {
         state.bookingsLoading = true;
@@ -254,7 +294,7 @@ const adminSlice = createSlice({
         state.bookingsLoading = false;
         state.bookingsError = action.payload;
       })
-      
+
       // Update Booking Status
       .addCase(updateBookingStatus.fulfilled, (state, action) => {
         const { bookingId, status } = action.payload;
@@ -264,7 +304,7 @@ const adminSlice = createSlice({
         }
         state.successMessage = 'Booking status updated successfully';
       })
-      
+
       // Cancel Booking
       .addCase(cancelBooking.fulfilled, (state, action) => {
         const { bookingId, status } = action.payload;
@@ -274,7 +314,7 @@ const adminSlice = createSlice({
         }
         state.successMessage = 'Booking cancelled successfully';
       })
-      
+
       // Venues
       .addCase(fetchVenues.pending, (state) => {
         state.venuesLoading = true;
@@ -288,7 +328,7 @@ const adminSlice = createSlice({
         state.venuesLoading = false;
         state.venuesError = action.payload;
       })
-      
+
       // Update Venue Status
       .addCase(updateVenueStatus.fulfilled, (state, action) => {
         const { venueId, status } = action.payload;
@@ -298,7 +338,7 @@ const adminSlice = createSlice({
         }
         state.successMessage = 'Venue status updated successfully';
       })
-      
+
       // Add Venue
       .addCase(addVenue.pending, (state) => {
         state.loading = true;
@@ -317,7 +357,7 @@ const adminSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Update Venue
       .addCase(updateVenue.fulfilled, (state, action) => {
         const index = state.venues.data.findIndex(v => v.id === action.payload.id);
@@ -326,7 +366,7 @@ const adminSlice = createSlice({
         }
         state.successMessage = 'Venue updated successfully';
       })
-      
+
       // Customers
       .addCase(fetchCustomers.pending, (state) => {
         console.log('🔄 Redux: fetchCustomers.pending');
@@ -346,7 +386,7 @@ const adminSlice = createSlice({
         state.customersLoading = false;
         state.customersError = action.payload;
       })
-      
+
       // Update Customer Status
       .addCase(updateCustomerStatus.fulfilled, (state, action) => {
         const { customerId, status } = action.payload;
@@ -356,7 +396,7 @@ const adminSlice = createSlice({
         }
         state.successMessage = 'Customer status updated successfully';
       })
-      
+
       // Reports
       .addCase(fetchRevenueReport.pending, (state) => {
         state.reportsLoading = true;
@@ -370,19 +410,41 @@ const adminSlice = createSlice({
         state.reportsLoading = false;
         state.reportsError = action.payload;
       })
-      
+
       .addCase(fetchBookingReport.fulfilled, (state, action) => {
         state.bookingReport = action.payload;
+      })
+
+      // Reviews
+      .addCase(fetchReviews.pending, (state) => {
+        state.reviewsLoading = true;
+        state.reviewsError = null;
+      })
+      .addCase(fetchReviews.fulfilled, (state, action) => {
+        state.reviewsLoading = false;
+        state.reviews = action.payload;
+      })
+      .addCase(fetchReviews.rejected, (state, action) => {
+        state.reviewsLoading = false;
+        state.reviewsError = action.payload;
+      })
+
+      .addCase(deleteReview.fulfilled, (state, action) => {
+        const { reviewId } = action.payload;
+        state.reviews.data = state.reviews.data.filter(r => r.id !== reviewId);
+        state.reviews.total -= 1;
+        state.successMessage = 'Review deleted successfully';
       });
   },
 });
 
-export const { 
-  clearError, 
+export const {
+  clearError,
   clearSuccessMessage,
   setBookingsPagination,
   setVenuesPagination,
   setCustomersPagination,
+  setReviewsPagination,
 } = adminSlice.actions;
 
 export default adminSlice.reducer;

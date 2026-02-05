@@ -1,34 +1,51 @@
 import { useState, useEffect } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Alert,
-  TextInput
+  TextInput,
+  Image
 } from 'react-native';
-import { 
-  Text, 
-  Button, 
-  Switch,
+import {
+  Text,
+  Button,
   ActivityIndicator
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signIn, clearError } from '../../store/slices/authSlice';
+import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  
+
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+    iosClientId: 'YOUR_IOS_CLIENT_ID', // Placeholder
+    androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
+  });
+
+  // Handle Google Sign In Response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      dispatch(googleSignIn(id_token));
+    }
+  }, [response]);
 
   // Clear error when component mounts
   useEffect(() => {
@@ -41,7 +58,7 @@ export default function SignInScreen({ navigation }) {
       let errorTitle = 'Sign In Error';
       let errorMessage = error;
       let buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
-      
+
       // Handle network-specific errors
       if (error.includes('network') || error.includes('connection') || error.includes('internet')) {
         errorTitle = 'Network Issue';
@@ -51,8 +68,11 @@ export default function SignInScreen({ navigation }) {
         errorTitle = 'Setup Required';
         errorMessage = 'Firebase needs to be configured. Please contact support.';
         buttons = [{ text: 'OK', onPress: () => dispatch(clearError()) }];
+      } else if (error.includes('Google sign in failed')) {
+        errorTitle = 'Google Sign In Error';
+        // Keep default message or customize
       }
-      
+
       Alert.alert(errorTitle, errorMessage, buttons);
     }
   }, [error, dispatch]);
@@ -62,17 +82,17 @@ export default function SignInScreen({ navigation }) {
       Alert.alert('Error', 'Please enter your email address');
       return false;
     }
-    
+
     if (!email.includes('@')) {
       Alert.alert('Error', 'Please enter a valid email address');
       return false;
     }
-    
+
     if (!password.trim()) {
       Alert.alert('Error', 'Please enter your password');
       return false;
     }
-    
+
     return true;
   };
 
@@ -81,25 +101,25 @@ export default function SignInScreen({ navigation }) {
     console.log('🔍 DEBUG: Email:', email);
     console.log('🔍 DEBUG: Password length:', password.length);
     console.log('🔍 DEBUG: Normalized email:', email.trim().toLowerCase());
-    
+
     if (validateForm()) {
       console.log('🔍 DEBUG: Form validation passed');
-      
+
       try {
         console.log('🔍 DEBUG: Dispatching signIn action...');
-        const result = await dispatch(signIn({ 
-          email: email.trim().toLowerCase(), 
-          password 
+        const result = await dispatch(signIn({
+          email: email.trim().toLowerCase(),
+          password
         })).unwrap();
-        
+
         console.log('🔍 DEBUG: Sign-in successful!', result);
-        
+
         // Request location permission after successful sign-in
         console.log('� DEBUG: Requesting location permission...');
         try {
           const { locationService } = await import('../../services/locationService');
           const locationResult = await locationService.handleLocationPermissionFlow();
-          
+
           if (locationResult.granted) {
             console.log('📍 DEBUG: Location permission granted:', locationResult.location);
           } else {
@@ -109,20 +129,20 @@ export default function SignInScreen({ navigation }) {
           console.log('📍 DEBUG: Location permission error:', locationError);
           // Don't block navigation if location fails
         }
-        
+
         // Force navigation to main app after successful sign-in
         console.log('🔍 DEBUG: Forcing navigation to MainTabs...');
         navigation.reset({
           index: 0,
           routes: [{ name: 'MainTabs' }],
         });
-        
+
       } catch (error) {
         console.log('🔍 DEBUG: Sign-in failed with error:', error);
         console.log('🔍 DEBUG: Error type:', typeof error);
         console.log('🔍 DEBUG: Error message:', error.message || error);
         console.log('🔍 DEBUG: Full error object:', JSON.stringify(error, null, 2));
-        
+
         // Check for specific Firebase error codes
         if (error.message) {
           if (error.message.includes('auth/user-not-found')) {
@@ -144,11 +164,7 @@ export default function SignInScreen({ navigation }) {
   };
 
   const handleGoogleSignIn = () => {
-    Alert.alert(
-      'Google Sign In',
-      'Google Sign In will be available in the next update.',
-      [{ text: 'OK' }]
-    );
+    promptAsync();
   };
 
   const handleForgotPassword = () => {
@@ -156,22 +172,22 @@ export default function SignInScreen({ navigation }) {
       Alert.alert('Enter Email', 'Please enter your email address first, then tap "Forgot Password?"');
       return;
     }
-    
+
     if (!email.includes('@')) {
       Alert.alert('Invalid Email', 'Please enter a valid email address');
       return;
     }
-    
+
     navigation.navigate('ForgotPassword', { email: email.trim().toLowerCase() });
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -193,7 +209,7 @@ export default function SignInScreen({ navigation }) {
         <View style={styles.formContainer}>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
-          
+
           {/* Email Input */}
           <View style={styles.inputContainer}>
             <View style={[styles.inputWrapper, (emailFocused || email) && styles.inputWrapperFocused]}>
@@ -238,31 +254,21 @@ export default function SignInScreen({ navigation }) {
                 underlineColorAndroid="transparent"
                 textContentType="password"
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeIcon}
               >
-                <MaterialIcons 
-                  name={showPassword ? "visibility" : "visibility-off"} 
-                  size={20} 
-                  color="#999" 
+                <MaterialIcons
+                  name={showPassword ? "visibility" : "visibility-off"}
+                  size={20}
+                  color="#999"
                 />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Remember Me & Forgot Password */}
-          <View style={styles.optionsRow}>
-            <View style={styles.rememberMeContainer}>
-              <Switch
-                value={rememberMe}
-                onValueChange={setRememberMe}
-                color="#004d43"
-                style={styles.switch}
-              />
-              <Text style={styles.rememberMeText}>Remember Me</Text>
-            </View>
-            
+          {/* Forgot Password */}
+          <View style={[styles.optionsRow, { justifyContent: 'flex-end' }]}>
             <TouchableOpacity onPress={handleForgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -293,12 +299,15 @@ export default function SignInScreen({ navigation }) {
           </View>
 
           {/* Google Sign In */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.googleButton}
             onPress={handleGoogleSignIn}
-            disabled={loading}
+            disabled={!request || loading}
           >
-            <MaterialIcons name="account-circle" size={24} color="#4285F4" />
+            <Image
+              source={require('../../images/2a5758d6-4edb-4047-87bb-e6b94dbbbab0-cover.png')}
+              style={styles.googleIcon}
+            />
             <Text style={styles.googleButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
@@ -424,18 +433,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     marginTop: 8,
   },
-  rememberMeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  switch: {
-    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
-  },
-  rememberMeText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 8,
-  },
   forgotPasswordText: {
     fontSize: 16,
     color: '#004d43',
@@ -487,6 +484,10 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
     marginLeft: 12,
+  },
+  googleIcon: {
+    width: 24,
+    height: 24,
   },
   signUpContainer: {
     flexDirection: 'row',

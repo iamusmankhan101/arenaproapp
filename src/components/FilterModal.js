@@ -32,8 +32,8 @@ export default function FilterModal({ visible, onDismiss }) {
     const updatedSports = currentSports.includes(sport)
       ? currentSports.filter(s => s !== sport)
       : [...currentSports, sport];
-    
-    setLocalFilters({...localFilters, sports: updatedSports});
+
+    setLocalFilters({ ...localFilters, sports: updatedSports });
   };
 
   const availableSports = ['Cricket', 'Football', 'Futsal', 'Padel'];
@@ -46,63 +46,63 @@ export default function FilterModal({ visible, onDismiss }) {
             <Text variant="headlineSmall" style={styles.title}>
               Filter Turfs
             </Text>
-            
+
             <View style={styles.filterSection}>
               <Text variant="titleMedium" style={styles.sectionTitle}>
                 Facilities
               </Text>
-              
+
               <View style={styles.switchRow}>
                 <Text>Floodlights Available</Text>
                 <Switch
                   value={localFilters.hasFloodlights}
-                  onValueChange={(value) => 
-                    setLocalFilters({...localFilters, hasFloodlights: value})
+                  onValueChange={(value) =>
+                    setLocalFilters({ ...localFilters, hasFloodlights: value })
                   }
                 />
               </View>
-              
+
               <View style={styles.switchRow}>
                 <Text>Generator Backup</Text>
                 <Switch
                   value={localFilters.hasGenerator}
-                  onValueChange={(value) => 
-                    setLocalFilters({...localFilters, hasGenerator: value})
+                  onValueChange={(value) =>
+                    setLocalFilters({ ...localFilters, hasGenerator: value })
                   }
                 />
               </View>
             </View>
-            
+
             <View style={styles.filterSection}>
               <Text variant="titleMedium" style={styles.sectionTitle}>
                 Surface Type
               </Text>
-              
+
               <View style={styles.chipRow}>
                 <Chip
                   selected={localFilters.surfaceType === 'all'}
-                  onPress={() => setLocalFilters({...localFilters, surfaceType: 'all'})}
+                  onPress={() => setLocalFilters({ ...localFilters, surfaceType: 'all' })}
                   style={styles.chip}
                 >
                   All
                 </Chip>
                 <Chip
                   selected={localFilters.surfaceType === 'astroturf'}
-                  onPress={() => setLocalFilters({...localFilters, surfaceType: 'astroturf'})}
+                  onPress={() => setLocalFilters({ ...localFilters, surfaceType: 'astroturf' })}
                   style={styles.chip}
                 >
                   AstroTurf
                 </Chip>
                 <Chip
                   selected={localFilters.surfaceType === 'cement'}
-                  onPress={() => setLocalFilters({...localFilters, surfaceType: 'cement'})}
+                  onPress={() => setLocalFilters({ ...localFilters, surfaceType: 'cement' })}
                   style={styles.chip}
                 >
                   Cement
                 </Chip>
               </View>
             </View>
-            
+
             <View style={styles.buttons}>
               <Button mode="outlined" onPress={handleResetFilters} style={styles.button}>
                 Reset
@@ -121,29 +121,36 @@ export default function FilterModal({ visible, onDismiss }) {
 const styles = StyleSheet.create({
   modal: {
     margin: 20,
+    maxHeight: '80%',
+    justifyContent: 'center',
   },
   title: {
     textAlign: 'center',
     marginBottom: 20,
-    color: '#2E7D32',
+    color: '#004d43',
     fontWeight: 'bold',
+    fontFamily: 'Montserrat_700Bold',
   },
   filterSection: {
     marginBottom: 20,
   },
   sectionTitle: {
-    marginBottom: 10,
+    marginBottom: 12,
     fontWeight: 'bold',
+    fontFamily: 'Montserrat_600SemiBold',
+    fontSize: 16,
   },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
+    paddingVertical: 4,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
   chip: {
     marginRight: 8,
@@ -152,10 +159,10 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 24,
+    gap: 12,
   },
   button: {
     flex: 1,
-    marginHorizontal: 5,
   },
 });

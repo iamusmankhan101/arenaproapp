@@ -9,6 +9,7 @@ import VenuesPage from './pages/VenuesPage';
 import CustomersPage from './pages/CustomersPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
+import ReviewsPage from './pages/ReviewsPage';
 
 function App() {
   const { isAuthenticated } = useSelector(state => state.auth);
@@ -26,6 +27,7 @@ function App() {
         <Route path="/venues" element={<VenuesPage />} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
