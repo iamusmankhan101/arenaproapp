@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
     Box,
     Typography,
-    Chip,
     Button,
     IconButton,
     Alert,
@@ -12,8 +11,7 @@ import {
 } from '@mui/material';
 import {
     Refresh,
-    Delete,
-    Star
+    Delete
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchReviews, deleteReview } from '../store/slices/adminSlice';
