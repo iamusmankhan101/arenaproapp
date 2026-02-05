@@ -8,7 +8,7 @@ import {
 import { db } from '../config/firebase';
 import { store } from '../store/store';
 import { setNearbyTurfs } from '../store/slices/turfSlice';
-import { safeDate, safeCompareDate, isValidDate } from '../utils/dateUtils';
+import { safeDate, safeCompareDate, isValidDate, safeToISOString, safeFirestoreTimestampToISO } from '../utils/dateUtils';
 
 class RealtimeSyncService {
   constructor() {
@@ -37,18 +37,8 @@ class RealtimeSyncService {
     try {
       const turfsRef = collection(db, 'venues');
 
-      // Start with a simpler query first, then add complexity
-      // This helps avoid index issues during development
-      let q;
-
-      // Try the complex query first, fall back to simple if it fails
-      try {
-        q = query(turfsRef, where('isActive', '==', true), orderBy('createdAt', 'desc'));
-      } catch (indexError) {
-        console.warn('⚠️ Complex query failed, using simple query:', indexError.message);
-        // Fallback to simpler query without orderBy
-        q = query(turfsRef, where('isActive', '==', true));
-      }
+      // Use simple query to avoid index requirements (sorting is handled client-side)
+      const q = query(turfsRef, where('isActive', '==', true));
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
         console.log('🏟️ Mobile app: Real-time turfs update received');
