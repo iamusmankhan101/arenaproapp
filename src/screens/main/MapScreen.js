@@ -643,6 +643,27 @@ export default function MapScreen({ navigation }) {
     }
   };
 
+  // Sync selectedVenue with real-time updates
+  useEffect(() => {
+    if (selectedVenue && nearbyTurfs.length > 0) {
+      const updatedVenue = nearbyTurfs.find(t => t.id === selectedVenue.id);
+      if (updatedVenue) {
+        // Only update if there are changes to avoid potential render loops
+        if (JSON.stringify(updatedVenue, (key, value) => {
+          // Avoid circular references or huge objects if any
+          if (key === 'coordinates' || key === 'loading') return undefined;
+          return value;
+        }) !== JSON.stringify(selectedVenue, (key, value) => {
+          if (key === 'coordinates' || key === 'loading') return undefined;
+          return value;
+        })) {
+          console.log('🔄 MapScreen: Syncing selected venue with real-time update');
+          setSelectedVenue(updatedVenue);
+        }
+      }
+    }
+  }, [nearbyTurfs, selectedVenue]);
+
   const toggleFilters = () => {
     setShowFilters(!showFilters);
     // Add haptic feedback if available
