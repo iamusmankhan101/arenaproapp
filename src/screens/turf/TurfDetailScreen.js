@@ -626,16 +626,29 @@ export default function TurfDetailScreen({ route, navigation }) {
                 <TouchableOpacity
                   style={styles.directionsButton}
                   onPress={() => {
-                    const coords = venue.coordinates || rawVenue.coordinates;
+                    // Try multiple possible coordinate locations
+                    const coords = venue.coordinates || rawVenue.coordinates || selectedTurf?.coordinates;
+                    console.log('🗺️ Directions button pressed:', {
+                      venueCoords: venue.coordinates,
+                      rawCoords: rawVenue.coordinates,
+                      selectedCoords: selectedTurf?.coordinates,
+                      finalCoords: coords
+                    });
+
                     if (coords && coords.latitude && coords.longitude) {
+                      const lat = coords.latitude;
+                      const lng = coords.longitude;
                       const url = Platform.select({
-                        ios: `maps:0,0?q=${coords.latitude},${coords.longitude}`,
-                        android: `geo:0,0?q=${coords.latitude},${coords.longitude}(${venue.name})`
+                        ios: `maps:0,0?q=${lat},${lng}`,
+                        android: `geo:0,0?q=${lat},${lng}(${venue.name})`
                       });
+                      console.log('🗺️ Opening maps with URL:', url);
                       Linking.openURL(url).catch(err => {
+                        console.error('❌ Failed to open maps:', err);
                         Alert.alert('Error', 'Unable to open maps');
                       });
                     } else {
+                      console.error('❌ No valid coordinates found');
                       Alert.alert('Error', 'Location coordinates not available');
                     }
                   }}
