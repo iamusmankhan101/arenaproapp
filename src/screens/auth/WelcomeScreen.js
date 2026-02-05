@@ -37,7 +37,7 @@ export default function WelcomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require('../../images/football.jpg')}
+        source={require('../../images/download.png')}
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >
