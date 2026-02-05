@@ -1,9 +1,9 @@
-import { 
-  collection, 
-  onSnapshot, 
-  query, 
-  where, 
-  orderBy 
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  orderBy
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { store } from '../store/store';
@@ -26,7 +26,7 @@ class RealtimeSyncService {
   // Initialize real-time listeners
   initialize() {
     if (this.isInitialized) return;
-    
+
     console.log('🔄 Initializing real-time sync...');
     this.setupTurfsListener();
     this.isInitialized = true;
@@ -35,12 +35,12 @@ class RealtimeSyncService {
   // Setup real-time listener for turfs/venues
   setupTurfsListener() {
     try {
-      const turfsRef = collection(db, 'turfs');
-      
+      const turfsRef = collection(db, 'venues');
+
       // Start with a simpler query first, then add complexity
       // This helps avoid index issues during development
       let q;
-      
+
       // Try the complex query first, fall back to simple if it fails
       try {
         q = query(turfsRef, where('isActive', '==', true), orderBy('createdAt', 'desc'));
@@ -49,16 +49,16 @@ class RealtimeSyncService {
         // Fallback to simpler query without orderBy
         q = query(turfsRef, where('isActive', '==', true));
       }
-      
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
         console.log('🏟️ Mobile app: Real-time turfs update received');
         console.log(`📊 Mobile app: Snapshot has ${snapshot.size} venues`);
-        
+
         const turfs = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
           console.log(`📍 Mobile app: Processing venue: ${data.name} (${doc.id})`);
-          
+
           turfs.push({
             id: doc.id,
             ...data,
@@ -85,7 +85,7 @@ class RealtimeSyncService {
             time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
           });
         });
-        
+
         // Sort manually by creation date (newest first) - handle both Date objects and ISO strings
         turfs.sort((a, b) => {
           try {
@@ -94,27 +94,27 @@ class RealtimeSyncService {
               console.warn('❌ RealtimeSync: Missing createdAt timestamps in sorting');
               return 0; // Keep original order if timestamps are missing
             }
-            
+
             const dateA = safeDate(a.createdAt);
             const dateB = safeDate(b.createdAt);
-            
+
             // Validate dates before comparing
             if (!isValidDate(dateA) || !isValidDate(dateB)) {
               console.warn('❌ RealtimeSync: Invalid dates in sorting, using fallback');
               return 0; // Keep original order if dates are invalid
             }
-            
+
             return safeCompareDate(dateB, dateA); // Newest first
           } catch (error) {
             console.error('❌ RealtimeSync: Error sorting turfs by date:', error);
             return 0; // Keep original order on error
           }
         });
-        
+
         console.log(`✅ Mobile app: Dispatching ${turfs.length} venues to Redux store`);
         // Update Redux store with new data
         store.dispatch(setNearbyTurfs(turfs));
-        
+
         // Check for new venues and show notification
         const currentVenueCount = turfs.length;
         if (this.lastVenueCount > 0 && currentVenueCount > this.lastVenueCount) {
@@ -127,7 +127,7 @@ class RealtimeSyncService {
           }
         }
         this.lastVenueCount = currentVenueCount;
-        
+
         // Log changes for debugging
         snapshot.docChanges().forEach((change) => {
           if (change.type === 'added') {
@@ -142,7 +142,7 @@ class RealtimeSyncService {
         });
       }, (error) => {
         console.error('❌ Error in turfs listener:', error);
-        
+
         // If the error is about indexes, try a fallback approach
         if (error.code === 'failed-precondition' && error.message.includes('index')) {
           console.log('🔄 Trying fallback query without complex filtering...');
@@ -153,10 +153,10 @@ class RealtimeSyncService {
           }
         }
       });
-      
+
       this.unsubscribers.set('turfs', unsubscribe);
       console.log('✅ Turfs real-time listener setup complete');
-      
+
     } catch (error) {
       console.error('❌ Failed to setup turfs listener:', error);
       this.setupFallbackTurfsListener();
@@ -167,16 +167,16 @@ class RealtimeSyncService {
   setupFallbackTurfsListener() {
     try {
       console.log('🔄 Setting up fallback turfs listener...');
-      const turfsRef = collection(db, 'turfs');
-      
+      const turfsRef = collection(db, 'venues');
+
       // Simple query without complex filtering
       const unsubscribe = onSnapshot(turfsRef, (snapshot) => {
         console.log('🏟️ Turfs updated in real-time (fallback mode)');
-        
+
         const turfs = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
-          
+
           // Filter active venues manually
           if (data.isActive !== false) { // Include if isActive is true or undefined
             turfs.push({
@@ -206,7 +206,7 @@ class RealtimeSyncService {
             });
           }
         });
-        
+
         // Sort manually by creation date (newest first) - handle both Date objects and ISO strings
         turfs.sort((a, b) => {
           try {
@@ -215,42 +215,42 @@ class RealtimeSyncService {
               console.warn('❌ RealtimeSync: Missing createdAt timestamps in sorting');
               return 0; // Keep original order if timestamps are missing
             }
-            
+
             const dateA = safeDate(a.createdAt);
             const dateB = safeDate(b.createdAt);
-            
+
             // Validate dates before comparing
             if (!isValidDate(dateA) || !isValidDate(dateB)) {
               console.warn('❌ RealtimeSync: Invalid dates in sorting, using fallback');
               return 0; // Keep original order if dates are invalid
             }
-            
+
             return safeCompareDate(dateB, dateA); // Newest first
           } catch (error) {
             console.error('❌ RealtimeSync: Error sorting turfs by date:', error);
             return 0; // Keep original order on error
           }
         });
-        
+
         // Update Redux store with new data
         store.dispatch(setNearbyTurfs(turfs));
-        
+
         console.log(`📊 Loaded ${turfs.length} active venues`);
-        
+
         if (this.notificationCallback && turfs.length > 0) {
           this.notificationCallback(`✅ Synced ${turfs.length} venues`, 'success');
         }
-        
+
       }, (error) => {
         console.error('❌ Error in fallback turfs listener:', error);
         if (this.notificationCallback) {
           this.notificationCallback('Failed to sync venues', 'error');
         }
       });
-      
+
       this.unsubscribers.set('turfs-fallback', unsubscribe);
       console.log('✅ Fallback turfs listener setup complete');
-      
+
     } catch (error) {
       console.error('❌ Failed to setup fallback turfs listener:', error);
     }
@@ -259,14 +259,14 @@ class RealtimeSyncService {
   // Setup real-time listener for bookings (optional)
   setupBookingsListener(userId) {
     if (!userId) return;
-    
+
     try {
       const bookingsRef = collection(db, 'bookings');
       const q = query(bookingsRef, where('userId', '==', userId), orderBy('createdAt', 'desc'));
-      
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
         console.log('📅 User bookings updated in real-time');
-        
+
         const bookings = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -278,17 +278,17 @@ class RealtimeSyncService {
             endTime: safeFirestoreTimestampToISO(data.endTime)
           });
         });
-        
+
         // You can dispatch to bookings slice here if needed
         // store.dispatch(setUserBookings(bookings));
-        
+
       }, (error) => {
         console.error('❌ Error in bookings listener:', error);
       });
-      
+
       this.unsubscribers.set('bookings', unsubscribe);
       console.log('✅ Bookings real-time listener setup complete');
-      
+
     } catch (error) {
       console.error('❌ Failed to setup bookings listener:', error);
     }
@@ -299,10 +299,10 @@ class RealtimeSyncService {
     try {
       const challengesRef = collection(db, 'challenges');
       const q = query(challengesRef, where('status', '==', 'open'), orderBy('createdAt', 'desc'));
-      
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
         console.log('⚔️ Challenges updated in real-time');
-        
+
         const challenges = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -313,17 +313,17 @@ class RealtimeSyncService {
             proposedDateTime: safeFirestoreTimestampToISO(data.proposedDateTime)
           });
         });
-        
+
         // You can dispatch to team slice here if needed
         // store.dispatch(setChallenges(challenges));
-        
+
       }, (error) => {
         console.error('❌ Error in challenges listener:', error);
       });
-      
+
       this.unsubscribers.set('challenges', unsubscribe);
       console.log('✅ Challenges real-time listener setup complete');
-      
+
     } catch (error) {
       console.error('❌ Failed to setup challenges listener:', error);
     }

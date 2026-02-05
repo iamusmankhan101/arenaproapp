@@ -208,7 +208,10 @@ export default function HomeScreen({ navigation }) {
         />
         <View style={styles.ratingBadge}>
           <MaterialIcons name="star" size={16} color="#004d43" />
-          <Text style={styles.ratingText}>{venue.rating || '4.0'}</Text>
+          <Text style={styles.ratingText}>
+            {venue.rating ? venue.rating.toFixed(1) : 'New'}
+            {venue.reviewCount ? ` (${venue.reviewCount})` : ''}
+          </Text>
         </View>
       </View>
       <View style={styles.venueInfo}>

@@ -1145,7 +1145,10 @@ export default function MapScreen({ navigation }) {
 
                 <View style={styles.cleanRatingRow}>
                   <MaterialIcons name="star" size={14} color="#FFD700" />
-                  <Text style={styles.cleanRatingText}>{selectedVenue.rating || '4.5'} (356 reviews)</Text>
+                  <Text style={styles.cleanRatingText}>
+                    {selectedVenue.rating ? selectedVenue.rating.toFixed(1) : 'New'}
+                    {selectedVenue.reviewCount ? ` (${selectedVenue.reviewCount} reviews)` : ''}
+                  </Text>
                 </View>
 
                 {/* Footer Info Row */}

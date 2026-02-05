@@ -263,39 +263,7 @@ export default function AppNavigator() {
               gestureEnabled: false,
             }}
           />
-          {/* Auth screens available for profile management */}
-          <Stack.Screen
-            name="SignIn"
-            component={SignInScreen}
-            options={{
-              title: 'Sign In',
-              gestureEnabled: true,
-            }}
-          />
-          <Stack.Screen
-            name="SignUp"
-            component={SignUpScreen}
-            options={{
-              title: 'Sign Up',
-              gestureEnabled: true,
-            }}
-          />
-          <Stack.Screen
-            name="ForgotPassword"
-            component={ForgotPasswordScreen}
-            options={{
-              title: 'Reset Password',
-              gestureEnabled: true,
-            }}
-          />
-          <Stack.Screen
-            name="OTP"
-            component={OTPScreen}
-            options={{
-              title: 'Verify OTP',
-              gestureEnabled: false,
-            }}
-          />
+
         </>
       )}
     </Stack.Navigator>

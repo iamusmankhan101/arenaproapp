@@ -17,7 +17,9 @@ import {
   query,
   orderBy,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc,
+  doc
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import {
@@ -122,6 +124,49 @@ export default function TurfDetailScreen({ route, navigation }) {
       }
     }
   }, [dispatch, turfId, selectedDate, showTimeSlots]);
+
+
+
+  // Self-Healing: Sync stats for existing venues that have reviews but no rating on parent doc
+  useEffect(() => {
+    if (reviews.length > 0 && selectedTurf) {
+      // Check if stats are out of sync or missing
+      const currentRating = selectedTurf.rating || 0;
+      const currentCount = selectedTurf.reviewCount || 0;
+
+      // Calculate actual stats from fetched reviews
+      const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+      const calculatedRating = reviews.length > 0 ? (totalRating / reviews.length) : 0;
+      const calculatedCount = reviews.length;
+
+      // Allow for small floating point differences in rating (0.1)
+      const isRatingDifferent = Math.abs(currentRating - calculatedRating) > 0.1;
+      const isCountDifferent = currentCount !== calculatedCount;
+
+      if (isRatingDifferent || isCountDifferent) {
+        console.log('🔄 Self-Healing: Syncing venue stats...', {
+          old: { rating: currentRating, count: currentCount },
+          new: { rating: calculatedRating.toFixed(1), count: calculatedCount }
+        });
+
+        const updateStats = async () => {
+          try {
+            const venueRef = doc(db, 'venues', turfId);
+            await updateDoc(venueRef, {
+              rating: parseFloat(calculatedRating.toFixed(1)),
+              reviewCount: calculatedCount,
+              updatedAt: serverTimestamp()
+            });
+            console.log('✅ Self-Healing: Stats synced successfully');
+          } catch (error) {
+            console.error('❌ Self-Healing: Failed to sync stats:', error);
+          }
+        };
+
+        updateStats();
+      }
+    }
+  }, [reviews, selectedTurf, turfId]);
 
   // Default venue data structure for fallback
   const defaultVenue = {
@@ -433,6 +478,7 @@ export default function TurfDetailScreen({ route, navigation }) {
     }
 
     try {
+      // 1. Add the new review to the subcollection
       const reviewsRef = collection(db, 'venues', turfId, 'reviews');
       await addDoc(reviewsRef, {
         userName: user?.displayName || user?.fullName || user?.name || 'Anonymous User',
@@ -442,10 +488,33 @@ export default function TurfDetailScreen({ route, navigation }) {
         date: serverTimestamp(),
       });
 
+      // 2. Calculate new average rating and review count
+      // We need to include the new rating in the calculation
+      const currentReviews = [...reviews, { rating: userRating }];
+      const totalRating = currentReviews.reduce((sum, review) => sum + review.rating, 0);
+      const newAverageRating = (totalRating / currentReviews.length).toFixed(1);
+      const newReviewCount = currentReviews.length;
+
+      console.log('⭐ Updating venue stats:', {
+        averageRating: parseFloat(newAverageRating),
+        reviewCount: newReviewCount
+      });
+
+      // 3. Update the parent venue document
+      const venueRef = doc(db, 'venues', turfId);
+      await updateDoc(venueRef, {
+        rating: parseFloat(newAverageRating),
+        reviewCount: newReviewCount,
+        updatedAt: serverTimestamp()
+      });
+
       setShowReviewModal(false);
       setUserRating(0);
       setReviewText('');
       Alert.alert('Success', 'Your review has been submitted!');
+
+      // Force refresh data
+      dispatch(fetchTurfDetails(turfId));
     } catch (error) {
       console.error('Error submitting review:', error);
       Alert.alert('Error', 'Failed to submit review. Please try again.');
