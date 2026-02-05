@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, StatusBar, Modal, TouchableWithoutFeedback } from 'react-native';
 import { Text, TextInput, Avatar, Button } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Calendar } from 'react-native-calendars';
 
 // Brand colors
 const COLORS = {
@@ -29,6 +30,8 @@ export default function ManageProfileScreen({ navigation }) {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showGenderPicker, setShowGenderPicker] = useState(false);
 
   const handleSave = () => {
     Alert.alert(
@@ -50,31 +53,55 @@ export default function ManageProfileScreen({ navigation }) {
     );
   };
 
-  const InputField = ({ label, value, onChangeText, icon, keyboardType = 'default', editable = true }) => (
+  const InputField = ({ label, value, onChangeText, icon, keyboardType = 'default', editable = true, onPress, isSelect = false }) => (
     <View style={styles.inputGroup}>
       <Text style={styles.inputLabel}>{label}</Text>
-      <View style={[
-        styles.inputWrapper,
-        isEditing && editable && styles.inputWrapperActive
-      ]}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={isEditing && isSelect ? onPress : undefined}
+        style={[
+          styles.inputWrapper,
+          isEditing && editable && styles.inputWrapperActive
+        ]}
+      >
         <MaterialIcons name={icon} size={20} color={COLORS.primary} style={styles.inputIcon} />
-        <TextInput
-          value={value}
-          onChangeText={onChangeText}
-          style={styles.textInput}
-          mode="flat"
-          disabled={!isEditing || !editable}
-          keyboardType={keyboardType}
-          underlineColor="transparent"
-          activeUnderlineColor="transparent"
-          textColor={COLORS.darkText}
-          placeholderTextColor={COLORS.gray}
-          placeholder={`Enter ${label.toLowerCase()}`}
-        />
-        {isEditing && editable && (
-          <MaterialIcons name="edit" size={16} color={COLORS.gray} />
+        {isSelect ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Text style={[
+              styles.textInput,
+              {
+                textAlignVertical: 'center',
+                color: value ? COLORS.darkText : COLORS.gray
+              }
+            ]}>
+              {value || `Select ${label.toLowerCase()}`}
+            </Text>
+          </View>
+        ) : (
+          <TextInput
+            value={value}
+            onChangeText={onChangeText}
+            style={styles.textInput}
+            mode="flat"
+            disabled={!isEditing || !editable}
+            keyboardType={keyboardType}
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            textColor={COLORS.darkText}
+            placeholderTextColor={COLORS.gray}
+            placeholder={`Enter ${label.toLowerCase()}`}
+            editable={isEditing && editable}
+          />
         )}
-      </View>
+
+        {isEditing && editable && (
+          <MaterialIcons
+            name={isSelect ? "arrow-drop-down" : "edit"}
+            size={isSelect ? 24 : 16}
+            color={COLORS.gray}
+          />
+        )}
+      </TouchableOpacity>
     </View>
   );
 
@@ -172,15 +199,17 @@ export default function ManageProfileScreen({ navigation }) {
           <InputField
             label="Date of Birth"
             value={formData.dateOfBirth}
-            onChangeText={(text) => setFormData({ ...formData, dateOfBirth: text })}
             icon="cake"
+            isSelect={true}
+            onPress={() => setShowDatePicker(true)}
           />
 
           <InputField
             label="Gender"
             value={formData.gender}
-            onChangeText={(text) => setFormData({ ...formData, gender: text })}
             icon="wc"
+            isSelect={true}
+            onPress={() => setShowGenderPicker(true)}
           />
 
           <InputField
@@ -214,6 +243,96 @@ export default function ManageProfileScreen({ navigation }) {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDatePicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Date of Birth</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <MaterialIcons name="close" size={24} color={COLORS.gray} />
+              </TouchableOpacity>
+            </View>
+            <Calendar
+              onDayPress={day => {
+                setFormData({ ...formData, dateOfBirth: day.dateString });
+                setShowDatePicker(false);
+              }}
+              markedDates={{
+                [formData.dateOfBirth]: { selected: true, selectedColor: COLORS.primary }
+              }}
+              theme={{
+                todayTextColor: COLORS.primary,
+                arrowColor: COLORS.primary,
+                selectedDayBackgroundColor: COLORS.primary,
+                selectedDayTextColor: COLORS.secondary,
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Gender Picker Modal */}
+      <Modal
+        visible={showGenderPicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowGenderPicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowGenderPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Gender</Text>
+              <TouchableOpacity onPress={() => setShowGenderPicker(false)}>
+                <MaterialIcons name="close" size={24} color={COLORS.gray} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.genderOption}
+              onPress={() => {
+                setFormData({ ...formData, gender: 'Male' });
+                setShowGenderPicker(false);
+              }}
+            >
+              <MaterialIcons name="male" size={24} color={COLORS.primary} style={styles.genderIcon} />
+              <Text style={styles.genderText}>Male</Text>
+              {formData.gender === 'Male' && (
+                <MaterialIcons name="check-circle" size={24} color={COLORS.primary} />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.genderOption}
+              onPress={() => {
+                setFormData({ ...formData, gender: 'Female' });
+                setShowGenderPicker(false);
+              }}
+            >
+              <MaterialIcons name="female" size={24} color={COLORS.primary} style={styles.genderIcon} />
+              <Text style={styles.genderText}>Female</Text>
+              {formData.gender === 'Female' && (
+                <MaterialIcons name="check-circle" size={24} color={COLORS.primary} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
     </View>
   );
 }
@@ -394,6 +513,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderWidth: 1.5,
     borderColor: 'transparent',
+    minHeight: 50,
   },
   inputWrapperActive: {
     borderColor: COLORS.primary,
@@ -450,5 +570,50 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 100,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    width: '100%',
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.darkText,
+  },
+  genderOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+  },
+  genderIcon: {
+    marginRight: 16,
+  },
+  genderText: {
+    flex: 1,
+    fontSize: 16,
+    color: COLORS.darkText,
+    fontWeight: '500',
   },
 });
