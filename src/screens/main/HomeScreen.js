@@ -391,11 +391,11 @@ export default function HomeScreen({ navigation }) {
               <View style={styles.header}>
                 <View style={styles.userSection}>
                   <Text style={styles.greeting}>Hi, {user?.fullName?.split(' ')[0] || 'Eman'}</Text>
-                  <Text style={styles.tagline}>Plan Your Sports</Text>
-                  <Text style={styles.tagline}>Activities to be</Text>
+                  <Text style={styles.tagline}>Plan Your Sports Activities</Text>
+
                   <View style={styles.bestContainer}>
-                    <Text style={styles.bestText}>the </Text>
-                    <Text style={styles.bestHighlight}>Best</Text>
+                    <Text style={styles.bestText}>with </Text>
+                    <Text style={styles.bestHighlight}>Arena Pro</Text>
                   </View>
                 </View>
                 <TouchableOpacity
@@ -547,10 +547,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   headerContainer: {
-    height: 250,
+    height: 160,
     position: 'relative',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     overflow: 'hidden',
   },
   fullWidthImage: {
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   tagline: {
-    fontSize: 18,
+    fontSize: 14,
     color: 'rgba(255,255,255,0.9)',
     fontFamily: 'Montserrat_400Regular',
     marginTop: 4,
@@ -604,12 +604,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   bestText: {
-    fontSize: 18,
+    fontSize: 14,
     color: 'rgba(255,255,255,0.9)',
     fontFamily: 'Montserrat_400Regular',
   },
   bestHighlight: {
-    fontSize: 18,
+    fontSize: 14,
     color: 'white',
     fontFamily: 'Montserrat_700Bold',
     textDecorationLine: 'underline',
