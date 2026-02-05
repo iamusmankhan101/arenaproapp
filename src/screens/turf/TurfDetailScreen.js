@@ -435,7 +435,7 @@ export default function TurfDetailScreen({ route, navigation }) {
     try {
       const reviewsRef = collection(db, 'venues', turfId, 'reviews');
       await addDoc(reviewsRef, {
-        userName: user?.name || user?.email || 'Anonymous User',
+        userName: user?.displayName || user?.fullName || user?.name || 'Anonymous User',
         userId: user?.uid || 'anonymous',
         rating: userRating,
         comment: reviewText.trim(),
@@ -460,8 +460,11 @@ export default function TurfDetailScreen({ route, navigation }) {
 
   const formatReviewDate = (date) => {
     const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Reset time to start of day for accurate day comparison
+    const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffTime = nowStart - dateStart;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
@@ -1506,11 +1509,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_700Bold',
   },
   reviewerName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#333',
     fontFamily: 'Montserrat_700Bold',
     marginBottom: 2,
+    maxWidth: 150,
   },
   reviewDate: {
     fontSize: 12,
