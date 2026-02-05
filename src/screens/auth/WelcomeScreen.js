@@ -1,24 +1,48 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ImageBackground, Image, Alert } from 'react-native';
 import { Text, Button } from 'react-native-paper';
+import { useDispatch, useSelector } from 'react-redux';
+import { googleSignIn } from '../../store/slices/authSlice';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import { theme } from '../../theme/theme';
 
+WebBrowser.maybeCompleteAuthSession();
+
 export default function WelcomeScreen({ navigation }) {
+  const dispatch = useDispatch();
+  const { loading } = useSelector(state => state.auth);
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+    iosClientId: 'YOUR_IOS_CLIENT_ID',
+    androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
+  });
+
+  React.useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      dispatch(googleSignIn(id_token));
+    } else if (response?.type === 'error') {
+      Alert.alert('Sign In Error', 'Google sign-in failed. Please try again.');
+    }
+  }, [response]);
+
   return (
     <View style={styles.container}>
-      <ImageBackground 
-        source={require('../../images/football.jpg')} 
+      <ImageBackground
+        source={require('../../images/football.jpg')}
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >
         <View style={styles.overlay} />
-        
+
         {/* Content */}
         <View style={styles.content}>
           {/* Logo */}
           <View style={styles.logoContainer}>
-            <Image 
-              source={require('../../images/pitch it logo (500 x 200 px) (2).png')} 
+            <Image
+              source={require('../../images/pitch it logo (500 x 200 px) (2).png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -29,7 +53,7 @@ export default function WelcomeScreen({ navigation }) {
           <View style={styles.welcomeContainer}>
             <Text style={styles.welcomeTitle}>Welcome to Arena Pro</Text>
             <Text style={styles.welcomeSubtitle}>
-              Discover and book the best sports venues in your area. 
+              Discover and book the best sports venues in your area.
               Join challenges, meet players, and elevate your game.
             </Text>
           </View>
@@ -63,9 +87,13 @@ export default function WelcomeScreen({ navigation }) {
           <View style={styles.socialContainer}>
             <Text style={styles.socialText}>Or continue with</Text>
             <View style={styles.socialButtons}>
-              <TouchableOpacity style={styles.socialButton}>
-                <Image 
-                  source={require('../../images/2a5758d6-4edb-4047-87bb-e6b94dbbbab0-cover.png')} 
+              <TouchableOpacity
+                style={styles.socialButton}
+                onPress={() => promptAsync()}
+                disabled={!request || loading}
+              >
+                <Image
+                  source={require('../../images/2a5758d6-4edb-4047-87bb-e6b94dbbbab0-cover.png')}
                   style={styles.googleIcon}
                   resizeMode="contain"
                 />
