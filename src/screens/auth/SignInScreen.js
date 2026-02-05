@@ -35,17 +35,14 @@ export default function SignInScreen({ navigation }) {
   const { loading, error } = useSelector(state => state.auth);
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    // Web client ID - used for Expo Go and web
+    // Expo Go client ID - routes through auth.expo.io proxy
+    expoClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+    // Web client ID
     clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
     // Android client ID - used in standalone Android builds
     androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
-    // Use Web client for iOS until you create a proper iOS OAuth client
+    // iOS client ID
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    // Explicit redirect URI for Expo Go
-    redirectUri: makeRedirectUri({
-      scheme: 'arenapropk.online',
-      useProxy: true,
-    }),
   });
 
   // Handle Google Sign In Response
