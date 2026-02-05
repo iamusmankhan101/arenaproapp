@@ -8,9 +8,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/images/arena pro logoqr.png",
+      "image": "./src/images/pitch it logo (2).png",
       "resizeMode": "contain",
-      "backgroundColor": "#004d43"
+      "backgroundColor": "#337f35"
     },
     "assetBundlePatterns": [
       "**/*"
