@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, StatusBar, Modal, TouchableWithoutFeedback } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, StatusBar, Modal, TouchableWithoutFeedback, Image } from 'react-native';
 import { Text, TextInput, Avatar, Button } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
+import * as ImagePicker from 'expo-image-picker';
 
 // Brand colors
 const COLORS = {
@@ -16,6 +17,60 @@ const COLORS = {
   darkText: '#1F2937',
 };
 
+const InputField = ({ label, value, onChangeText, icon, keyboardType = 'default', editable = true, onPress, isSelect = false, isEditing }) => (
+  <View style={styles.inputGroup}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={(isEditing && isSelect) ? onPress : undefined}
+      style={[
+        styles.inputWrapper,
+        isEditing && editable && styles.inputWrapperActive,
+        (!isEditing || !editable) && styles.inputWrapperDisabled
+      ]}
+      disabled={!isEditing || !isSelect}
+    >
+      <MaterialIcons name={icon} size={20} color={COLORS.primary} style={styles.inputIcon} />
+      {isSelect ? (
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text style={[
+            styles.textInput,
+            {
+              textAlignVertical: 'center',
+              color: value ? COLORS.darkText : COLORS.gray
+            }
+          ]}>
+            {value || `Select ${label.toLowerCase()}`}
+          </Text>
+        </View>
+      ) : (
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          style={styles.textInput}
+          mode="flat"
+          disabled={!isEditing || !editable}
+          keyboardType={keyboardType}
+          underlineColor="transparent"
+          activeUnderlineColor="transparent"
+          textColor={COLORS.darkText}
+          placeholderTextColor={COLORS.gray}
+          placeholder={`Enter ${label.toLowerCase()}`}
+          editable={isEditing && editable}
+        />
+      )}
+
+      {isEditing && (
+        <MaterialIcons
+          name={isSelect ? "arrow-drop-down" : "edit"}
+          size={isSelect ? 24 : 16}
+          color={COLORS.gray}
+        />
+      )}
+    </TouchableOpacity>
+  </View>
+);
+
 export default function ManageProfileScreen({ navigation }) {
   const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
@@ -26,12 +81,31 @@ export default function ManageProfileScreen({ navigation }) {
     phoneNumber: user?.phoneNumber || '',
     dateOfBirth: user?.dateOfBirth || '',
     gender: user?.gender || '',
-    location: user?.city || user?.location || ''
+    location: user?.city || user?.location || '',
+    profileImage: user?.photoURL || null
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
+
+  // Date Picker State
+  const [datePickerMode, setDatePickerMode] = useState('calendar'); // 'calendar' or 'year'
+  const [currentCalendarDate, setCurrentCalendarDate] = useState(formData.dateOfBirth || new Date().toISOString().split('T')[0]);
+
+  // Generate years for selection (1950 to current year)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i);
+
+  const handleYearSelect = (year) => {
+    // Keep current month and day, just change year
+    const currentDate = new Date(currentCalendarDate);
+    const newDate = new Date(year, currentDate.getMonth(), currentDate.getDate() || 1);
+    const dateString = newDate.toISOString().split('T')[0];
+
+    setCurrentCalendarDate(dateString);
+    setDatePickerMode('calendar');
+  };
 
   const handleSave = () => {
     Alert.alert(
@@ -41,69 +115,49 @@ export default function ManageProfileScreen({ navigation }) {
     );
   };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setFormData({ ...formData, profileImage: result.assets[0].uri });
+    }
+  };
+
+  const takePhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission to access camera is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setFormData({ ...formData, profileImage: result.assets[0].uri });
+    }
+  };
+
   const handleEditPhoto = () => {
     Alert.alert(
       'Change Profile Photo',
       'Choose an option',
       [
-        { text: 'Camera', onPress: () => console.log('Open Camera') },
-        { text: 'Gallery', onPress: () => console.log('Open Gallery') },
+        { text: 'Camera', onPress: takePhoto },
+        { text: 'Gallery', onPress: pickImage },
         { text: 'Cancel', style: 'cancel' }
       ]
     );
   };
-
-  const InputField = ({ label, value, onChangeText, icon, keyboardType = 'default', editable = true, onPress, isSelect = false }) => (
-    <View style={styles.inputGroup}>
-      <Text style={styles.inputLabel}>{label}</Text>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={isEditing && isSelect ? onPress : undefined}
-        style={[
-          styles.inputWrapper,
-          isEditing && editable && styles.inputWrapperActive
-        ]}
-      >
-        <MaterialIcons name={icon} size={20} color={COLORS.primary} style={styles.inputIcon} />
-        {isSelect ? (
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Text style={[
-              styles.textInput,
-              {
-                textAlignVertical: 'center',
-                color: value ? COLORS.darkText : COLORS.gray
-              }
-            ]}>
-              {value || `Select ${label.toLowerCase()}`}
-            </Text>
-          </View>
-        ) : (
-          <TextInput
-            value={value}
-            onChangeText={onChangeText}
-            style={styles.textInput}
-            mode="flat"
-            disabled={!isEditing || !editable}
-            keyboardType={keyboardType}
-            underlineColor="transparent"
-            activeUnderlineColor="transparent"
-            textColor={COLORS.darkText}
-            placeholderTextColor={COLORS.gray}
-            placeholder={`Enter ${label.toLowerCase()}`}
-            editable={isEditing && editable}
-          />
-        )}
-
-        {isEditing && editable && (
-          <MaterialIcons
-            name={isSelect ? "arrow-drop-down" : "edit"}
-            size={isSelect ? 24 : 16}
-            color={COLORS.gray}
-          />
-        )}
-      </TouchableOpacity>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
@@ -140,12 +194,22 @@ export default function ManageProfileScreen({ navigation }) {
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarGlow} />
             <View style={styles.avatarContainer}>
-              <Avatar.Text
-                size={110}
-                label={formData.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                style={styles.avatar}
-                labelStyle={styles.avatarLabel}
-              />
+              {formData.profileImage ? (
+                <View style={[styles.avatar, { overflow: 'hidden', justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }]}>
+                  <Image
+                    source={{ uri: formData.profileImage }}
+                    style={{ width: 110, height: 110 }}
+                  />
+                </View>
+              ) : (
+                <Avatar.Text
+                  size={110}
+                  label={formData.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                  style={styles.avatar}
+                  labelStyle={styles.avatarLabel}
+                />
+              )}
+
               {isEditing && (
                 <TouchableOpacity
                   style={styles.cameraButton}
@@ -177,6 +241,7 @@ export default function ManageProfileScreen({ navigation }) {
             value={formData.fullName}
             onChangeText={(text) => setFormData({ ...formData, fullName: text })}
             icon="person-outline"
+            isEditing={isEditing}
           />
 
           <InputField
@@ -186,6 +251,7 @@ export default function ManageProfileScreen({ navigation }) {
             icon="email"
             keyboardType="email-address"
             editable={false}
+            isEditing={isEditing}
           />
 
           <InputField
@@ -194,6 +260,7 @@ export default function ManageProfileScreen({ navigation }) {
             onChangeText={(text) => setFormData({ ...formData, phoneNumber: text })}
             icon="phone"
             keyboardType="phone-pad"
+            isEditing={isEditing}
           />
 
           <InputField
@@ -201,7 +268,12 @@ export default function ManageProfileScreen({ navigation }) {
             value={formData.dateOfBirth}
             icon="cake"
             isSelect={true}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => {
+              setCurrentCalendarDate(formData.dateOfBirth || new Date().toISOString().split('T')[0]);
+              setDatePickerMode('calendar');
+              setShowDatePicker(true);
+            }}
+            isEditing={isEditing}
           />
 
           <InputField
@@ -210,6 +282,7 @@ export default function ManageProfileScreen({ navigation }) {
             icon="wc"
             isSelect={true}
             onPress={() => setShowGenderPicker(true)}
+            isEditing={isEditing}
           />
 
           <InputField
@@ -217,6 +290,7 @@ export default function ManageProfileScreen({ navigation }) {
             value={formData.location}
             onChangeText={(text) => setFormData({ ...formData, location: text })}
             icon="location-on"
+            isEditing={isEditing}
           />
         </View>
 
@@ -257,27 +331,75 @@ export default function ManageProfileScreen({ navigation }) {
           onPress={() => setShowDatePicker(false)}
         >
           <View style={styles.modalContent}>
+            {/* Date Picker Header with Year Selection */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Date of Birth</Text>
+              <View>
+                <Text style={styles.modalTitle}>Select Date of Birth</Text>
+                <TouchableOpacity
+                  onPress={() => setDatePickerMode(datePickerMode === 'calendar' ? 'year' : 'calendar')}
+                  style={styles.yearSelector}
+                >
+                  <Text style={styles.yearSelectorText}>
+                    {new Date(currentCalendarDate).getFullYear()}
+                  </Text>
+                  <MaterialIcons
+                    name={datePickerMode === 'calendar' ? "arrow-drop-down" : "arrow-drop-up"}
+                    size={24}
+                    color={COLORS.primary}
+                  />
+                </TouchableOpacity>
+              </View>
               <TouchableOpacity onPress={() => setShowDatePicker(false)}>
                 <MaterialIcons name="close" size={24} color={COLORS.gray} />
               </TouchableOpacity>
             </View>
-            <Calendar
-              onDayPress={day => {
-                setFormData({ ...formData, dateOfBirth: day.dateString });
-                setShowDatePicker(false);
-              }}
-              markedDates={{
-                [formData.dateOfBirth]: { selected: true, selectedColor: COLORS.primary }
-              }}
-              theme={{
-                todayTextColor: COLORS.primary,
-                arrowColor: COLORS.primary,
-                selectedDayBackgroundColor: COLORS.primary,
-                selectedDayTextColor: COLORS.secondary,
-              }}
-            />
+
+            {datePickerMode === 'calendar' ? (
+              <Calendar
+                current={currentCalendarDate}
+                onDayPress={day => {
+                  setFormData({ ...formData, dateOfBirth: day.dateString });
+                  setShowDatePicker(false);
+                }}
+                markedDates={{
+                  [formData.dateOfBirth]: { selected: true, selectedColor: COLORS.primary }
+                }}
+                theme={{
+                  todayTextColor: COLORS.primary,
+                  arrowColor: COLORS.primary,
+                  selectedDayBackgroundColor: COLORS.primary,
+                  selectedDayTextColor: COLORS.secondary,
+                }}
+                // Update internal state when month changes so year selector stays in sync
+                onMonthChange={(month) => {
+                  setCurrentCalendarDate(month.dateString);
+                }}
+              />
+            ) : (
+              <View style={styles.yearListContainer}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <View style={styles.yearGrid}>
+                    {years.map((year) => (
+                      <TouchableOpacity
+                        key={year}
+                        style={[
+                          styles.yearItem,
+                          new Date(currentCalendarDate).getFullYear() === year && styles.yearItemSelected
+                        ]}
+                        onPress={() => handleYearSelect(year)}
+                      >
+                        <Text style={[
+                          styles.yearText,
+                          new Date(currentCalendarDate).getFullYear() === year && styles.yearTextSelected
+                        ]}>
+                          {year}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -519,6 +641,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     backgroundColor: COLORS.white,
   },
+  inputWrapperDisabled: {
+    backgroundColor: COLORS.background,
+  },
   inputIcon: {
     marginRight: 10,
   },
@@ -588,6 +713,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 10,
+    maxHeight: '80%', // Limit height
   },
   modalHeader: {
     flexDirection: 'row',
@@ -599,6 +725,48 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: COLORS.darkText,
+  },
+  yearSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  yearSelectorText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginRight: 4,
+  },
+  yearListContainer: {
+    height: 300,
+  },
+  yearGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  yearItem: {
+    width: '30%',
+    paddingVertical: 12,
+    marginBottom: 12,
+    backgroundColor: COLORS.background,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  yearItemSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  yearText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.darkText,
+  },
+  yearTextSelected: {
+    color: COLORS.secondary,
+    fontWeight: '700',
   },
   genderOption: {
     flexDirection: 'row',
