@@ -25,7 +25,7 @@ import {
 import MapView, { Marker, PROVIDER_GOOGLE, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
+import { fetchNearbyTurfs, toggleFavorite } from '../../store/slices/turfSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import SkeletonLoader from '../../components/SkeletonLoader';
@@ -1155,8 +1155,18 @@ export default function MapScreen({ navigation }) {
                   <Text style={styles.cleanVenueName} numberOfLines={1}>
                     {selectedVenue.name}
                   </Text>
-                  <TouchableOpacity style={styles.heartButton}>
-                    <MaterialIcons name="favorite-border" size={20} color="#757575" />
+                  <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      dispatch(toggleFavorite(selectedVenue));
+                    }}
+                  >
+                    <MaterialIcons
+                      name={selectedVenue.isFavorite ? "favorite" : "favorite-border"}
+                      size={20}
+                      color={selectedVenue.isFavorite ? "#FF6B6B" : "#757575"}
+                    />
                   </TouchableOpacity>
                 </View>
 
