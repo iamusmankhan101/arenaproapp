@@ -128,6 +128,8 @@ const turfSlice = createSlice({
       })
       .addCase(toggleFavorite.fulfilled, (state, action) => {
         const { turfData, isFavorite } = action.payload;
+
+        // Update favorites array
         if (isFavorite) {
           const exists = state.favorites.find(fav => fav.id === turfData.id);
           if (!exists) {
@@ -136,6 +138,17 @@ const turfSlice = createSlice({
         } else {
           state.favorites = state.favorites.filter(fav => fav.id !== turfData.id);
         }
+
+        // Update isFavorite in nearbyTurfs array
+        const venueIndex = state.nearbyTurfs.findIndex(v => v.id === turfData.id);
+        if (venueIndex !== -1) {
+          state.nearbyTurfs[venueIndex].isFavorite = isFavorite;
+        }
+
+        // Update selectedTurf if it's the same venue
+        if (state.selectedTurf?.id === turfData.id) {
+          state.selectedTurf.isFavorite = isFavorite;
+        }
       })
       .addCase(fetchFavorites.fulfilled, (state, action) => {
         state.favorites = action.payload;
@@ -143,11 +156,11 @@ const turfSlice = createSlice({
   },
 });
 
-export const { 
-  setFilters, 
-  clearSelectedTurf, 
-  clearError, 
-  addToFavorites, 
+export const {
+  setFilters,
+  clearSelectedTurf,
+  clearError,
+  addToFavorites,
   removeFromFavorites,
   setNearbyTurfs
 } = turfSlice.actions;

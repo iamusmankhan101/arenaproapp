@@ -1131,12 +1131,12 @@ export default function MapScreen({ navigation }) {
           ]}
         >
           <Surface style={styles.venueCard} elevation={6}>
+            {/* Venue Image */}
             <TouchableOpacity
               onPress={() => handleVenueSelect(selectedVenue)}
               activeOpacity={0.9}
               style={styles.cardTouchable}
             >
-              {/* Venue Image */}
               <Image
                 source={
                   selectedVenue.images && selectedVenue.images.length > 0
@@ -1155,19 +1155,6 @@ export default function MapScreen({ navigation }) {
                   <Text style={styles.cleanVenueName} numberOfLines={1}>
                     {selectedVenue.name}
                   </Text>
-                  <TouchableOpacity
-                    style={styles.heartButton}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      dispatch(toggleFavorite(selectedVenue));
-                    }}
-                  >
-                    <MaterialIcons
-                      name={selectedVenue.isFavorite ? "favorite" : "favorite-border"}
-                      size={20}
-                      color={selectedVenue.isFavorite ? "#FF6B6B" : "#757575"}
-                    />
-                  </TouchableOpacity>
                 </View>
 
                 <Text style={styles.cleanAddress} numberOfLines={1}>
@@ -1200,6 +1187,21 @@ export default function MapScreen({ navigation }) {
                   </View>
                 </View>
               </View>
+            </TouchableOpacity>
+
+            {/* Favorite Button - Positioned Absolutely */}
+            <TouchableOpacity
+              style={styles.absoluteHeartButton}
+              onPress={() => {
+                console.log('❤️ Favorite button pressed for:', selectedVenue.name);
+                dispatch(toggleFavorite(selectedVenue));
+              }}
+            >
+              <MaterialIcons
+                name={selectedVenue.isFavorite ? "favorite" : "favorite-border"}
+                size={24}
+                color={selectedVenue.isFavorite ? "#FF6B6B" : "#757575"}
+              />
             </TouchableOpacity>
           </Surface>
         </Animated.View>
@@ -1556,6 +1558,20 @@ const styles = StyleSheet.create({
   },
   heartButton: {
     padding: 4,
+  },
+  absoluteHeartButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 20,
+    padding: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    zIndex: 10,
   },
   cleanAddress: {
     fontSize: 13,

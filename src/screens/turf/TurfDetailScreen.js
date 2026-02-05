@@ -9,7 +9,8 @@ import {
   Alert,
   TextInput,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Linking
 } from 'react-native';
 import {
   collection,
@@ -622,7 +623,30 @@ export default function TurfDetailScreen({ route, navigation }) {
               <View style={styles.locationRow}>
                 <MaterialIcons name="location-on" size={16} color="#666" />
                 <Text style={styles.locationText}>{typeof venue.location === 'string' ? venue.location : `${venue.location?.city || 'Unknown City'} `}</Text>
-                <MaterialIcons name="schedule" size={16} color="#666" style={{ marginLeft: 20 }} />
+                <TouchableOpacity
+                  style={styles.directionsButton}
+                  onPress={() => {
+                    const coords = venue.coordinates || rawVenue.coordinates;
+                    if (coords && coords.latitude && coords.longitude) {
+                      const url = Platform.select({
+                        ios: `maps:0,0?q=${coords.latitude},${coords.longitude}`,
+                        android: `geo:0,0?q=${coords.latitude},${coords.longitude}(${venue.name})`
+                      });
+                      Linking.openURL(url).catch(err => {
+                        Alert.alert('Error', 'Unable to open maps');
+                      });
+                    } else {
+                      Alert.alert('Error', 'Location coordinates not available');
+                    }
+                  }}
+                >
+                  <MaterialIcons name="directions" size={18} color={theme.colors.primary} />
+                  <Text style={[styles.directionsText, { color: theme.colors.primary }]}>Directions</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.hoursRow}>
+                <MaterialIcons name="schedule" size={16} color="#666" />
                 <Text style={styles.hoursText}>{venue.hours}</Text>
               </View>
 
@@ -1174,6 +1198,27 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 4,
     fontFamily: 'Montserrat_400Regular',
+  },
+  directionsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(94, 53, 177, 0.1)',
+    marginLeft: 'auto',
+  },
+  directionsText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  hoursRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
   hoursText: {
     fontSize: 14,
