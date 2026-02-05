@@ -19,6 +19,7 @@ import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -82,9 +83,26 @@ export default function SignInScreen({ navigation }) {
     return true;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (validateForm()) {
-      dispatch(signIn({ email: email.trim().toLowerCase(), password }));
+      try {
+        console.log('Attempting sign in...');
+        const resultAction = await dispatch(signIn({ email: email.trim().toLowerCase(), password }));
+
+        if (signIn.fulfilled.match(resultAction)) {
+          console.log('Sign in successful');
+          // Navigation is handled by auth state change in AppNavigator
+        } else {
+          console.log('Sign in failed:', resultAction.payload);
+          // Error is handled by useEffect listening to state.error
+          if (resultAction.payload) {
+            Alert.alert('Sign In Failed', resultAction.payload.message || 'Authentication failed');
+          }
+        }
+      } catch (err) {
+        console.error('Sign in exception:', err);
+        Alert.alert('Error', 'An unexpected error occurred during sign in.');
+      }
     }
   };
 
