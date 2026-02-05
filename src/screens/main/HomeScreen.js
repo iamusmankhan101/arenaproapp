@@ -89,8 +89,11 @@ export default function HomeScreen({ navigation }) {
   const { nearbyTurfs, loading: turfsLoading } = useSelector(state => state.turf);
   const { challenges, loading: challengesLoading } = useSelector(state => state.team);
 
+  console.log('🔍 HomeScreen: Rendering...', { turfsLoading, challengesLoading, nearbyTurfsCount: nearbyTurfs.length });
+
   // Load data on component mount and when screen comes into focus
   useEffect(() => {
+    console.log('🔍 HomeScreen: Component Mounted');
     // Fetch all active venues (no location filtering)
     dispatch(fetchNearbyTurfs({ latitude: 0, longitude: 0, radius: 0 })); // Dummy values since location filtering is removed
 
