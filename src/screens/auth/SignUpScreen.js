@@ -15,8 +15,13 @@ import {
   ActivityIndicator
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signUp, clearError } from '../../store/slices/authSlice';
+import { signUp, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
@@ -40,6 +45,27 @@ export default function SignUpScreen({ navigation }) {
 
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
+
+  // Google Sign-In configuration
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+    androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
+    iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+    redirectUri: makeRedirectUri({
+      scheme: 'arenapropk.online',
+      useProxy: true,
+    }),
+  });
+
+  // Handle Google Sign-In Response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      dispatch(googleSignIn(id_token));
+    } else if (response?.type === 'error') {
+      Alert.alert('Sign Up Error', 'Google sign-up failed. Please try again.');
+    }
+  }, [response, dispatch]);
 
   const cities = [
     'Lahore',
@@ -151,12 +177,12 @@ export default function SignUpScreen({ navigation }) {
     }
   };
 
-  const handleGoogleSignUp = () => {
-    Alert.alert(
-      'Google Sign Up',
-      'Google Sign Up will be available in the next update. Please use email registration for now.',
-      [{ text: 'OK' }]
-    );
+  const handleGoogleSignUp = async () => {
+    try {
+      await promptAsync();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to initiate Google sign-up. Please try again.');
+    }
   };
 
   return (

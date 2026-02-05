@@ -20,6 +20,7 @@ import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -40,6 +41,11 @@ export default function SignInScreen({ navigation }) {
     androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
     // Use Web client for iOS until you create a proper iOS OAuth client
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+    // Explicit redirect URI for Expo Go
+    redirectUri: makeRedirectUri({
+      scheme: 'arenapropk.online',
+      useProxy: true,
+    }),
   });
 
   // Handle Google Sign In Response
