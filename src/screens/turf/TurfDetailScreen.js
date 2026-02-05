@@ -662,7 +662,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                           <Text style={styles.reviewDate}>{formatReviewDate(review.date)}</Text>
                         </View>
                       </View>
-                      <View style={styles.reviewRating}>
+                      <View style={styles.reviewRatingContainer}>
                         {renderReviewStars(review.rating, 14)}
                       </View>
                     </View>
@@ -1424,8 +1424,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+    elevation: 2,
   },
   writeReviewText: {
     fontSize: 14,
@@ -1433,10 +1436,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_600SemiBold',
   },
   reviewStats: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    alignItems: 'center',
   },
   averageRatingContainer: {
     alignItems: 'center',
@@ -1459,11 +1468,15 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   reviewItem: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 0,
   },
   reviewHeader: {
     flexDirection: 'row',
@@ -1475,39 +1488,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   reviewerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    elevation: 2,
   },
   reviewerInitial: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     fontFamily: 'Montserrat_700Bold',
   },
   reviewerName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
-    fontFamily: 'Montserrat_600SemiBold',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 2,
   },
   reviewDate: {
     fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-    fontFamily: 'Montserrat_400Regular',
+    color: '#888',
+    fontFamily: 'Montserrat_500Medium',
   },
-  reviewRating: {
-    flexDirection: 'row',
+  reviewRatingContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   reviewComment: {
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+    color: '#444',
+    lineHeight: 22,
     fontFamily: 'Montserrat_400Regular',
+    marginLeft: 4,
   },
   seeAllReviews: {
     alignItems: 'center',
