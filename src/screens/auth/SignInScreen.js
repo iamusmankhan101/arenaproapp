@@ -35,7 +35,7 @@ export default function SignInScreen({ navigation }) {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const dispatch = useDispatch();
-  const { loading, error } = useSelector(state => state.auth);
+  const { loading, error, isAuthenticated } = useSelector(state => state.auth);
 
   // Create discovery document for Google OAuth
   const discovery = AuthSession.useAutoDiscovery('https://accounts.google.com');
@@ -45,6 +45,14 @@ export default function SignInScreen({ navigation }) {
     native: 'arenapropk.online://',
     useProxy: true,
   });
+
+  // Debug logging for auth state
+  useEffect(() => {
+    console.log('SignInScreen: Auth state changed:', { isAuthenticated, loading, error });
+    if (isAuthenticated) {
+      console.log('SignInScreen: User is authenticated, should navigate away...');
+    }
+  }, [isAuthenticated, loading, error]);
 
   // Show error alert
   useEffect(() => {
