@@ -23,9 +23,9 @@ export const signIn = createAsyncThunk(
 
 export const signUp = createAsyncThunk(
   'auth/signUp',
-  async ({ email, password, fullName, phoneNumber, city }, { rejectWithValue }) => {
+  async ({ email, password, fullName, phoneNumber, city, referralCode }, { rejectWithValue }) => {
     try {
-      const response = await firebaseAuthAPI.signUp(email, password, fullName, phoneNumber, city);
+      const response = await firebaseAuthAPI.signUp(email, password, fullName, phoneNumber, city, referralCode);
       return response.data;
     } catch (error) {
       return rejectWithValue({ message: error.message });
@@ -100,7 +100,7 @@ export const devBypassAuth = createAsyncThunk(
       if (!__DEV__) {
         return rejectWithValue({ message: 'Development bypass only available in dev mode' });
       }
-      
+
       const mockCredentials = getMockCredentials();
       // Store mock credentials
       await AsyncStorage.setItem('authToken', mockCredentials.token);
@@ -123,10 +123,10 @@ export const loadStoredAuth = createAsyncThunk(
         await AsyncStorage.setItem('user', JSON.stringify(mockCredentials.user));
         return mockCredentials;
       }
-      
+
       const token = await AsyncStorage.getItem('authToken');
       const userString = await AsyncStorage.getItem('user');
-      
+
       if (token && userString) {
         const user = JSON.parse(userString);
         try {
@@ -172,14 +172,14 @@ export const initializeAuth = createAsyncThunk(
         }
         dispatch(setInitialized());
       });
-      
+
       // Store unsubscribe function outside Redux state
       if (typeof window !== 'undefined') {
         window.__authUnsubscribe = unsubscribe;
       } else if (typeof global !== 'undefined') {
         global.__authUnsubscribe = unsubscribe;
       }
-      
+
       return { success: true };
     } catch (error) {
       return rejectWithValue({ message: 'Failed to initialize authentication' });
@@ -400,13 +400,13 @@ const authSlice = createSlice({
   },
 });
 
-export const { 
-  logout, 
-  clearAuth, 
-  setAuthData, 
-  clearError, 
-  setInitialized, 
-  updateUserData 
+export const {
+  logout,
+  clearAuth,
+  setAuthData,
+  clearError,
+  setInitialized,
+  updateUserData
 } = authSlice.actions;
 
 export default authSlice.reducer;

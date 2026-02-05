@@ -34,6 +34,9 @@ export default function SignUpScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
+  const [referralCodeValid, setReferralCodeValid] = useState(null);
+  const [checkingReferralCode, setCheckingReferralCode] = useState(false);
 
   // Focus states to prevent keyboard closing
   const [firstNameFocused, setFirstNameFocused] = useState(false);
@@ -42,6 +45,7 @@ export default function SignUpScreen({ navigation }) {
   const [phoneNumberFocused, setPhoneNumberFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
+  const [referralCodeFocused, setReferralCodeFocused] = useState(false);
 
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
@@ -176,10 +180,35 @@ export default function SignUpScreen({ navigation }) {
         password,
         fullName,
         phoneNumber: phoneNumber.trim(),
-        city: selectedCity
+        city: selectedCity,
+        referralCode: referralCode.trim()
       }));
     }
   };
+
+  // Validate referral code in real-time
+  useEffect(() => {
+    const validateReferralCode = async () => {
+      if (!referralCode.trim()) {
+        setReferralCodeValid(null);
+        return;
+      }
+
+      setCheckingReferralCode(true);
+      try {
+        const { verifyReferralCode } = require('../../services/referralService');
+        const result = await verifyReferralCode(referralCode.trim());
+        setReferralCodeValid(result.valid);
+      } catch (error) {
+        setReferralCodeValid(false);
+      } finally {
+        setCheckingReferralCode(false);
+      }
+    };
+
+    const timeoutId = setTimeout(validateReferralCode, 500);
+    return () => clearTimeout(timeoutId);
+  }, [referralCode]);
 
   const handleGoogleSignUp = async () => {
     try {
@@ -434,6 +463,46 @@ export default function SignUpScreen({ navigation }) {
                 ]}
               />
             </View>
+          </View>
+
+          {/* Referral Code (Optional) */}
+          <View style={styles.inputContainer}>
+            <View style={[styles.inputWrapper, (referralCodeFocused || referralCode) && styles.inputWrapperFocused]}>
+              <MaterialIcons name="card-giftcard" size={20} color="#999" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Referral Code (Optional)"
+                placeholderTextColor="#999"
+                value={referralCode}
+                onChangeText={setReferralCode}
+                onFocus={() => setReferralCodeFocused(true)}
+                onBlur={() => setReferralCodeFocused(false)}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                returnKeyType="done"
+                selectionColor="#004d43"
+                underlineColorAndroid="transparent"
+              />
+              {checkingReferralCode && (
+                <ActivityIndicator size="small" color="#004d43" style={{ marginLeft: 8 }} />
+              )}
+              {!checkingReferralCode && referralCodeValid === true && (
+                <MaterialIcons name="check-circle" size={20} color="#6BCF7F" style={{ marginLeft: 8 }} />
+              )}
+              {!checkingReferralCode && referralCodeValid === false && (
+                <MaterialIcons name="error" size={20} color="#FF6B6B" style={{ marginLeft: 8 }} />
+              )}
+            </View>
+            {referralCodeValid === true && (
+              <Text style={styles.referralSuccessText}>
+                ✓ Code Applied! You have Rs. 300 off your first booking
+              </Text>
+            )}
+            {referralCodeValid === false && (
+              <Text style={styles.referralErrorText}>
+                Invalid referral code
+              </Text>
+            )}
           </View>
 
           {/* Sign Up Button */}
@@ -733,5 +802,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#004d43',
     fontWeight: '600',
+  },
+  referralSuccessText: {
+    fontSize: 12,
+    color: '#6BCF7F',
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  referralErrorText: {
+    fontSize: 12,
+    color: '#FF6B6B',
+    marginTop: 4,
+    marginLeft: 4,
   },
 });

@@ -477,6 +477,71 @@ export const bookingAPI = {
       const bookingId = `PIT${Date.now().toString().slice(-6)}`;
       console.log('🔥 FIREBASE: Generated booking ID:', bookingId);
 
+      // ===== REFERRAL SYSTEM LOGIC =====
+      let referralDiscount = 0;
+      let finalTotalAmount = bookingData.totalAmount || 0;
+      let referralApplied = false;
+
+      try {
+        // Get user document to check referral status
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log('💰 REFERRAL: Checking referral eligibility for user:', user.uid);
+
+          // Import referral utilities
+          const { isEligibleForReferralDiscount, isReferrerEligibleForReward, REFERRAL_CONSTANTS, calculateDiscountedTotal } = require('../utils/referralUtils');
+          const { applyReferralReward, markReferralCompleted } = require('./referralService');
+
+          // Check if user is eligible for referral discount (first booking + was referred)
+          if (isEligibleForReferralDiscount(userData)) {
+            console.log('✅ REFERRAL: User is eligible for referral discount!');
+
+            // Apply discount
+            const discountResult = calculateDiscountedTotal(finalTotalAmount, REFERRAL_CONSTANTS.NEW_USER_DISCOUNT);
+            referralDiscount = discountResult.discountApplied;
+            finalTotalAmount = discountResult.finalTotal;
+            referralApplied = true;
+
+            console.log(`💰 REFERRAL: Applied Rs. ${referralDiscount} discount. New total: Rs. ${finalTotalAmount}`);
+          }
+
+          // Check if referrer should get reward (user just completed first booking)
+          if (isReferrerEligibleForReward(userData)) {
+            console.log('🎁 REFERRAL: User completed first booking, rewarding referrer!');
+
+            // Apply reward to referrer
+            const rewardResult = await applyReferralReward(
+              userData.referredBy,
+              user.uid,
+              userData.fullName || userData.displayName || 'User'
+            );
+
+            if (rewardResult.success) {
+              console.log(`✅ REFERRAL: Referrer rewarded with Rs. ${REFERRAL_CONSTANTS.REFERRER_REWARD}`);
+            }
+          }
+
+          // Mark referral as completed and set first booking flag
+          if (userData.referredBy && !userData.hasCompletedFirstBooking) {
+            await markReferralCompleted(user.uid);
+            console.log('✅ REFERRAL: Marked referral as completed');
+          } else if (!userData.hasCompletedFirstBooking) {
+            // Just mark first booking as complete for non-referred users
+            await updateDoc(doc(db, 'users', user.uid), {
+              hasCompletedFirstBooking: true,
+              updatedAt: serverTimestamp()
+            });
+            console.log('✅ REFERRAL: Marked first booking as complete');
+          }
+        }
+      } catch (referralError) {
+        console.error('⚠️ REFERRAL: Error processing referral logic:', referralError);
+        // Don't fail the booking if referral logic fails
+      }
+      // ===== END REFERRAL SYSTEM LOGIC =====
+
       // Authenticated user booking with enriched data
       const enrichedBookingData = {
         ...bookingData,
@@ -489,6 +554,10 @@ export const bookingAPI = {
         bookingId: bookingId,
         dateTime: bookingDateTime.toISOString(),
         duration: duration,
+        totalAmount: finalTotalAmount,
+        originalAmount: bookingData.totalAmount || 0,
+        referralDiscount: referralDiscount,
+        referralApplied: referralApplied,
         createdAt: serverTimestamp()
       };
 
@@ -511,7 +580,9 @@ export const bookingAPI = {
           id: bookingRef.id,
           ...cleanBookingData,
           requiresSignIn: false,
-          message: 'Booking confirmed successfully!'
+          message: referralApplied
+            ? `Booking confirmed! You saved Rs. ${referralDiscount} with your referral code!`
+            : 'Booking confirmed successfully!'
         }
       };
 

@@ -1,4 +1,4 @@
-import { 
+import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -12,14 +12,14 @@ import {
   EmailAuthProvider,
   onAuthStateChanged
 } from 'firebase/auth';
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  collection, 
-  query, 
-  where, 
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
   getDocs,
   serverTimestamp,
   increment,
@@ -39,16 +39,16 @@ const RETRY_CONFIG = {
 const convertFirebaseTimestamp = (value) => {
   // Handle null/undefined
   if (!value) return new Date().toISOString();
-  
+
   // If it's already a string, return as is
   if (typeof value === 'string') return value;
-  
+
   // If it's a Date object
   if (value instanceof Date) return value.toISOString();
-  
+
   // If it's a Firebase Timestamp object (has seconds and nanoseconds)
-  if (value && typeof value === 'object' && 
-      (value.seconds !== undefined || value.nanoseconds !== undefined)) {
+  if (value && typeof value === 'object' &&
+    (value.seconds !== undefined || value.nanoseconds !== undefined)) {
     try {
       // Convert Firebase Timestamp to Date
       const timestamp = new Timestamp(value.seconds || 0, value.nanoseconds || 0);
@@ -58,7 +58,7 @@ const convertFirebaseTimestamp = (value) => {
       return new Date().toISOString();
     }
   }
-  
+
   // If it's a Firebase Timestamp instance
   if (value && typeof value.toDate === 'function') {
     try {
@@ -68,12 +68,12 @@ const convertFirebaseTimestamp = (value) => {
       return new Date().toISOString();
     }
   }
-  
+
   // If it's a serverTimestamp placeholder
   if (value && value._methodName === 'serverTimestamp') {
     return new Date().toISOString();
   }
-  
+
   // If it's an object with type "firestore/timestamp/"
   if (value && typeof value === 'object' && value.type === 'firestore/timestamp/') {
     try {
@@ -84,7 +84,7 @@ const convertFirebaseTimestamp = (value) => {
       return new Date().toISOString();
     }
   }
-  
+
   // Fallback to current time
   return new Date().toISOString();
 };
@@ -92,13 +92,13 @@ const convertFirebaseTimestamp = (value) => {
 // Deep clean function to remove all non-serializable values from an object
 const deepCleanForRedux = (obj) => {
   if (!obj || typeof obj !== 'object') return obj;
-  
+
   if (Array.isArray(obj)) {
     return obj.map(item => deepCleanForRedux(item));
   }
-  
+
   const cleaned = {};
-  
+
   for (const [key, value] of Object.entries(obj)) {
     if (value === null || value === undefined) {
       cleaned[key] = value;
@@ -108,10 +108,10 @@ const deepCleanForRedux = (obj) => {
       cleaned[key] = deepCleanForRedux(value);
     } else if (typeof value === 'object') {
       // Check if it's a timestamp-like object
-      if (value.seconds !== undefined || value.nanoseconds !== undefined || 
-          value._methodName === 'serverTimestamp' || 
-          value.type === 'firestore/timestamp/' ||
-          (value.toDate && typeof value.toDate === 'function')) {
+      if (value.seconds !== undefined || value.nanoseconds !== undefined ||
+        value._methodName === 'serverTimestamp' ||
+        value.type === 'firestore/timestamp/' ||
+        (value.toDate && typeof value.toDate === 'function')) {
         cleaned[key] = convertFirebaseTimestamp(value);
       } else {
         // Recursively clean nested objects
@@ -122,49 +122,49 @@ const deepCleanForRedux = (obj) => {
       cleaned[key] = String(value);
     }
   }
-  
+
   return cleaned;
 };
 
 // Simplified network-aware wrapper
 const withRetry = async (operation, operationName = 'Firebase operation') => {
   let lastError;
-  
+
   for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
     try {
       console.log(`🔄 ${operationName} (attempt ${attempt}/${RETRY_CONFIG.maxRetries})`);
-      
+
       const result = await Promise.race([
         operation(),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Operation timeout')), RETRY_CONFIG.timeoutMs)
         )
       ]);
-      
+
       console.log(`✅ ${operationName} succeeded`);
       return result;
-      
+
     } catch (error) {
       lastError = error;
       console.log(`❌ ${operationName} failed on attempt ${attempt}:`, error.message);
-      
+
       // Don't retry for certain errors
-      if (error.code === 'auth/user-not-found' || 
-          error.code === 'auth/wrong-password' ||
-          error.code === 'auth/email-already-in-use' ||
-          error.code === 'auth/weak-password' ||
-          error.code === 'auth/invalid-email' ||
-          error.code === 'auth/invalid-credential') {
+      if (error.code === 'auth/user-not-found' ||
+        error.code === 'auth/wrong-password' ||
+        error.code === 'auth/email-already-in-use' ||
+        error.code === 'auth/weak-password' ||
+        error.code === 'auth/invalid-email' ||
+        error.code === 'auth/invalid-credential') {
         throw error;
       }
-      
+
       if (attempt < RETRY_CONFIG.maxRetries) {
         console.log(`⏳ Waiting ${RETRY_CONFIG.retryDelay}ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, RETRY_CONFIG.retryDelay));
       }
     }
   }
-  
+
   throw lastError;
 };
 
@@ -214,12 +214,12 @@ export const firebaseAuthAPI = {
         try {
           if (user) {
             console.log('Auth state changed - user signed in:', user.uid);
-            
+
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
-            
+
             let rawFirestoreData = {};
-            
+
             if (userDoc.exists()) {
               rawFirestoreData = userDoc.data();
               try {
@@ -235,7 +235,7 @@ export const firebaseAuthAPI = {
               const firestoreUserData = createUserDocumentForFirestore(user, {
                 registrationMethod: 'existing_auth'
               });
-              
+
               try {
                 await setDoc(userDocRef, firestoreUserData);
                 console.log('✅ Created new user document');
@@ -249,7 +249,7 @@ export const firebaseAuthAPI = {
                 };
               }
             }
-            
+
             // Create base user data from Firebase Auth
             const baseUserData = {
               uid: user.uid,
@@ -258,13 +258,13 @@ export const firebaseAuthAPI = {
               emailVerified: user.emailVerified,
               photoURL: user.photoURL
             };
-            
+
             // Merge with cleaned Firestore data
             const completeUserData = {
               ...baseUserData,
               ...deepCleanForRedux(rawFirestoreData)
             };
-            
+
             // Get token safely
             let token = null;
             try {
@@ -272,7 +272,7 @@ export const firebaseAuthAPI = {
             } catch (tokenError) {
               console.log('⚠️ Failed to get ID token:', tokenError.message);
             }
-            
+
             callback({ user: completeUserData, token });
           } else {
             console.log('Auth state changed - user signed out');
@@ -298,7 +298,7 @@ export const firebaseAuthAPI = {
       });
     } catch (error) {
       console.error('Failed to initialize auth listener:', error);
-      return () => {};
+      return () => { };
     }
   },
 
@@ -306,7 +306,7 @@ export const firebaseAuthAPI = {
   signIn: async (email, password) => {
     return withRetry(async () => {
       console.log('🔍 FIREBASE DEBUG: signIn called with:', { email, passwordLength: password.length });
-      
+
       if (!auth) {
         console.log('🔍 FIREBASE DEBUG: Auth not initialized');
         throw new Error('Firebase authentication is not properly initialized');
@@ -326,13 +326,13 @@ export const firebaseAuthAPI = {
           email: user.email,
           emailVerified: user.emailVerified
         });
-        
+
         const userDocRef = doc(db, 'users', user.uid);
         console.log('🔍 FIREBASE DEBUG: Getting user document...');
         const userDoc = await getDoc(userDocRef);
-        
+
         let rawFirestoreData = {};
-        
+
         if (userDoc.exists()) {
           console.log('🔍 FIREBASE DEBUG: User document exists');
           rawFirestoreData = userDoc.data();
@@ -349,7 +349,7 @@ export const firebaseAuthAPI = {
           const firestoreUserData = createUserDocumentForFirestore(user, {
             registrationMethod: 'sign_in'
           });
-          
+
           try {
             await setDoc(userDocRef, firestoreUserData);
             console.log('🔍 FIREBASE DEBUG: Created user document during sign in');
@@ -363,11 +363,11 @@ export const firebaseAuthAPI = {
             };
           }
         }
-        
+
         console.log('🔍 FIREBASE DEBUG: Getting ID token...');
         const token = await user.getIdToken();
         console.log('🔍 FIREBASE DEBUG: Got ID token');
-        
+
         // Create clean user data for Redux
         const baseUserData = {
           uid: user.uid,
@@ -375,20 +375,20 @@ export const firebaseAuthAPI = {
           displayName: user.displayName,
           emailVerified: user.emailVerified
         };
-        
+
         const cleanUserData = {
           ...baseUserData,
           ...deepCleanForRedux(rawFirestoreData)
         };
-        
+
         console.log('🔍 FIREBASE DEBUG: Clean user data:', cleanUserData);
-        
+
         // Store in AsyncStorage
         console.log('🔍 FIREBASE DEBUG: Storing in AsyncStorage...');
         await AsyncStorage.setItem('authToken', token);
         await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
         console.log('🔍 FIREBASE DEBUG: Stored in AsyncStorage');
-        
+
         console.log('🔍 FIREBASE DEBUG: Sign-in process completed successfully');
         return {
           data: {
@@ -406,7 +406,7 @@ export const firebaseAuthAPI = {
   },
 
   // Enhanced sign up
-  signUp: async (email, password, fullName, phoneNumber = '', city = '') => {
+  signUp: async (email, password, fullName, phoneNumber = '', city = '', referralCode = '') => {
     return withRetry(async () => {
       if (!auth) {
         throw new Error('Firebase authentication is not properly initialized');
@@ -418,28 +418,72 @@ export const firebaseAuthAPI = {
       const existingUsers = await getDocs(
         query(collection(db, 'users'), where('email', '==', normalizedEmail))
       );
-      
+
       if (!existingUsers.empty) {
         throw new Error('An account with this email already exists');
       }
-      
+
+      // Verify referral code if provided
+      let referrerId = null;
+      let referrerName = null;
+      if (referralCode && referralCode.trim()) {
+        const { verifyReferralCode } = require('./referralService');
+        const verification = await verifyReferralCode(referralCode.trim());
+        if (!verification.valid) {
+          throw new Error('Invalid referral code');
+        }
+        referrerId = verification.referrerId;
+        referrerName = verification.referrerName;
+        console.log('✅ Valid referral code applied:', referralCode, 'Referrer:', referrerName);
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
       const user = userCredential.user;
-      
+
       await updateProfile(user, { displayName: fullName });
       await sendEmailVerification(user);
-      
+
+      // Generate unique referral code for new user
+      const { generateReferralCode } = require('../utils/referralUtils');
+      let myReferralCode;
+      let codeIsUnique = false;
+      let attempts = 0;
+      const maxAttempts = 5;
+
+      // Ensure referral code is unique
+      while (!codeIsUnique && attempts < maxAttempts) {
+        myReferralCode = generateReferralCode(fullName);
+        const codeQuery = query(collection(db, 'users'), where('myReferralCode', '==', myReferralCode));
+        const codeSnapshot = await getDocs(codeQuery);
+        codeIsUnique = codeSnapshot.empty;
+        attempts++;
+      }
+
+      if (!codeIsUnique) {
+        // Fallback: add timestamp to ensure uniqueness
+        myReferralCode = generateReferralCode(fullName) + '-' + Date.now().toString().slice(-3);
+      }
+
+      console.log('✅ Generated unique referral code:', myReferralCode);
+
       const firestoreUserData = createUserDocumentForFirestore(user, {
         fullName,
         phoneNumber,
         city,
-        registrationMethod: 'email'
+        registrationMethod: 'email',
+        // Referral system fields
+        myReferralCode,
+        referredBy: referrerId,
+        referralStatus: referrerId ? 'PENDING' : null,
+        walletBalance: 0,
+        hasCompletedFirstBooking: false,
+        referralHistory: [],
       });
-      
+
       await setDoc(doc(db, 'users', user.uid), firestoreUserData);
-      
+
       const token = await user.getIdToken();
-      
+
       // Create clean user data for Redux
       const baseUserData = {
         uid: user.uid,
@@ -447,7 +491,7 @@ export const firebaseAuthAPI = {
         displayName: fullName,
         emailVerified: user.emailVerified
       };
-      
+
       const cleanUserData = {
         ...baseUserData,
         ...deepCleanForRedux(firestoreUserData),
@@ -455,15 +499,20 @@ export const firebaseAuthAPI = {
         phoneNumber,
         city
       };
-      
+
       await AsyncStorage.setItem('authToken', token);
       await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
-      
+
+      let message = 'Account created successfully! Please check your email for verification.';
+      if (referrerId) {
+        message += ` You have Rs. 300 off your first booking!`;
+      }
+
       return {
         data: {
           user: cleanUserData,
           token,
-          message: 'Account created successfully! Please check your email for verification.'
+          message
         }
       };
     }, 'Sign up');
@@ -475,11 +524,11 @@ export const firebaseAuthAPI = {
       const credential = GoogleAuthProvider.credential(googleToken);
       const userCredential = await signInWithCredential(auth, credential);
       const user = userCredential.user;
-      
+
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
       let rawFirestoreData;
-      
+
       if (!userDoc.exists()) {
         rawFirestoreData = createUserDocumentForFirestore(user, {
           registrationMethod: 'google',
@@ -497,9 +546,9 @@ export const firebaseAuthAPI = {
           console.log('⚠️ Could not update user data:', updateError.message);
         }
       }
-      
+
       const token = await user.getIdToken();
-      
+
       const baseUserData = {
         uid: user.uid,
         email: user.email,
@@ -507,15 +556,15 @@ export const firebaseAuthAPI = {
         emailVerified: user.emailVerified,
         photoURL: user.photoURL
       };
-      
+
       const cleanUserData = {
         ...baseUserData,
         ...deepCleanForRedux(rawFirestoreData)
       };
-      
+
       await AsyncStorage.setItem('authToken', token);
       await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
-      
+
       return {
         data: {
           user: cleanUserData,
@@ -552,14 +601,14 @@ export const firebaseAuthAPI = {
     return withRetry(async () => {
       const user = auth.currentUser;
       if (!user) throw new Error('No authenticated user');
-      
+
       if (userData.displayName && userData.displayName !== user.displayName) {
         await updateProfile(user, { displayName: userData.displayName });
       }
-      
+
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
-      
+
       if (userDoc.exists()) {
         const updateData = {
           ...userData,
@@ -570,18 +619,18 @@ export const firebaseAuthAPI = {
         const newUserData = createUserDocumentForFirestore(user, userData);
         await setDoc(userDocRef, newUserData);
       }
-      
+
       const storedUser = await AsyncStorage.getItem('user');
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
-        const updatedUser = deepCleanForRedux({ 
-          ...parsedUser, 
+        const updatedUser = deepCleanForRedux({
+          ...parsedUser,
           ...userData,
           updatedAt: new Date().toISOString()
         });
         await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       }
-      
+
       return { data: { message: 'Profile updated successfully' } };
     }, 'Update profile');
   },
@@ -591,14 +640,14 @@ export const firebaseAuthAPI = {
     return withRetry(async () => {
       const user = auth.currentUser;
       if (!user) throw new Error('No authenticated user');
-      
+
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
-      
+
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
-      
+
       if (userDoc.exists()) {
         try {
           await updateDoc(userDocRef, {
@@ -608,7 +657,7 @@ export const firebaseAuthAPI = {
           console.log('⚠️ Could not update user document after password change');
         }
       }
-      
+
       return { data: { message: 'Password changed successfully' } };
     }, 'Change password');
   },
@@ -618,7 +667,7 @@ export const firebaseAuthAPI = {
     return withRetry(async () => {
       const user = auth.currentUser;
       if (!user) throw new Error('No authenticated user');
-      
+
       await sendEmailVerification(user);
       return { data: { message: 'Verification email sent successfully' } };
     }, 'Resend verification');
@@ -631,25 +680,25 @@ export const firebaseAuthAPI = {
       if (!user) {
         return { data: null };
       }
-      
+
       const currentToken = await user.getIdToken(true);
-      
+
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
       const rawFirestoreData = userDoc.exists() ? userDoc.data() : {};
-      
+
       const baseUserData = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         emailVerified: user.emailVerified
       };
-      
+
       const cleanUserData = {
         ...baseUserData,
         ...deepCleanForRedux(rawFirestoreData)
       };
-      
+
       return {
         data: {
           user: cleanUserData,
@@ -681,7 +730,7 @@ export const firebaseAuthAPI = {
       'auth/invalid-user-token': 'User token is invalid. Please sign in again.',
       'auth/user-token-expired': 'User token has expired. Please sign in again.'
     };
-    
+
     return errorMessages[errorCode] || `Authentication error: ${errorCode || 'Unknown error'}. Please try again.`;
   }
 };
@@ -693,7 +742,7 @@ export const getCurrentUser = () => auth?.currentUser || null;
 export const onAuthStateChange = (callback) => {
   if (!auth) {
     console.error('Auth not initialized');
-    return () => {};
+    return () => { };
   }
   return onAuthStateChanged(auth, callback);
 };
