@@ -10,12 +10,11 @@ import {
     Rating
 } from '@mui/material';
 import {
-import {
-        Refresh,
-        Delete,
-        Check,
-        Close
-    } from '@mui/icons-material';
+    Refresh,
+    Delete,
+    Check,
+    Close
+} from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchReviews, deleteReview, updateReviewStatus } from '../store/slices/adminSlice';
 import { format } from 'date-fns';
