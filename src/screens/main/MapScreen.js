@@ -889,7 +889,7 @@ export default function MapScreen({ navigation }) {
           </TouchableOpacity>
 
           <Searchbar
-            placeholder="Search venues..."
+            placeholder="Search venues & areas"
             onChangeText={handleSearchChange}
             value={searchQuery}
             style={styles.cleanSearchBar}
@@ -899,13 +899,7 @@ export default function MapScreen({ navigation }) {
             elevation={0}
           />
 
-          <TouchableOpacity
-            style={styles.filterIconContainer}
-            activeOpacity={0.7}
-            onPress={toggleFilters}
-          >
-            <MaterialIcons name="tune" size={24} color="#757575" />
-          </TouchableOpacity>
+
         </Surface>
       </View>
 
@@ -1295,6 +1289,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
     height: 50,
+
   },
   cleanSearchInput: {
     fontSize: 16,

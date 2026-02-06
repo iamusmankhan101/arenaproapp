@@ -167,6 +167,18 @@ export const deleteReview = createAsyncThunk(
   }
 );
 
+export const updateReviewStatus = createAsyncThunk(
+  'admin/updateReviewStatus',
+  async ({ venueId, reviewId, status }, { rejectWithValue }) => {
+    try {
+      await workingAdminAPI.updateReviewStatus(venueId, reviewId, status);
+      return { reviewId, status };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   // Dashboard
   dashboardStats: {
@@ -434,6 +446,14 @@ const adminSlice = createSlice({
         state.reviews.data = state.reviews.data.filter(r => r.id !== reviewId);
         state.reviews.total -= 1;
         state.successMessage = 'Review deleted successfully';
+      })
+      .addCase(updateReviewStatus.fulfilled, (state, action) => {
+        const { reviewId, status } = action.payload;
+        const review = state.reviews.data.find(r => r.id === reviewId);
+        if (review) {
+          review.status = status;
+        }
+        state.successMessage = `Review ${status} successfully`;
       });
   },
 });

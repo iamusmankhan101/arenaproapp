@@ -10,11 +10,14 @@ import {
     Rating
 } from '@mui/material';
 import {
-    Refresh,
-    Delete
-} from '@mui/icons-material';
+import {
+        Refresh,
+        Delete,
+        Check,
+        Close
+    } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
-import { fetchReviews, deleteReview } from '../store/slices/adminSlice';
+import { fetchReviews, deleteReview, updateReviewStatus } from '../store/slices/adminSlice';
 import { format } from 'date-fns';
 
 export default function ReviewsPage() {
@@ -44,6 +47,11 @@ export default function ReviewsPage() {
         if (window.confirm('Are you sure you want to delete this review?')) {
             dispatch(deleteReview({ venueId, reviewId }));
         }
+    };
+
+    const handleStatusUpdate = (venueId, reviewId, status) => {
+        console.log(`Updating status for review ${reviewId} to ${status}`);
+        dispatch(updateReviewStatus({ venueId, reviewId, status }));
     };
 
     const columns = [
@@ -91,7 +99,7 @@ export default function ReviewsPage() {
             field: 'comment',
             headerName: 'Comment',
             flex: 1,
-            minWidth: 300,
+            minWidth: 250,
             renderCell: (params) => (
                 <Tooltip title={params.value}>
                     <Typography variant="body2" noWrap>
@@ -101,19 +109,69 @@ export default function ReviewsPage() {
             )
         },
         {
+            field: 'status',
+            headerName: 'Status',
+            width: 120,
+            renderCell: (params) => {
+                const status = params.value || 'approved'; // Default to approved for old reviews
+                let color = 'default';
+                if (status === 'approved') color = 'success';
+                if (status === 'pending') color = 'warning';
+                if (status === 'rejected') color = 'error';
+
+                return (
+                    <Box
+                        sx={{
+                            backgroundColor: status === 'approved' ? '#e8f5e9' : status === 'pending' ? '#fff3e0' : '#ffebee',
+                            color: status === 'approved' ? '#2e7d32' : status === 'pending' ? '#ef6c00' : '#c62828',
+                            borderRadius: '16px',
+                            px: 1.5,
+                            py: 0.25,
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            textTransform: 'capitalize'
+                        }}
+                    >
+                        {status}
+                    </Box>
+                );
+            }
+        },
+        {
             field: 'actions',
             headerName: 'Actions',
-            width: 100,
+            width: 150,
             sortable: false,
-            renderCell: (params) => (
-                <IconButton
-                    color="error"
-                    size="small"
-                    onClick={() => handleDelete(params.row.venueId, params.id)}
-                >
-                    <Delete />
-                </IconButton>
-            )
+            renderCell: (params) => {
+                const status = params.row.status || 'approved';
+                return (
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        {status === 'pending' && (
+                            <Tooltip title="Approve">
+                                <IconButton
+                                    color="success"
+                                    size="small"
+                                    onClick={() => handleStatusUpdate(params.row.venueId, params.id, 'approved')}
+                                >
+                                    <Check />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+
+                        {(status === 'pending' || status === 'approved') && (
+                            <Tooltip title="Delete/Reject">
+                                <IconButton
+                                    color="error"
+                                    size="small"
+                                    onClick={() => handleDelete(params.row.venueId, params.id)}
+                                >
+                                    <Delete />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                    </Box>
+                );
+            }
         }
     ];
 

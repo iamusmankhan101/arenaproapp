@@ -95,15 +95,18 @@ export default function TurfDetailScreen({ route, navigation }) {
     const q = query(reviewsRef, orderBy('date', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedReviews = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          // Convert Firestore timestamp to JS Date, fallback to now if missing
-          date: data.date?.toDate() || new Date(),
-        };
-      });
+      const fetchedReviews = snapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // Convert Firestore timestamp to JS Date, fallback to now if missing
+            date: data.date?.toDate() || new Date(),
+          };
+        })
+        .filter(review => !review.status || review.status === 'approved'); // Only show approved or legacy reviews
+
       setReviews(fetchedReviews);
     }, (error) => {
       console.error('Error fetching reviews:', error);
@@ -487,10 +490,12 @@ export default function TurfDetailScreen({ route, navigation }) {
         rating: userRating,
         comment: reviewText.trim(),
         date: serverTimestamp(),
+        status: 'pending' // New reviews are pending approval
       });
 
       // 2. Calculate new average rating and review count
-      // We need to include the new rating in the calculation
+      // Note: We normally wouldn't update stats for pending reviews, but to keep it simple for now
+      // we will still update the stats. If strict moderation is needed, this should be moved to a backend trigger.
       const currentReviews = [...reviews, { rating: userRating }];
       const totalRating = currentReviews.reduce((sum, review) => sum + review.rating, 0);
       const newAverageRating = (totalRating / currentReviews.length).toFixed(1);
@@ -512,7 +517,12 @@ export default function TurfDetailScreen({ route, navigation }) {
       setShowReviewModal(false);
       setUserRating(0);
       setReviewText('');
-      Alert.alert('Success', 'Your review has been submitted!');
+
+      // Update alert to inform user about approval process
+      Alert.alert(
+        'Review Submitted',
+        'Thank you! Your review has been submitted and will be visible after approval.'
+      );
 
       // Force refresh data
       dispatch(fetchTurfDetails(turfId));

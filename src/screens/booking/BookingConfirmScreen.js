@@ -23,6 +23,7 @@ import {
   Modal
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchUserProfile } from '../../store/slices/authSlice';
 import { createBooking, fetchUserBookings } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeDate, safeFormatDate } from '../../utils/dateUtils';
@@ -198,6 +199,8 @@ export default function BookingConfirmScreen({ route, navigation }) {
     setShowSuccessModal(false);
     // Refresh bookings data before navigating
     dispatch(fetchUserBookings());
+    // Refresh user profile to update booking count and unlock referral code
+    dispatch(fetchUserProfile());
     navigation.navigate('Bookings');
   };
 
@@ -310,30 +313,33 @@ export default function BookingConfirmScreen({ route, navigation }) {
               </Chip>
             </View>
 
-            <View style={styles.bookingDetails}>
-              <View style={styles.detailItem}>
+            <View style={[styles.bookingDetails, { flexDirection: 'column', alignItems: 'flex-start', gap: 12 }]}>
+              <View style={[styles.detailItem, { flex: 0, width: '100%' }]}>
                 <MaterialIcons name="event" size={18} color="#666" />
-                <Text style={styles.detailText}>{formattedDate}</Text>
+                <Text style={[styles.detailText, { fontSize: 14 }]}>{formattedDate}</Text>
               </View>
-              <View style={styles.detailItem}>
-                <MaterialIcons name="schedule" size={18} color="#666" />
-                <Text style={styles.detailText}>{time}</Text>
-              </View>
-              <View style={styles.detailItem}>
-                <MaterialIcons name="wb-sunny" size={18} color="#666" />
-                <Text style={styles.detailText}>{slot.priceType} Slot</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+                <View style={[styles.detailItem, { justifyContent: 'flex-start' }]}>
+                  <MaterialIcons name="schedule" size={18} color="#666" />
+                  <Text style={styles.detailText}>{time}</Text>
+                </View>
+                <View style={[styles.detailItem, { justifyContent: 'flex-end' }]}>
+                  <MaterialIcons name="wb-sunny" size={18} color="#666" />
+                  <Text style={styles.detailText}>{slot.priceType}</Text>
+                </View>
               </View>
             </View>
           </Surface>
         </Animated.View>
 
         {/* Payment Options Selection */}
-        <Animated.View
+        <View
           style={[
             styles.animatedCard,
             {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
+              // Temporary debug style/removal of animation
+
+
             }
           ]}
         >
@@ -375,7 +381,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
               <RadioButton value="venue" status={paymentMode === 'venue' ? 'checked' : 'unchecked'} color={theme.colors.primary} onPress={() => setPaymentMode('venue')} />
             </TouchableOpacity>
           </Surface>
-        </Animated.View>
+        </View>
 
         {/* Pricing Breakdown */}
         <Animated.View

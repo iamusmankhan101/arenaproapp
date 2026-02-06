@@ -755,6 +755,23 @@ export const workingAdminAPI = {
     }
   },
 
+  // Update review status
+  async updateReviewStatus(venueId, reviewId, status) {
+    try {
+      console.log(`🔄 Admin: Updating review ${reviewId} status to ${status}`);
+      const firestore = initFirebase();
+      const reviewRef = doc(firestore, 'venues', venueId, 'reviews', reviewId);
+      await updateDoc(reviewRef, {
+        status: status,
+        updatedAt: new Date()
+      });
+      return { success: true, status };
+    } catch (error) {
+      console.error('❌ Admin: Error updating review status:', error);
+      throw error;
+    }
+  },
+
   // Delete review (moderation)
   async deleteReview(venueId, reviewId) {
     try {

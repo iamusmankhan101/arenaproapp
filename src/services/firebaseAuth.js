@@ -711,6 +711,23 @@ export const firebaseAuthAPI = {
     }
   },
 
+  // Get user profile
+  getUserProfile: async (uid) => {
+    return withRetry(async () => {
+      const userDocRef = doc(db, 'users', uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        throw new Error('User document not found');
+      }
+
+      const rawFirestoreData = userDoc.data();
+      const cleanUserData = deepCleanForRedux(rawFirestoreData);
+
+      return { data: cleanUserData };
+    }, 'Get user profile');
+  },
+
   // Helper function to get user-friendly error messages
   getErrorMessage: (errorCode) => {
     const errorMessages = {

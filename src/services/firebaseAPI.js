@@ -544,7 +544,7 @@ export const bookingAPI = {
 
           // Update User Data: Mark referral completed, increment booking count, consume discount
           const userUpdates = {
-            bookingCount: increment(1), // Always increment booking count
+            bookingCount: (userData.bookingCount || 0) + 1, // Manual increment to avoid ReferenceError
             updatedAt: serverTimestamp()
           };
 

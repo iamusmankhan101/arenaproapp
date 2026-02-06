@@ -154,6 +154,24 @@ export const loadStoredAuth = createAsyncThunk(
   }
 );
 
+// Fetch User Profile
+export const fetchUserProfile = createAsyncThunk(
+  'auth/fetchUserProfile',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const { user } = getState().auth;
+      if (!user?.uid) {
+        return rejectWithValue({ message: 'No user ID found' });
+      }
+
+      const response = await firebaseAuthAPI.getUserProfile(user.uid);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue({ message: error.message });
+    }
+  }
+);
+
 // Initialize auth state listener
 export const initializeAuth = createAsyncThunk(
   'auth/initializeAuth',
@@ -396,6 +414,21 @@ const authSlice = createSlice({
       .addCase(loadStoredAuth.rejected, (state) => {
         state.initializing = false;
         state.isAuthenticated = false;
+      })
+      // Fetch User Profile
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.user) {
+          state.user = { ...state.user, ...action.payload };
+        }
+      })
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.loading = false;
+        // We don't want to show a big error if background fetch fails, just log it
+        console.log('Background profile fetch failed:', action.payload?.message);
       });
   },
 });

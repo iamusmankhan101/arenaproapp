@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Alert, Sh
 import * as Clipboard from 'expo-clipboard';
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
+import { fetchUserProfile } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeFormatDate } from '../../utils/dateUtils';
 import { useFocusEffect } from '@react-navigation/native';
@@ -91,6 +92,17 @@ export default function HomeScreen({ navigation }) {
   const [showReferralModal, setShowReferralModal] = useState(false);
 
   const { user } = useSelector(state => state.auth);
+
+  // DEBUG LOGGING
+  useEffect(() => {
+    if (user) {
+      console.log('🔍 HOME DEBUG: User object changed:', {
+        uid: user.uid,
+        bookingCount: user.bookingCount,
+        myReferralCode: user.myReferralCode
+      });
+    }
+  }, [user]);
   const { nearbyTurfs, loading: turfsLoading } = useSelector(state => state.turf);
   const { challenges, loading: challengesLoading } = useSelector(state => state.team);
 
@@ -700,6 +712,45 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.lockedSubtext}>
                       Complete your first booking to unlock your unique referral code!
                     </Text>
+                    {/* Debug Info & Manual Refresh */}
+                    <View style={{ marginTop: 20, alignItems: 'center' }}>
+                      <Text style={{ color: 'red', fontSize: 12, marginBottom: 10 }}>
+                        Debug: Bookings = {user?.bookingCount !== undefined ? user.bookingCount : 'undefined'}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={async () => {
+                          try {
+                            // Check if action exists
+                            if (!fetchUserProfile) {
+                              alert('ERROR: fetchUserProfile action is undefined!');
+                              return;
+                            }
+
+                            alert(`Current Count: ${user?.bookingCount}. Refreshing...`);
+
+                            // Dispatch and wait for result
+                            const result = await dispatch(fetchUserProfile());
+
+                            if (fetchUserProfile.fulfilled.match(result)) {
+                              alert(`Success! New Count: ${result.payload?.bookingCount}`);
+                            } else {
+                              alert(`Failed: ${result.payload?.message || result.error?.message}`);
+                            }
+                          } catch (e) {
+                            alert(`CRASH: ${e.message}`);
+                            console.error(e);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: '#E0E0E0',
+                          paddingHorizontal: 16,
+                          paddingVertical: 8,
+                          borderRadius: 20
+                        }}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: 'bold' }}>🔄 Force Refresh Status</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   {/* What You'll Get */}
