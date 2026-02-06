@@ -13,7 +13,8 @@ import {
   startAfter,
   GeoPoint,
   serverTimestamp,
-  writeBatch
+  writeBatch,
+  increment
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../config/firebase';
