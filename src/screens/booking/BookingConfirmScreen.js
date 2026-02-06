@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  Alert, 
-  Animated, 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Animated,
   Dimensions,
   TouchableOpacity,
   StatusBar,
-  SafeAreaView
+  SafeAreaView,
+  Image
 } from 'react-native';
-import { 
-  Text, 
-  Card, 
-  Button, 
-  RadioButton, 
-  Divider, 
+import {
+  Text,
+  Card,
+  Button,
+  RadioButton,
+  Divider,
   Chip,
   Surface,
   Portal,
@@ -26,6 +27,8 @@ import { createBooking, fetchUserBookings } from '../../store/slices/bookingSlic
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeDate, safeFormatDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
+import * as ImagePicker from 'expo-image-picker';
+import { turfAPI } from '../../services/firebaseAPI'; // Import API directly for upload
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,9 +37,19 @@ export default function BookingConfirmScreen({ route, navigation }) {
   const [paymentMethod, setPaymentMethod] = useState('jazzcash');
   const [isBooking, setIsBooking] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPaymentInstructions, setShowPaymentInstructions] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(30));
-  
+  const [screenshot, setScreenshot] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [paymentMode, setPaymentMode] = useState('advance'); // 'venue' or 'advance'
+
+  const paymentDetails = {
+    jazzcash: { name: 'JazzCash', accountName: 'Muhammad Usman Khan', accountNumber: '03058562523' },
+    easypaisa: { name: 'EasyPaisa', accountName: 'Muhammad Usman Khan', accountNumber: '03058562523' },
+    card: { name: 'Bank Transfer', accountName: 'Muhammad Usman Khan', accountNumber: '56565002675200', bankName: 'Bank Alfalah' }
+  };
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -57,30 +70,92 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
   const calculateTotal = () => {
     const basePrice = slot.price;
-    return {
-      basePrice,
-      total: basePrice
-    };
+
+    if (paymentMode === 'venue') {
+      return {
+        basePrice,
+        total: basePrice,
+        discount: 0,
+        advance: 0,
+        remaining: basePrice
+      };
+    } else {
+      // Advance payment mode - 5% discount
+      const discount = basePrice * 0.05;
+      const discountedTotal = basePrice - discount;
+      const ADVANCE_AMOUNT = 500;
+
+      return {
+        basePrice,
+        total: discountedTotal,
+        discount,
+        advance: ADVANCE_AMOUNT,
+        remaining: Math.max(0, discountedTotal - ADVANCE_AMOUNT)
+      };
+    }
   };
 
   const pricing = calculateTotal();
 
-  const handleConfirmBooking = async () => {
-    setIsBooking(true);
-    
+  const handleInitialConfirm = () => {
+    if (paymentMode === 'venue') {
+      // Direct confirm for venue payment
+      handleFinalConfirm();
+    } else {
+      // Show instructions for advance payment
+      setShowPaymentInstructions(true);
+    }
+  };
+
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.5,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+      setScreenshot(result.assets[0].uri);
+    }
+  };
+
+  const handleFinalConfirm = async () => {
+    if (paymentMode === 'advance') {
+      setUploading(true);
+    }
+    // don't close modal yet, wait for upload
+
     try {
+      let screenshotUrl = null;
+      if (paymentMode === 'advance' && screenshot) {
+        const filename = screenshot.substring(screenshot.lastIndexOf('/') + 1);
+        const uploadPath = `payment_proofs/${Date.now()}_${filename}`;
+        screenshotUrl = await turfAPI.uploadImage(screenshot, uploadPath);
+      }
+
+      setShowPaymentInstructions(false); // Close modal after upload success
+      setIsBooking(true);
+
       const bookingData = {
         turfId: turf.id,
         date: date,
         startTime: slot.startTime,
         endTime: slot.endTime,
         totalAmount: pricing.total,
-        paymentMethod: paymentMethod,
+        advancePaid: pricing.advance,
+        remainingAmount: pricing.remaining,
+        paymentMethod: paymentMode === 'advance' ? paymentMethod : 'cash_at_venue', // Online payment method for the advance
         slotType: slot.priceType,
+        paymentStatus: paymentMode === 'advance' ? 'partial' : 'pending', // Initial status is partial (advance paid)
+        paymentScreenshot: screenshotUrl
       };
 
       const result = await dispatch(createBooking(bookingData)).unwrap();
-      
+
       // Handle different booking responses
       if (result.requiresSignIn) {
         // Guest booking created, but requires sign in
@@ -103,26 +178,19 @@ export default function BookingConfirmScreen({ route, navigation }) {
         // Authenticated booking confirmed
         setShowSuccessModal(true);
       }
-      
+
     } catch (error) {
+      console.error("Booking Error:", error);
       Alert.alert(
         'Booking Failed',
-        error.message || 'The slot may have been taken by someone else. Please try another slot.',
+        error.message || 'Details could not be uploaded or slot taken. Please try again.',
         [
-          {
-            text: 'Try Again',
-            onPress: () => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                navigation.navigate('Home');
-              }
-            }
-          }
+          { text: 'OK' }
         ]
       );
     } finally {
       setIsBooking(false);
+      setUploading(false);
     }
   };
 
@@ -136,7 +204,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
   const formatDateTime = () => {
     try {
       const bookingDate = safeDate(date);
-      
+
       // Validate the date
       if (isNaN(bookingDate.getTime())) {
         console.error('❌ BookingConfirmScreen: Invalid date:', date);
@@ -146,7 +214,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
           time: `${slot.startTime} - ${slot.endTime}`
         };
       }
-      
+
       return {
         date: safeFormatDate(bookingDate, {
           weekday: 'long',
@@ -169,8 +237,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
     switch (method) {
       case 'jazzcash': return 'account-balance-wallet';
       case 'easypaisa': return 'payment';
-      case 'card': return 'credit-card';
-      case 'cash': return 'money';
+      case 'card': return 'account-balance'; // Changed icon for Bank Transfer
       default: return 'payment';
     }
   };
@@ -180,7 +247,6 @@ export default function BookingConfirmScreen({ route, navigation }) {
       case 'jazzcash': return '#FF6B35';
       case 'easypaisa': return '#00A651';
       case 'card': return '#1976D2';
-      case 'cash': return '#795548';
       default: return '#666';
     }
   };
@@ -190,19 +256,19 @@ export default function BookingConfirmScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
-      
+
       {/* Custom Header */}
       <SafeAreaView style={[styles.header, { backgroundColor: theme.colors.primary }]}>
         <View style={styles.headerContent}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => {
-            if (navigation.canGoBack()) {
-              navigation.goBack();
-            } else {
-              navigation.navigate('MainTabs');
-            }
-          }}
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('MainTabs');
+              }
+            }}
           >
             <MaterialIcons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
@@ -211,13 +277,13 @@ export default function BookingConfirmScreen({ route, navigation }) {
         </View>
       </SafeAreaView>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Venue Summary Card */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.animatedCard,
             {
@@ -235,15 +301,15 @@ export default function BookingConfirmScreen({ route, navigation }) {
                 <Text style={styles.venueName}>{turf.name}</Text>
                 <Text style={styles.venueAddress}>{turf.address}</Text>
               </View>
-              <Chip 
-                mode="outlined" 
+              <Chip
+                mode="outlined"
                 style={[styles.priceChip, { backgroundColor: `${theme.colors.secondary}30`, borderColor: theme.colors.primary }]}
                 textStyle={[styles.priceChipText, { color: theme.colors.primary }]}
               >
                 PKR {pricing.total.toLocaleString()}
               </Chip>
             </View>
-            
+
             <View style={styles.bookingDetails}>
               <View style={styles.detailItem}>
                 <MaterialIcons name="event" size={18} color="#666" />
@@ -261,8 +327,58 @@ export default function BookingConfirmScreen({ route, navigation }) {
           </Surface>
         </Animated.View>
 
+        {/* Payment Options Selection */}
+        <Animated.View
+          style={[
+            styles.animatedCard,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <Surface style={styles.paymentCard} elevation={1}>
+            <Text style={styles.sectionTitle}>Choose Payment Option</Text>
+
+            <TouchableOpacity
+              style={[
+                styles.paymentOption,
+                paymentMode === 'advance' && [styles.selectedPaymentOption, { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.secondary}20` }]
+              ]}
+              onPress={() => setPaymentMode('advance')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <MaterialIcons name="local-offer" size={24} color={theme.colors.primary} style={{ marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.paymentName, { color: theme.colors.primary }]}>Pay Advance & Save 5%</Text>
+                  <Text style={styles.paymentDesc}>Pay PKR 500 now, get discounted total</Text>
+                </View>
+                <Chip textStyle={{ fontSize: 10, height: 12, lineHeight: 12 }} style={{ backgroundColor: '#E8F5E9' }}>Save PKR {(pricing.basePrice * 0.05).toFixed(0)}</Chip>
+              </View>
+              <RadioButton value="advance" status={paymentMode === 'advance' ? 'checked' : 'unchecked'} color={theme.colors.primary} onPress={() => setPaymentMode('advance')} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.paymentOption,
+                paymentMode === 'venue' && [styles.selectedPaymentOption, { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.secondary}20` }]
+              ]}
+              onPress={() => setPaymentMode('venue')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <MaterialIcons name="storefront" size={24} color="#666" style={{ marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.paymentName}>Pay Full at Venue</Text>
+                  <Text style={styles.paymentDesc}>No advance payment required</Text>
+                </View>
+              </View>
+              <RadioButton value="venue" status={paymentMode === 'venue' ? 'checked' : 'unchecked'} color={theme.colors.primary} onPress={() => setPaymentMode('venue')} />
+            </TouchableOpacity>
+          </Surface>
+        </Animated.View>
+
         {/* Pricing Breakdown */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.animatedCard,
             {
@@ -273,82 +389,125 @@ export default function BookingConfirmScreen({ route, navigation }) {
         >
           <Surface style={styles.pricingCard} elevation={1}>
             <Text style={styles.sectionTitle}>Pricing Details</Text>
-            
+
             <View style={styles.priceBreakdown}>
               <View style={styles.priceRow}>
-                <Text style={styles.priceLabel}>Ground Fee ({slot.priceType})</Text>
-                <Text style={styles.priceValue}>PKR {pricing.basePrice.toLocaleString()}</Text>
+                <Text style={styles.priceLabel}>Slot Price</Text>
+                <Text style={[styles.priceValue, { textDecorationLine: paymentMode === 'advance' ? 'line-through' : 'none', color: paymentMode === 'advance' ? '#999' : '#333' }]}>
+                  PKR {pricing.basePrice.toLocaleString()}
+                </Text>
               </View>
-              
+
+              {paymentMode === 'advance' && (
+                <View style={styles.priceRow}>
+                  <Text style={[styles.priceLabel, { color: '#4CAF50' }]}>Discount (5%)</Text>
+                  <Text style={[styles.priceValue, { color: '#4CAF50' }]}>- PKR {pricing.discount.toLocaleString()}</Text>
+                </View>
+              )}
+
+              <View style={[styles.priceRow, { marginTop: 4 }]}>
+                <Text style={[styles.priceLabel, { fontWeight: 'bold', color: '#333' }]}>Total Amount</Text>
+                <Text style={[styles.priceValue, { fontWeight: 'bold', color: '#333' }]}>PKR {pricing.total.toLocaleString()}</Text>
+              </View>
+
               <Divider style={styles.priceDivider} />
-              
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total Amount</Text>
-                <Text style={[styles.totalValue, { color: theme.colors.primary }]}>PKR {pricing.total.toLocaleString()}</Text>
-              </View>
+
+              {paymentMode === 'advance' ? (
+                <>
+                  <View style={[styles.priceRow, { marginTop: 4 }]}>
+                    <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600' }]}>Advance Payment</Text>
+                    <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700' }]}>PKR {pricing.advance.toLocaleString()}</Text>
+                  </View>
+
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceLabel}>Balance Payable at Venue</Text>
+                    <Text style={styles.priceValue}>PKR {pricing.remaining.toLocaleString()}</Text>
+                  </View>
+                </>
+              ) : (
+                <View style={[styles.priceRow, { marginTop: 4 }]}>
+                  <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600' }]}>Payable at Venue</Text>
+                  <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700' }]}>PKR {pricing.total.toLocaleString()}</Text>
+                </View>
+              )}
+
             </View>
           </Surface>
         </Animated.View>
 
-        {/* Payment Methods */}
-        <Animated.View 
-          style={[
-            styles.animatedCard,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Surface style={styles.paymentCard} elevation={1}>
-            <Text style={styles.sectionTitle}>Choose Payment Method</Text>
-            
-            <RadioButton.Group 
-              onValueChange={setPaymentMethod} 
-              value={paymentMethod}
-            >
-              {[
-                { value: 'jazzcash', name: 'JazzCash', desc: 'Mobile wallet payment' },
-                { value: 'easypaisa', name: 'EasyPaisa', desc: 'Mobile wallet payment' },
-                { value: 'card', name: 'Debit/Credit Card', desc: 'Secure card payment' },
-                { value: 'cash', name: 'Pay at Venue', desc: 'Cash payment on arrival' }
-              ].map((method) => (
-                <TouchableOpacity
-                  key={method.value}
-                  style={[
-                    styles.paymentOption,
-                    paymentMethod === method.value && [styles.selectedPaymentOption, { 
-                      borderColor: theme.colors.primary, 
-                      backgroundColor: `${theme.colors.secondary}20` 
-                    }]
-                  ]}
-                  onPress={() => setPaymentMethod(method.value)}
-                >
-                  <View style={styles.paymentLeft}>
-                    <View style={[
-                      styles.paymentIconContainer,
-                      { backgroundColor: getPaymentColor(method.value) + '15' }
-                    ]}>
-                      <MaterialIcons 
-                        name={getPaymentIcon(method.value)} 
-                        size={20} 
-                        color={getPaymentColor(method.value)} 
-                      />
+        {/* Payment Methods - Only show if Advance Mode */}
+        {paymentMode === 'advance' && (
+          <Animated.View
+            style={[
+              styles.animatedCard,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            <Surface style={styles.paymentCard} elevation={1}>
+              <Text style={styles.sectionTitle}>Pay Advance With</Text>
+              <Text style={{ fontSize: 12, color: '#666', marginBottom: 10, fontStyle: 'italic' }}>Select a payment method to view account details</Text>
+
+              <RadioButton.Group
+                onValueChange={setPaymentMethod}
+                value={paymentMethod}
+              >
+                {[
+                  { value: 'jazzcash', name: 'JazzCash', desc: 'Mobile wallet payment' },
+                  { value: 'easypaisa', name: 'EasyPaisa', desc: 'Mobile wallet payment' },
+                  { value: 'card', name: 'Bank Transfer', desc: 'Direct Bank Transfer' },
+                ].map((method) => (
+                  <TouchableOpacity
+                    key={method.value}
+                    style={[
+                      styles.paymentOption,
+                      paymentMethod === method.value && [styles.selectedPaymentOption, {
+                        borderColor: theme.colors.primary,
+                        backgroundColor: `${theme.colors.secondary}20`
+                      }]
+                    ]}
+                    onPress={() => setPaymentMethod(method.value)}
+                  >
+                    <View style={styles.paymentLeft}>
+                      <View style={[
+                        styles.paymentIconContainer,
+                        { backgroundColor: getPaymentColor(method.value) + '15' }
+                      ]}>
+                        {method.value === 'jazzcash' ? (
+                          <Image
+                            source={require('../../images/lg-691c164eec616-JazzCash.webp')}
+                            style={{ width: 24, height: 24, resizeMode: 'contain' }}
+                          />
+                        ) : method.value === 'easypaisa' ? (
+                          <Image
+                            source={require('../../images/easypaisa-pay-logo-11685340011w1ndm8dzgj.png')}
+                            style={{ width: 24, height: 24, resizeMode: 'contain' }}
+                          />
+                        ) : (
+                          <MaterialIcons
+                            name={getPaymentIcon(method.value)}
+                            size={20}
+                            color={getPaymentColor(method.value)}
+                          />
+                        )}
+                      </View>
+                      <View style={styles.paymentInfo}>
+                        <Text style={styles.paymentName}>{method.name}</Text>
+                        <Text style={styles.paymentDesc}>{method.desc}</Text>
+                      </View>
                     </View>
-                    <View style={styles.paymentInfo}>
-                      <Text style={styles.paymentName}>{method.name}</Text>
-                      <Text style={styles.paymentDesc}>{method.desc}</Text>
-                    </View>
-                  </View>
-                  <RadioButton value={method.value} color={theme.colors.primary} />
-                </TouchableOpacity>
-              ))}
-            </RadioButton.Group>
-          </Surface>
-        </Animated.View>
+                    <RadioButton value={method.value} color={theme.colors.primary} />
+                  </TouchableOpacity>
+                ))}
+              </RadioButton.Group>
+            </Surface>
+          </Animated.View>
+        )}
 
         {/* Important Information */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.animatedCard,
             {
@@ -359,26 +518,32 @@ export default function BookingConfirmScreen({ route, navigation }) {
         >
           <Surface style={styles.infoCard} elevation={1}>
             <Text style={styles.sectionTitle}>Important Information</Text>
-            
+
             <View style={styles.infoList}>
+              {paymentMode === 'advance' && (
+                <View style={styles.infoItem}>
+                  <MaterialIcons name="info" size={16} color={theme.colors.primary} />
+                  <Text style={styles.infoText}>Advance payment of PKR {pricing.advance} is non-refundable if cancelled within 2 hours of slot.</Text>
+                </View>
+              )}
+
+              <View style={styles.infoItem}>
+                <MaterialIcons name="check-circle" size={16} color="#4CAF50" />
+                <Text style={styles.infoText}>
+                  {paymentMode === 'advance'
+                    ? `Remaining PKR ${pricing.remaining} to be paid at the venue.`
+                    : `Full amount based on venue rates to be paid at the venue.`}
+                </Text>
+              </View>
+
               <View style={styles.infoItem}>
                 <MaterialIcons name="access-time" size={16} color="#FF9800" />
                 <Text style={styles.infoText}>Arrive 10 minutes before your slot</Text>
               </View>
-              
-              <View style={styles.infoItem}>
-                <MaterialIcons name="cancel" size={16} color="#F44336" />
-                <Text style={styles.infoText}>Free cancellation up to 2 hours before</Text>
-              </View>
-              
+
               <View style={styles.infoItem}>
                 <MaterialIcons name="phone" size={16} color={theme.colors.primary} />
                 <Text style={styles.infoText}>Contact: {turf.phoneNumber}</Text>
-              </View>
-              
-              <View style={styles.infoItem}>
-                <MaterialIcons name="verified" size={16} color="#2196F3" />
-                <Text style={styles.infoText}>Booking confirmation via SMS</Text>
               </View>
             </View>
           </Surface>
@@ -388,26 +553,142 @@ export default function BookingConfirmScreen({ route, navigation }) {
       {/* Bottom Action */}
       <View style={styles.bottomAction}>
         <View style={styles.totalSummary}>
-          <Text style={styles.totalSummaryLabel}>Total Amount</Text>
-          <Text style={[styles.totalSummaryValue, { color: theme.colors.primary }]}>PKR {pricing.total.toLocaleString()}</Text>
+          <Text style={styles.totalSummaryLabel}>{paymentMode === 'advance' ? 'Advance Payable' : 'Payable at Venue'}</Text>
+          <Text style={[styles.totalSummaryValue, { color: theme.colors.primary }]}>
+            PKR {paymentMode === 'advance' ? pricing.advance.toLocaleString() : pricing.total.toLocaleString()}
+          </Text>
         </View>
         <Button
           mode="contained"
-          onPress={handleConfirmBooking}
+          onPress={handleInitialConfirm}
           loading={isBooking}
           disabled={isBooking}
           style={[styles.confirmButton, { backgroundColor: theme.colors.primary }]}
           contentStyle={styles.confirmButtonContent}
           labelStyle={[styles.confirmButtonLabel, { color: theme.colors.secondary }]}
         >
-          {isBooking ? 'Processing...' : 'Confirm & Pay'}
+          {isBooking ? 'Processing...' : (paymentMode === 'advance' ? `Pay ${pricing.advance} & Confirm` : 'Confirm Booking')}
         </Button>
       </View>
 
+      {/* Payment Instructions Modal */}
+      <Portal>
+        <Modal
+          visible={showPaymentInstructions}
+          onDismiss={() => setShowPaymentInstructions(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Surface style={styles.successModal} elevation={4}>
+            <Text style={styles.successTitle}>Payment Instructions</Text>
+            <Text style={[styles.successMessage, { marginBottom: 10 }]}>
+              Please send <Text style={{ fontWeight: 'bold' }}>PKR {pricing.advance}</Text> to the following account:
+            </Text>
+
+            <View style={{
+              backgroundColor: '#F5F5F5',
+              padding: 16,
+              borderRadius: 12,
+              width: '100%',
+              marginBottom: 24,
+              borderWidth: 1,
+              borderColor: '#E0E0E0'
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                {paymentMethod === 'jazzcash' ? (
+                  <Image
+                    source={require('../../images/lg-691c164eec616-JazzCash.webp')}
+                    style={{ width: 40, height: 40, resizeMode: 'contain', marginRight: 12 }}
+                  />
+                ) : paymentMethod === 'easypaisa' ? (
+                  <Image
+                    source={require('../../images/easypaisa-pay-logo-11685340011w1ndm8dzgj.png')}
+                    style={{ width: 40, height: 40, resizeMode: 'contain', marginRight: 12 }}
+                  />
+                ) : (
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#E3F2FD', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                    <MaterialIcons name="account-balance" size={24} color="#1976D2" />
+                  </View>
+                )}
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{paymentDetails[paymentMethod]?.name}</Text>
+              </View>
+
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontSize: 12, color: '#666' }}>Account Title</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>{paymentDetails[paymentMethod]?.accountName}</Text>
+              </View>
+
+              {paymentDetails[paymentMethod]?.bankName && (
+                <View style={{ marginBottom: 8 }}>
+                  <Text style={{ fontSize: 12, color: '#666' }}>Bank Name</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>{paymentDetails[paymentMethod]?.bankName}</Text>
+                </View>
+              )}
+
+              <View>
+                <Text style={{ fontSize: 12, color: '#666' }}>Account Number</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.colors.primary, letterSpacing: 1 }}>
+                    {paymentDetails[paymentMethod]?.accountNumber}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Screenshot Upload Section */}
+            <View style={{ width: '100%', marginBottom: 24 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 }}>Upload Payment Proof (Optional)</Text>
+              <TouchableOpacity
+                onPress={pickImage}
+                style={{
+                  height: 120,
+                  backgroundColor: '#F5F5F5',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#E0E0E0',
+                  borderStyle: 'dashed',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  overflow: 'hidden'
+                }}
+              >
+                {screenshot ? (
+                  <Image source={{ uri: screenshot }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                ) : (
+                  <View style={{ alignItems: 'center' }}>
+                    <MaterialIcons name="cloud-upload" size={32} color="#999" />
+                    <Text style={{ color: '#666', marginTop: 8 }}>Tap to upload screenshot</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ width: '100%', gap: 10 }}>
+              <Button
+                mode="contained"
+                onPress={handleFinalConfirm}
+                style={[styles.successButton, { backgroundColor: theme.colors.primary, width: '100%' }]}
+                contentStyle={{ paddingVertical: 8 }}
+                labelStyle={{ color: theme.colors.secondary, fontSize: 16, fontWeight: 'bold' }}
+              >
+                I have sent the payment
+              </Button>
+
+              <Button
+                mode="text"
+                onPress={() => setShowPaymentInstructions(false)}
+                color="#666"
+              >
+                Cancel
+              </Button>
+            </View>
+          </Surface>
+        </Modal>
+      </Portal>
+
       {/* Success Modal */}
       <Portal>
-        <Modal 
-          visible={showSuccessModal} 
+        <Modal
+          visible={showSuccessModal}
           onDismiss={handleSuccessModalClose}
           contentContainerStyle={styles.modalContainer}
         >
@@ -417,7 +698,9 @@ export default function BookingConfirmScreen({ route, navigation }) {
             </View>
             <Text style={styles.successTitle}>Booking Confirmed!</Text>
             <Text style={styles.successMessage}>
-              Your ground has been booked successfully. You will receive a confirmation SMS shortly.
+              {paymentMode === 'advance'
+                ? `Your advance payment was successful. Please pay the remaining PKR ${pricing.remaining} at the venue.`
+                : `Booking confirmed! Please pay PKR ${pricing.total} at the venue.`}
             </Text>
             <Button
               mode="contained"

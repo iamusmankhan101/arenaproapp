@@ -626,18 +626,33 @@ export default function TurfDetailScreen({ route, navigation }) {
                 <TouchableOpacity
                   style={styles.directionsButton}
                   onPress={() => {
-                    // Try multiple possible coordinate locations
-                    const coords = venue.coordinates || rawVenue.coordinates || selectedTurf?.coordinates;
+                    // Start with explicit coordinates object
+                    let lat = venue.coordinates?.latitude || rawVenue.coordinates?.latitude || selectedTurf?.coordinates?.latitude;
+                    let lng = venue.coordinates?.longitude || rawVenue.coordinates?.longitude || selectedTurf?.coordinates?.longitude;
+
+                    // Fallback 1: Check if latitude/longitude exist directly on the object
+                    if (!lat || !lng) {
+                      lat = venue.latitude || rawVenue.latitude || selectedTurf?.latitude;
+                      lng = venue.longitude || rawVenue.longitude || selectedTurf?.longitude;
+                    }
+
+                    // Fallback 2: Check inside location object
+                    if (!lat || !lng) {
+                      const loc = venue.location || rawVenue.location || selectedTurf?.location;
+                      if (typeof loc === 'object') {
+                        lat = loc?.latitude;
+                        lng = loc?.longitude;
+                      }
+                    }
+
                     console.log('🗺️ Directions button pressed:', {
                       venueCoords: venue.coordinates,
-                      rawCoords: rawVenue.coordinates,
-                      selectedCoords: selectedTurf?.coordinates,
-                      finalCoords: coords
+                      directCoords: { lat: venue.latitude, lng: venue.longitude },
+                      locationCoords: venue.location,
+                      resolved: { lat, lng }
                     });
 
-                    if (coords && coords.latitude && coords.longitude) {
-                      const lat = coords.latitude;
-                      const lng = coords.longitude;
+                    if (lat && lng) {
                       const url = Platform.select({
                         ios: `maps:0,0?q=${lat},${lng}`,
                         android: `geo:0,0?q=${lat},${lng}(${venue.name})`
@@ -648,7 +663,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                         Alert.alert('Error', 'Unable to open maps');
                       });
                     } else {
-                      console.error('❌ No valid coordinates found');
+                      console.error('❌ No valid coordinates found', { venue });
                       Alert.alert('Error', 'Location coordinates not available');
                     }
                   }}
@@ -789,7 +804,8 @@ export default function TurfDetailScreen({ route, navigation }) {
             </View>
           </View>
         </ScrollView>
-      )}
+      )
+      }
 
       {/* Bottom Book Button */}
       <View style={styles.bottomContainer}>
@@ -1099,7 +1115,7 @@ export default function TurfDetailScreen({ route, navigation }) {
           </Card>
         </Modal>
       </Portal>
-    </View>
+    </View >
   );
 }
 

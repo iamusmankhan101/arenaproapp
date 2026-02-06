@@ -15,7 +15,8 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db, storage } from '../config/firebase';
 import { safeDate, isValidDate, safeDateString, safeToISOString, safeFirestoreTimestampToISO } from '../utils/dateUtils';
 
 // Helper function to serialize Firestore data and handle timestamps
@@ -345,7 +346,9 @@ export const bookingAPI = {
           userId: guestId,
           userType: 'guest',
           status: 'pending', // Guest bookings start as pending
-          paymentStatus: 'pending',
+          paymentStatus: bookingData.advancePaid ? 'partial' : 'pending',
+          advancePaid: bookingData.advancePaid || 0,
+          remainingAmount: bookingData.remainingAmount || 0,
           bookingReference: `PIT${Date.now().toString().slice(-6)}`,
           createdAt: serverTimestamp(),
           guestInfo: {
@@ -361,7 +364,7 @@ export const bookingAPI = {
             id: bookingRef.id,
             ...bookingData,
             status: 'pending',
-            paymentStatus: 'pending',
+            paymentStatus: bookingData.advancePaid ? 'partial' : 'pending',
             bookingReference: `PIT${Date.now().toString().slice(-6)}`,
             requiresSignIn: true,
             message: 'Booking created! Please sign in to complete your booking.'
@@ -494,24 +497,39 @@ export const bookingAPI = {
           const { isEligibleForReferralDiscount, isReferrerEligibleForReward, REFERRAL_CONSTANTS, calculateDiscountedTotal } = require('../utils/referralUtils');
           const { applyReferralReward, markReferralCompleted } = require('./referralService');
 
-          // Check if user is eligible for referral discount (first booking + was referred)
-          if (isEligibleForReferralDiscount(userData)) {
-            console.log('✅ REFERRAL: User is eligible for referral discount!');
+          // Case 1: Start with max booking total
 
-            // Apply discount
+
+          // Case 2: Check if user is eligible for New User Discount (first booking + was referred)
+          if (isEligibleForReferralDiscount(userData)) {
+            console.log('✅ REFERRAL: User is eligible for NEW USER discount!');
+
             const discountResult = calculateDiscountedTotal(finalTotalAmount, REFERRAL_CONSTANTS.NEW_USER_DISCOUNT);
             referralDiscount = discountResult.discountApplied;
             finalTotalAmount = discountResult.finalTotal;
             referralApplied = true;
 
-            console.log(`💰 REFERRAL: Applied Rs. ${referralDiscount} discount. New total: Rs. ${finalTotalAmount}`);
+            console.log(`💰 REFERRAL: Applied Rs. ${referralDiscount} new user discount`);
+          }
+          // Case 3: Check if user is eligible for Referrer Reward (2nd booking discount)
+          else if (userData.referralDiscountEligible) {
+            console.log('✅ REFERRAL: User is eligible for REFERRER REWARD discount!');
+
+            const discountResult = calculateDiscountedTotal(finalTotalAmount, REFERRAL_CONSTANTS.REFERRER_REWARD);
+            referralDiscount = discountResult.discountApplied;
+            finalTotalAmount = discountResult.finalTotal;
+            referralApplied = true;
+
+            // Mark discount as used immediately in local state, update in DB later
+            console.log(`💰 REFERRAL: Applied Rs. ${referralDiscount} referrer discount`);
           }
 
-          // Check if referrer should get reward (user just completed first booking)
+          // Check if referrer should indicate reward (user just completed first booking)
+          // Note context: This runs when the referee completes THEIR booking
           if (isReferrerEligibleForReward(userData)) {
             console.log('🎁 REFERRAL: User completed first booking, rewarding referrer!');
 
-            // Apply reward to referrer
+            // Apply reward to referrer (mark them eligible for THEIR next booking)
             const rewardResult = await applyReferralReward(
               userData.referredBy,
               user.uid,
@@ -519,22 +537,33 @@ export const bookingAPI = {
             );
 
             if (rewardResult.success) {
-              console.log(`✅ REFERRAL: Referrer rewarded with Rs. ${REFERRAL_CONSTANTS.REFERRER_REWARD}`);
+              console.log(`✅ REFERRAL: Referrer rewarded with eligibility for Rs. ${REFERRAL_CONSTANTS.REFERRER_REWARD} off`);
             }
           }
 
-          // Mark referral as completed and set first booking flag
-          if (userData.referredBy && !userData.hasCompletedFirstBooking) {
-            await markReferralCompleted(user.uid);
-            console.log('✅ REFERRAL: Marked referral as completed');
-          } else if (!userData.hasCompletedFirstBooking) {
-            // Just mark first booking as complete for non-referred users
-            await updateDoc(doc(db, 'users', user.uid), {
-              hasCompletedFirstBooking: true,
-              updatedAt: serverTimestamp()
-            });
-            console.log('✅ REFERRAL: Marked first booking as complete');
+          // Update User Data: Mark referral completed, increment booking count, consume discount
+          const userUpdates = {
+            bookingCount: increment(1), // Always increment booking count
+            updatedAt: serverTimestamp()
+          };
+
+          // If this was their first booking (whether referred or not)
+          if (!userData.hasCompletedFirstBooking) {
+            userUpdates.hasCompletedFirstBooking = true;
+            if (userData.referredBy) {
+              userUpdates.referralStatus = 'COMPLETED';
+            }
           }
+
+          // If they used a referrer discount, consume it
+          if (userData.referralDiscountEligible && referralApplied && !isEligibleForReferralDiscount(userData)) {
+            userUpdates.referralDiscountEligible = false; // Consume the discount
+            userUpdates.referralDiscountUsed = true; // Track usage logic
+          }
+
+          await updateDoc(doc(db, 'users', user.uid), userUpdates);
+          console.log('✅ USER UPDATES: Incremented booking count and updated referral status');
+
         }
       } catch (referralError) {
         console.error('⚠️ REFERRAL: Error processing referral logic:', referralError);
@@ -549,7 +578,9 @@ export const bookingAPI = {
         userId: user.uid,
         userType: 'authenticated',
         status: 'confirmed',
-        paymentStatus: 'paid',
+        paymentStatus: bookingData.advancePaid ? 'partial' : 'paid', // 'partial' if advance paid, 'paid' if full (though logic enforces advance now)
+        advancePaid: bookingData.advancePaid || 0,
+        remainingAmount: bookingData.remainingAmount || 0,
         bookingReference: bookingId,
         bookingId: bookingId,
         dateTime: bookingDateTime.toISOString(),
@@ -580,9 +611,11 @@ export const bookingAPI = {
           id: bookingRef.id,
           ...cleanBookingData,
           requiresSignIn: false,
-          message: referralApplied
-            ? `Booking confirmed! You saved Rs. ${referralDiscount} with your referral code!`
-            : 'Booking confirmed successfully!'
+          message: bookingData.advancePaid
+            ? `Booking confirmed! Advance paid. Balance due: Rs. ${bookingData.remainingAmount}`
+            : (referralApplied
+              ? `Booking confirmed! You saved Rs. ${referralDiscount} with your referral code!`
+              : 'Booking confirmed successfully!')
         }
       };
 

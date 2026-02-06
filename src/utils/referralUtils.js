@@ -5,11 +5,12 @@
 
 // Referral system constants
 export const REFERRAL_CONSTANTS = {
-    NEW_USER_DISCOUNT: 300,      // Rs. 300 off first booking
-    REFERRER_REWARD: 300,         // Rs. 300 wallet credit for referrer
+    NEW_USER_DISCOUNT: 300,      // Rs. 300 off first booking for new user
+    REFERRER_REWARD: 300,         // Rs. 300 off 2nd booking for referrer
     CODE_LENGTH: 7,               // Format: HAMZ-582 (4 letters + dash + 3 digits)
     MIN_NAME_LENGTH: 2,
     MAX_NAME_LENGTH: 4,
+    MIN_BOOKINGS_FOR_REFERRAL: 1, // User needs 1 completed booking to get referral code
 };
 
 /**

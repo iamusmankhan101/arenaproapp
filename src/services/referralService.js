@@ -62,15 +62,15 @@ export const verifyReferralCode = async (code) => {
 };
 
 /**
- * Apply referral reward to referrer's wallet
+ * Apply referral reward to referrer (eligible for 2nd booking discount)
  * @param {string} referrerId - ID of the user who referred
  * @param {string} refereeId - ID of the user who was referred
  * @param {string} refereeName - Name of the user who was referred
- * @returns {Promise<{success: boolean, newBalance: number}>}
+ * @returns {Promise<{success: boolean}>}
  */
 export const applyReferralReward = async (referrerId, refereeId, refereeName) => {
     try {
-        console.log('💰 Applying referral reward to:', referrerId, 'for referring:', refereeName);
+        console.log('🎁 Marking referrer eligible for reward:', referrerId, 'for referring:', refereeName);
 
         const referrerRef = doc(db, 'users', referrerId);
 
@@ -79,25 +79,24 @@ export const applyReferralReward = async (referrerId, refereeId, refereeName) =>
             userId: refereeId,
             userName: refereeName,
             completedAt: new Date().toISOString(),
-            rewardAmount: REFERRAL_CONSTANTS.REFERRER_REWARD,
+            rewardType: 'BOOKING_DISCOUNT',
+            discountAmount: REFERRAL_CONSTANTS.REFERRER_REWARD,
         };
 
-        // Update referrer's wallet and add to referral history
+        // Update referrer's document to mark them eligible for 2nd booking discount
+        // We only set this if they haven't already used it or if we want to stack them (assuming 1 active at a time for now)
         await updateDoc(referrerRef, {
-            walletBalance: increment(REFERRAL_CONSTANTS.REFERRER_REWARD),
             referralHistory: arrayUnion(referralEntry),
+            referralDiscountEligible: true, // Mark eligible for discount
+            referralDiscountBookingNumber: 2, // Specifically for their 2nd booking (or next if they have more)
             updatedAt: serverTimestamp(),
         });
 
-        // Get updated balance
-        const updatedDoc = await getDoc(referrerRef);
-        const newBalance = updatedDoc.data()?.walletBalance || REFERRAL_CONSTANTS.REFERRER_REWARD;
-
-        console.log('✅ Referral reward applied. New balance:', newBalance);
-        return { success: true, newBalance };
+        console.log('✅ Referrer marked eligible for discount on next booking');
+        return { success: true };
     } catch (error) {
         console.error('❌ Error applying referral reward:', error);
-        return { success: false, newBalance: 0 };
+        return { success: false };
     }
 };
 

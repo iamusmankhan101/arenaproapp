@@ -18,6 +18,9 @@ import {
   VenueCardSkeleton,
   ChallengeCardSkeleton
 } from '../../components/SkeletonLoader';
+import { generateReferralCode } from '../../utils/referralUtils';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 
 // Header slider images
 const headerImages = [
@@ -104,6 +107,37 @@ export default function HomeScreen({ navigation }) {
       setNotification({ message, type });
     });
   }, [dispatch]);
+
+  // Generate referral code for existing users who don't have one
+  useEffect(() => {
+    const generateMissingReferralCode = async () => {
+      // Only generate referral code if user has completed at least 1 booking
+      if (user && user.uid && !user.myReferralCode && user.fullName) {
+        const bookingCount = user.bookingCount || 0;
+
+        if (bookingCount >= 1) {
+          try {
+            console.log('🎁 Generating referral code for user with', bookingCount, 'bookings');
+            const newReferralCode = generateReferralCode(user.fullName);
+
+            // Update user document in Firestore
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, {
+              myReferralCode: newReferralCode,
+            });
+
+            console.log('✅ Referral code generated and saved:', newReferralCode);
+          } catch (error) {
+            console.error('❌ Error generating referral code:', error);
+          }
+        } else {
+          console.log('ℹ️ User needs to complete at least 1 booking to get a referral code');
+        }
+      }
+    };
+
+    generateMissingReferralCode();
+  }, [user]);
 
   // Reload venues when screen comes into focus (when returning from other screens)
   useFocusEffect(
@@ -561,15 +595,13 @@ export default function HomeScreen({ navigation }) {
       )}
 
       {/* Floating Referral Button */}
-      {user?.myReferralCode && (
-        <TouchableOpacity
-          style={styles.floatingButton}
-          onPress={() => setShowReferralModal(true)}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons name="card-giftcard" size={28} color="#e8ee26" />
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => setShowReferralModal(true)}
+        activeOpacity={0.8}
+      >
+        <MaterialIcons name="card-giftcard" size={28} color="#e8ee26" />
+      </TouchableOpacity>
 
       {/* Referral Modal */}
       <Modal
@@ -600,51 +632,94 @@ export default function HomeScreen({ navigation }) {
 
             {/* Modal Body */}
             <View style={styles.modalBody}>
-              <Text style={styles.modalTitle}>Refer & Earn!</Text>
-              <Text style={styles.modalSubtitle}>
-                Share your referral code with friends and both get Rs. 300 off your first booking!
-              </Text>
+              {(user?.bookingCount || 0) >= 1 ? (
+                <>
+                  <Text style={styles.modalTitle}>Refer & Earn!</Text>
+                  <Text style={styles.modalSubtitle}>
+                    Share your referral code with friends! They get Rs. 300 off their 1st booking, and you get Rs. 300 off your 2nd booking after they complete theirs!
+                  </Text>
 
-              {/* Referral Code Display */}
-              <View style={styles.referralCodeContainer}>
-                <Text style={styles.referralCodeLabel}>Your Referral Code</Text>
-                <View style={styles.referralCodeBox}>
-                  <Text style={styles.referralCodeText}>{user?.myReferralCode}</Text>
-                </View>
-              </View>
+                  {/* Referral Code Display */}
+                  <View style={styles.referralCodeContainer}>
+                    <Text style={styles.referralCodeLabel}>Your Referral Code</Text>
+                    <View style={styles.referralCodeBox}>
+                      {user?.myReferralCode ? (
+                        <Text style={styles.referralCodeText}>{user.myReferralCode}</Text>
+                      ) : (
+                        <Text style={styles.referralCodePlaceholder}>Generating your code...</Text>
+                      )}
+                    </View>
+                  </View>
 
-              {/* Benefits */}
-              <View style={styles.benefitsContainer}>
-                <View style={styles.benefitItem}>
-                  <MaterialIcons name="check-circle" size={20} color="#6BCF7F" />
-                  <Text style={styles.benefitText}>Your friend gets Rs. 300 off</Text>
-                </View>
-                <View style={styles.benefitItem}>
-                  <MaterialIcons name="check-circle" size={20} color="#6BCF7F" />
-                  <Text style={styles.benefitText}>You earn Rs. 500 reward</Text>
-                </View>
-              </View>
+                  {/* Benefits */}
+                  <View style={styles.benefitsContainer}>
+                    <View style={styles.benefitItem}>
+                      <MaterialIcons name="check-circle" size={20} color="#6BCF7F" />
+                      <Text style={styles.benefitText}>Your friend gets Rs. 300 off their 1st booking</Text>
+                    </View>
+                    <View style={styles.benefitItem}>
+                      <MaterialIcons name="check-circle" size={20} color="#6BCF7F" />
+                      <Text style={styles.benefitText}>You get Rs. 300 off your 2nd booking</Text>
+                    </View>
+                  </View>
 
-              {/* Action Buttons */}
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={styles.copyButton}
-                  onPress={handleCopyReferralCode}
-                  activeOpacity={0.8}
-                >
-                  <MaterialIcons name="content-copy" size={20} color="#004d43" />
-                  <Text style={styles.copyButtonText}>Copy Code</Text>
-                </TouchableOpacity>
+                  {/* Action Buttons */}
+                  {user?.myReferralCode && (
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        style={styles.copyButton}
+                        onPress={handleCopyReferralCode}
+                        activeOpacity={0.8}
+                      >
+                        <MaterialIcons name="content-copy" size={20} color="#004d43" />
+                        <Text style={styles.copyButtonText}>Copy Code</Text>
+                      </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.shareButton}
-                  onPress={handleShareReferralCode}
-                  activeOpacity={0.8}
-                >
-                  <MaterialIcons name="share" size={20} color="#fff" />
-                  <Text style={styles.shareButtonText}>Share</Text>
-                </TouchableOpacity>
-              </View>
+                      <TouchableOpacity
+                        style={styles.shareButton}
+                        onPress={handleShareReferralCode}
+                        activeOpacity={0.8}
+                      >
+                        <MaterialIcons name="share" size={20} color="#fff" />
+                        <Text style={styles.shareButtonText}>Share</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.modalTitle}>Complete Your First Booking!</Text>
+                  <Text style={styles.modalSubtitle}>
+                    You need to complete at least 1 booking before you can start referring friends and earning rewards.
+                  </Text>
+
+                  {/* Locked State */}
+                  <View style={styles.lockedContainer}>
+                    <MaterialIcons name="lock" size={60} color="#ccc" />
+                    <Text style={styles.lockedText}>Referral Code Locked</Text>
+                    <Text style={styles.lockedSubtext}>
+                      Complete your first booking to unlock your unique referral code!
+                    </Text>
+                  </View>
+
+                  {/* What You'll Get */}
+                  <View style={styles.benefitsContainer}>
+                    <Text style={styles.benefitsTitle}>What you'll get after unlocking:</Text>
+                    <View style={styles.benefitItem}>
+                      <MaterialIcons name="card-giftcard" size={20} color="#004d43" />
+                      <Text style={styles.benefitText}>Your unique referral code</Text>
+                    </View>
+                    <View style={styles.benefitItem}>
+                      <MaterialIcons name="people" size={20} color="#004d43" />
+                      <Text style={styles.benefitText}>Rs. 300 off for your friends</Text>
+                    </View>
+                    <View style={styles.benefitItem}>
+                      <MaterialIcons name="monetization-on" size={20} color="#004d43" />
+                      <Text style={styles.benefitText}>Rs. 300 off your 2nd booking</Text>
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -1100,5 +1175,200 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 20,
     fontFamily: 'Montserrat_400Regular',
+  },
+  // Floating Referral Button Styles
+  floatingButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#004d43',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    zIndex: 9999,
+  },
+  // Referral Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  modalIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#e8ee26',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  modalTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#004d43',
+    marginBottom: 8,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 24,
+    lineHeight: 20,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  referralCodeContainer: {
+    marginBottom: 24,
+  },
+  referralCodeLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
+    fontFamily: 'Montserrat_500Medium',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  referralCodeBox: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#004d43',
+    borderStyle: 'dashed',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  referralCodeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#004d43',
+    letterSpacing: 2,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  referralCodePlaceholder: {
+    fontSize: 16,
+    color: '#999',
+    fontStyle: 'italic',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  benefitsContainer: {
+    marginBottom: 24,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+  },
+  benefitsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#004d43',
+    marginBottom: 12,
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  benefitText: {
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 12,
+    fontFamily: 'Montserrat_500Medium',
+    flex: 1,
+  },
+  lockedContainer: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    marginBottom: 24,
+  },
+  lockedText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 16,
+    marginBottom: 8,
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  lockedSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  copyButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#e8ee26',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  copyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#004d43',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  shareButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#004d43',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  shareButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    fontFamily: 'Montserrat_600SemiBold',
   },
 });
