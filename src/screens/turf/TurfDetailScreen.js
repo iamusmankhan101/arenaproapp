@@ -60,6 +60,7 @@ export default function TurfDetailScreen({ route, navigation }) {
   const [userRating, setUserRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [reviews, setReviews] = useState([]);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
 
   const dispatch = useDispatch();
@@ -481,6 +482,8 @@ export default function TurfDetailScreen({ route, navigation }) {
       return;
     }
 
+    setIsSubmittingReview(true);
+
     try {
       // 1. Add the new review to the subcollection
       const reviewsRef = collection(db, 'venues', turfId, 'reviews');
@@ -529,6 +532,8 @@ export default function TurfDetailScreen({ route, navigation }) {
     } catch (error) {
       console.error('Error submitting review:', error);
       Alert.alert('Error', 'Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -1115,6 +1120,8 @@ export default function TurfDetailScreen({ route, navigation }) {
                       contentStyle={styles.buttonContent}
                       labelStyle={{ fontFamily: 'Montserrat_700Bold' }}
                       icon="send"
+                      loading={isSubmittingReview}
+                      disabled={isSubmittingReview}
                     >
                       Submit Review
                     </Button>
