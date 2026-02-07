@@ -27,7 +27,7 @@ export default function SignUpScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedCity, setSelectedCity] = useState('Lahore');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -76,16 +76,7 @@ export default function SignUpScreen({ navigation }) {
   }, [response, dispatch]);
 
   const cities = [
-    'Lahore',
-    'Karachi',
-    'Islamabad',
-    'Rawalpindi',
-    'Faisalabad',
-    'Multan',
-    'Peshawar',
-    'Quetta',
-    'Gujranwala',
-    'Sialkot'
+    'Lahore'
   ];
 
   // Clear error when component mounts
