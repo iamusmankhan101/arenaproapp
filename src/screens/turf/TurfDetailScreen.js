@@ -53,7 +53,7 @@ export default function TurfDetailScreen({ route, navigation }) {
     }
     return today;
   });
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
 
   // Review states
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -335,19 +335,47 @@ export default function TurfDetailScreen({ route, navigation }) {
     console.log('🎯 TurfDetailScreen: Opening booking modal, clearing cache');
     // Clear any cached slots and force fresh fetch
     dispatch(clearAvailableSlots());
-    setSelectedTimeSlot(null);
+    setSelectedTimeSlots([]);
     setShowTimeSlots(true);
   };
 
   const handleTimeSlotSelect = (slot) => {
-    if (slot.available) {
-      setSelectedTimeSlot(slot);
-    }
+    if (!slot.available) return;
+
+    setSelectedTimeSlots(prev => {
+      const exists = prev.find(s => s.id === slot.id);
+      if (exists) {
+        // Deselect
+        return prev.filter(s => s.id !== slot.id);
+      } else {
+        // Select and sort by start time
+        const newSelection = [...prev, slot].sort((a, b) => {
+          return a.startTime.localeCompare(b.startTime);
+        });
+        return newSelection;
+      }
+    });
   };
 
   const handleConfirmBooking = () => {
-    if (!selectedTimeSlot) {
-      Alert.alert('Error', 'Please select a time slot');
+    if (selectedTimeSlots.length === 0) {
+      Alert.alert('Error', 'Please select at least one time slot');
+      return;
+    }
+
+    // Validate continuity
+    // Assuming slots are already sorted by time in state update
+    const isContiguous = selectedTimeSlots.every((slot, index) => {
+      if (index === 0) return true;
+      const prevSlot = selectedTimeSlots[index - 1];
+      // Simple check: current start should equal prev end
+      // Note: This assumes standard formatting logic. 
+      // If end time is "06:00" and next start is "06:00", it matches.
+      return slot.startTime === prevSlot.endTime;
+    });
+
+    if (!isContiguous) {
+      Alert.alert('Invalid Selection', 'Please select consecutive time slots for a single booking.');
       return;
     }
 
@@ -368,6 +396,24 @@ export default function TurfDetailScreen({ route, navigation }) {
 
     console.log('🎯 TurfDetailScreen: Date string for booking:', dateString);
 
+    // Merge slots for the next screen
+    const firstSlot = selectedTimeSlots[0];
+    const lastSlot = selectedTimeSlots[selectedTimeSlots.length - 1];
+    const totalPrice = selectedTimeSlots.reduce((sum, s) => sum + s.price, 0);
+
+    // Determine mixed price type if applicable
+    const uniquePriceTypes = [...new Set(selectedTimeSlots.map(s => getPriceType(s.time || s.startTime)))];
+    const combinedPriceType = uniquePriceTypes.join(' / ');
+
+    const mergedSlot = {
+      ...firstSlot,
+      startTime: firstSlot.time || firstSlot.startTime,
+      endTime: lastSlot.endTime,
+      price: totalPrice,
+      priceType: combinedPriceType, // e.g. "Day / Evening"
+      originalSlots: selectedTimeSlots
+    };
+
     const bookingData = {
       turf: {
         id: venue.id,
@@ -375,12 +421,7 @@ export default function TurfDetailScreen({ route, navigation }) {
         address: venue.location,
         phoneNumber: '+92 300 1234567'
       },
-      slot: {
-        startTime: selectedTimeSlot.time,
-        endTime: selectedTimeSlot.endTime,
-        price: selectedTimeSlot.price,
-        priceType: getPriceType(selectedTimeSlot.time)
-      },
+      slot: mergedSlot,
       date: dateString // Use safe date string
     };
 
@@ -544,6 +585,8 @@ export default function TurfDetailScreen({ route, navigation }) {
   };
 
   const formatReviewDate = (date) => {
+    if (!date) return '';
+
     const now = new Date();
     // Reset time to start of day for accurate day comparison
     const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -555,6 +598,8 @@ export default function TurfDetailScreen({ route, navigation }) {
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
@@ -791,13 +836,16 @@ export default function TurfDetailScreen({ route, navigation }) {
                   <View key={review.id} style={styles.reviewItem}>
                     <View style={styles.reviewHeader}>
                       <View style={styles.reviewerInfo}>
-                        <View style={[styles.reviewerAvatar, { backgroundColor: theme.colors.secondary }]}>
-                          <Text style={[styles.reviewerInitial, { color: theme.colors.primary }]}>
+                        <View style={[styles.reviewerAvatar, { backgroundColor: theme.colors.primary }]}>
+                          <Text style={[styles.reviewerInitial, { color: theme.colors.secondary }]}>
                             {review.userName.charAt(0).toUpperCase()}
                           </Text>
                         </View>
                         <View>
-                          <Text style={styles.reviewerName}>{review.userName}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Text style={styles.reviewerName}>{review.userName}</Text>
+                            <MaterialIcons name="verified" size={14} color={theme.colors.primary} />
+                          </View>
                           <Text style={styles.reviewDate}>{formatReviewDate(review.date)}</Text>
                         </View>
                       </View>
@@ -913,36 +961,39 @@ export default function TurfDetailScreen({ route, navigation }) {
                         console.log('⚠️ TurfDetailScreen: No admin-configured slots for this date');
                       }
 
-                      return slotsToShow.map((slot) => (
-                        <TouchableOpacity
-                          key={slot.id}
-                          style={[
-                            styles.timeSlotCard,
-                            !slot.available && styles.unavailableSlot,
-                            selectedTimeSlot?.id === slot.id && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
-                          ]}
-                          onPress={() => handleTimeSlotSelect(slot)}
-                          disabled={!slot.available}
-                        >
-                          <Text style={[
-                            styles.timeSlotTime,
-                            !slot.available && styles.unavailableSlotText,
-                            selectedTimeSlot?.id === slot.id && styles.selectedSlotText
-                          ]}>
-                            {slot.time || slot.startTime} - {slot.endTime}
-                          </Text>
-                          <Text style={[
-                            styles.timeSlotPrice,
-                            !slot.available && styles.unavailableSlotPrice,
-                            selectedTimeSlot?.id === slot.id && styles.selectedSlotPrice
-                          ]}>
-                            PKR {slot.price.toLocaleString()}
-                          </Text>
-                          {!slot.available && (
-                            <Text style={styles.bookedText}>Booked</Text>
-                          )}
-                        </TouchableOpacity>
-                      ));
+                      return slotsToShow.map((slot) => {
+                        const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
+                        return (
+                          <TouchableOpacity
+                            key={slot.id}
+                            style={[
+                              styles.timeSlotCard,
+                              !slot.available && styles.unavailableSlot,
+                              isSelected && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
+                            ]}
+                            onPress={() => handleTimeSlotSelect(slot)}
+                            disabled={!slot.available}
+                          >
+                            <Text style={[
+                              styles.timeSlotTime,
+                              !slot.available && styles.unavailableSlotText,
+                              isSelected && styles.selectedSlotText
+                            ]}>
+                              {slot.time || slot.startTime} - {slot.endTime}
+                            </Text>
+                            <Text style={[
+                              styles.timeSlotPrice,
+                              !slot.available && styles.unavailableSlotPrice,
+                              isSelected && styles.selectedSlotPrice
+                            ]}>
+                              PKR {slot.price.toLocaleString()}
+                            </Text>
+                            {!slot.available && (
+                              <Text style={styles.bookedText}>Booked</Text>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      });
                     })()}
                   </View>
                   {(!availableSlots || availableSlots.length === 0) && (
@@ -955,28 +1006,24 @@ export default function TurfDetailScreen({ route, navigation }) {
               )}
 
               {/* Selected Slot Summary */}
-              {selectedTimeSlot && (
+              {selectedTimeSlots.length > 0 && (
                 <View style={[styles.selectedSlotSummary, { backgroundColor: `${theme.colors.secondary} 20` }]}>
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Selected Slot:</Text>
+                    <Text style={styles.summaryLabel}>Selected Slot(s):</Text>
                     <Text style={styles.summaryValue}>
-                      {selectedTimeSlot.time} - {selectedTimeSlot.endTime}
+                      {selectedTimeSlots[0].time || selectedTimeSlots[0].startTime} - {selectedTimeSlots[selectedTimeSlots.length - 1].endTime}
                     </Text>
                   </View>
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Date:</Text>
+                    <Text style={styles.summaryLabel}>Duration:</Text>
                     <Text style={styles.summaryValue}>
-                      {selectedDate.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      {selectedTimeSlots.length} hour{selectedTimeSlots.length > 1 ? 's' : ''}
                     </Text>
                   </View>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Total Price:</Text>
                     <Text style={[styles.summaryPrice, { color: theme.colors.primary }]}>
-                      PKR {selectedTimeSlot.price.toLocaleString()}
+                      PKR {selectedTimeSlots.reduce((sum, s) => sum + s.price, 0).toLocaleString()}
                     </Text>
                   </View>
                 </View>
@@ -1000,7 +1047,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                   style={[
                     styles.confirmButton,
                     {
-                      backgroundColor: !selectedTimeSlot
+                      backgroundColor: selectedTimeSlots.length === 0
                         ? `${theme.colors.primary} 80` // 50% opacity when disabled
                         : theme.colors.primary
                     }
@@ -1008,7 +1055,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                   textColor={theme.colors.secondary}
                   contentStyle={styles.buttonContent}
                   labelStyle={{ color: theme.colors.secondary }}
-                  disabled={!selectedTimeSlot}
+                  disabled={selectedTimeSlots.length === 0}
                 >
                   Confirm Booking
                 </Button>
