@@ -610,11 +610,6 @@ const styles = StyleSheet.create({
   inputWrapperFocused: {
     borderColor: '#004d43',
     backgroundColor: '#FFFFFF',
-    elevation: 2,
-    shadowColor: '#004d43',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
   inputIcon: {
     marginRight: 12,
