@@ -13,7 +13,7 @@ import {
     Refresh,
     Delete,
     Check,
-    Close
+
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchReviews, deleteReview, updateReviewStatus } from '../store/slices/adminSlice';
@@ -113,10 +113,7 @@ export default function ReviewsPage() {
             width: 120,
             renderCell: (params) => {
                 const status = params.value || 'approved'; // Default to approved for old reviews
-                let color = 'default';
-                if (status === 'approved') color = 'success';
-                if (status === 'pending') color = 'warning';
-                if (status === 'rejected') color = 'error';
+
 
                 return (
                     <Box
