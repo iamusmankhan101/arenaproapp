@@ -719,46 +719,54 @@ export const bookingAPI = {
         }
       };
 
-      // 5. Send Email Confirmation via Backend (Fire-and-forget)
+      // 5. Send Email Confirmation via EmailJS (Frontend)
       try {
-        // Use the base URL from our centralized API config
-        // FIX: Force local IP for physical device testing if not on localhost
-        // This bypasses the issue where api.defaults.baseURL might be set to a dummy production URL like 'https://api.arenapro.pk'
-        const localIP = '192.168.100.72';
-        const backendPort = '3001';
+        console.log('📧 Mobile: preparing to send email via EmailJS...');
 
-        let baseUrl = 'http://' + localIP + ':' + backendPort;
+        // EmailJS Configuration
+        const SERVICE_ID = process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID;
+        const TEMPLATE_ID = process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID;
+        const USER_ID = process.env.EXPO_PUBLIC_EMAILJS_USER_ID; // Public Key
 
-        // If we are actually running on a simulator/emulator that maps localhost, we could use that,
-        // but for physical device, we MUST use the LAN IP.
-
-        console.log('📧 Mobile: Sending email via backend at:', baseUrl);
-        const emailServiceUrl = `${baseUrl}/api/bookings/send-confirmation`;
-
-        const emailPayload = {
-          email: user.email,
-          bookingDetails: {
-            bookingId: bookingRef.id,
-            customerName: user.displayName || user.email.split('@')[0],
-            turfName: venueDetails.turfName,
-            turfAddress: venueDetails.turfArea,
-            date: bookingData.date,
-            timeSlot: `${bookingData.startTime} - ${bookingData.endTime}`,
-            totalAmount: finalTotalAmount
+        const emailParams = {
+          service_id: SERVICE_ID,
+          template_id: TEMPLATE_ID,
+          user_id: USER_ID,
+          template_params: {
+            to_name: user.displayName || user.email.split('@')[0],
+            to_email: user.email,
+            booking_id: bookingRef.id,
+            turf_name: venueDetails.turfName,
+            date: new Date(bookingData.date).toDateString(),
+            time_slot: `${bookingData.startTime} - ${bookingData.endTime}`,
+            total_amount: finalTotalAmount,
+            turf_address: venueDetails.turfArea
           }
         };
 
-        console.log('📧 Mobile: Triggering backend email service...');
-        // Don't await this, let it run in background so UI is snappy
-        fetch(emailServiceUrl, {
+        console.log('📧 Mobile: Sending email payload:', emailParams);
+
+        // Send email using fetch to avoid adding new dependencies if not needed
+        // Or you can use 'emailjs-com' package if you prefer
+        fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(emailPayload)
-        }).then(res => res.json())
-          .then(data => console.log('📧 Mobile: Email service response:', data))
-          .catch(err => console.error('⚠️ Mobile: Failed to call email service:', err));
+          body: JSON.stringify(emailParams)
+        })
+          .then((response) => {
+            if (response.ok) {
+              console.log('✅ Mobile: EmailJS success!');
+            } else {
+              return response.text().then(text => {
+                console.error('⚠️ Mobile: EmailJS failed:', text);
+              });
+            }
+          })
+          .catch((error) => {
+            console.error('⚠️ Mobile: EmailJS network error:', error);
+          });
 
       } catch (emailError) {
         console.error('⚠️ Mobile: Error preparing email:', emailError);
