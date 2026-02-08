@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Dimensions, 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
   Image,
-  FlatList 
+  FlatList
 } from 'react-native';
 import { Text, Searchbar, Chip } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
@@ -24,7 +24,7 @@ export default function VenueListScreen({ navigation, route }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredVenues, setFilteredVenues] = useState([]);
-  
+
   const { user } = useSelector(state => state.auth);
   const { nearbyTurfs, loading } = useSelector(state => state.turf);
 
@@ -65,13 +65,13 @@ export default function VenueListScreen({ navigation, route }) {
 
     // Filter by search query
     if (searchQuery.trim() !== '') {
-      filtered = filtered.filter(venue => 
+      filtered = filtered.filter(venue =>
         venue.area?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venue.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (Array.isArray(venue.sports) ? venue.sports.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) : 
-         typeof venue.sports === 'string' ? venue.sports.toLowerCase().includes(searchQuery.toLowerCase()) :
-         venue.sport?.toLowerCase().includes(searchQuery.toLowerCase()))
+        (Array.isArray(venue.sports) ? venue.sports.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) :
+          typeof venue.sports === 'string' ? venue.sports.toLowerCase().includes(searchQuery.toLowerCase()) :
+            venue.sport?.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -128,20 +128,20 @@ export default function VenueListScreen({ navigation, route }) {
       activeOpacity={0.8}
     >
       <View style={styles.venueImageContainer}>
-        <Image 
-          source={item.image || getDefaultImage(item.sport)} 
+        <Image
+          source={item.image || getDefaultImage(item.sport)}
           style={styles.venueImage}
           resizeMode="cover"
         />
         <View style={styles.ratingBadge}>
-          <Icon name="star" size={16} color="white" />
+          <Icon name="star" size={16} color="#004d43" />
           <Text style={styles.ratingText}>{item.rating || 0}</Text>
         </View>
         <View style={styles.sportBadge}>
           <Text style={styles.sportBadgeText}>
-            {Array.isArray(item.sports) ? item.sports[0] : 
-             typeof item.sports === 'string' ? item.sports.split(',')[0].trim() : 
-             item.sport || 'Sport'}
+            {Array.isArray(item.sports) ? item.sports[0] :
+              typeof item.sports === 'string' ? item.sports.split(',')[0].trim() :
+                item.sport || 'Sport'}
           </Text>
         </View>
       </View>
@@ -172,7 +172,7 @@ export default function VenueListScreen({ navigation, route }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -191,7 +191,7 @@ export default function VenueListScreen({ navigation, route }) {
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
-          iconColor="#229a60"
+          iconColor="#004d43"
           inputStyle={styles.searchInput}
         />
       </View>
@@ -311,8 +311,8 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   selectedCategoryChip: {
-    backgroundColor: '#229a60',
-    borderColor: '#229a60',
+    backgroundColor: '#004d43',
+    borderColor: '#004d43',
   },
   categoryChipText: {
     color: '#666',
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     left: 8,
-    backgroundColor: '#FF8C00',
+    backgroundColor: '#e8ee26',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 6,
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 11,
-    color: 'white',
+    color: '#004d43',
     marginLeft: 2,
     fontFamily: 'Montserrat_600SemiBold',
   },
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#229a60',
+    backgroundColor: '#004d43',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -428,13 +428,13 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     fontSize: 10,
-    color: '#229a60',
+    color: '#004d43',
     fontFamily: 'Montserrat_500Medium',
   },
   priceAmount: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#229a60',
+    color: '#004d43',
     fontFamily: 'Montserrat_700Bold',
   },
   priceUnit: {
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   bookableButton: {
-    backgroundColor: '#229a60',
+    backgroundColor: '#004d43',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,

@@ -201,7 +201,7 @@ export default function ProfileScreen({ navigation }) {
                 </View>
                 <View>
                   <Text style={styles.contactLabel}>Phone</Text>
-                  <Text style={styles.contactValue}>03144133096</Text>
+                  <Text style={styles.contactValue}>03390078965</Text>
                 </View>
               </View>
 

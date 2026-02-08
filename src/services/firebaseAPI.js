@@ -19,6 +19,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../config/firebase';
 import { safeDate, isValidDate, safeDateString, safeToISOString, safeFirestoreTimestampToISO } from '../utils/dateUtils';
+import api from './api';
 
 // Helper function to serialize Firestore data and handle timestamps
 const serializeFirestoreData = (data) => {
@@ -223,6 +224,27 @@ export const turfAPI = {
       // Return empty array instead of throwing error to prevent app crashes
       return { data: [] };
     }
+  },
+
+  // Upload image
+  async uploadImage(uri, path) {
+    try {
+      console.log('📤 Uploading image:', path);
+
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      const storageRef = ref(storage, path);
+      await uploadBytes(storageRef, blob);
+
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log('✅ Image uploaded successfully:', downloadURL);
+
+      return downloadURL;
+    } catch (error) {
+      console.error('❌ Error uploading image:', error);
+      throw error;
+    }
   }
 };
 
@@ -247,9 +269,22 @@ export const bookingAPI = {
       // Only use date-specific slots - no fallback to general time slots
       let venueTimeSlots = [];
 
-      if (venueData.dateSpecificSlots && venueData.dateSpecificSlots[date]) {
-        // Use date-specific slots if they exist for this date
-        venueTimeSlots = venueData.dateSpecificSlots[date];
+      if (venueData.dateSpecificSlots) {
+        console.log('🔍 DEBUG: Available date keys in Firestore:', Object.keys(venueData.dateSpecificSlots));
+
+        // Try exact match first
+        if (venueData.dateSpecificSlots[date]) {
+          venueTimeSlots = venueData.dateSpecificSlots[date];
+          console.log(`📊 Mobile: Found exact match for ${date}`);
+        }
+        // Try generic match (e.g. if stored as M/D/YYYY but queried as YYYY-MM-DD)
+        else {
+          // Basic fallback check - maybe implement more robust matching later
+          console.log(`⚠️ Mobile: No exact match for ${date}`);
+        }
+      }
+
+      if (venueTimeSlots.length > 0) {
         console.log(`📊 Mobile: Using date-specific slots for ${date}: ${venueTimeSlots.length} slots configured`);
       } else {
         console.log(`⚠️ Mobile: No date-specific slots configured for ${date}`);
@@ -525,6 +560,26 @@ export const bookingAPI = {
             console.log(`💰 REFERRAL: Applied Rs. ${referralDiscount} referrer discount`);
           }
 
+          // If frontend already applied the discount, we shouldn't apply it again to the total
+          if (bookingData.referralDiscountApplied && referralApplied) {
+            console.log('💰 REFERRAL: Discount already applied by frontend. keeping total as is.');
+            // Maintain the total sent by frontend, but ensure we still mark it as used in the DB
+            finalTotalAmount = bookingData.totalAmount;
+            referralDiscount = bookingData.referralDiscountAmount || referralDiscount;
+          } else if (bookingData.referralDiscountApplied && !referralApplied) {
+            // Frontend said applied, but backend says not eligible?
+            console.warn('⚠️ REFERRAL: Frontend applied discount but backend says not eligible. Reverting total?');
+            // For safety, force the recalculated total (which is higher)
+            // finalTotalAmount = finalTotalAmount; // from above calculation
+          }
+
+          // Recalculate remaining amount just in case, based on the FINAL total
+          const advancePaid = bookingData.advancePaid || 0;
+          const remainingAmount = Math.max(0, finalTotalAmount - advancePaid);
+
+          // Update booking data with correct remaining amount
+          bookingData.remainingAmount = remainingAmount;
+
           // Check if referrer should indicate reward (user just completed first booking)
           // Note context: This runs when the referee completes THEIR booking
           if (isReferrerEligibleForReward(userData)) {
@@ -619,6 +674,42 @@ export const bookingAPI = {
               : 'Booking confirmed successfully!')
         }
       };
+
+      // 5. Send Email Confirmation via Backend (Fire-and-forget)
+      try {
+        // Use the base URL from our centralized API config
+        // This ensures we use the same server as the rest of the app (including local IP vs production)
+        const baseUrl = api.defaults.baseURL || 'http://localhost:5000';
+        const emailServiceUrl = `${baseUrl}/bookings/send-confirmation`;
+
+        const emailPayload = {
+          email: user.email,
+          bookingDetails: {
+            bookingId: bookingRef.id,
+            customerName: user.displayName || user.email.split('@')[0],
+            turfName: venueDetails.turfName,
+            turfAddress: venueDetails.turfArea,
+            date: bookingData.date,
+            timeSlot: `${bookingData.startTime} - ${bookingData.endTime}`,
+            totalAmount: finalTotalAmount
+          }
+        };
+
+        console.log('📧 Mobile: Triggering backend email service...');
+        // Don't await this, let it run in background so UI is snappy
+        fetch(emailServiceUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(emailPayload)
+        }).then(res => res.json())
+          .then(data => console.log('📧 Mobile: Email service response:', data))
+          .catch(err => console.error('⚠️ Mobile: Failed to call email service:', err));
+
+      } catch (emailError) {
+        console.error('⚠️ Mobile: Error preparing email:', emailError);
+      }
 
       console.log('🔥 FIREBASE: Returning booking result with ID:', bookingRef.id);
 

@@ -503,6 +503,29 @@ export const firebaseAuthAPI = {
       await AsyncStorage.setItem('authToken', token);
       await AsyncStorage.setItem('user', JSON.stringify(cleanUserData));
 
+      // Send Welcome Email via Backend (Fire-and-forget)
+      try {
+        // Use local IP for testing on device/emulator
+        const emailServiceUrl = 'http://192.168.100.14:3001/api/auth/send-welcome';
+
+        console.log('📧 Mobile: Triggering backend welcome email...');
+        fetch(emailServiceUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            fullName: fullName
+          })
+        }).then(res => res.json())
+          .then(data => console.log('📧 Mobile: Welcome email response:', data))
+          .catch(err => console.error('⚠️ Mobile: Failed to call welcome email service:', err));
+
+      } catch (emailError) {
+        console.error('⚠️ Mobile: Error preparing welcome email:', emailError);
+      }
+
       let message = 'Account created successfully! Please check your email for verification.';
       if (referrerId) {
         message += ` You have Rs. 300 off your first booking!`;

@@ -268,7 +268,7 @@ export default function BookingScreen() {
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Searchbar
-            placeholder="Search bookings, venues, sports..."
+            placeholder="Search bookings..."
             onChangeText={setSearchQuery}
             value={searchQuery}
             style={styles.searchbar}

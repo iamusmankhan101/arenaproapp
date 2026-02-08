@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   StatusBar,
   SafeAreaView,
-  Image
+  Image,
+  Linking
 } from 'react-native';
 import {
   Text,
@@ -30,11 +31,13 @@ import { safeDate, safeFormatDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import * as ImagePicker from 'expo-image-picker';
 import { turfAPI } from '../../services/firebaseAPI'; // Import API directly for upload
+import { REFERRAL_CONSTANTS, calculateDiscountedTotal } from '../../utils/referralUtils';
 
 const { width, height } = Dimensions.get('window');
 
 export default function BookingConfirmScreen({ route, navigation }) {
   const { turf, slot, date } = route.params;
+  console.log('🔍 DEBUG: BookingConfirm - Received date param:', date);
   const [paymentMethod, setPaymentMethod] = useState('jazzcash');
   const [isBooking, setIsBooking] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -44,6 +47,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
   const [screenshot, setScreenshot] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [paymentMode, setPaymentMode] = useState('advance'); // 'venue' or 'advance'
+  const [confirmBookingId, setConfirmBookingId] = useState(null); // To store booking ID for WhatsApp notification
 
   const paymentDetails = {
     jazzcash: { name: 'JazzCash', accountName: 'Muhammad Usman Khan', accountNumber: '03058562523' },
@@ -52,6 +56,12 @@ export default function BookingConfirmScreen({ route, navigation }) {
   };
 
   const dispatch = useDispatch();
+  const { user } = useSelector(state => state.auth);
+
+  useEffect(() => {
+    // Refresh user profile to get latest referral eligibility status
+    dispatch(fetchUserProfile());
+  }, [dispatch]);
 
   useEffect(() => {
     // Animate cards on mount
@@ -71,27 +81,73 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
   const calculateTotal = () => {
     const basePrice = slot.price;
+    let finalTotal = basePrice;
+    let referralDiscount = 0;
+
+    // Check for referral eligibility (User has "Rs 300 off next booking")
+    const isReferralEligible = user?.referralDiscountEligible;
+
+    if (isReferralEligible) {
+      // Apply 300 Rs discount
+      const result = calculateDiscountedTotal(basePrice, REFERRAL_CONSTANTS.REFERRER_REWARD);
+      referralDiscount = result.discountApplied;
+      // We apply this BEFORE the payment mode discount to give maximum benefit?
+      // Or after? Usually flat discounts are applied first or last.
+      // Let's apply it to the base price first.
+
+      // Actually, let's keep it simple.
+      // If we apply 300 off, the new "Base" for percentage calculation is smaller?
+      // Or is the percentage discount on the original price?
+      // Let's stick to: Total = (Base - %Discount) - FlatDiscount
+    }
 
     if (paymentMode === 'venue') {
+      // Venue payment mode - 5% discount
+      const percentageDiscount = basePrice * 0.05;
+
+      let totalAfterPercentage = basePrice - percentageDiscount;
+
+      // Apply referral discount if eligible
+      if (isReferralEligible) {
+        const result = calculateDiscountedTotal(totalAfterPercentage, REFERRAL_CONSTANTS.REFERRER_REWARD);
+        referralDiscount = result.discountApplied;
+        finalTotal = result.finalTotal;
+      } else {
+        finalTotal = totalAfterPercentage;
+      }
+
       return {
         basePrice,
-        total: basePrice,
-        discount: 0,
+        total: finalTotal,
+        discount: percentageDiscount, // This is just the percentage discount amount
+        referralDiscount,
         advance: 0,
-        remaining: basePrice
+        remaining: finalTotal
       };
     } else {
-      // Advance payment mode - 5% discount
-      const discount = basePrice * 0.05;
-      const discountedTotal = basePrice - discount;
+      // Advance payment mode - 10% discount
+      const percentageDiscount = basePrice * 0.10;
+
+      let totalAfterPercentage = basePrice - percentageDiscount;
+
+      // Apply referral discount if eligible
+      if (isReferralEligible) {
+        const result = calculateDiscountedTotal(totalAfterPercentage, REFERRAL_CONSTANTS.REFERRER_REWARD);
+        referralDiscount = result.discountApplied;
+        finalTotal = result.finalTotal;
+      } else {
+        finalTotal = totalAfterPercentage;
+      }
+
       const ADVANCE_AMOUNT = 500;
 
       return {
         basePrice,
-        total: discountedTotal,
-        discount,
+        total: finalTotal,
+        discount: percentageDiscount,
+        referralDiscount,
         advance: ADVANCE_AMOUNT,
-        remaining: Math.max(0, discountedTotal - ADVANCE_AMOUNT)
+        remaining: Math.max(0, finalTotal - ADVANCE_AMOUNT)
       };
     }
   };
@@ -152,7 +208,9 @@ export default function BookingConfirmScreen({ route, navigation }) {
         paymentMethod: paymentMode === 'advance' ? paymentMethod : 'cash_at_venue', // Online payment method for the advance
         slotType: slot.priceType,
         paymentStatus: paymentMode === 'advance' ? 'partial' : 'pending', // Initial status is partial (advance paid)
-        paymentScreenshot: screenshotUrl
+        paymentScreenshot: screenshotUrl,
+        referralDiscountApplied: pricing.referralDiscount > 0,
+        referralDiscountAmount: pricing.referralDiscount
       };
 
       const result = await dispatch(createBooking(bookingData)).unwrap();
@@ -177,6 +235,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
         );
       } else {
         // Authenticated booking confirmed
+        setConfirmBookingId(result.bookingId); // Store booking ID
         setShowSuccessModal(true);
       }
 
@@ -195,6 +254,53 @@ export default function BookingConfirmScreen({ route, navigation }) {
     }
   };
 
+  const handleWhatsAppNotification = (bookingId) => {
+    if (!slot || !bookingId) return;
+
+    // Use turf phone number or a default fallback if missing
+    const rawPhone = turf?.phoneNumber || '923001234567';
+
+    // Sanitize phone number: remove '+' and non-numeric characters
+    const turfPhone = rawPhone.replace(/\D/g, '').replace(/^0+/, '');
+
+    console.log('📱 WhatsApp: Opening chat with', turfPhone);
+
+    // Message for Ground Owner
+    // Manually parse YYYY-MM-DD for message too
+    const [year, month, day] = date.split('-').map(Number);
+    const msgDate = new Date(year, month - 1, day).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const message = `Hello, I just booked ${turf.name || 'your venue'}.
+
+📅 Date: ${msgDate}
+⏰ Time: ${slot.startTime} - ${slot.endTime}
+🆔 Booking ID: ${bookingId}
+💰 Amount: PKR ${pricing.total}
+
+Please confirm my booking.`;
+
+    const url = `whatsapp://send?phone=${turfPhone}&text=${encodeURIComponent(message)}`;
+
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        console.log('❌ WhatsApp: Not supported/installed');
+        Alert.alert('Error', 'WhatsApp is not installed on this device');
+      }
+    }).catch(err => {
+      console.error('❌ WhatsApp: Linking error:', err);
+      Alert.alert('Error', 'Could not open WhatsApp');
+    });
+    // Note: To send to "My Whatsapp" (the user), we would need a separate action because we can't open two chats at once.
+    // We can add a second button or just rely on the user sharing the booking details from the "My Bookings" screen later.
+  };
+
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
     // Refresh bookings data before navigating
@@ -206,25 +312,21 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
   const formatDateTime = () => {
     try {
-      const bookingDate = safeDate(date);
+      if (!date) return { date: 'Invalid Date', time: `${slot.startTime} - ${slot.endTime}` };
 
-      // Validate the date
-      if (isNaN(bookingDate.getTime())) {
-        console.error('❌ BookingConfirmScreen: Invalid date:', date);
-        // Return fallback formatting
-        return {
-          date: 'Invalid Date',
-          time: `${slot.startTime} - ${slot.endTime}`
-        };
-      }
+      // Manually parse YYYY-MM-DD to avoid timezone issues
+      const [year, month, day] = date.split('-').map(Number);
+      const bookingDate = new Date(year, month - 1, day);
+
+      const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      };
 
       return {
-        date: safeFormatDate(bookingDate, {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }, 'Invalid Date'),
+        date: bookingDate.toLocaleDateString('en-US', options),
         time: `${slot.startTime} - ${slot.endTime}`
       };
     } catch (error) {
@@ -356,10 +458,10 @@ export default function BookingConfirmScreen({ route, navigation }) {
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                 <MaterialIcons name="local-offer" size={24} color={theme.colors.primary} style={{ marginRight: 12 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.paymentName, { color: theme.colors.primary }]}>Pay Advance & Save 5%</Text>
+                  <Text style={[styles.paymentName, { color: theme.colors.primary }]}>Pay Advance & Save 10%</Text>
                   <Text style={styles.paymentDesc}>Pay PKR 500 now, get discounted total</Text>
                 </View>
-                <Chip textStyle={{ fontSize: 10, height: 12, lineHeight: 12 }} style={{ backgroundColor: '#E8F5E9' }}>Save PKR {(pricing.basePrice * 0.05).toFixed(0)}</Chip>
+                <Chip textStyle={{ fontSize: 10, height: 12, lineHeight: 12 }} style={{ backgroundColor: '#E8F5E9' }}>Save 10%</Chip>
               </View>
               <RadioButton value="advance" status={paymentMode === 'advance' ? 'checked' : 'unchecked'} color={theme.colors.primary} onPress={() => setPaymentMode('advance')} />
             </TouchableOpacity>
@@ -377,6 +479,8 @@ export default function BookingConfirmScreen({ route, navigation }) {
                   <Text style={styles.paymentName}>Pay Full at Venue</Text>
                   <Text style={styles.paymentDesc}>No advance payment required</Text>
                 </View>
+                <Chip textStyle={{ fontSize: 10, height: 12, lineHeight: 12 }} style={{ backgroundColor: '#E8F5E9', marginLeft: 8 }}>Save 5%</Chip>
+
               </View>
               <RadioButton value="venue" status={paymentMode === 'venue' ? 'checked' : 'unchecked'} color={theme.colors.primary} onPress={() => setPaymentMode('venue')} />
             </TouchableOpacity>
@@ -404,12 +508,12 @@ export default function BookingConfirmScreen({ route, navigation }) {
                 </Text>
               </View>
 
-              {paymentMode === 'advance' && (
-                <View style={styles.priceRow}>
-                  <Text style={[styles.priceLabel, { color: '#4CAF50' }]}>Discount (5%)</Text>
-                  <Text style={[styles.priceValue, { color: '#4CAF50' }]}>- PKR {pricing.discount.toLocaleString()}</Text>
-                </View>
-              )}
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceLabel, { color: '#4CAF50' }]}>
+                  Discount ({paymentMode === 'advance' ? '10%' : '5%'})
+                </Text>
+                <Text style={[styles.priceValue, { color: '#4CAF50' }]}>- PKR {pricing.discount.toLocaleString()}</Text>
+              </View>
 
               <View style={[styles.priceRow, { marginTop: 4 }]}>
                 <Text style={[styles.priceLabel, { fontWeight: 'bold', color: '#333' }]}>Total Amount</Text>
@@ -434,6 +538,17 @@ export default function BookingConfirmScreen({ route, navigation }) {
                 <View style={[styles.priceRow, { marginTop: 4 }]}>
                   <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600' }]}>Payable at Venue</Text>
                   <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700' }]}>PKR {pricing.total.toLocaleString()}</Text>
+                </View>
+              )}
+
+              {pricing.referralDiscount > 0 && (
+                <View style={[styles.priceRow, { marginTop: 4, backgroundColor: '#E8F5E9', padding: 4, borderRadius: 4 }]}>
+                  <Text style={[styles.priceLabel, { color: '#2E7D32', fontWeight: 'bold' }]}>
+                    Referral Reward Applies!
+                  </Text>
+                  <Text style={[styles.priceValue, { color: '#2E7D32', fontWeight: 'bold' }]}>
+                    - PKR {pricing.referralDiscount}
+                  </Text>
                 </View>
               )}
 

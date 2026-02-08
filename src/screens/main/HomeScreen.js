@@ -444,7 +444,10 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
         {/* Header Section with Full-Width Image Slider */}
         {turfsLoading ? (
           <HeaderSkeleton />
@@ -648,7 +651,7 @@ export default function HomeScreen({ navigation }) {
                 <>
                   <Text style={styles.modalTitle}>Refer & Earn!</Text>
                   <Text style={styles.modalSubtitle}>
-                    Share your referral code with friends! They get Rs. 300 off their 1st booking, and you get Rs. 300 off your 2nd booking after they complete theirs!
+                    Share your referral code with friends! They get Rs. 300 off their 1st booking, and you will get Rs. 300 off your next booking after they complete theirs!
                   </Text>
 
                   {/* Referral Code Display */}
@@ -671,7 +674,7 @@ export default function HomeScreen({ navigation }) {
                     </View>
                     <View style={styles.benefitItem}>
                       <MaterialIcons name="check-circle" size={20} color="#6BCF7F" />
-                      <Text style={styles.benefitText}>You get Rs. 300 off your 2nd booking</Text>
+                      <Text style={styles.benefitText}>You will get Rs. 300 off your next booking</Text>
                     </View>
                   </View>
 
@@ -766,7 +769,7 @@ export default function HomeScreen({ navigation }) {
                     </View>
                     <View style={styles.benefitItem}>
                       <MaterialIcons name="monetization-on" size={20} color="#004d43" />
-                      <Text style={styles.benefitText}>Rs. 300 off your 2nd booking</Text>
+                      <Text style={styles.benefitText}>Rs. 300 off your next booking</Text>
                     </View>
                   </View>
                 </>

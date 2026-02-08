@@ -388,6 +388,9 @@ export default function TurfDetailScreen({ route, navigation }) {
 
     // Convert date to YYYY-MM-DD format using safe utility
     const dateString = safeDateString(selectedDate);
+    console.log('🔍 DEBUG: TurfDetail - selectedDate object:', selectedDate);
+    console.log('🔍 DEBUG: TurfDetail - safeDateString result:', dateString);
+
     if (!dateString) {
       console.error('❌ TurfDetailScreen: Could not get date string from selectedDate:', selectedDate);
       Alert.alert('Error', 'Invalid date selected');
@@ -419,7 +422,7 @@ export default function TurfDetailScreen({ route, navigation }) {
         id: venue.id,
         name: venue.name,
         address: venue.location,
-        phoneNumber: '+92 300 1234567'
+        phoneNumber: '03390078965'
       },
       slot: mergedSlot,
       date: dateString // Use safe date string

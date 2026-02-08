@@ -2,11 +2,12 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { protect, generateUserTokens } = require('../middleware/auth');
-const { 
-  validateUserRegistration, 
-  validateUserLogin, 
-  handleValidationErrors 
+const {
+  validateUserRegistration,
+  validateUserLogin,
+  handleValidationErrors
 } = require('../middleware/validation');
+const sendEmail = require('../utils/sendEmail');
 
 const router = express.Router();
 
@@ -284,6 +285,62 @@ router.get('/verify-token', protect, (req, res) => {
       }
     }
   });
+});
+
+// @desc    Send welcome email (Standalone service)
+// @route   POST /api/auth/send-welcome
+// @access  Public
+router.post('/send-welcome', async (req, res) => {
+  try {
+    const { email, fullName } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email is required'
+      });
+    }
+
+    const message = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #004d43;">Welcome to Arena Pro! ⚽🏏</h2>
+        <p>Hi ${fullName || 'Athlete'},</p>
+        <p>Thank you for joining <strong>Arena Pro</strong>, the ultimate sports venue booking platform.</p>
+        
+        <p>We are excited to have you on board! With Arena Pro, you can:</p>
+        <ul>
+          <li>Find and book the best sports venues near you</li>
+          <li>Join challenges and compete with other teams</li>
+          <li>Track your bookings and play history</li>
+        </ul>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="#" style="background-color: #004d43; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Explore Venues</a>
+        </div>
+
+        <p>If you have any questions, feel free to reply to this email.</p>
+        <p style="margin-top: 30px;">Best Regards,<br>The Arena Pro Team</p>
+      </div>
+    `;
+
+    const result = await sendEmail({
+      email: email,
+      subject: 'Welcome to Arena Pro! 🚀',
+      message: message
+    });
+
+    res.json({
+      status: 'success',
+      data: result
+    });
+
+  } catch (error) {
+    console.error('Email service error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
 });
 
 module.exports = router;

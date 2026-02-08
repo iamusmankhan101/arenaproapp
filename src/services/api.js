@@ -50,30 +50,30 @@ export const authAPI = {
     mockAuthAPI.signIn,
     (phoneNumber, password) => api.post('/auth/signin', { phoneNumber, password })
   ),
-  
+
   signUp: createAuthMethod(
     mockAuthAPI.signUp,
     (phoneNumber, password, fullName) => api.post('/auth/signup', { phoneNumber, password, fullName })
   ),
-  
+
   // Google authentication
   googleSignIn: createAuthMethod(
     mockAuthAPI.googleSignIn,
     (googleToken) => api.post('/auth/google', { token: googleToken })
   ),
-  
+
   // OTP-based authentication (fallback)
   sendOTP: createAuthMethod(
     mockAuthAPI.sendOTP,
     (phoneNumber) => api.post('/auth/send-otp', { phoneNumber })
   ),
-  
+
   verifyOTP: createAuthMethod(
     mockAuthAPI.verifyOTP,
-    (phoneNumber, otp, password, fullName, isSignup) => 
+    (phoneNumber, otp, password, fullName, isSignup) =>
       api.post('/auth/verify-otp', { phoneNumber, otp, password, fullName, isSignup })
   ),
-  
+
   // Token verification
   verifyToken: createAuthMethod(
     mockAuthAPI.verifyToken,
@@ -81,33 +81,33 @@ export const authAPI = {
       headers: { Authorization: `Bearer ${token}` }
     })
   ),
-  
+
   // Password reset
   forgotPassword: createAuthMethod(
     mockAuthAPI.forgotPassword,
     (phoneNumber) => api.post('/auth/forgot-password', { phoneNumber })
   ),
-  
+
   resetPassword: createAuthMethod(
     mockAuthAPI.resetPassword,
-    (phoneNumber, otp, newPassword) => 
+    (phoneNumber, otp, newPassword) =>
       api.post('/auth/reset-password', { phoneNumber, otp, newPassword })
   ),
-  
+
   // Profile management
-  updateProfile: (userData) => 
+  updateProfile: (userData) =>
     api.put('/auth/profile', userData),
-  
-  changePassword: (currentPassword, newPassword) => 
+
+  changePassword: (currentPassword, newPassword) =>
     api.put('/auth/change-password', { currentPassword, newPassword }),
 };
 
 export const turfAPI = {
-  getNearbyTurfs: (lat, lng, radius) => 
+  getNearbyTurfs: (lat, lng, radius) =>
     api.get(`/turfs/nearby?lat=${lat}&lng=${lng}&radius=${radius}`),
   getTurfDetails: (turfId) => api.get(`/turfs/${turfId}`),
   searchTurfs: (query, filters) => api.post('/turfs/search', { query, filters }),
-  
+
   // Favorites functionality
   toggleFavorite: (turfId) => api.post(`/turfs/${turfId}/favorite`),
   getFavorites: () => api.get('/turfs/favorites'),
@@ -135,44 +135,44 @@ export const paymentAPI = {
 export const adminAPI = {
   // Dashboard
   getDashboardStats: () => api.get('/admin/dashboard/stats'),
-  
+
   // Bookings
   getBookings: (params) => {
     const queryString = new URLSearchParams(params).toString();
     return api.get(`/admin/bookings?${queryString}`);
   },
-  updateBookingStatus: (bookingId, status) => 
+  updateBookingStatus: (bookingId, status) =>
     api.put(`/admin/bookings/${bookingId}/status`, { status }),
-  cancelBooking: (bookingId, reason) => 
+  cancelBooking: (bookingId, reason) =>
     api.put(`/admin/bookings/${bookingId}/cancel`, { reason }),
   getBookingDetails: (bookingId) => api.get(`/admin/bookings/${bookingId}`),
-  
+
   // Venues
   getVenues: (params) => {
     const queryString = new URLSearchParams(params).toString();
     return api.get(`/admin/venues?${queryString}`);
   },
   createVenue: (venueData) => api.post('/admin/venues', venueData),
-  updateVenue: (venueId, venueData) => 
+  updateVenue: (venueId, venueData) =>
     api.put(`/admin/venues/${venueId}`, venueData),
-  updateVenueStatus: (venueId, status) => 
+  updateVenueStatus: (venueId, status) =>
     api.put(`/admin/venues/${venueId}/status`, { status }),
   deleteVenue: (venueId) => api.delete(`/admin/venues/${venueId}`),
   getVenueAnalytics: (venueId) => api.get(`/admin/venues/${venueId}/analytics`),
-  
+
   // Customers
   getCustomers: (params) => {
     const queryString = new URLSearchParams(params).toString();
     return api.get(`/admin/customers?${queryString}`);
   },
   getCustomerDetails: (customerId) => api.get(`/admin/customers/${customerId}`),
-  updateCustomerStatus: (customerId, status) => 
+  updateCustomerStatus: (customerId, status) =>
     api.put(`/admin/customers/${customerId}/status`, { status }),
   getCustomerBookings: (customerId, params) => {
     const queryString = new URLSearchParams(params).toString();
     return api.get(`/admin/customers/${customerId}/bookings?${queryString}`);
   },
-  
+
   // Reports
   getRevenueReport: (params) => {
     const queryString = new URLSearchParams(params).toString();
@@ -190,16 +190,16 @@ export const adminAPI = {
     const queryString = new URLSearchParams(params).toString();
     return api.get(`/admin/reports/venues?${queryString}`);
   },
-  
+
   // Settings
   getSettings: () => api.get('/admin/settings'),
   updateSettings: (settings) => api.put('/admin/settings', settings),
-  
+
   // Authentication
   login: (credentials) => api.post('/admin/auth/login', credentials),
   logout: () => api.post('/admin/auth/logout'),
   refreshToken: () => api.post('/admin/auth/refresh'),
-  
+
   // Notifications
   sendNotification: (notification) => api.post('/admin/notifications', notification),
   getNotifications: (params) => {

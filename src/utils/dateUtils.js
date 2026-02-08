@@ -39,8 +39,14 @@ export const safeToISOString = (date, fallback = null) => {
  */
 export const safeDateString = (date, fallback = null) => {
   try {
-    const isoString = safeToISOString(date, fallback);
-    return isoString ? isoString.split('T')[0] : fallback;
+    const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return fallback || new Date().toISOString().split('T')[0];
+
+    // Use local time instead of UTC to avoid timezone shifts
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   } catch (error) {
     console.error('❌ safeDateString: Error extracting date string:', error, 'Date:', date);
     return fallback || new Date().toISOString().split('T')[0];

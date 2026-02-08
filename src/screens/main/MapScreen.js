@@ -645,12 +645,30 @@ export default function MapScreen({ navigation }) {
 
   // Sync selectedVenue with real-time updates
   useEffect(() => {
-    if (selectedVenue && nearbyTurfs.length > 0) {
-      const updatedVenue = nearbyTurfs.find(t => t.id === selectedVenue.id);
+    if (selectedVenue) {
+      // Try to find the venue in the processed list first (which has distances)
+      let updatedVenue = venuesWithValidCoords.find(t => t.id === selectedVenue.id);
+
+      // If not in processed list yet (maybe loading), try raw list
+      if (!updatedVenue && nearbyTurfs.length > 0) {
+        updatedVenue = nearbyTurfs.find(t => t.id === selectedVenue.id);
+      }
+
       if (updatedVenue) {
-        // Only update if there are changes to avoid potential render loops
+        // If we pulled from raw list, we might lose distance. Preserve it.
+        if (!updatedVenue.distance && selectedVenue.distance) {
+          updatedVenue = {
+            ...updatedVenue,
+            distance: selectedVenue.distance,
+            distanceKm: selectedVenue.distanceKm,
+            coordinates: selectedVenue.coordinates // Also preserve valid coordinates if raw ones aren't processed yet
+          };
+        }
+
+        // Only update if there are meaningful changes
         if (JSON.stringify(updatedVenue, (key, value) => {
           // Avoid circular references or huge objects if any
+          // Also ignore distance comparison if we just patched it in
           if (key === 'coordinates' || key === 'loading') return undefined;
           return value;
         }) !== JSON.stringify(selectedVenue, (key, value) => {
@@ -662,7 +680,7 @@ export default function MapScreen({ navigation }) {
         }
       }
     }
-  }, [nearbyTurfs, selectedVenue]);
+  }, [nearbyTurfs, venuesWithValidCoords, selectedVenue]);
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
