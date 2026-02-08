@@ -8,7 +8,7 @@ const connectDB = async () => {
     });
 
     console.log(`📊 MongoDB Connected: ${conn.connection.host}`);
-    
+
     // Handle connection events
     mongoose.connection.on('error', (err) => {
       console.error('MongoDB connection error:', err);
@@ -26,8 +26,8 @@ const connectDB = async () => {
     });
 
   } catch (error) {
-    console.error('Database connection failed:', error.message);
-    process.exit(1);
+    console.error('Database connection failed (Non-fatal, starting server anyway):', error.message);
+    // process.exit(1); // Allow server to start even if DB fails (for email-only usage)
   }
 };
 

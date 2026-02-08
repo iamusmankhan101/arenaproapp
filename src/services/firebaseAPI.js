@@ -722,11 +722,18 @@ export const bookingAPI = {
       // 5. Send Email Confirmation via Backend (Fire-and-forget)
       try {
         // Use the base URL from our centralized API config
-        // This ensures we use the same server as the rest of the app (including local IP vs production)
-        const baseUrl = api.defaults.baseURL && !api.defaults.baseURL.includes('localhost')
-          ? api.defaults.baseURL
-          : 'http://192.168.100.72:3001'; // Fallback to local machine IP for physical device testing
-        const emailServiceUrl = `${baseUrl}/api/bookings/send-confirmation`; // Added /api prefix based on server.js routes
+        // FIX: Force local IP for physical device testing if not on localhost
+        // This bypasses the issue where api.defaults.baseURL might be set to a dummy production URL like 'https://api.arenapro.pk'
+        const localIP = '192.168.100.72';
+        const backendPort = '3001';
+
+        let baseUrl = 'http://' + localIP + ':' + backendPort;
+
+        // If we are actually running on a simulator/emulator that maps localhost, we could use that,
+        // but for physical device, we MUST use the LAN IP.
+
+        console.log('📧 Mobile: Sending email via backend at:', baseUrl);
+        const emailServiceUrl = `${baseUrl}/api/bookings/send-confirmation`;
 
         const emailPayload = {
           email: user.email,
