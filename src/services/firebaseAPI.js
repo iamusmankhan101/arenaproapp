@@ -305,15 +305,23 @@ export const bookingAPI = {
         return { data: [] };
       }
 
+      // Normalize date to YYYY-MM-DD string to ensure query matches Firestore format
+      let queryDate = date;
+      if (date instanceof Date) {
+        queryDate = safeDateString(date);
+      } else if (typeof date === 'string' && date.includes('T')) {
+        queryDate = date.split('T')[0];
+      }
+
+      console.log(`🔍 Mobile: Normalized query date: ${queryDate} (Original: ${date})`);
+
       // Try to get existing bookings for this date (using exact string match)
       let bookedIntervals = [];
       try {
         const bookingsRef = collection(db, 'bookings');
-        // Fix: Query by exact date string since booking.date is stored as string "YYYY-MM-DD"
-        // Previous logic using startOfDay/endOfDay (Date objects) failed because Firestore can't compare String field with Date objects
         const q = query(bookingsRef,
           where('turfId', '==', turfId),
-          where('date', '==', date),
+          where('date', '==', queryDate),
           where('status', 'in', ['confirmed', 'pending'])
         );
 
@@ -321,12 +329,16 @@ export const bookingAPI = {
         bookedIntervals = snapshot.docs.map(doc => {
           const booking = doc.data();
           return {
+            id: doc.id,
             start: booking.startTime,
             end: booking.endTime
           };
         });
 
-        console.log(`📋 Mobile: Found ${bookedIntervals.length} bookings for ${date}:`, bookedIntervals);
+        console.log(`📋 Mobile: Found ${bookedIntervals.length} bookings for ${queryDate}`);
+        if (bookedIntervals.length > 0) {
+          console.log('📋 Mobile: Booked intervals:', JSON.stringify(bookedIntervals));
+        }
       } catch (error) {
         console.warn('⚠️ Mobile: Error fetching bookings:', error.message);
         bookedIntervals = [];
@@ -334,9 +346,18 @@ export const bookingAPI = {
 
       // Helper to convert time "HH:MM" to minutes for comparison
       const timeToMinutes = (t) => {
-        if (!t) return 0;
-        const [h, m] = t.split(':').map(Number);
-        return h * 60 + m;
+        if (!t) return -1;
+        try {
+          // Handle potential full ISO strings by extracting time part
+          if (t.includes('T')) {
+            t = t.split('T')[1].substring(0, 5);
+          }
+          const [h, m] = t.split(':').map(Number);
+          return h * 60 + m;
+        } catch (e) {
+          console.error('❌ Mobile: Error parsing time:', t);
+          return -1;
+        }
       };
 
       // Mark selected slots as available/unavailable based on overlapping bookings
@@ -350,16 +371,21 @@ export const bookingAPI = {
         const e1 = slotEnd ? timeToMinutes(slotEnd) : s1 + 60;
 
         // Check if this slot overlaps with ANY booked interval
-        // Overlap Logic: (StartA < EndB) && (StartB < EndA)
-        const isBooked = bookedIntervals.some(booking => {
+        const overlappingBooking = bookedIntervals.find(booking => {
           const s2 = timeToMinutes(booking.start);
           const e2 = timeToMinutes(booking.end);
-          return s1 < e2 && s2 < e1;
+
+          if (s1 === -1 || s2 === -1) return false;
+
+          // Strict overlap check: (StartA < EndB) && (EndA > StartB)
+          const overlaps = s1 < e2 && e1 > s2;
+          return overlaps;
         });
+
+        const isBooked = !!overlappingBooking;
 
         return {
           ...slot,
-          // Ensure both time and startTime fields exist for compatibility
           time: slotStart,
           startTime: slotStart,
           available: !isBooked
@@ -697,8 +723,10 @@ export const bookingAPI = {
       try {
         // Use the base URL from our centralized API config
         // This ensures we use the same server as the rest of the app (including local IP vs production)
-        const baseUrl = api.defaults.baseURL || 'http://localhost:5000';
-        const emailServiceUrl = `${baseUrl}/bookings/send-confirmation`;
+        const baseUrl = api.defaults.baseURL && !api.defaults.baseURL.includes('localhost')
+          ? api.defaults.baseURL
+          : 'http://192.168.100.72:3001'; // Fallback to local machine IP for physical device testing
+        const emailServiceUrl = `${baseUrl}/api/bookings/send-confirmation`; // Added /api prefix based on server.js routes
 
         const emailPayload = {
           email: user.email,

@@ -892,7 +892,7 @@ export default function TurfDetailScreen({ route, navigation }) {
           onDismiss={() => setShowTimeSlots(false)}
           contentContainerStyle={styles.modalContainer}
         >
-          <View style={[styles.modalContent, { maxHeight: height * 0.8 }]}>
+          <View style={[styles.modalContent, { height: height * 0.8 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Time Slot</Text>
               <TouchableOpacity
@@ -903,7 +903,7 @@ export default function TurfDetailScreen({ route, navigation }) {
               </TouchableOpacity>
             </View>
 
-            <View style={{ flexShrink: 1 }}>
+            <View style={{ flex: 1 }}>
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 20 }}
