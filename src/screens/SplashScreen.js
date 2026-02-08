@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: width * 0.8,
-    height: height * 0.4,
+    width: width * 0.9,
+    height: width * 0.9, // Make it square-ish or adjust based on aspect ratio
   },
 });

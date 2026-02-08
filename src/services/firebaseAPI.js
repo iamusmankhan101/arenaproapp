@@ -305,45 +305,63 @@ export const bookingAPI = {
         return { data: [] };
       }
 
-      // Try to get existing bookings for this date (with fallback for index issues)
-      let bookedSlots = [];
+      // Try to get existing bookings for this date (using exact string match)
+      let bookedIntervals = [];
       try {
         const bookingsRef = collection(db, 'bookings');
-        const startOfDay = safeDate(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = safeDate(date);
-        endOfDay.setHours(23, 59, 59, 999);
-
+        // Fix: Query by exact date string since booking.date is stored as string "YYYY-MM-DD"
+        // Previous logic using startOfDay/endOfDay (Date objects) failed because Firestore can't compare String field with Date objects
         const q = query(bookingsRef,
           where('turfId', '==', turfId),
-          where('date', '>=', startOfDay),
-          where('date', '<=', endOfDay),
+          where('date', '==', date),
           where('status', 'in', ['confirmed', 'pending'])
         );
 
         const snapshot = await getDocs(q);
-        bookedSlots = snapshot.docs.map(doc => {
+        bookedIntervals = snapshot.docs.map(doc => {
           const booking = doc.data();
-          return booking.timeSlot || booking.slot?.startTime;
-        }).filter(Boolean);
+          return {
+            start: booking.startTime,
+            end: booking.endTime
+          };
+        });
 
-        console.log(`📋 Mobile: Found ${bookedSlots.length} booked slots:`, bookedSlots);
-      } catch (indexError) {
-        console.warn('⚠️ Mobile: Firestore index not ready yet, showing all slots as available:', indexError.message);
-        // If index is not ready, show all slots as available
-        bookedSlots = [];
+        console.log(`📋 Mobile: Found ${bookedIntervals.length} bookings for ${date}:`, bookedIntervals);
+      } catch (error) {
+        console.warn('⚠️ Mobile: Error fetching bookings:', error.message);
+        bookedIntervals = [];
       }
 
-      // Mark selected slots as available/unavailable based on bookings
+      // Helper to convert time "HH:MM" to minutes for comparison
+      const timeToMinutes = (t) => {
+        if (!t) return 0;
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+      };
+
+      // Mark selected slots as available/unavailable based on overlapping bookings
       const availableSlots = selectedSlots.map(slot => {
-        const slotTime = slot.time || slot.startTime;
-        const isBooked = bookedSlots.includes(slotTime);
+        const slotStart = slot.time || slot.startTime;
+        const slotEnd = slot.endTime;
+
+        // Calculate slot interval
+        const s1 = timeToMinutes(slotStart);
+        // If endTime is missing, assume 1 hour duration as fallback
+        const e1 = slotEnd ? timeToMinutes(slotEnd) : s1 + 60;
+
+        // Check if this slot overlaps with ANY booked interval
+        // Overlap Logic: (StartA < EndB) && (StartB < EndA)
+        const isBooked = bookedIntervals.some(booking => {
+          const s2 = timeToMinutes(booking.start);
+          const e2 = timeToMinutes(booking.end);
+          return s1 < e2 && s2 < e1;
+        });
 
         return {
           ...slot,
           // Ensure both time and startTime fields exist for compatibility
-          time: slotTime,
-          startTime: slotTime,
+          time: slotStart,
+          startTime: slotStart,
           available: !isBooked
         };
       });

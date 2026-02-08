@@ -881,7 +881,7 @@ export default function TurfDetailScreen({ route, navigation }) {
           style={[styles.bookButton, { backgroundColor: theme.colors.primary }]}
           contentStyle={styles.bookButtonContent}
         >
-          Book Court
+          Book Now
         </Button>
       </View>
 
@@ -892,179 +892,184 @@ export default function TurfDetailScreen({ route, navigation }) {
           onDismiss={() => setShowTimeSlots(false)}
           contentContainerStyle={styles.modalContainer}
         >
-          <Card style={styles.timeSlotsCard}>
-            <Card.Content>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select Time Slot</Text>
-                <TouchableOpacity
-                  onPress={() => setShowTimeSlots(false)}
-                  style={styles.closeButton}
-                >
-                  <MaterialIcons name="close" size={24} color="#666" />
-                </TouchableOpacity>
-              </View>
+          <View style={[styles.modalContent, { maxHeight: height * 0.8 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Time Slot</Text>
+              <TouchableOpacity
+                onPress={() => setShowTimeSlots(false)}
+                style={styles.closeButton}
+              >
+                <MaterialIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
 
-              {/* Date Selection */}
-              <Text style={styles.sectionLabel}>Select Date</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
-                {generateDateOptions().map((date, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.dateOption,
-                      selectedDate.toDateString() === date.toDateString() && { backgroundColor: theme.colors.primary }
-                    ]}
-                    onPress={() => {
-                      // Validate date before setting it using safe utilities
-                      if (isValidDate(date)) {
-                        setSelectedDate(date);
-                      } else {
-                        console.error('❌ TurfDetailScreen: Invalid date selected:', date);
-                      }
-                    }}
-                  >
-                    <Text style={[
-                      styles.dateOptionText,
-                      selectedDate.toDateString() === date.toDateString() && styles.selectedDateOptionText
-                    ]}>
-                      {formatDateOption(date)}
-                    </Text>
-                    <Text style={[
-                      styles.dateOptionDay,
-                      selectedDate.toDateString() === date.toDateString() && styles.selectedDateOptionDay
-                    ]}>
-                      {date.getDate()}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Time Slots Grid */}
-              <Text style={styles.sectionLabel}>Available Time Slots</Text>
-              {slotsLoading ? (
-                <View style={styles.loadingContainer}>
-                  <Text style={styles.loadingText}>Loading time slots...</Text>
-                </View>
-              ) : slotsError ? (
-                <View style={styles.noSlotsContainer}>
-                  <Text style={styles.noSlotsText}>Error loading time slots</Text>
-                  <Text style={styles.noSlotsSubtext}>{slotsError}</Text>
-                </View>
-              ) : (
-                <ScrollView style={styles.timeSlotsScroll} showsVerticalScrollIndicator={false}>
-                  <View style={styles.timeSlotsGrid}>
-                    {(() => {
-                      // Only use admin-configured date-specific slots from Redux - no fallback
-                      const slotsToShow = availableSlots || [];
-                      console.log(`🕐 TurfDetailScreen: Displaying ${slotsToShow.length} admin - configured time slots`);
-                      console.log(`   - Redux availableSlots: ${availableSlots?.length || 0} `);
-                      console.log(`   - Using: Admin - configured date - specific slots only`);
-
-                      if (slotsToShow.length === 0) {
-                        console.log('⚠️ TurfDetailScreen: No admin-configured slots for this date');
-                      }
-
-                      return slotsToShow.map((slot) => {
-                        const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
-                        return (
-                          <TouchableOpacity
-                            key={slot.id}
-                            style={[
-                              styles.timeSlotCard,
-                              !slot.available && styles.unavailableSlot,
-                              isSelected && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
-                            ]}
-                            onPress={() => handleTimeSlotSelect(slot)}
-                            disabled={!slot.available}
-                          >
-                            <Text style={[
-                              styles.timeSlotTime,
-                              !slot.available && styles.unavailableSlotText,
-                              isSelected && styles.selectedSlotText
-                            ]}>
-                              {slot.time || slot.startTime} - {slot.endTime}
-                            </Text>
-                            <Text style={[
-                              styles.timeSlotPrice,
-                              !slot.available && styles.unavailableSlotPrice,
-                              isSelected && styles.selectedSlotPrice
-                            ]}>
-                              PKR {slot.price.toLocaleString()}
-                            </Text>
-                            {!slot.available && (
-                              <Text style={styles.bookedText}>Booked</Text>
-                            )}
-                          </TouchableOpacity>
-                        );
-                      });
-                    })()}
-                  </View>
-                  {(!availableSlots || availableSlots.length === 0) && (
-                    <View style={styles.noSlotsContainer}>
-                      <Text style={styles.noSlotsText}>No time slots configured for this date</Text>
-                      <Text style={styles.noSlotsSubtext}>Admin needs to configure slots for this date in the admin panel</Text>
-                    </View>
-                  )}
+            <View style={{ flexShrink: 1 }}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 20 }}
+              >
+                {/* Date Selection */}
+                <Text style={styles.sectionLabel}>Select Date</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
+                  {generateDateOptions().map((date, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.dateOption,
+                        selectedDate.toDateString() === date.toDateString() && { backgroundColor: theme.colors.primary }
+                      ]}
+                      onPress={() => {
+                        // Validate date before setting it using safe utilities
+                        if (isValidDate(date)) {
+                          setSelectedDate(date);
+                        } else {
+                          console.error('❌ TurfDetailScreen: Invalid date selected:', date);
+                        }
+                      }}
+                    >
+                      <Text style={[
+                        styles.dateOptionText,
+                        selectedDate.toDateString() === date.toDateString() && styles.selectedDateOptionText
+                      ]}>
+                        {formatDateOption(date)}
+                      </Text>
+                      <Text style={[
+                        styles.dateOptionDay,
+                        selectedDate.toDateString() === date.toDateString() && styles.selectedDateOptionDay
+                      ]}>
+                        {date.getDate()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </ScrollView>
-              )}
 
-              {/* Selected Slot Summary */}
-              {selectedTimeSlots.length > 0 && (
-                <View style={[styles.selectedSlotSummary, { backgroundColor: `${theme.colors.secondary} 20` }]}>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Selected Slot(s):</Text>
-                    <Text style={styles.summaryValue}>
-                      {selectedTimeSlots[0].time || selectedTimeSlots[0].startTime} - {selectedTimeSlots[selectedTimeSlots.length - 1].endTime}
-                    </Text>
+                {/* Time Slots Grid */}
+                <Text style={styles.sectionLabel}>Available Time Slots</Text>
+                {slotsLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <Text style={styles.loadingText}>Loading time slots...</Text>
                   </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Duration:</Text>
-                    <Text style={styles.summaryValue}>
-                      {selectedTimeSlots.length} hour{selectedTimeSlots.length > 1 ? 's' : ''}
-                    </Text>
+                ) : slotsError ? (
+                  <View style={styles.noSlotsContainer}>
+                    <Text style={styles.noSlotsText}>Error loading time slots</Text>
+                    <Text style={styles.noSlotsSubtext}>{slotsError}</Text>
                   </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Total Price:</Text>
-                    <Text style={[styles.summaryPrice, { color: theme.colors.primary }]}>
-                      PKR {selectedTimeSlots.reduce((sum, s) => sum + s.price, 0).toLocaleString()}
-                    </Text>
-                  </View>
-                </View>
-              )}
+                ) : (
+                  <View style={styles.timeSlotsWrapper}>
+                    <View style={styles.timeSlotsGrid}>
+                      {(() => {
+                        // Only use admin-configured date-specific slots from Redux - no fallback
+                        const slotsToShow = availableSlots || [];
+                        console.log(`🕐 TurfDetailScreen: Displaying ${slotsToShow.length} admin - configured time slots`);
+                        console.log(`   - Redux availableSlots: ${availableSlots?.length || 0} `);
+                        console.log(`   - Using: Admin - configured date - specific slots only`);
 
-              {/* Action Buttons */}
-              <View style={styles.modalActions}>
-                <Button
-                  mode="contained"
-                  onPress={() => setShowTimeSlots(false)}
-                  style={[styles.cancelButton, { backgroundColor: theme.colors.secondary }]}
-                  textColor={theme.colors.primary}
-                  contentStyle={styles.buttonContent}
-                  labelStyle={{ color: theme.colors.primary }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  mode="contained"
-                  onPress={handleConfirmBooking}
-                  style={[
-                    styles.confirmButton,
-                    {
-                      backgroundColor: selectedTimeSlots.length === 0
-                        ? `${theme.colors.primary} 80` // 50% opacity when disabled
-                        : theme.colors.primary
-                    }
-                  ]}
-                  textColor={theme.colors.secondary}
-                  contentStyle={styles.buttonContent}
-                  labelStyle={{ color: theme.colors.secondary }}
-                  disabled={selectedTimeSlots.length === 0}
-                >
-                  Confirm Booking
-                </Button>
-              </View>
-            </Card.Content>
-          </Card>
+                        if (slotsToShow.length === 0) {
+                          console.log('⚠️ TurfDetailScreen: No admin-configured slots for this date');
+                        }
+
+                        return slotsToShow.map((slot) => {
+                          const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
+                          return (
+                            <TouchableOpacity
+                              key={slot.id}
+                              style={[
+                                styles.timeSlotCard,
+                                !slot.available && styles.unavailableSlot,
+                                isSelected && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
+                              ]}
+                              onPress={() => handleTimeSlotSelect(slot)}
+                              disabled={!slot.available}
+                            >
+                              <Text style={[
+                                styles.timeSlotTime,
+                                !slot.available && styles.unavailableSlotText,
+                                isSelected && styles.selectedSlotText
+                              ]}>
+                                {slot.time || slot.startTime} - {slot.endTime}
+                              </Text>
+                              <Text style={[
+                                styles.timeSlotPrice,
+                                !slot.available && styles.unavailableSlotPrice,
+                                isSelected && styles.selectedSlotPrice
+                              ]}>
+                                PKR {slot.price.toLocaleString()}
+                              </Text>
+                              {!slot.available && (
+                                <Text style={styles.bookedText}>Booked</Text>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        });
+                      })()}
+                    </View>
+                    {(!availableSlots || availableSlots.length === 0) && (
+                      <View style={styles.noSlotsContainer}>
+                        <Text style={styles.noSlotsText}>No time slots configured for this date</Text>
+                        <Text style={styles.noSlotsSubtext}>Admin needs to configure slots for this date in the admin panel</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Selected Slot Summary */}
+                {selectedTimeSlots.length > 0 && (
+                  <View style={[styles.selectedSlotSummary, { backgroundColor: `${theme.colors.secondary} 20` }]}>
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Selected Slot(s):</Text>
+                      <Text style={styles.summaryValue}>
+                        {selectedTimeSlots[0].time || selectedTimeSlots[0].startTime} - {selectedTimeSlots[selectedTimeSlots.length - 1].endTime}
+                      </Text>
+                    </View>
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Duration:</Text>
+                      <Text style={styles.summaryValue}>
+                        {selectedTimeSlots.length} hour{selectedTimeSlots.length > 1 ? 's' : ''}
+                      </Text>
+                    </View>
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Total Price:</Text>
+                      <Text style={[styles.summaryPrice, { color: theme.colors.primary }]}>
+                        PKR {selectedTimeSlots.reduce((sum, s) => sum + s.price, 0).toLocaleString()}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+
+            {/* Action Buttons - Fixed at bottom of card */}
+            <View style={styles.modalActions}>
+              <Button
+                mode="contained"
+                onPress={() => setShowTimeSlots(false)}
+                style={[styles.cancelButton, { backgroundColor: theme.colors.secondary }]}
+                textColor={theme.colors.primary}
+                contentStyle={styles.buttonContent}
+                labelStyle={{ color: theme.colors.primary }}
+              >
+                Cancel
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleConfirmBooking}
+                style={[
+                  styles.confirmButton,
+                  {
+                    backgroundColor: selectedTimeSlots.length === 0
+                      ? `${theme.colors.primary} 80` // 50% opacity when disabled
+                      : theme.colors.primary
+                  }
+                ]}
+                textColor={theme.colors.secondary}
+                contentStyle={styles.buttonContent}
+                labelStyle={{ color: theme.colors.secondary }}
+                disabled={selectedTimeSlots.length === 0}
+              >
+                Confirm Booking
+              </Button>
+            </View>
+          </View>
         </Modal>
 
         {/* Enhanced Review Submission Modal */}
@@ -1194,6 +1199,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     height: height * 0.4,
     position: 'relative',
+    backgroundColor: '#f0f0f0', // Fallback color
   },
   headerImage: {
     width: '100%',
@@ -1437,6 +1443,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     margin: 20,
     maxHeight: height * 0.8,
+    borderRadius: 16,
   },
   timeSlotsCard: {
     borderRadius: 16,
@@ -1586,9 +1593,19 @@ const styles = StyleSheet.create({
     color: '#004d43',
     fontFamily: 'Montserrat_700Bold',
   },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    overflow: 'hidden',
+    width: '100%',
+  },
   modalActions: {
     flexDirection: 'row',
     gap: 12,
+    padding: 20,
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
   },
   cancelButton: {
     flex: 1,
