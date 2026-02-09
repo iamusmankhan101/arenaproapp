@@ -42,6 +42,10 @@ export default function VenueListScreen({ navigation, route }) {
     } else if (route.params?.sport) {
       setSelectedCategory(route.params.sport);
     }
+
+    if (route.params?.searchQuery) {
+      setSearchQuery(route.params.searchQuery);
+    }
   }, [route.params]);
 
   // Filter venues based on search and category

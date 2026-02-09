@@ -54,9 +54,9 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
         <Card.Content>
           <View style={styles.header}>
             <View style={styles.teamInfo}>
-              <Avatar.Text 
-                size={36} 
-                label={challenge.teamName?.charAt(0) || 'T'} 
+              <Avatar.Text
+                size={36}
+                label={challenge.teamName?.charAt(0) || 'T'}
                 style={styles.avatar}
               />
               <View style={styles.teamDetails}>
@@ -65,16 +65,16 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
                     {challenge.title || challenge.message}
                   </Text>
                   <View style={styles.badges}>
-                    <MaterialIcons 
-                      name={getChallengeTypeIcon(challenge.type)} 
-                      size={16} 
-                      color="#666" 
+                    <MaterialIcons
+                      name={getChallengeTypeIcon(challenge.type)}
+                      size={16}
+                      color="#666"
                       style={styles.typeIcon}
                     />
-                    <MaterialIcons 
-                      name={getSportIcon(challenge.sport)} 
-                      size={16} 
-                      color="#229a60" 
+                    <MaterialIcons
+                      name={getSportIcon(challenge.sport)}
+                      size={16}
+                      color="#229a60"
                     />
                   </View>
                 </View>
@@ -95,8 +95,8 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
                 </View>
               </View>
             </View>
-            
-            <Chip 
+
+            <Chip
               style={[styles.statusChip, { backgroundColor: getStatusColor(challenge.status) }]}
               textStyle={{ color: 'white', fontSize: 10 }}
             >
@@ -117,7 +117,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
                 {formatDateTime(challenge.proposedDateTime)}
               </Text>
             </View>
-            
+
             {challenge.venue && (
               <View style={styles.detailRow}>
                 <MaterialIcons name="location-on" size={16} color="#666" />
@@ -126,7 +126,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
                 </Text>
               </View>
             )}
-            
+
             {challenge.maxGroundFee && (
               <View style={styles.detailRow}>
                 <MaterialIcons name="monetization-on" size={16} color="#666" />
@@ -143,6 +143,32 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
                 <Text style={styles.detailText}>
                   {challenge.rules}
                 </Text>
+              </View>
+            )}
+
+            {/* Sport Specific Specs */}
+            {(challenge.ballType || challenge.overs || challenge.format || challenge.duration) && (
+              <View style={styles.specsContainer}>
+                {challenge.format && (
+                  <Chip style={styles.specChip} textStyle={styles.specChipText} icon="groups">
+                    {challenge.format}
+                  </Chip>
+                )}
+                {challenge.ballType && (
+                  <Chip style={styles.specChip} textStyle={styles.specChipText} icon="sports-baseball">
+                    {challenge.ballType}
+                  </Chip>
+                )}
+                {challenge.overs && (
+                  <Chip style={styles.specChip} textStyle={styles.specChipText} icon="timer">
+                    {challenge.overs} Overs
+                  </Chip>
+                )}
+                {challenge.duration && (
+                  <Chip style={styles.specChip} textStyle={styles.specChipText} icon="timer">
+                    {challenge.duration} Mins
+                  </Chip>
+                )}
               </View>
             )}
           </View>
@@ -164,8 +190,8 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
                 {challenge.timeAgo || 'Just now'}
               </Text>
               {challenge.type === 'tournament' && (
-                <Chip 
-                  icon="emoji-events" 
+                <Chip
+                  icon="emoji-events"
                   style={styles.tournamentChip}
                   textStyle={styles.tournamentChipText}
                 >
@@ -173,11 +199,11 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
                 </Chip>
               )}
             </View>
-            
+
             <View style={styles.footerRight}>
               {canAccept && (
-                <Button 
-                  mode="contained" 
+                <Button
+                  mode="contained"
                   onPress={(e) => {
                     e.stopPropagation();
                     onAccept();
@@ -189,10 +215,10 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, user
                   Accept
                 </Button>
               )}
-              
+
               {isOwnChallenge && challenge.status === 'open' && (
-                <Chip 
-                  icon="edit" 
+                <Chip
+                  icon="edit"
                   style={styles.ownChallengeChip}
                   textStyle={styles.ownChallengeText}
                 >
@@ -360,5 +386,20 @@ const styles = StyleSheet.create({
   ownChallengeText: {
     color: '#229a60',
     fontSize: 9,
+  },
+  specsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    gap: 6,
+  },
+  specChip: {
+    backgroundColor: '#F0F0F0',
+    height: 24,
+  },
+  specChipText: {
+    fontSize: 10,
+    color: '#666',
+    marginRight: 4,
   },
 });

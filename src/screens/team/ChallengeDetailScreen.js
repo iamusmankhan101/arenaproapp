@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Dimensions, 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
   Alert,
-  Share 
+  Share
 } from 'react-native';
 import { Text, Card, Button, Chip, Avatar, Divider } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { acceptChallenge, joinTournament } from '../../store/slices/teamSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeDate, safeFormatDate } from '../../utils/dateUtils';
+import { challengeService } from '../../services/challengeService';
 
 const { width } = Dimensions.get('window');
 
@@ -23,89 +24,26 @@ export default function ChallengeDetailScreen({ route, navigation }) {
   const { userTeam } = useSelector(state => state.auth);
 
   // Mock challenge data - in real app, this would come from API
+
   useEffect(() => {
-    // Simulate API call
-    const mockChallenge = {
-      id: challengeId,
-      title: 'Friday Night Football Championship',
-      description: 'Looking for competitive teams for an epic Friday night showdown! Winner takes all the glory and the ground fee. Bring your A-game because we\'re not holding back. Professional referee will be arranged.',
-      type: 'open',
-      sport: 'Football',
-      status: 'open',
-      createdAt: '2026-01-28T10:00:00Z',
-      proposedDateTime: '2026-02-01T19:00:00Z',
-      venue: 'DHA Sports Complex',
-      venueAddress: 'Phase 5, DHA, Lahore',
-      maxGroundFee: '2500',
-      isWinnerTakesAll: true,
-      rules: 'Standard FIFA rules apply. 90 minutes match with 15-minute halftime. Professional referee required. No slide tackles from behind.',
-      maxParticipants: 8,
-      participants: 3,
-      
-      // Creator team info
-      creatorTeam: {
-        id: 1,
-        name: 'Thunder FC',
-        avatar: 'T',
-        wins: 12,
-        losses: 3,
-        draws: 2,
-        eloRating: 1450,
-        fairPlayScore: 4.2,
-        captain: 'Ahmed Khan',
-        founded: '2023',
-        homeGround: 'DHA Sports Complex'
-      },
-      
-      // Participants (for tournaments)
-      participantTeams: [
-        {
-          id: 1,
-          name: 'Thunder FC',
-          avatar: 'T',
-          wins: 12,
-          losses: 3,
-          eloRating: 1450,
-          joinedAt: '2026-01-28T10:00:00Z'
-        },
-        {
-          id: 2,
-          name: 'Lightning Bolts',
-          avatar: 'L',
-          wins: 8,
-          losses: 5,
-          eloRating: 1320,
-          joinedAt: '2026-01-28T14:30:00Z'
-        },
-        {
-          id: 3,
-          name: 'Storm Riders',
-          avatar: 'S',
-          wins: 15,
-          losses: 2,
-          eloRating: 1580,
-          joinedAt: '2026-01-28T16:45:00Z'
+    const fetchChallengeDetails = async () => {
+      if (!challengeId) return;
+
+      try {
+        const data = await challengeService.getChallengeById(challengeId);
+        if (data) {
+          setChallenge(data);
+        } else {
+          Alert.alert('Error', 'Challenge not found');
+          navigation.goBack();
         }
-      ],
-      
-      // Match history between teams (if applicable)
-      matchHistory: [
-        {
-          date: '2025-12-15',
-          opponent: 'Lightning Bolts',
-          result: 'W',
-          score: '3-1'
-        },
-        {
-          date: '2025-11-20',
-          opponent: 'Storm Riders',
-          result: 'L',
-          score: '1-2'
-        }
-      ]
+      } catch (error) {
+        console.error('Error loading challenge:', error);
+        Alert.alert('Error', 'Failed to load challenge details');
+      }
     };
-    
-    setChallenge(mockChallenge);
+
+    fetchChallengeDetails();
   }, [challengeId]);
 
   const handleAcceptChallenge = () => {
@@ -114,12 +52,28 @@ export default function ChallengeDetailScreen({ route, navigation }) {
       `Are you sure you want to accept this challenge? ${challenge.isWinnerTakesAll ? 'The loser will pay the entire ground fee.' : 'Ground fee will be split equally.'}`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Accept Challenge', 
+        {
+          text: 'Accept Challenge',
           onPress: () => {
-            dispatch(acceptChallenge(challengeId));
-            Alert.alert('Success', 'Challenge accepted! You will receive booking details soon.');
-            navigation.goBack();
+            dispatch(acceptChallenge({
+              challengeId,
+              opponentId: userTeam.id,
+              opponentTeamName: userTeam.name
+            }));
+            Alert.alert(
+              'Challenge Accepted!',
+              `You have accepted the challenge. Please book the venue (${challenge.venue}) to confirm.`,
+              [
+                {
+                  text: 'Book Now',
+                  onPress: () => navigation.navigate('Main', {
+                    screen: 'VenueList',
+                    params: { searchQuery: challenge.venue, sport: challenge.sport }
+                  })
+                },
+                { text: 'Later', style: 'cancel', onPress: () => navigation.goBack() }
+              ]
+            );
           }
         }
       ]
@@ -132,8 +86,8 @@ export default function ChallengeDetailScreen({ route, navigation }) {
       `Join this ${challenge.sport} tournament? You'll be competing against ${challenge.participants - 1} other teams.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Join Tournament', 
+        {
+          text: 'Join Tournament',
           onPress: () => {
             dispatch(joinTournament(challengeId));
             Alert.alert('Success', 'Joined tournament! Check your team dashboard for updates.');
@@ -146,12 +100,12 @@ export default function ChallengeDetailScreen({ route, navigation }) {
 
   const handleShareChallenge = async () => {
     try {
-      const formattedDate = safeFormatDate(challenge.proposedDateTime, { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      const formattedDate = safeFormatDate(challenge.proposedDateTime, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       }, 'a future date');
-      
+
       await Share.share({
         message: `Check out this ${challenge.sport} challenge: "${challenge.title}" on ${formattedDate}. Join the competition!`,
         title: challenge.title
@@ -168,7 +122,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         time: 'Invalid Time'
       };
     }
-    
+
     const date = safeDate(dateTime);
     return {
       date: safeFormatDate(date, {
@@ -231,14 +185,14 @@ export default function ChallengeDetailScreen({ route, navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
           <MaterialIcons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Challenge Details</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.shareButton}
           onPress={handleShareChallenge}
         >
@@ -252,17 +206,17 @@ export default function ChallengeDetailScreen({ route, navigation }) {
           <Card.Content>
             <View style={styles.challengeHeader}>
               <View style={styles.challengeTypeContainer}>
-                <MaterialIcons 
-                  name={getChallengeTypeIcon(challenge.type)} 
-                  size={20} 
-                  color="#229a60" 
+                <MaterialIcons
+                  name={getChallengeTypeIcon(challenge.type)}
+                  size={20}
+                  color="#229a60"
                 />
                 <Text style={styles.challengeType}>
-                  {challenge.type === 'tournament' ? 'Tournament' : 
-                   challenge.type === 'private' ? 'Private Match' : 'Open Challenge'}
+                  {challenge.type === 'tournament' ? 'Tournament' :
+                    challenge.type === 'private' ? 'Private Match' : 'Open Challenge'}
                 </Text>
               </View>
-              <Chip 
+              <Chip
                 style={[styles.statusChip, { backgroundColor: getStatusColor(challenge.status) }]}
                 textStyle={{ color: 'white', fontSize: 12 }}
               >
@@ -271,7 +225,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
             </View>
 
             <Text style={styles.challengeTitle}>{challenge.title}</Text>
-            
+
             <View style={styles.sportContainer}>
               <MaterialIcons name={getSportIcon(challenge.sport)} size={24} color="#229a60" />
               <Text style={styles.sportText}>{challenge.sport}</Text>
@@ -285,7 +239,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         <Card style={styles.detailsCard}>
           <Card.Content>
             <Text style={styles.sectionTitle}>Match Details</Text>
-            
+
             <View style={styles.detailRow}>
               <MaterialIcons name="event" size={20} color="#666" />
               <View style={styles.detailContent}>
@@ -331,11 +285,11 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         <Card style={styles.teamCard}>
           <Card.Content>
             <Text style={styles.sectionTitle}>Challenge Creator</Text>
-            
+
             <View style={styles.teamHeader}>
-              <Avatar.Text 
-                size={50} 
-                label={challenge.creatorTeam.avatar} 
+              <Avatar.Text
+                size={50}
+                label={challenge.creatorTeam.avatar}
                 style={styles.teamAvatar}
               />
               <View style={styles.teamInfo}>
@@ -375,7 +329,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
             <Card.Content>
               <View style={styles.participantsHeader}>
                 <Text style={styles.sectionTitle}>Tournament Participants</Text>
-                <Chip 
+                <Chip
                   style={styles.participantsChip}
                   textStyle={styles.participantsChipText}
                 >
@@ -385,9 +339,9 @@ export default function ChallengeDetailScreen({ route, navigation }) {
 
               {challenge.participantTeams.map((team, index) => (
                 <View key={team.id} style={styles.participantItem}>
-                  <Avatar.Text 
-                    size={40} 
-                    label={team.avatar} 
+                  <Avatar.Text
+                    size={40}
+                    label={team.avatar}
                     style={styles.participantAvatar}
                   />
                   <View style={styles.participantInfo}>
@@ -397,10 +351,10 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                     </Text>
                   </View>
                   <Text style={styles.participantJoinTime}>
-                    {safeFormatDate(team.joinedAt, { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
+                    {safeFormatDate(team.joinedAt, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
                     }, 'Unknown Date')}
                   </Text>
                 </View>
@@ -422,15 +376,15 @@ export default function ChallengeDetailScreen({ route, navigation }) {
           <Card style={styles.historyCard}>
             <Card.Content>
               <Text style={styles.sectionTitle}>Recent Match History</Text>
-              
+
               {challenge.matchHistory.map((match, index) => (
                 <View key={index} style={styles.historyItem}>
                   <View style={styles.historyDate}>
                     <Text style={styles.historyDateText}>
-                      {safeFormatDate(match.date, { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
+                      {safeFormatDate(match.date, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
                       }, 'Unknown Date')}
                     </Text>
                   </View>
@@ -439,8 +393,10 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                     <View style={styles.historyResult}>
                       <Text style={[
                         styles.historyResultText,
-                        { color: match.result === 'W' ? '#229a60' : 
-                                 match.result === 'L' ? '#F44336' : '#FF9800' }
+                        {
+                          color: match.result === 'W' ? '#229a60' :
+                            match.result === 'L' ? '#F44336' : '#FF9800'
+                        }
                       ]}>
                         {match.result === 'W' ? 'Won' : match.result === 'L' ? 'Lost' : 'Draw'}
                       </Text>

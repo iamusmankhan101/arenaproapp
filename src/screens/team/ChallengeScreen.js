@@ -18,7 +18,7 @@ export default function ChallengeScreen({ navigation }) {
   const [selectedSport, setSelectedSport] = useState('All Sports');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('browse'); // browse, my-challenges, invites
-  
+
   const dispatch = useDispatch();
   const { challenges, loading, userTeam, teamStats } = useSelector(state => state.team);
 
@@ -27,7 +27,30 @@ export default function ChallengeScreen({ navigation }) {
   }, [dispatch]);
 
   const handleCreateChallenge = (challengeData) => {
-    dispatch(createChallenge(challengeData));
+    if (!userTeam) {
+      Alert.alert('Error', 'You must have a team to create a challenge');
+      return;
+    }
+
+    const enhancedData = {
+      ...challengeData,
+      challengerId: userTeam.id, // Legacy support
+      creatorTeam: {
+        id: userTeam.id,
+        name: userTeam.name,
+        avatar: userTeam.avatar || userTeam.name?.charAt(0) || 'T',
+        wins: teamStats.wins || 0,
+        losses: teamStats.losses || 0,
+        draws: teamStats.draws || 0,
+        eloRating: teamStats.eloRating || 1200,
+        fairPlayScore: teamStats.fairPlayScore || 5.0,
+        captain: userTeam.captain || 'Captain',
+        founded: userTeam.founded || '2024',
+        homeGround: userTeam.homeGround || 'N/A'
+      }
+    };
+
+    dispatch(createChallenge(enhancedData));
     setShowCreateModal(false);
   };
 
@@ -37,8 +60,8 @@ export default function ChallengeScreen({ navigation }) {
       'Are you sure you want to accept this challenge? This will create a match booking.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Accept', 
+        {
+          text: 'Accept',
           onPress: () => dispatch(acceptChallenge(challengeId))
         }
       ]
@@ -48,11 +71,11 @@ export default function ChallengeScreen({ navigation }) {
   const filteredChallenges = challenges.filter(challenge => {
     const matchesType = selectedType === 'All' || challenge.type === selectedType.toLowerCase();
     const matchesSport = selectedSport === 'All Sports' || challenge.sport === selectedSport;
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       challenge.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       challenge.venue.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return matchesType && matchesSport && matchesSearch;
   });
 
@@ -69,7 +92,7 @@ export default function ChallengeScreen({ navigation }) {
   );
 
   const renderChallenge = ({ item }) => (
-    <ChallengeCard 
+    <ChallengeCard
       challenge={item}
       onAccept={() => handleAcceptChallenge(item.id)}
       onViewDetails={() => navigation.navigate('ChallengeDetail', { challengeId: item.id })}
@@ -98,7 +121,7 @@ export default function ChallengeScreen({ navigation }) {
 
       {/* Quick Actions */}
       <View style={styles.quickActionsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.quickActionCard}
           onPress={() => setShowCreateModal(true)}
         >
@@ -106,8 +129,8 @@ export default function ChallengeScreen({ navigation }) {
           <Text style={styles.quickActionTitle}>Create Challenge</Text>
           <Text style={styles.quickActionSubtitle}>Start a new match</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.quickActionCard}
           onPress={() => navigation.navigate('VenueList')}
         >
@@ -147,9 +170,9 @@ export default function ChallengeScreen({ navigation }) {
                 <Text style={styles.statLabel}>ELO Rating</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { 
-                  color: (teamStats.fairPlayScore || 4) >= 4 ? '#004d43' : 
-                         (teamStats.fairPlayScore || 4) >= 3 ? '#FF9800' : '#F44336' 
+                <Text style={[styles.statValue, {
+                  color: (teamStats.fairPlayScore || 4) >= 4 ? '#004d43' :
+                    (teamStats.fairPlayScore || 4) >= 3 ? '#FF9800' : '#F44336'
                 }]}>
                   {(teamStats.fairPlayScore || 4).toFixed(1)}
                 </Text>
@@ -169,7 +192,7 @@ export default function ChallengeScreen({ navigation }) {
           style={styles.searchbar}
           iconColor="#004d43" // Primary brand color
         />
-        
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
           <View style={styles.filterGroup}>
             <Text style={styles.filterLabel}>Type:</Text>
@@ -192,7 +215,7 @@ export default function ChallengeScreen({ navigation }) {
               </Chip>
             ))}
           </View>
-          
+
           <View style={styles.filterGroup}>
             <Text style={styles.filterLabel}>Sport:</Text>
             {sportFilters.map((sport) => (
@@ -230,13 +253,13 @@ export default function ChallengeScreen({ navigation }) {
             <MaterialIcons name="sports-soccer" size={64} color="#ccc" />
             <Text variant="bodyLarge" style={styles.emptyText}>
               {activeTab === 'browse' ? 'No challenges available' :
-               activeTab === 'my-challenges' ? 'You haven\'t created any challenges yet' :
-               'No pending invites'}
+                activeTab === 'my-challenges' ? 'You haven\'t created any challenges yet' :
+                  'No pending invites'}
             </Text>
             <Text style={styles.emptySubtext}>
               {activeTab === 'browse' ? 'Be the first to create a challenge!' :
-               activeTab === 'my-challenges' ? 'Create your first challenge to get started' :
-               'Check back later for new invitations'}
+                activeTab === 'my-challenges' ? 'Create your first challenge to get started' :
+                  'Check back later for new invitations'}
             </Text>
           </View>
         }

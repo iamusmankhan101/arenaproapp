@@ -25,6 +25,10 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
     isWinnerTakesAll: false,
     maxParticipants: '2',
     inviteTeams: [],
+    ballType: '',
+    overs: '',
+    format: '',
+    duration: '',
   });
 
   const handleSubmit = () => {
@@ -57,6 +61,10 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
       isWinnerTakesAll: false,
       maxParticipants: '2',
       inviteTeams: [],
+      ballType: '',
+      overs: '',
+      format: '',
+      duration: '',
     });
   };
 
@@ -67,12 +75,12 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
         styles.typeCard,
         formData.type === type.id && styles.selectedTypeCard
       ]}
-      onPress={() => setFormData({...formData, type: type.id})}
+      onPress={() => setFormData({ ...formData, type: type.id })}
     >
-      <MaterialIcons 
-        name={type.icon} 
-        size={24} 
-        color={formData.type === type.id ? '#229a60' : '#666'} 
+      <MaterialIcons
+        name={type.icon}
+        size={24}
+        color={formData.type === type.id ? '#229a60' : '#666'}
       />
       <Text style={[
         styles.typeLabel,
@@ -92,7 +100,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
             <Text variant="headlineSmall" style={styles.title}>
               Create Match Challenge
             </Text>
-            
+
             <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
               {/* Challenge Type Selection */}
               <Text style={styles.sectionTitle}>Challenge Type</Text>
@@ -102,21 +110,21 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
 
               {/* Basic Information */}
               <Text style={styles.sectionTitle}>Match Details</Text>
-              
+
               <TextInput
                 label="Challenge Title"
                 value={formData.title}
-                onChangeText={(text) => setFormData({...formData, title: text})}
+                onChangeText={(text) => setFormData({ ...formData, title: text })}
                 placeholder="Friday Night Football Challenge"
                 style={styles.input}
                 mode="outlined"
                 activeOutlineColor="#229a60"
               />
-              
+
               <TextInput
                 label="Description"
                 value={formData.description}
-                onChangeText={(text) => setFormData({...formData, description: text})}
+                onChangeText={(text) => setFormData({ ...formData, description: text })}
                 placeholder="Looking for a competitive match. Loser pays ground fee!"
                 multiline
                 numberOfLines={3}
@@ -133,7 +141,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
                     key={sport}
                     mode={formData.sport === sport ? 'flat' : 'outlined'}
                     selected={formData.sport === sport}
-                    onPress={() => setFormData({...formData, sport: sport})}
+                    onPress={() => setFormData({ ...formData, sport: sport })}
                     style={[
                       styles.sportChip,
                       formData.sport === sport && styles.selectedSportChip
@@ -153,17 +161,17 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
                 <TextInput
                   label="Date"
                   value={formData.proposedDate}
-                  onChangeText={(text) => setFormData({...formData, proposedDate: text})}
+                  onChangeText={(text) => setFormData({ ...formData, proposedDate: text })}
                   placeholder="YYYY-MM-DD"
                   style={[styles.input, styles.halfInput]}
                   mode="outlined"
                   activeOutlineColor="#229a60"
                 />
-                
+
                 <TextInput
                   label="Time"
                   value={formData.proposedTime}
-                  onChangeText={(text) => setFormData({...formData, proposedTime: text})}
+                  onChangeText={(text) => setFormData({ ...formData, proposedTime: text })}
                   placeholder="19:00"
                   style={[styles.input, styles.halfInput]}
                   mode="outlined"
@@ -175,17 +183,17 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
               <TextInput
                 label="Preferred Venue (Optional)"
                 value={formData.venue}
-                onChangeText={(text) => setFormData({...formData, venue: text})}
+                onChangeText={(text) => setFormData({ ...formData, venue: text })}
                 placeholder="DHA Sports Complex or any good venue"
                 style={styles.input}
                 mode="outlined"
                 activeOutlineColor="#229a60"
               />
-              
+
               <TextInput
                 label="Max Ground Fee (PKR)"
                 value={formData.maxGroundFee}
-                onChangeText={(text) => setFormData({...formData, maxGroundFee: text})}
+                onChangeText={(text) => setFormData({ ...formData, maxGroundFee: text })}
                 placeholder="3000"
                 keyboardType="numeric"
                 style={styles.input}
@@ -195,11 +203,11 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
 
               {/* Rules and Settings */}
               <Text style={styles.sectionTitle}>Match Rules</Text>
-              
+
               <TextInput
                 label="Special Rules (Optional)"
                 value={formData.rules}
-                onChangeText={(text) => setFormData({...formData, rules: text})}
+                onChangeText={(text) => setFormData({ ...formData, rules: text })}
                 placeholder="Standard rules, 90 minutes, referee required"
                 multiline
                 numberOfLines={2}
@@ -213,7 +221,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
                   <Text style={styles.switchLabel}>Winner Takes All</Text>
                   <Switch
                     value={formData.isWinnerTakesAll}
-                    onValueChange={(value) => setFormData({...formData, isWinnerTakesAll: value})}
+                    onValueChange={(value) => setFormData({ ...formData, isWinnerTakesAll: value })}
                     color="#229a60"
                   />
                 </View>
@@ -226,7 +234,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
                 <TextInput
                   label="Max Participants"
                   value={formData.maxParticipants}
-                  onChangeText={(text) => setFormData({...formData, maxParticipants: text})}
+                  onChangeText={(text) => setFormData({ ...formData, maxParticipants: text })}
                   placeholder="8"
                   keyboardType="numeric"
                   style={styles.input}
@@ -234,15 +242,79 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
                   activeOutlineColor="#229a60"
                 />
               )}
+
+              {/* Sport Specific Fields */}
+              {formData.sport === 'Cricket' && (
+                <View>
+                  <Text style={styles.sectionTitle}>Cricket Specifics</Text>
+                  <View style={styles.row}>
+                    <TextInput
+                      label="Ball Type"
+                      value={formData.ballType}
+                      onChangeText={(text) => setFormData({ ...formData, ballType: text })}
+                      placeholder="Tape-ball / Tennis"
+                      style={[styles.input, styles.halfInput]}
+                      mode="outlined"
+                      activeOutlineColor="#229a60"
+                    />
+                    <TextInput
+                      label="Overs"
+                      value={formData.overs}
+                      onChangeText={(text) => setFormData({ ...formData, overs: text })}
+                      placeholder="8"
+                      keyboardType="numeric"
+                      style={[styles.input, styles.halfInput]}
+                      mode="outlined"
+                      activeOutlineColor="#229a60"
+                    />
+                  </View>
+                  <TextInput
+                    label="Format"
+                    value={formData.format}
+                    onChangeText={(text) => setFormData({ ...formData, format: text })}
+                    placeholder="8-a-side"
+                    style={styles.input}
+                    mode="outlined"
+                    activeOutlineColor="#229a60"
+                  />
+                </View>
+              )}
+
+              {formData.sport === 'Football' && (
+                <View>
+                  <Text style={styles.sectionTitle}>Football Specifics</Text>
+                  <View style={styles.row}>
+                    <TextInput
+                      label="Format"
+                      value={formData.format}
+                      onChangeText={(text) => setFormData({ ...formData, format: text })}
+                      placeholder="6v6"
+                      style={[styles.input, styles.halfInput]}
+                      mode="outlined"
+                      activeOutlineColor="#229a60"
+                    />
+                    <TextInput
+                      label="Duration (mins)"
+                      value={formData.duration}
+                      onChangeText={(text) => setFormData({ ...formData, duration: text })}
+                      placeholder="60"
+                      keyboardType="numeric"
+                      style={[styles.input, styles.halfInput]}
+                      mode="outlined"
+                      activeOutlineColor="#229a60"
+                    />
+                  </View>
+                </View>
+              )}
             </ScrollView>
-            
+
             <View style={styles.buttons}>
               <Button mode="outlined" onPress={onDismiss} style={styles.button}>
                 Cancel
               </Button>
-              <Button 
-                mode="contained" 
-                onPress={handleSubmit} 
+              <Button
+                mode="contained"
+                onPress={handleSubmit}
                 style={[styles.button, styles.submitButton]}
                 buttonColor="#229a60"
               >

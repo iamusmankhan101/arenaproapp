@@ -1,15 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { teamAPI } from '../../services/api';
+import { challengeService } from '../../services/challengeService';
 
 export const fetchChallenges = createAsyncThunk(
   'team/fetchChallenges',
-  async (_, { rejectWithValue }) => {
+  async (sport, { rejectWithValue }) => {
     try {
-      const response = await teamAPI.getChallenges();
-      return response.data;
+      const challenges = await challengeService.getOpenChallenges(sport === 'All Sports' ? null : sport);
+      return challenges;
     } catch (error) {
-      // Return empty array if API fails, don't show error to user
-      console.warn('Failed to fetch challenges, using empty array:', error.message);
+      console.warn('Failed to fetch challenges:', error.message);
       return [];
     }
   }
@@ -19,22 +18,30 @@ export const createChallenge = createAsyncThunk(
   'team/createChallenge',
   async (challengeData, { rejectWithValue }) => {
     try {
-      const response = await teamAPI.createChallenge(challengeData);
-      return response.data;
+      const result = await challengeService.createChallenge(challengeData);
+      if (result.success) {
+        return { id: result.id, ...challengeData };
+      } else {
+        return rejectWithValue(result.error);
+      }
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );
 
 export const acceptChallenge = createAsyncThunk(
   'team/acceptChallenge',
-  async (challengeId, { rejectWithValue }) => {
+  async ({ challengeId, opponentId, opponentTeamName }, { rejectWithValue }) => {
     try {
-      const response = await teamAPI.acceptChallenge(challengeId);
-      return response.data;
+      const result = await challengeService.acceptChallenge(challengeId, opponentId, opponentTeamName);
+      if (result.success) {
+        return { id: challengeId, status: 'matched', opponentId, opponentTeamName };
+      } else {
+        return rejectWithValue(result.error);
+      }
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -84,7 +91,7 @@ const teamSlice = createSlice({
       .addCase(acceptChallenge.fulfilled, (state, action) => {
         const index = state.challenges.findIndex(c => c.id === action.payload.id);
         if (index !== -1) {
-          state.challenges[index] = action.payload;
+          state.challenges[index] = { ...state.challenges[index], ...action.payload };
         }
       });
   },
