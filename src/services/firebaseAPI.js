@@ -755,9 +755,39 @@ export const bookingAPI = {
           },
           body: JSON.stringify(emailParams)
         })
-          .then((response) => {
+          .then(async (response) => {
             if (response.ok) {
-              console.log('✅ Mobile: EmailJS success!');
+              console.log('✅ Mobile: User EmailJS success!');
+
+              // --- SEND ADMIN EMAIL ---
+              const adminEmail = process.env.EXPO_PUBLIC_ADMIN_EMAIL || 'iamusmankhan101@gmail.com';
+              if (adminEmail) {
+                console.log(`📧 Mobile: Sending Admin Notification to ${adminEmail}...`);
+
+                const adminEmailParams = {
+                  service_id: SERVICE_ID,
+                  template_id: TEMPLATE_ID,
+                  user_id: USER_ID,
+                  template_params: {
+                    ...emailParams.template_params,
+                    to_name: 'Admin',
+                    to_email: adminEmail,
+                    user_name: user.displayName || user.email
+                  }
+                };
+
+                try {
+                  const adminRes = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(adminEmailParams)
+                  });
+                  if (adminRes.ok) console.log('✅ Mobile: Admin EmailJS success!');
+                  else console.error('⚠️ Mobile: Admin EmailJS failed:', await adminRes.text());
+                } catch (e) {
+                  console.error('⚠️ Mobile: Admin EmailJS error:', e);
+                }
+              }
             } else {
               return response.text().then(text => {
                 console.error('⚠️ Mobile: EmailJS failed:', text);

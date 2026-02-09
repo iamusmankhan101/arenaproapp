@@ -25,6 +25,7 @@ import {
   Phone,
   Email,
   Refresh,
+  WhatsApp,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchBookings, updateBookingStatus } from '../store/slices/adminSlice';
@@ -82,6 +83,10 @@ const ActionMenu = ({ booking, onAction }) => {
           <Cancel sx={{ mr: 1, fontSize: 16 }} />
           Cancel
         </MenuItem>
+        <MenuItem onClick={() => handleAction('whatsapp')}>
+          <WhatsApp sx={{ mr: 1, fontSize: 16, color: '#25D366' }} />
+          WhatsApp
+        </MenuItem>
         <MenuItem onClick={() => handleAction('contact')}>
           <Phone sx={{ mr: 1, fontSize: 16 }} />
           Contact Customer
@@ -94,7 +99,7 @@ const ActionMenu = ({ booking, onAction }) => {
 export default function BookingsPage() {
   const dispatch = useDispatch();
   const { bookings, bookingsLoading, bookingsError } = useSelector(state => state.admin);
-  
+
   // Debug logging
   console.log('📊 BookingsPage render:', {
     bookingsData: bookings?.data,
@@ -103,7 +108,7 @@ export default function BookingsPage() {
     bookingsError,
     dataLength: bookings?.data?.length
   });
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [paginationModel, setPaginationModel] = useState({
@@ -141,6 +146,24 @@ export default function BookingsPage() {
     setPaginationModel({ ...paginationModel, page: 0 });
   };
 
+  const handleWhatsApp = (booking) => {
+    if (!booking.customerPhone) {
+      alert('Customer phone number not available');
+      return;
+    }
+
+    // specific format for Pakistan numbers: 03001234567 -> 923001234567
+    let phone = booking.customerPhone.replace(/\D/g, ''); // Remove non-digits
+    if (phone.startsWith('0')) {
+      phone = '92' + phone.substring(1);
+    }
+
+    const message = `Hello ${booking.customerName}, regarding your booking #${booking.bookingId} at ${booking.turfName} on ${format(new Date(booking.dateTime), 'MMM dd, yyyy')} at ${format(new Date(booking.dateTime), 'hh:mm a')}.`;
+
+    // Open WhatsApp
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
   const handleBookingAction = (bookingId, action) => {
     if (action === 'confirm') {
       dispatch(updateBookingStatus({ bookingId, status: 'confirmed' }));
@@ -150,6 +173,9 @@ export default function BookingsPage() {
       const booking = bookings.data.find(b => b.id === bookingId);
       setSelectedBooking(booking);
       setDialogOpen(true);
+    } else if (action === 'whatsapp') {
+      const booking = bookings.data.find(b => b.id === bookingId);
+      handleWhatsApp(booking);
     }
   };
 
