@@ -140,6 +140,7 @@ export const loadStoredAuth = createAsyncThunk(
       await AsyncStorage.multiRemove(['authToken', 'user']);
       return null; // Don't reject, just return null for no auth
     }
+  }
 );
 
 // Fetch User Profile
