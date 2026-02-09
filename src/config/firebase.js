@@ -24,32 +24,33 @@ try {
   // Initialize Firebase app
   app = initializeApp(firebaseConfig);
   console.log('✅ Firebase app initialized');
-  
+
   // Initialize Auth with proper error handling
+  // Initialize Auth with persistence (PRIORITY)
   try {
-    // Try to get existing auth instance first
-    auth = getAuth(app);
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+    console.log('✅ Firebase Auth initialized with persistence');
   } catch (error) {
-    console.log('Initializing auth with persistence...');
+    // If already initialized (e.g. during hot reload), get the existing instance
+    console.log('⚠️ Auth already initialized or failed, using existing instance...');
     try {
-      auth = initializeAuth(app, {
-        persistence: getReactNativePersistence(AsyncStorage)
-      });
-    } catch (initError) {
-      console.error('Firebase Auth initialization error:', initError);
-      // Fallback to basic auth
       auth = getAuth(app);
+    } catch (getAuthError) {
+      console.error('❌ Failed to get Auth instance:', getAuthError);
+      throw getAuthError;
     }
   }
-  
+
   // Initialize Firestore
   db = getFirestore(app);
-  
+
   // Initialize Storage
   storage = getStorage(app);
-  
+
   console.log('✅ All Firebase services initialized successfully');
-  
+
 } catch (error) {
   console.error('❌ Firebase initialization failed:', error);
   throw error;

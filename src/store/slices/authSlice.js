@@ -129,21 +129,10 @@ export const loadStoredAuth = createAsyncThunk(
 
       if (token && userString) {
         const user = JSON.parse(userString);
-        try {
-          // Verify token is still valid
-          const response = await firebaseAuthAPI.verifyToken(token);
-          if (response.data) {
-            return { token: response.data.token, user: response.data.user };
-          } else {
-            // Token verification returned null (no authenticated user)
-            await AsyncStorage.multiRemove(['authToken', 'user']);
-            return null;
-          }
-        } catch (error) {
-          // Token is invalid, clear storage
-          await AsyncStorage.multiRemove(['authToken', 'user']);
-          return null;
-        }
+        // Trust stored credentials initially - let onAuthStateChanged handle verification
+        // This prevents race conditions where the app logs out before Firebase is ready
+        console.log('✅ Loaded stored auth state');
+        return { token, user: user }; // Return stored user directly
       }
       return null;
     } catch (error) {
@@ -151,7 +140,6 @@ export const loadStoredAuth = createAsyncThunk(
       await AsyncStorage.multiRemove(['authToken', 'user']);
       return null; // Don't reject, just return null for no auth
     }
-  }
 );
 
 // Fetch User Profile
