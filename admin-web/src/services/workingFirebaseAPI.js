@@ -158,7 +158,7 @@ export const workingAdminAPI = {
           totalSlots: venueData.totalSlots || venueData.timeSlots?.length || 0,
           priceRange: venueData.priceRange || venueData.basePrice || 0,
           contactPerson: venueData.contactPerson || 'N/A',
-          contactPhone: venueData.contactPhone || venueData.contactPersonPhone || 'N/A',
+          contactPhone: venueData.contactPhone || 'N/A',
           // Ensure arrays are properly formatted
           sports: Array.isArray(venueData.sports) ? venueData.sports : [],
           facilities: Array.isArray(venueData.facilities) ? venueData.facilities : [],
@@ -247,14 +247,7 @@ export const workingAdminAPI = {
           // Additional fields for admin
           userId: bookingData.userId,
           userType: bookingData.userType || 'guest',
-          userType: bookingData.userType || 'guest',
           turfId: bookingData.turfId,
-<<<<<<< HEAD
-          ownerContact: venue.contactPhone || venue.contactPersonPhone || '',
-=======
-          // Added: Venue Owner Phone for WhatsApp contact
-          venueOwnerPhone: venue.contact?.phoneNumber || venue.contactPhone || '',
->>>>>>> feature/whatsapp-integration
         };
 
         bookings.push(transformedBooking);
@@ -506,7 +499,6 @@ export const workingAdminAPI = {
         address: venueData.address,
         city: venueData.city || 'Lahore',
         area: venueData.area,
-        contactPhone: venueData.contactPhone || '',
         sports: Array.isArray(venueData.sports) ? venueData.sports : [],
         facilities: Array.isArray(venueData.facilities) ? venueData.facilities : [],
         basePrice: Number(venueData.basePrice) || 1000,
@@ -514,6 +506,8 @@ export const workingAdminAPI = {
         closeTime: venueData.closeTime || '23:00',
         slotDuration: Number(venueData.slotDuration) || 60,
         images: Array.isArray(venueData.images) ? venueData.images : [],
+        // Contact info
+        contactPhone: venueData.contactPhone || '',
         // Location data structure
         location: {
           latitude: Number(venueData.latitude) || 31.5204,
@@ -528,10 +522,6 @@ export const workingAdminAPI = {
         operatingHours: {
           open: venueData.openTime || '06:00',
           close: venueData.closeTime || '23:00'
-        },
-        // Contact structure
-        contact: {
-          phoneNumber: venueData.ownerPhoneNumber
         },
         // Time slots - use processed selected slots
         timeSlots: processedTimeSlots,
@@ -618,7 +608,6 @@ export const workingAdminAPI = {
         address: venueData.address,
         city: venueData.city || 'Lahore',
         area: venueData.area,
-        contactPhone: venueData.contactPhone || '',
         sports: Array.isArray(venueData.sports) ? venueData.sports : [],
         facilities: Array.isArray(venueData.facilities) ? venueData.facilities : [],
         basePrice: Number(venueData.basePrice) || 0,
@@ -626,6 +615,8 @@ export const workingAdminAPI = {
         closeTime: venueData.closeTime || '23:00',
         slotDuration: Number(venueData.slotDuration) || 60,
         images: Array.isArray(venueData.images) ? venueData.images : [],
+        // Contact info
+        contactPhone: venueData.contactPhone || '',
         // Location data
         location: {
           latitude: Number(venueData.latitude) || 31.5204,
@@ -640,10 +631,6 @@ export const workingAdminAPI = {
         operatingHours: {
           open: venueData.openTime || '06:00',
           close: venueData.closeTime || '23:00'
-        },
-        // Contact structure
-        contact: {
-          phoneNumber: venueData.ownerPhoneNumber
         },
         // Time slots - use processed selected slots
         timeSlots: processedTimeSlots,

@@ -33,6 +33,7 @@ const FACILITIES_OPTIONS = [
   'Scoreboard', 'Pavilion', 'Indoor Court'
 ];
 
+// Force deployment update
 export default function AddVenueModal({ open, onClose, editVenue = null }) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -59,7 +60,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     // Date-related fields
     selectedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     dateSpecificSlots: {}, // Object to store slots for different dates
-    ownerPhoneNumber: '' // Changed: Added owner phone number field
+    contactPhone: '' // Owner/Contact phone number
   });
 
   // Load edit venue data when editVenue prop changes
@@ -110,7 +111,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         })) : [],
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: editVenue.dateSpecificSlots || {},
-        ownerPhoneNumber: editVenue.contact?.phoneNumber || editVenue.contactPhone || '' // Changed: Load owner phone number
+        contactPhone: editVenue.contactPhone || editVenue.contact?.phoneNumber || ''
       });
 
       // Set uploaded images for editing
@@ -145,7 +146,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         availableSlots: [],
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: {},
-        ownerPhoneNumber: '' // Changed: Reset owner phone number
+        contactPhone: ''
       });
       setUploadedImages([]);
     }
@@ -332,8 +333,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     setError('');
 
     // Basic validation
-    if (!formData.name || !formData.address || !formData.area || !formData.basePrice || !formData.ownerPhoneNumber) {
-      setError('Please fill in all required fields, including Owner Phone Number'); // Changed: Updated error message
+    if (!formData.name || !formData.address || !formData.area || !formData.basePrice) {
+      setError('Please fill in all required fields');
       return;
     }
 
@@ -412,7 +413,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         // Reset date-related fields
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: {},
-        ownerPhoneNumber: '' // Changed: Reset owner phone number
+        contactPhone: ''
       });
 
       setUploadedImages([]);
@@ -462,19 +463,6 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
             />
           </Grid>
 
-          {/* Changed: Added Owner Phone Number field */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Owner Phone Number *"
-              value={formData.ownerPhoneNumber}
-              onChange={handleInputChange('ownerPhoneNumber')}
-              placeholder="+923001234567"
-              disabled={loading}
-              helperText="Format: +923001234567"
-            />
-          </Grid>
-
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -495,6 +483,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               disabled={loading}
             />
           </Grid>
+
           <Grid item xs={12}>
             <TextField
               fullWidth
