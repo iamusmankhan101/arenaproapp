@@ -1,0 +1,81 @@
+﻿git : remote: error: GH013: 
+Repository rule violations 
+found for refs/heads/feature/wh
+atsapp-integration.        
+At line:1 char:1
++ git push origin 
+feature/whatsapp-integration > 
+push_error.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo          :  
+   NotSpecified: (remote: err  
+  or: ...ration.        :Str   
+ ing) [], RemoteException
+    + FullyQualifiedErrorId :  
+   NativeCommandError
+ 
+remote: 
+remote: - GITHUB PUSH 
+PROTECTION        
+remote:   ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇö        
+remote:     Resolve the 
+following violations before 
+pushing again        
+remote: 
+remote:     - Push cannot 
+contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to 
+resolve a blocked push        
+remote:      https://docs.githu
+b.com/code-security/secret-scan
+ning/working-with-secret-scanni
+ng-and-push-protection/working-
+with-push-protection-from-the-c
+ommand-line#resolving-a-blocked
+-push        
+remote:             
+remote:             
+remote:       ΓÇöΓÇö 
+Sendinblue SMTP Key ΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö        
+remote:        locations:      
+  
+remote:          - commit: 3cbe
+18107cf023f056479a6c3248f14e866
+be27a        
+remote:            path: 
+backend/.env:30        
+remote:             
+remote:        (?) To push, 
+remove secret from commit(s) 
+or follow this URL to allow 
+the secret.        
+remote:        https://github.c
+om/iamusmankhan101/arenaproapp/
+security/secret-scanning/unbloc
+k-secret/39OlT8vQoIhrqwsZw7fLI1
+M7BCc        
+remote:             
+remote: 
+remote: 
+To https://github.com/iamusmank
+han101/arenaproapp.git
+ ! [remote rejected]   
+feature/whatsapp-integration 
+-> 
+feature/whatsapp-integration 
+(push declined due to 
+repository rule violations)
+error: failed to push some 
+refs to 'https://github.com/iam
+usmankhan101/arenaproapp.git'

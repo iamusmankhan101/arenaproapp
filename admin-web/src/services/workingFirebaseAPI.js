@@ -249,7 +249,12 @@ export const workingAdminAPI = {
           userType: bookingData.userType || 'guest',
           userType: bookingData.userType || 'guest',
           turfId: bookingData.turfId,
+<<<<<<< HEAD
           ownerContact: venue.contactPhone || venue.contactPersonPhone || '',
+=======
+          // Added: Venue Owner Phone for WhatsApp contact
+          venueOwnerPhone: venue.contact?.phoneNumber || venue.contactPhone || '',
+>>>>>>> feature/whatsapp-integration
         };
 
         bookings.push(transformedBooking);
@@ -524,6 +529,10 @@ export const workingAdminAPI = {
           open: venueData.openTime || '06:00',
           close: venueData.closeTime || '23:00'
         },
+        // Contact structure
+        contact: {
+          phoneNumber: venueData.ownerPhoneNumber
+        },
         // Time slots - use processed selected slots
         timeSlots: processedTimeSlots,
         // Include date-specific slots if provided
@@ -631,6 +640,10 @@ export const workingAdminAPI = {
         operatingHours: {
           open: venueData.openTime || '06:00',
           close: venueData.closeTime || '23:00'
+        },
+        // Contact structure
+        contact: {
+          phoneNumber: venueData.ownerPhoneNumber
         },
         // Time slots - use processed selected slots
         timeSlots: processedTimeSlots,

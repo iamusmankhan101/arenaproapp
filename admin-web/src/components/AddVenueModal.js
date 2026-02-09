@@ -59,7 +59,11 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     // Date-related fields
     selectedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     dateSpecificSlots: {}, // Object to store slots for different dates
+<<<<<<< HEAD
     contactPhone: ''
+=======
+    ownerPhoneNumber: '' // Changed: Added owner phone number field
+>>>>>>> feature/whatsapp-integration
   });
 
   // Load edit venue data when editVenue prop changes
@@ -110,7 +114,11 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         })) : [],
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: editVenue.dateSpecificSlots || {},
+<<<<<<< HEAD
         contactPhone: editVenue.contactPhone || editVenue.contactPersonPhone || ''
+=======
+        ownerPhoneNumber: editVenue.contact?.phoneNumber || editVenue.contactPhone || '' // Changed: Load owner phone number
+>>>>>>> feature/whatsapp-integration
       });
 
       // Set uploaded images for editing
@@ -145,7 +153,11 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         availableSlots: [],
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: {},
+<<<<<<< HEAD
         contactPhone: ''
+=======
+        ownerPhoneNumber: '' // Changed: Reset owner phone number
+>>>>>>> feature/whatsapp-integration
       });
       setUploadedImages([]);
     }
@@ -332,8 +344,13 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     setError('');
 
     // Basic validation
+<<<<<<< HEAD
     if (!formData.name || !formData.address || !formData.area || !formData.basePrice || !formData.contactPhone) {
       setError('Please fill in all required fields');
+=======
+    if (!formData.name || !formData.address || !formData.area || !formData.basePrice || !formData.ownerPhoneNumber) {
+      setError('Please fill in all required fields, including Owner Phone Number'); // Changed: Updated error message
+>>>>>>> feature/whatsapp-integration
       return;
     }
 
@@ -412,7 +429,11 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         // Reset date-related fields
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: {},
+<<<<<<< HEAD
         contactPhone: ''
+=======
+        ownerPhoneNumber: '' // Changed: Reset owner phone number
+>>>>>>> feature/whatsapp-integration
       });
 
       setUploadedImages([]);
@@ -462,6 +483,22 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
             />
           </Grid>
 
+<<<<<<< HEAD
+=======
+          {/* Changed: Added Owner Phone Number field */}
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Owner Phone Number *"
+              value={formData.ownerPhoneNumber}
+              onChange={handleInputChange('ownerPhoneNumber')}
+              placeholder="+923001234567"
+              disabled={loading}
+              helperText="Format: +923001234567"
+            />
+          </Grid>
+
+>>>>>>> feature/whatsapp-integration
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -483,6 +520,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
             />
           </Grid>
 
+<<<<<<< HEAD
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -495,6 +533,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
             />
           </Grid>
 
+=======
+>>>>>>> feature/whatsapp-integration
           <Grid item xs={12}>
             <TextField
               fullWidth
