@@ -87,12 +87,12 @@ const ActionMenu = ({ booking, onAction }) => {
           <Phone sx={{ mr: 1, fontSize: 16 }} />
           Contact Customer
         </MenuItem>
-        {booking.venueOwnerPhone && (
-          <MenuItem onClick={() => handleAction('whatsapp')}>
-            <WhatsApp sx={{ mr: 1, fontSize: 16, color: '#25D366' }} />
+        <MenuItem onClick={() => handleAction('whatsapp')}>
+          <WhatsApp sx={{ mr: 1, fontSize: 16, color: booking.venueOwnerPhone ? '#25D366' : 'action.disabled' }} />
+          <Typography color={booking.venueOwnerPhone ? 'textPrimary' : 'textSecondary'}>
             Notify Owner
-          </MenuItem>
-        )}
+          </Typography>
+        </MenuItem>
       </Menu>
     </>
   );
@@ -173,6 +173,8 @@ export default function BookingsPage() {
 
         // Open WhatsApp
         window.open(`https://wa.me/${booking.venueOwnerPhone.replace(/\+/g, '')}?text=${message}`, '_blank');
+      } else {
+        alert('This venue does not have an Owner Phone Number configured. Please edit the venue to add one.');
       }
     }
   };
