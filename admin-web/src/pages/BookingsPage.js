@@ -162,7 +162,7 @@ export default function BookingsPage() {
       if (booking && booking.venueOwnerPhone) {
         // Format message
         const message = encodeURIComponent(
-          `*New Booking Alert!* 🏟️\n\n` +
+          `*New Booking Alert! from Arena Pro*\n\n` +
           `Hello! You have a new booking at *${booking.turfName}*.\n\n` +
           `📅 Date: ${format(new Date(booking.dateTime), 'MMM dd, yyyy')}\n` +
           `⏰ Time: ${booking.timeSlot}\n` +
