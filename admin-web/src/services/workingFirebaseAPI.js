@@ -247,7 +247,6 @@ export const workingAdminAPI = {
           // Additional fields for admin
           userId: bookingData.userId,
           userType: bookingData.userType || 'guest',
-          userType: bookingData.userType || 'guest',
           turfId: bookingData.turfId,
           // Added: Venue Owner Phone for WhatsApp contact
           venueOwnerPhone: venue.contact?.phoneNumber || venue.contactPhone || '',
