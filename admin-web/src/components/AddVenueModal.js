@@ -474,6 +474,27 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               helperText="Format: +923001234567"
             />
           </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Area *"
+              value={formData.area}
+              onChange={handleInputChange('area')}
+              placeholder="e.g., DHA Phase 5"
+              disabled={loading}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Address *"
+              value={formData.address}
+              onChange={handleInputChange('address')}
+              disabled={loading}
+            />
+          </Grid>
           <Grid item xs={12}>
             <TextField
               fullWidth
