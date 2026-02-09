@@ -505,7 +505,6 @@ export const workingAdminAPI = {
         openTime: venueData.openTime || '06:00',
         closeTime: venueData.closeTime || '23:00',
         slotDuration: Number(venueData.slotDuration) || 60,
-        slotDuration: Number(venueData.slotDuration) || 60,
         images: Array.isArray(venueData.images) ? venueData.images : [],
         // Contact info
         contactPhone: venueData.contactPhone || '',
