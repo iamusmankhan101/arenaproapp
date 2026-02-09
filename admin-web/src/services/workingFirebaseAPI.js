@@ -219,19 +219,30 @@ export const workingAdminAPI = {
         venuesMap[doc.id] = doc.data();
       });
 
+      // Fetch users map to resolve "Guest User" for authenticated bookings
+      const usersRef = collection(firestore, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      const usersMap = {};
+      usersSnapshot.forEach((doc) => {
+        usersMap[doc.id] = doc.data();
+      });
+
       querySnapshot.forEach((doc) => {
         const bookingData = doc.data();
 
         // Get venue information
         const venue = venuesMap[bookingData.turfId] || {};
 
+        // Get user information if available
+        const user = bookingData.userId ? usersMap[bookingData.userId] : null;
+
         // Transform booking data for admin panel display
         const transformedBooking = {
           id: doc.id,
           bookingId: bookingData.bookingReference || doc.id.slice(-6),
-          customerName: bookingData.guestInfo?.name || bookingData.customerName || 'Guest User',
-          customerPhone: bookingData.guestInfo?.phone || bookingData.customerPhone || 'N/A',
-          customerEmail: bookingData.guestInfo?.email || bookingData.customerEmail || 'N/A',
+          customerName: bookingData.guestInfo?.name || bookingData.customerName || (user ? (user.fullName || user.displayName || user.name) : 'Guest User'),
+          customerPhone: bookingData.guestInfo?.phone || bookingData.customerPhone || (user ? (user.phoneNumber || user.phone) : 'N/A'),
+          customerEmail: bookingData.guestInfo?.email || bookingData.customerEmail || (user ? user.email : 'N/A'),
           turfName: venue.name || bookingData.turf?.name || 'Unknown Venue',
           turfArea: venue.area || venue.address || bookingData.turf?.address || 'N/A',
           sport: bookingData.sport || (venue.sports && venue.sports[0]) || 'Football',
