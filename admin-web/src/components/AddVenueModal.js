@@ -39,7 +39,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
   const [error, setError] = useState('');
   const [uploadedImages, setUploadedImages] = useState([]);
   const isEditing = Boolean(editVenue);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -58,18 +58,19 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     availableSlots: [], // All possible slots based on operating hours
     // Date-related fields
     selectedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-    dateSpecificSlots: {} // Object to store slots for different dates
+    dateSpecificSlots: {}, // Object to store slots for different dates
+    contactPhone: ''
   });
 
   // Load edit venue data when editVenue prop changes
   useEffect(() => {
     if (editVenue) {
       console.log('🔄 Loading edit venue data:', editVenue);
-      
+
       // Extract location data from different possible structures
       let latitude = '';
       let longitude = '';
-      
+
       if (editVenue.location?.latitude) {
         latitude = editVenue.location.latitude.toString();
         longitude = editVenue.location.longitude.toString();
@@ -77,14 +78,14 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         latitude = editVenue.latitude.toString();
         longitude = editVenue.longitude.toString();
       }
-      
+
       // Extract pricing data
       const basePrice = editVenue.pricing?.basePrice || editVenue.basePrice || 1000;
-      
+
       // Extract operating hours
       const openTime = editVenue.operatingHours?.open || editVenue.openTime || '06:00';
       const closeTime = editVenue.operatingHours?.close || editVenue.closeTime || '23:00';
-      
+
       setFormData({
         name: editVenue.name || '',
         description: editVenue.description || '',
@@ -108,9 +109,10 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
           selected: slot.selected !== false // Default to selected unless explicitly false
         })) : [],
         selectedDate: new Date().toISOString().split('T')[0],
-        dateSpecificSlots: editVenue.dateSpecificSlots || {}
+        dateSpecificSlots: editVenue.dateSpecificSlots || {},
+        contactPhone: editVenue.contactPhone || editVenue.contactPersonPhone || ''
       });
-      
+
       // Set uploaded images for editing
       if (editVenue.images && editVenue.images.length > 0) {
         const existingImages = editVenue.images.map((img, index) => ({
@@ -121,7 +123,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         }));
         setUploadedImages(existingImages);
       }
-      
+
       console.log('✅ Edit venue data loaded successfully');
     } else {
       // Reset form for new venue
@@ -142,7 +144,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         slotDuration: '60',
         availableSlots: [],
         selectedDate: new Date().toISOString().split('T')[0],
-        dateSpecificSlots: {}
+        dateSpecificSlots: {},
+        contactPhone: ''
       });
       setUploadedImages([]);
     }
@@ -151,7 +154,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
   // Handle image upload
   const handleImageUpload = (event) => {
     const files = Array.from(event.target.files);
-    
+
     files.forEach(file => {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -162,7 +165,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
             preview: e.target.result,
             name: file.name
           };
-          
+
           setUploadedImages(prev => [...prev, newImage]);
           setFormData(prev => ({
             ...prev,
@@ -172,7 +175,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         reader.readAsDataURL(file);
       }
     });
-    
+
     // Reset the input
     event.target.value = '';
   };
@@ -189,34 +192,34 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
   // Generate all possible time slots based on operating hours
   const generateAllPossibleSlots = useCallback(() => {
     if (!formData.openTime || !formData.closeTime) return [];
-    
+
     const slots = [];
     const startHour = parseInt(formData.openTime.split(':')[0]);
     const startMinute = parseInt(formData.openTime.split(':')[1]);
     const endHour = parseInt(formData.closeTime.split(':')[0]);
     const endMinute = parseInt(formData.closeTime.split(':')[1]);
     const duration = parseInt(formData.slotDuration);
-    
+
     // Convert to minutes for easier calculation
     const startTotalMinutes = startHour * 60 + startMinute;
     const endTotalMinutes = endHour * 60 + endMinute;
-    
+
     for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += duration) {
       const slotStartHour = Math.floor(minutes / 60);
       const slotStartMinute = minutes % 60;
       const slotEndMinutes = minutes + duration;
       const slotEndHour = Math.floor(slotEndMinutes / 60);
       const slotEndMinute = slotEndMinutes % 60;
-      
+
       // Skip if end time exceeds closing time
       if (slotEndMinutes > endTotalMinutes) break;
-      
+
       const startTime = `${slotStartHour.toString().padStart(2, '0')}:${slotStartMinute.toString().padStart(2, '0')}`;
       const endTime = `${slotEndHour.toString().padStart(2, '0')}:${slotEndMinute.toString().padStart(2, '0')}`;
-      
+
       const slotId = `slot-${slotStartHour}-${slotStartMinute}`;
       const basePrice = parseFloat(formData.basePrice) || 1000; // Default base price
-      
+
       slots.push({
         id: slotId,
         startTime,
@@ -226,7 +229,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         selected: true // Default to selected
       });
     }
-    
+
     return slots;
   }, [formData.openTime, formData.closeTime, formData.basePrice, formData.slotDuration]);
 
@@ -277,11 +280,11 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     setFormData(prev => {
       const dateKey = date || prev.selectedDate;
       const currentDateSlots = prev.dateSpecificSlots[dateKey] || generateSlotsForDate(dateKey);
-      
+
       const updatedDateSlots = currentDateSlots.map(slot =>
         slot.id === slotId ? { ...slot, selected: !slot.selected } : slot
       );
-      
+
       return {
         ...prev,
         dateSpecificSlots: {
@@ -297,7 +300,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    
+
     setFormData(prev => ({
       ...prev,
       selectedDate: tomorrowStr,
@@ -316,8 +319,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
   };
 
   const handleMultiSelectChange = (field) => (event) => {
-    const value = typeof event.target.value === 'string' 
-      ? event.target.value.split(',') 
+    const value = typeof event.target.value === 'string'
+      ? event.target.value.split(',')
       : event.target.value;
     setFormData({
       ...formData,
@@ -327,9 +330,9 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
 
   const handleSubmit = async () => {
     setError('');
-    
+
     // Basic validation
-    if (!formData.name || !formData.address || !formData.area || !formData.basePrice) {
+    if (!formData.name || !formData.address || !formData.area || !formData.basePrice || !formData.contactPhone) {
       setError('Please fill in all required fields');
       return;
     }
@@ -340,7 +343,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     }
 
     // Check if at least one date-specific slot is selected
-    const hasSelectedSlots = Object.values(formData.dateSpecificSlots).some(dateSlots => 
+    const hasSelectedSlots = Object.values(formData.dateSpecificSlots).some(dateSlots =>
       dateSlots.some(slot => slot.selected)
     );
 
@@ -350,18 +353,18 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
     }
 
     setLoading(true);
-    
+
     try {
       // Prepare venue data with date-specific slots only
       let dateSpecificAvailability = {};
-      
+
       // Require date-specific slots to be configured
       if (Object.keys(formData.dateSpecificSlots).length > 0) {
         Object.keys(formData.dateSpecificSlots).forEach(date => {
           dateSpecificAvailability[date] = formData.dateSpecificSlots[date].filter(slot => slot.selected);
         });
       }
-      
+
       // Convert string numbers to actual numbers
       const venueData = {
         ...formData,
@@ -380,15 +383,15 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
 
       if (isEditing) {
         // Update existing venue
-        await dispatch(updateVenue({ 
-          venueId: editVenue.id, 
-          venueData 
+        await dispatch(updateVenue({
+          venueId: editVenue.id,
+          venueData
         })).unwrap();
       } else {
         // Add new venue
         await dispatch(addVenue(venueData)).unwrap();
       }
-      
+
       // Reset form and close modal
       setFormData({
         name: '',
@@ -408,13 +411,14 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         availableSlots: [],
         // Reset date-related fields
         selectedDate: new Date().toISOString().split('T')[0],
-        dateSpecificSlots: {}
+        dateSpecificSlots: {},
+        contactPhone: ''
       });
-      
+
       setUploadedImages([]);
-      
+
       onClose();
-      
+
     } catch (error) {
       setError(error.message || `Failed to ${isEditing ? 'update' : 'add'} venue`);
     } finally {
@@ -432,14 +436,14 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{isEditing ? 'Edit Venue' : 'Add New Venue'}</DialogTitle>
-      
+
       <DialogContent>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-        
+
         <Grid container spacing={2} sx={{ mt: 1 }}>
           {/* Basic Information */}
           <Grid item xs={12}>
@@ -447,7 +451,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               Basic Information
             </Typography>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -457,7 +461,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               disabled={loading}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -468,7 +472,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               disabled={loading}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -478,7 +482,19 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               disabled={loading}
             />
           </Grid>
-          
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Owner Contact Number *"
+              value={formData.contactPhone}
+              onChange={handleInputChange('contactPhone')}
+              placeholder="e.g., 03001234567"
+              disabled={loading}
+              helperText="This number will be used for WhatsApp notifications"
+            />
+          </Grid>
+
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -497,7 +513,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               Location
             </Typography>
           </Grid>
-          
+
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
@@ -507,7 +523,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               disabled={loading}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
@@ -519,7 +535,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               disabled={loading}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
@@ -538,7 +554,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               Sports & Facilities
             </Typography>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <FormControl fullWidth>
               <InputLabel>Sports *</InputLabel>
@@ -564,7 +580,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <FormControl fullWidth>
               <InputLabel>Facilities</InputLabel>
@@ -597,7 +613,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               Images
             </Typography>
           </Grid>
-          
+
           <Grid item xs={12}>
             <Box sx={{ mb: 2 }}>
               <input
@@ -619,7 +635,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
                   Upload Images
                 </Button>
               </label>
-              
+
               {uploadedImages.length > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
@@ -675,7 +691,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               Pricing
             </Typography>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -687,7 +703,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               helperText="Price per time slot"
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
               <Typography variant="body2" color="textSecondary">
@@ -702,7 +718,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               Operating Hours
             </Typography>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -714,7 +730,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
               disabled={loading}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -847,7 +863,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
                                       {slot.startTime} - {slot.endTime}
                                     </Typography>
                                   </Box>
-                                  
+
                                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                     <Typography variant="caption" fontWeight="bold" color="primary">
                                       PKR {slot.price}
@@ -882,7 +898,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
                       </Button>
                     </Box>
                   )}
-                  
+
                   <Typography variant="caption" color="textSecondary" sx={{ mt: 2, display: 'block' }}>
                     Click on time slots to select/deselect them. Selected slots will be available for booking.
                   </Typography>
@@ -902,14 +918,14 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
           )}
         </Grid>
       </DialogContent>
-      
+
       <DialogActions>
         <Button onClick={handleClose} disabled={loading}>
           Cancel
         </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained" 
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
           disabled={loading}
           startIcon={loading ? <CircularProgress size={20} /> : null}
         >

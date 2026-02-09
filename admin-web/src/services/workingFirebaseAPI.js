@@ -158,7 +158,7 @@ export const workingAdminAPI = {
           totalSlots: venueData.totalSlots || venueData.timeSlots?.length || 0,
           priceRange: venueData.priceRange || venueData.basePrice || 0,
           contactPerson: venueData.contactPerson || 'N/A',
-          contactPhone: venueData.contactPhone || 'N/A',
+          contactPhone: venueData.contactPhone || venueData.contactPersonPhone || 'N/A',
           // Ensure arrays are properly formatted
           sports: Array.isArray(venueData.sports) ? venueData.sports : [],
           facilities: Array.isArray(venueData.facilities) ? venueData.facilities : [],
@@ -247,7 +247,9 @@ export const workingAdminAPI = {
           // Additional fields for admin
           userId: bookingData.userId,
           userType: bookingData.userType || 'guest',
+          userType: bookingData.userType || 'guest',
           turfId: bookingData.turfId,
+          ownerContact: venue.contactPhone || venue.contactPersonPhone || '',
         };
 
         bookings.push(transformedBooking);
@@ -499,6 +501,7 @@ export const workingAdminAPI = {
         address: venueData.address,
         city: venueData.city || 'Lahore',
         area: venueData.area,
+        contactPhone: venueData.contactPhone || '',
         sports: Array.isArray(venueData.sports) ? venueData.sports : [],
         facilities: Array.isArray(venueData.facilities) ? venueData.facilities : [],
         basePrice: Number(venueData.basePrice) || 1000,
@@ -606,6 +609,7 @@ export const workingAdminAPI = {
         address: venueData.address,
         city: venueData.city || 'Lahore',
         area: venueData.area,
+        contactPhone: venueData.contactPhone || '',
         sports: Array.isArray(venueData.sports) ? venueData.sports : [],
         facilities: Array.isArray(venueData.facilities) ? venueData.facilities : [],
         basePrice: Number(venueData.basePrice) || 0,
