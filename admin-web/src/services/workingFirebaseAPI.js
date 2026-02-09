@@ -248,6 +248,7 @@ export const workingAdminAPI = {
           userId: bookingData.userId,
           userType: bookingData.userType || 'guest',
           turfId: bookingData.turfId,
+          venueOwnerPhone: venue.contactPhone || venue.phoneNumber || null,
         };
 
         bookings.push(transformedBooking);

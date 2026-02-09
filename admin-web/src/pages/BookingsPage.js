@@ -25,6 +25,7 @@ import {
   Phone,
   Email,
   Refresh,
+  WhatsApp,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchBookings, updateBookingStatus } from '../store/slices/adminSlice';
@@ -86,6 +87,12 @@ const ActionMenu = ({ booking, onAction }) => {
           <Phone sx={{ mr: 1, fontSize: 16 }} />
           Contact Customer
         </MenuItem>
+        {booking.venueOwnerPhone && (
+          <MenuItem onClick={() => handleAction('whatsapp')}>
+            <WhatsApp sx={{ mr: 1, fontSize: 16, color: '#25D366' }} />
+            Notify Owner
+          </MenuItem>
+        )}
       </Menu>
     </>
   );
@@ -150,6 +157,23 @@ export default function BookingsPage() {
       const booking = bookings.data.find(b => b.id === bookingId);
       setSelectedBooking(booking);
       setDialogOpen(true);
+    } else if (action === 'whatsapp') {
+      const booking = bookings.data.find(b => b.id === bookingId);
+      if (booking && booking.venueOwnerPhone) {
+        // Format message
+        const message = encodeURIComponent(
+          `*New Booking Alert!* 🏟️\n\n` +
+          `Hello! You have a new booking at *${booking.turfName}*.\n\n` +
+          `📅 Date: ${format(new Date(booking.dateTime), 'MMM dd, yyyy')}\n` +
+          `⏰ Time: ${booking.timeSlot}\n` +
+          `👤 Customer: ${booking.customerName}\n` +
+          `💰 Amount: PKR ${booking.totalAmount}\n\n` +
+          `Please ensure the facility is ready. Thanks!`
+        );
+
+        // Open WhatsApp
+        window.open(`https://wa.me/${booking.venueOwnerPhone.replace(/\+/g, '')}?text=${message}`, '_blank');
+      }
     }
   };
 
