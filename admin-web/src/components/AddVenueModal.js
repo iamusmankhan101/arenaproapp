@@ -474,6 +474,17 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
             />
           </Grid>
 
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Owner Phone Number *"
+              value={formData.contactPhone}
+              onChange={handleInputChange('contactPhone')}
+              placeholder="e.g., 03001234567"
+              disabled={loading}
+            />
+          </Grid>
+
           <Grid item xs={12}>
             <TextField
               fullWidth
