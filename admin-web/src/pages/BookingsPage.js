@@ -25,6 +25,7 @@ import {
   Phone,
   Email,
   Refresh,
+  WhatsApp, // Added
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchBookings, updateBookingStatus } from '../store/slices/adminSlice';
@@ -86,6 +87,11 @@ const ActionMenu = ({ booking, onAction }) => {
           <Phone sx={{ mr: 1, fontSize: 16 }} />
           Contact Customer
         </MenuItem>
+        {/* Added: WhatsApp Owner Option */}
+        <MenuItem onClick={() => handleAction('whatsapp')}>
+          <WhatsApp sx={{ mr: 1, fontSize: 16, color: '#25D366' }} />
+          WhatsApp Owner
+        </MenuItem>
       </Menu>
     </>
   );
@@ -94,7 +100,7 @@ const ActionMenu = ({ booking, onAction }) => {
 export default function BookingsPage() {
   const dispatch = useDispatch();
   const { bookings, bookingsLoading, bookingsError } = useSelector(state => state.admin);
-  
+
   // Debug logging
   console.log('📊 BookingsPage render:', {
     bookingsData: bookings?.data,
@@ -103,7 +109,7 @@ export default function BookingsPage() {
     bookingsError,
     dataLength: bookings?.data?.length
   });
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [paginationModel, setPaginationModel] = useState({
@@ -150,6 +156,18 @@ export default function BookingsPage() {
       const booking = bookings.data.find(b => b.id === bookingId);
       setSelectedBooking(booking);
       setDialogOpen(true);
+    } else if (action === 'whatsapp') {
+      // Added: Handle WhatsApp action
+      const booking = bookings.data.find(b => b.id === bookingId);
+      if (booking && booking.venueOwnerPhone) {
+        const phoneNumber = booking.venueOwnerPhone.replace(/\D/g, ''); // Remove non-digits
+        const message = encodeURIComponent(
+          `Hello, regarding booking #${booking.bookingId} at ${booking.turfName} for ${booking.customerName} on ${format(new Date(booking.dateTime), 'MMM dd, yyyy')} at ${format(new Date(booking.dateTime), 'hh:mm a')}.`
+        );
+        window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+      } else {
+        alert('Owner phone number not available for this venue.');
+      }
     }
   };
 
