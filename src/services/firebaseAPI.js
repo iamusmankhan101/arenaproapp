@@ -755,7 +755,6 @@ export const bookingAPI = {
           },
           body: JSON.stringify(emailParams)
         })
-<<<<<<< HEAD
           .then(async (response) => {
             if (response.ok) {
               console.log('✅ Mobile: User EmailJS success!');
@@ -789,11 +788,6 @@ export const bookingAPI = {
                   console.error('⚠️ Mobile: Admin EmailJS error:', e);
                 }
               }
-=======
-          .then((response) => {
-            if (response.ok) {
-              console.log('✅ Mobile: EmailJS success!');
->>>>>>> feature/whatsapp-integration
             } else {
               return response.text().then(text => {
                 console.error('⚠️ Mobile: EmailJS failed:', text);
