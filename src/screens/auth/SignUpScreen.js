@@ -20,6 +20,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSession from 'expo-auth-session';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -46,6 +47,7 @@ export default function SignUpScreen({ navigation }) {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
   const [referralCodeFocused, setReferralCodeFocused] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
@@ -216,7 +218,10 @@ export default function SignUpScreen({ navigation }) {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Platform.OS === 'android' ? 50 + insets.bottom : 50 }
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={false}

@@ -23,6 +23,7 @@ import {
   ActivityIndicator
 } from 'react-native-paper';
 import MapView, { Marker, PROVIDER_GOOGLE, Circle } from 'react-native-maps';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchNearbyTurfs, toggleFavorite } from '../../store/slices/turfSlice';
@@ -148,6 +149,7 @@ export default function MapScreen({ navigation }) {
   const [geocodedCoordinates, setGeocodedCoordinates] = useState(new Map());
   const [isMapReady, setIsMapReady] = useState(false);
   const [venuesWithValidCoords, setVenuesWithValidCoords] = useState([]);
+  const insets = useSafeAreaInsets();
 
   const mapRef = useRef(null);
   const dispatch = useDispatch();
@@ -1101,7 +1103,10 @@ export default function MapScreen({ navigation }) {
         <Animated.View
           style={[
             styles.venueCardContainer,
-            { transform: [{ translateY: cardSlideAnim }] }
+            {
+              transform: [{ translateY: cardSlideAnim }],
+              bottom: Platform.OS === 'android' ? 100 + insets.bottom : 100
+            }
           ]}
         >
           <Surface style={styles.venueCard} elevation={8}>
@@ -1139,6 +1144,7 @@ export default function MapScreen({ navigation }) {
             styles.venueCardContainer,
             {
               transform: [{ translateY: cardSlideAnim }],
+              bottom: Platform.OS === 'android' ? 100 + insets.bottom : 100
             }
           ]}
         >

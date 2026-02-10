@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Alert, Share } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Alert, Share, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
@@ -446,7 +447,7 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: Platform.OS === 'android' ? 100 + insets.bottom : 100 }}
       >
         {/* Header Section with Full-Width Image Slider */}
         {turfsLoading ? (

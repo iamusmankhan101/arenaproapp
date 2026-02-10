@@ -12,6 +12,7 @@ import {
   Platform,
   Linking
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   collection,
   addDoc,
@@ -51,9 +52,9 @@ export default function TurfDetailScreen({ route, navigation }) {
       console.error('❌ TurfDetailScreen: Invalid initial date, using fallback');
       return new Date(Date.now()); // Fallback to current timestamp
     }
-    return today;
   });
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
+  const insets = useSafeAreaInsets();
 
   // Review states
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -874,7 +875,7 @@ export default function TurfDetailScreen({ route, navigation }) {
       }
 
       {/* Bottom Book Button */}
-      <View style={styles.bottomContainer}>
+      <View style={[styles.bottomContainer, { paddingBottom: Platform.OS === 'android' ? 20 + insets.bottom : 20 }]}>
         <Button
           mode="contained"
           onPress={handleBooking}

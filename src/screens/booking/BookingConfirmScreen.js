@@ -12,6 +12,7 @@ import {
   Image,
   Linking
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Text,
   Card,
@@ -48,6 +49,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
   const [uploading, setUploading] = useState(false);
   const [paymentMode, setPaymentMode] = useState('advance'); // 'venue' or 'advance'
   const [confirmBookingId, setConfirmBookingId] = useState(null); // To store booking ID for WhatsApp notification
+  const insets = useSafeAreaInsets();
 
   const paymentDetails = {
     jazzcash: { name: 'JazzCash', accountName: 'Muhammad Usman Khan', accountNumber: '03058562523' },
@@ -676,7 +678,7 @@ Please confirm my booking.`;
       </ScrollView>
 
       {/* Bottom Action */}
-      <View style={styles.bottomAction}>
+      <View style={[styles.bottomAction, { paddingBottom: Platform.OS === 'android' ? 20 + insets.bottom : 20 }]}>
         <View style={styles.totalSummary}>
           <Text style={styles.totalSummaryLabel}>{paymentMode === 'advance' ? 'Advance Payable' : 'Payable at Venue'}</Text>
           <Text style={[styles.totalSummaryValue, { color: theme.colors.primary }]}>

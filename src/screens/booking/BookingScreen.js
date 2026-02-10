@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  RefreshControl
+  RefreshControl,
+  Platform
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Text,
   Chip,
@@ -26,6 +28,7 @@ import { theme } from '../../theme/theme';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function BookingScreen() {
+  const insets = useSafeAreaInsets();
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -235,7 +238,7 @@ export default function BookingScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Platform.OS === 'android' ? insets.bottom + 60 : 0 }]}>
       <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
 
       {/* Enhanced Header with Gradient */}
@@ -405,7 +408,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
     fontFamily: 'Montserrat_700Bold',

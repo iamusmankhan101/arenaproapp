@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, Alert, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, FlatList, Alert, ScrollView, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Card, Button, FAB, Chip, Searchbar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchChallenges, createChallenge, acceptChallenge, setUserTeam } from '../../store/slices/teamSlice';
@@ -18,6 +20,7 @@ export default function ChallengeScreen({ navigation }) {
   const [selectedSport, setSelectedSport] = useState('All Sports');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('browse'); // browse, my-challenges, invites
+  const insets = useSafeAreaInsets();
 
   const dispatch = useDispatch();
   const { challenges, loading, userTeam, teamStats } = useSelector(state => state.team);
@@ -283,7 +286,8 @@ export default function ChallengeScreen({ navigation }) {
         data={filteredChallenges}
         renderItem={renderChallenge}
         keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.list}
+
+        contentContainerStyle={[styles.list, { paddingBottom: Platform.OS === 'android' ? 20 + insets.bottom + 60 : 20 }]}
         refreshing={loading}
         onRefresh={() => dispatch(fetchChallenges())}
         ListEmptyComponent={

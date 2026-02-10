@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Modal, Image } from 'react-native';
+
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Modal, Image, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Avatar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
@@ -19,7 +21,9 @@ import {
 export default function ProfileScreen({ navigation }) {
   const dispatch = useDispatch();
   const { user, loading } = useSelector(state => state.auth);
+
   const [contactModalVisible, setContactModalVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   if (loading) {
     return (
@@ -77,7 +81,13 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 60 : 40 }
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Header */}
         <View style={styles.header}>

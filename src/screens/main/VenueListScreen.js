@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
-  FlatList
+  FlatList,
+  Platform
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Searchbar, Chip } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -173,7 +175,7 @@ export default function VenueListScreen({ navigation, route }) {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Platform.OS === 'android' ? insets.bottom + 60 : 0 }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity

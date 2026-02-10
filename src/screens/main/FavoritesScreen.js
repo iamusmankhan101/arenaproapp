@@ -9,6 +9,7 @@ import {
   StatusBar,
   Platform
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchFavorites, toggleFavorite } from '../../store/slices/turfSlice';
@@ -152,7 +153,10 @@ export default function FavoritesScreen({ navigation }) {
         renderItem={renderFavoriteItem}
         keyExtractor={(item) => item.id}
         numColumns={2}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[
+          styles.listContainer,
+          { paddingBottom: Platform.OS === 'android' ? 20 + insets.bottom + 60 : 20 }
+        ]}
         showsVerticalScrollIndicator={false}
         columnWrapperStyle={styles.row}
       />
