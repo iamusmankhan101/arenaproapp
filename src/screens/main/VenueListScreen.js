@@ -155,7 +155,7 @@ export default function VenueListScreen({ navigation, route }) {
           <Icon name="location-on" size={14} color="#666" />
           <Text style={styles.venueLocation}>{item.area}, {item.city}</Text>
         </View>
-        <Text style={styles.venueTime}>{item.time || 'Contact for hours'}</Text>
+
         <View style={styles.venueFooter}>
           <View style={styles.priceContainer}>
             <Text style={styles.priceLabel}>PKR </Text>

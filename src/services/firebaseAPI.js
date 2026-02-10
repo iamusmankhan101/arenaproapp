@@ -82,6 +82,23 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 // Turf/Venue API
+// Helper to wait for auth initialization
+const waitForAuth = () => {
+  return new Promise((resolve) => {
+    if (auth.currentUser) {
+      return resolve(auth.currentUser);
+    }
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      unsubscribe();
+      resolve(user);
+    });
+    // Timeout after 2 seconds
+    setTimeout(() => {
+      resolve(auth.currentUser);
+    }, 2000);
+  });
+};
+
 export const turfAPI = {
   // Get nearby turfs - now returns all active venues without location filtering
   async getNearbyTurfs(latitude, longitude, radius = 10) {
@@ -413,8 +430,25 @@ export const bookingAPI = {
     console.log('🔥 FIREBASE: createBooking called with data:', bookingData);
 
     try {
-      const user = auth.currentUser;
+      // WAIT FOR AUTH TO INITIALIZE
+      let user = auth.currentUser;
+      if (!user) {
+        console.log('⏳ FIREBASE: Waiting for auth to initialize...');
+        user = await waitForAuth();
+      }
+
       console.log('🔥 FIREBASE: Current user:', user ? { uid: user.uid, email: user.email } : 'No user');
+
+      // FALLBACK: If Firebase Auth is not ready but Redux provided user details, trust Redux
+      // This fixes the "Ask to sign in" bug for logged-in users on cold start
+      if (!user && bookingData.userId) {
+        console.log('⚠️ FIREBASE: Auth not ready, but Redux provided user ID. Using fallback:', bookingData.userId);
+        user = {
+          uid: bookingData.userId,
+          email: bookingData.userEmail,
+          displayName: bookingData.userName
+        };
+      }
 
       if (!user) {
         console.log('⚠️ FIREBASE: User not authenticated, creating guest booking');
@@ -821,7 +855,13 @@ export const bookingAPI = {
     console.log('🔥 FIREBASE: getUserBookings called');
 
     try {
-      const user = auth.currentUser;
+      // WAIT FOR AUTH TO INITIALIZE
+      let user = auth.currentUser;
+      if (!user) {
+        console.log('⏳ FIREBASE: Waiting for auth to initialize (getUserBookings)...');
+        user = await waitForAuth();
+      }
+
       console.log('🔥 FIREBASE: Current user for getUserBookings:', user ? { uid: user.uid, email: user.email } : 'No user');
 
       if (!user) {
@@ -832,9 +872,10 @@ export const bookingAPI = {
       console.log('🔥 FIREBASE: Querying bookings for userId:', user.uid);
 
       const bookingsRef = collection(db, 'bookings');
+      // Fix potential query issue: removed orderBy for now to rule out index issues
       const q = query(bookingsRef,
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', user.uid)
+        // orderBy('createdAt', 'desc') 
       );
 
       console.log('🔥 FIREBASE: Executing Firestore query...');
@@ -851,6 +892,13 @@ export const bookingAPI = {
           userId: data.userId
         });
         return data;
+      });
+
+      // Sort manually since we removed orderBy
+      bookings.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return dateB - dateA; // Newest first
       });
 
       console.log('🔥 FIREBASE: Final bookings array:', bookings.map(b => ({

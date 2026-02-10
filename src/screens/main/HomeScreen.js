@@ -288,7 +288,7 @@ export default function HomeScreen({ navigation }) {
           <MaterialIcons name="location-on" size={14} color="#666" />
           <Text style={styles.venueLocation}>{venue.area || 'Unknown Area'}, {venue.city || 'Unknown City'}</Text>
         </View>
-        <Text style={styles.venueTime}>{venue.time || 'Hours not specified'}</Text>
+
         <View style={styles.venueFooter}>
           <View style={styles.venueIcons}>
             <Text style={styles.venueIconText}>

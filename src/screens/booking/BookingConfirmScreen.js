@@ -210,7 +210,11 @@ export default function BookingConfirmScreen({ route, navigation }) {
         paymentStatus: paymentMode === 'advance' ? 'partial' : 'pending', // Initial status is partial (advance paid)
         paymentScreenshot: screenshotUrl,
         referralDiscountApplied: pricing.referralDiscount > 0,
-        referralDiscountAmount: pricing.referralDiscount
+        referralDiscountAmount: pricing.referralDiscount,
+        // Pass Redux user data as fallback for auth race conditions
+        userId: user?.uid,
+        userEmail: user?.email,
+        userName: user?.fullName || user?.displayName
       };
 
       const result = await dispatch(createBooking(bookingData)).unwrap();

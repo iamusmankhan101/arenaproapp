@@ -1193,10 +1193,7 @@ export default function MapScreen({ navigation }) {
                     <Text style={styles.infoText}>{selectedVenue.distance || '1.2 km'}</Text>
                   </View>
 
-                  <View style={styles.infoItem}>
-                    <MaterialIcons name="schedule" size={14} color="#5E35B1" />
-                    <Text style={styles.infoText}>Open</Text>
-                  </View>
+
                 </View>
               </View>
             </TouchableOpacity>
