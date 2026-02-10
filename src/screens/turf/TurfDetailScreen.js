@@ -52,6 +52,7 @@ export default function TurfDetailScreen({ route, navigation }) {
       console.error('❌ TurfDetailScreen: Invalid initial date, using fallback');
       return new Date(Date.now()); // Fallback to current timestamp
     }
+    return today;
   });
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
   const insets = useSafeAreaInsets();

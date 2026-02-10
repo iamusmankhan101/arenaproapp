@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import React, { useEffect, useState } from 'react';
+
 import { View, StyleSheet, FlatList, Alert, ScrollView, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Card, Button, FAB, Chip, Searchbar } from 'react-native-paper';
