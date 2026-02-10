@@ -110,6 +110,22 @@ export const fetchUserBookings = createAsyncThunk(
   }
 );
 
+export const cancelUserBooking = createAsyncThunk(
+  'booking/cancelBooking',
+  async (bookingId, { rejectWithValue }) => {
+    try {
+      console.log('🔄 REDUX: Cancelling booking:', bookingId);
+      const bookingAPI = await getAPI();
+      const response = await bookingAPI.cancelBooking(bookingId);
+      console.log('✅ REDUX: Booking cancelled successfully');
+      return { bookingId, ...response.data };
+    } catch (error) {
+      console.error('❌ REDUX: Error cancelling booking:', error);
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 const bookingSlice = createSlice({
   name: 'booking',
   initialState: {
@@ -184,6 +200,22 @@ const bookingSlice = createSlice({
         console.log('❌ REDUX: fetchUserBookings.rejected with error:', action.payload);
         state.loading = false;
         state.error = action.payload?.message || 'Failed to fetch bookings';
+      })
+      .addCase(cancelUserBooking.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(cancelUserBooking.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update the booking status in the list
+        const index = state.userBookings.findIndex(b => b.id === action.payload.bookingId);
+        if (index !== -1) {
+          state.userBookings[index].status = 'cancelled';
+          state.userBookings[index].paymentStatus = 'refunded';
+        }
+      })
+      .addCase(cancelUserBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to cancel booking';
       });
   },
 });

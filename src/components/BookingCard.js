@@ -3,7 +3,11 @@ import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { Text, Button, Chip, Surface } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 
+import { useDispatch } from 'react-redux';
+import { cancelUserBooking } from '../store/slices/bookingSlice';
+
 export default function BookingCard({ booking }) {
+  const dispatch = useDispatch();
   const getStatusColor = (status) => {
     switch (status) {
       case 'confirmed': return '#4CAF50';
@@ -46,21 +50,21 @@ export default function BookingCard({ booking }) {
     if (!dateTime) {
       return { date: 'Unknown', time: 'Unknown' };
     }
-    
+
     const date = new Date(dateTime);
-    
+
     // Check if date is valid
     if (isNaN(date.getTime())) {
       console.warn('Invalid dateTime in booking:', dateTime);
       return { date: 'Invalid Date', time: 'Invalid Time' };
     }
-    
+
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
     const tomorrow = new Date(now);
     tomorrow.setDate(now.getDate() + 1);
     const isTomorrow = date.toDateString() === tomorrow.toDateString();
-    
+
     let dateStr;
     if (isToday) {
       dateStr = 'Today';
@@ -73,25 +77,25 @@ export default function BookingCard({ booking }) {
         day: 'numeric'
       });
     }
-    
+
     const timeStr = date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true
     });
-    
+
     return { date: dateStr, time: timeStr };
   };
 
   const canCancel = () => {
     if (!booking.dateTime) return false;
-    
+
     const bookingTime = new Date(booking.dateTime);
     if (isNaN(bookingTime.getTime())) return false;
-    
+
     const now = new Date();
     const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
-    
+
     return booking.status === 'confirmed' && hoursUntilBooking > 2;
   };
 
@@ -101,11 +105,19 @@ export default function BookingCard({ booking }) {
       'Are you sure you want to cancel this booking? Cancellation charges may apply.',
       [
         { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes, Cancel', 
+        {
+          text: 'Yes, Cancel',
           style: 'destructive',
           onPress: () => {
             console.log('Cancelling booking:', booking.id);
+            dispatch(cancelUserBooking(booking.id))
+              .unwrap()
+              .then(() => {
+                Alert.alert('Success', 'Booking cancelled successfully');
+              })
+              .catch((err) => {
+                Alert.alert('Error', err || 'Failed to cancel booking');
+              });
           }
         }
       ]
@@ -121,10 +133,10 @@ export default function BookingCard({ booking }) {
         <View style={styles.header}>
           <View style={styles.venueInfo}>
             <View style={styles.sportIconContainer}>
-              <MaterialIcons 
-                name={getSportIcon(booking.sport)} 
-                size={20} 
-                color={getSportColor(booking.sport)} 
+              <MaterialIcons
+                name={getSportIcon(booking.sport)}
+                size={20}
+                color={getSportColor(booking.sport)}
               />
             </View>
             <View style={styles.venueDetails}>
@@ -132,13 +144,13 @@ export default function BookingCard({ booking }) {
               <Text style={styles.venueLocation}>{booking.turfArea || 'Unknown Area'}</Text>
             </View>
           </View>
-          
+
           <View style={[
-            styles.statusChip, 
+            styles.statusChip,
             { backgroundColor: getStatusBgColor(booking.status || 'pending') }
           ]}>
             <Text style={[
-              styles.statusText, 
+              styles.statusText,
               { color: getStatusColor(booking.status || 'pending') }
             ]}>
               {(booking.status || 'pending').toUpperCase()}
@@ -158,7 +170,7 @@ export default function BookingCard({ booking }) {
               <Text style={styles.detailText}>{time}</Text>
             </View>
           </View>
-          
+
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
               <MaterialIcons name="timer" size={16} color="#666" />
@@ -169,7 +181,7 @@ export default function BookingCard({ booking }) {
               <Text style={styles.detailText}>PKR {(booking.totalAmount || 0).toLocaleString()}</Text>
             </View>
           </View>
-          
+
           {booking.bookingId && (
             <View style={styles.bookingIdRow}>
               <MaterialIcons name="confirmation-number" size={16} color="#666" />
@@ -206,8 +218,8 @@ export default function BookingCard({ booking }) {
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
           {booking.paymentStatus === 'pending' && (
-            <Button 
-              mode="contained" 
+            <Button
+              mode="contained"
               style={styles.payButton}
               buttonColor="#4CAF50"
               compact
@@ -216,10 +228,10 @@ export default function BookingCard({ booking }) {
               Pay Now
             </Button>
           )}
-          
+
           {canCancel() && (
-            <Button 
-              mode="outlined" 
+            <Button
+              mode="outlined"
               style={styles.cancelButton}
               textColor="#F44336"
               compact
@@ -228,10 +240,10 @@ export default function BookingCard({ booking }) {
               Cancel
             </Button>
           )}
-          
+
           {booking.status === 'completed' && !booking.rated && (
-            <Button 
-              mode="text" 
+            <Button
+              mode="text"
               style={styles.rateButton}
               icon={() => <MaterialIcons name="star" size={16} color="#FF9800" />}
               compact
