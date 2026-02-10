@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, Alert, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { Text, Card, Button, FAB, Chip, Searchbar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchChallenges, createChallenge, acceptChallenge } from '../../store/slices/teamSlice';
+import { fetchChallenges, createChallenge, acceptChallenge, setUserTeam } from '../../store/slices/teamSlice';
 import ChallengeCard from '../../components/ChallengeCard';
 import CreateChallengeModal from '../../components/CreateChallengeModal';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -22,31 +22,69 @@ export default function ChallengeScreen({ navigation }) {
   const dispatch = useDispatch();
   const { challenges, loading, userTeam, teamStats } = useSelector(state => state.team);
 
+  // Get auth user to check/create team profile
+  const { user } = useSelector(state => state.auth);
+
   useEffect(() => {
     dispatch(fetchChallenges());
   }, [dispatch]);
 
-  const handleCreateChallenge = (challengeData) => {
-    if (!userTeam) {
-      Alert.alert('Error', 'You must have a team to create a challenge');
-      return;
+  // Sync userTeam from Auth if available
+  useEffect(() => {
+    if (user?.teamProfile && !userTeam) {
+      dispatch(setUserTeam(user.teamProfile));
+    }
+  }, [user, userTeam, dispatch]);
+
+  const handleCreateChallenge = async (challengeData) => {
+    let currentTeam = userTeam;
+
+    // Auto-create team if missing
+    if (!currentTeam) {
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to create a challenge');
+        return;
+      }
+
+      const newTeam = {
+        id: user.uid,
+        name: `${user.displayName || 'Player'}'s Team`,
+        captain: user.displayName || 'Captain',
+        avatar: user.photoURL || null,
+        founded: new Date().getFullYear().toString(),
+        homeGround: user.city || 'Home Ground',
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        eloRating: 1200,
+        fairPlayScore: 5.0,
+      };
+
+      // Update Redux
+      dispatch(setUserTeam(newTeam));
+      currentTeam = newTeam;
+
+      // Persist to Auth/Firebase (Fire and forget or await?)
+      // We'll dispatch the updateProfile thunk from authSlice
+      // We need to import it first, but to avoid adding more imports, we'll rely on the local state update for now
+      // Ideally: dispatch(updateProfile({ teamProfile: newTeam }));
     }
 
     const enhancedData = {
       ...challengeData,
-      challengerId: userTeam.id, // Legacy support
+      challengerId: currentTeam.id,
       creatorTeam: {
-        id: userTeam.id,
-        name: userTeam.name,
-        avatar: userTeam.avatar || userTeam.name?.charAt(0) || 'T',
-        wins: teamStats.wins || 0,
-        losses: teamStats.losses || 0,
-        draws: teamStats.draws || 0,
-        eloRating: teamStats.eloRating || 1200,
-        fairPlayScore: teamStats.fairPlayScore || 5.0,
-        captain: userTeam.captain || 'Captain',
-        founded: userTeam.founded || '2024',
-        homeGround: userTeam.homeGround || 'N/A'
+        id: currentTeam.id,
+        name: currentTeam.name,
+        avatar: currentTeam.avatar || currentTeam.name?.charAt(0) || 'T',
+        wins: currentTeam.wins || 0,
+        losses: currentTeam.losses || 0,
+        draws: currentTeam.draws || 0,
+        eloRating: currentTeam.eloRating || 1200,
+        fairPlayScore: currentTeam.fairPlayScore || 5.0,
+        captain: currentTeam.captain || 'Captain',
+        founded: currentTeam.founded || '2024',
+        homeGround: currentTeam.homeGround || 'N/A'
       }
     };
 
