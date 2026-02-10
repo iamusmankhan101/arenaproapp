@@ -4,7 +4,7 @@ import { View, StyleSheet, FlatList, Alert, ScrollView, TouchableOpacity, Dimens
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Card, Button, FAB, Chip, Searchbar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchChallenges, createChallenge, acceptChallenge, setUserTeam } from '../../store/slices/teamSlice';
+import { fetchChallenges, createChallenge, acceptChallenge, setUserTeam, deleteChallenge } from '../../store/slices/teamSlice';
 import ChallengeCard from '../../components/ChallengeCard';
 import CreateChallengeModal from '../../components/CreateChallengeModal';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -12,7 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 const { width } = Dimensions.get('window');
 
 const challengeTypes = ['All', 'Open', 'Private', 'Tournament'];
-const sportFilters = ['All Sports', 'Cricket', 'Football', 'Padel', 'Badminton'];
+const sportFilters = ['All Sports', 'Cricket', 'Football', 'Padel'];
 
 export default function ChallengeScreen({ navigation }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -93,9 +93,15 @@ export default function ChallengeScreen({ navigation }) {
 
     dispatch(createChallenge(enhancedData));
     setShowCreateModal(false);
+    Alert.alert('Success', 'Challenge created successfully!');
   };
 
   const handleAcceptChallenge = (challengeId) => {
+    if (!userTeam) {
+      Alert.alert('Error', 'You must have a team to accept challenges.');
+      return;
+    }
+
     Alert.alert(
       'Accept Challenge',
       'Are you sure you want to accept this challenge? This will create a match booking.',
@@ -103,21 +109,68 @@ export default function ChallengeScreen({ navigation }) {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Accept',
-          onPress: () => dispatch(acceptChallenge(challengeId))
+          onPress: () => dispatch(acceptChallenge({
+            challengeId,
+            opponentId: userTeam.id,
+            opponentTeamName: userTeam.name
+          }))
+        }
+      ]
+    );
+  };
+
+  const handleDeleteChallenge = (challengeId) => {
+    Alert.alert(
+      'Delete Challenge',
+      'Are you sure you want to delete this challenge?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => dispatch(deleteChallenge(challengeId))
         }
       ]
     );
   };
 
   const filteredChallenges = challenges.filter(challenge => {
+    // Basic Filters
     const matchesType = selectedType === 'All' || challenge.type === selectedType.toLowerCase();
     const matchesSport = selectedSport === 'All Sports' || challenge.sport === selectedSport;
     const matchesSearch = searchQuery === '' ||
-      challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      challenge.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      challenge.venue.toLowerCase().includes(searchQuery.toLowerCase());
+      (challenge.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (challenge.teamName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (challenge.venue || '').toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesType && matchesSport && matchesSearch;
+    // Tab Logic
+    const currentUserId = user?.uid;
+
+    if (activeTab === 'browse') {
+      // Show only OPEN challenges that are NOT created by the current user
+      // Ensure robust ID comparison (handle potential string/number mismatch)
+      if (!currentUserId) return matchesType && matchesSport && matchesSearch && challenge.status === 'open';
+
+      const isMyChallenge = String(challenge.challengerId) === String(currentUserId);
+
+      return matchesType && matchesSport && matchesSearch &&
+        challenge.status === 'open' &&
+        !isMyChallenge;
+
+    } else if (activeTab === 'my-challenges') {
+      // Show challenges created by user OR accepted by user
+      if (!currentUserId) return false;
+
+      const isCreator = String(challenge.challengerId) === String(currentUserId);
+      const isOpponent = String(challenge.opponentId) === String(currentUserId);
+
+      return matchesType && matchesSport && matchesSearch && (isCreator || isOpponent);
+    } else if (activeTab === 'invites') {
+      // Future: Implement invites logic
+      return false;
+    }
+
+    return false;
   });
 
   const renderTabButton = (tab, label, icon) => (
@@ -133,16 +186,20 @@ export default function ChallengeScreen({ navigation }) {
   );
 
   const renderChallenge = ({ item }) => (
-    <ChallengeCard
-      challenge={item}
-      onAccept={() => handleAcceptChallenge(item.id)}
-      onViewDetails={() => navigation.navigate('ChallengeDetail', { challengeId: item.id })}
-      userTeam={userTeam}
-    />
+    <View style={{ paddingHorizontal: 20 }}>
+      <ChallengeCard
+        challenge={item}
+        onAccept={() => handleAcceptChallenge(item.id)}
+        onViewDetails={() => navigation.navigate('ChallengeDetail', { challengeId: item.id })}
+        onDelete={() => handleDeleteChallenge(item.id)}
+        userTeam={userTeam}
+        currentUserId={user?.uid}
+      />
+    </View>
   );
 
-  return (
-    <View style={styles.container}>
+  const renderHeader = () => (
+    <View>
       {/* Header */}
       <View style={styles.header}>
         <Text variant="headlineMedium" style={styles.title}>
@@ -157,7 +214,6 @@ export default function ChallengeScreen({ navigation }) {
       <View style={styles.tabContainer}>
         {renderTabButton('browse', 'Browse', 'explore')}
         {renderTabButton('my-challenges', 'My Challenges', 'sports-soccer')}
-        {renderTabButton('invites', 'Invites', 'mail')}
       </View>
 
       {/* Quick Actions */}
@@ -182,47 +238,7 @@ export default function ChallengeScreen({ navigation }) {
       </View>
 
       {/* Team Stats Card */}
-      {userTeam && (
-        <Card style={styles.statsCard}>
-          <Card.Content>
-            <View style={styles.teamHeader}>
-              <View>
-                <Text variant="titleMedium" style={styles.teamName}>
-                  {userTeam.name}
-                </Text>
-                <Text style={styles.teamRank}>Rank #{teamStats.rank || 'Unranked'}</Text>
-              </View>
-              <View style={styles.winRateContainer}>
-                <Text style={styles.winRateValue}>{teamStats.winRate || 0}%</Text>
-                <Text style={styles.winRateLabel}>Win Rate</Text>
-              </View>
-            </View>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{teamStats.wins || 0}</Text>
-                <Text style={styles.statLabel}>Wins</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{teamStats.losses || 0}</Text>
-                <Text style={styles.statLabel}>Losses</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{teamStats.eloRating || 1200}</Text>
-                <Text style={styles.statLabel}>ELO Rating</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, {
-                  color: (teamStats.fairPlayScore || 4) >= 4 ? '#004d43' :
-                    (teamStats.fairPlayScore || 4) >= 3 ? '#FF9800' : '#F44336'
-                }]}>
-                  {(teamStats.fairPlayScore || 4).toFixed(1)}
-                </Text>
-                <Text style={styles.statLabel}>Fair Play</Text>
-              </View>
-            </View>
-          </Card.Content>
-        </Card>
-      )}
+
 
       {/* Search and Filters */}
       <View style={styles.filtersContainer}>
@@ -234,60 +250,83 @@ export default function ChallengeScreen({ navigation }) {
           iconColor="#004d43" // Primary brand color
         />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
-          <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Type:</Text>
-            {challengeTypes.map((type) => (
-              <Chip
-                key={type}
-                mode={selectedType === type ? 'flat' : 'outlined'}
-                selected={selectedType === type}
-                onPress={() => setSelectedType(type)}
-                style={[
-                  styles.filterChip,
-                  selectedType === type && styles.selectedFilterChip
-                ]}
-                textStyle={[
-                  styles.filterChipText,
-                  selectedType === type && styles.selectedFilterChipText
-                ]}
-              >
-                {type}
-              </Chip>
-            ))}
-          </View>
+        <View style={{ marginBottom: 12 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
+            {challengeTypes.map((type) => {
+              let icon = 'apps';
+              if (type === 'Open') icon = 'earth';
+              else if (type === 'Private') icon = 'lock';
+              else if (type === 'Tournament') icon = 'trophy';
 
-          <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Sport:</Text>
-            {sportFilters.map((sport) => (
-              <Chip
-                key={sport}
-                mode={selectedSport === sport ? 'flat' : 'outlined'}
-                selected={selectedSport === sport}
-                onPress={() => setSelectedSport(sport)}
-                style={[
-                  styles.filterChip,
-                  selectedSport === sport && styles.selectedFilterChip
-                ]}
-                textStyle={[
-                  styles.filterChipText,
-                  selectedSport === sport && styles.selectedFilterChipText
-                ]}
-              >
-                {sport}
-              </Chip>
-            ))}
-          </View>
-        </ScrollView>
+              return (
+                <Chip
+                  key={type}
+                  mode={selectedType === type ? 'flat' : 'outlined'}
+                  selected={selectedType === type}
+                  onPress={() => setSelectedType(type)}
+                  icon={icon}
+                  style={[
+                    styles.filterChip,
+                    selectedType === type && { backgroundColor: '#e8ee26', borderColor: '#e8ee26' }
+                  ]}
+                  textStyle={[
+                    styles.filterChipText,
+                    selectedType === type && { color: '#004d43', fontWeight: 'bold' }
+                  ]}
+                  showSelectedOverlay
+                >
+                  {type}
+                </Chip>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        <View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
+            {sportFilters.map((sport) => {
+              let icon = 'trophy-variant-outline';
+              if (sport === 'All Sports') icon = 'trophy-variant-outline';
+              else if (sport === 'Cricket') icon = 'cricket';
+              else if (sport === 'Football') icon = 'soccer';
+              else if (sport === 'Padel') icon = 'tennis-ball';
+
+              return (
+                <Chip
+                  key={sport}
+                  mode={selectedSport === sport ? 'flat' : 'outlined'}
+                  selected={selectedSport === sport}
+                  onPress={() => setSelectedSport(sport)}
+                  icon={icon}
+                  style={[
+                    styles.filterChip,
+                    selectedSport === sport && { backgroundColor: '#e8ee26', borderColor: '#e8ee26' }
+                  ]}
+                  textStyle={[
+                    styles.filterChipText,
+                    selectedSport === sport && { color: '#004d43', fontWeight: 'bold' }
+                  ]}
+                  showSelectedOverlay
+                >
+                  {sport}
+                </Chip>
+              );
+            })}
+          </ScrollView>
+        </View>
       </View>
+    </View>
+  );
 
-      {/* Challenges List */}
+  return (
+    <View style={styles.container}>
+      {/* Challenges List with Header */}
       <FlatList
         data={filteredChallenges}
         renderItem={renderChallenge}
-        keyExtractor={item => item.id.toString()}
-
-        contentContainerStyle={[styles.list, { paddingBottom: Platform.OS === 'android' ? 20 + insets.bottom + 60 : 20 }]}
+        keyExtractor={item => item?.id?.toString() || Math.random().toString()}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
         refreshing={loading}
         onRefresh={() => dispatch(fetchChallenges())}
         ListEmptyComponent={

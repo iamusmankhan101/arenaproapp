@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
-  Share
+  Share,
+  ActivityIndicator
 } from 'react-native';
 import { Text, Card, Button, Chip, Avatar, Divider } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
-import { acceptChallenge, joinTournament } from '../../store/slices/teamSlice';
+import { acceptChallenge, joinTournament, deleteChallenge } from '../../store/slices/teamSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeDate, safeFormatDate } from '../../utils/dateUtils';
 import { challengeService } from '../../services/challengeService';
@@ -46,7 +47,20 @@ export default function ChallengeDetailScreen({ route, navigation }) {
     fetchChallengeDetails();
   }, [challengeId]);
 
+  if (!challenge) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#004d43" />
+      </View>
+    );
+  }
+
   const handleAcceptChallenge = () => {
+    if (!userTeam) {
+      Alert.alert('Error', 'You must have a team to accept challenges.');
+      return;
+    }
+
     Alert.alert(
       'Accept Challenge',
       `Are you sure you want to accept this challenge? ${challenge.isWinnerTakesAll ? 'The loser will pay the entire ground fee.' : 'Ground fee will be split equally.'}`,
@@ -78,6 +92,25 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         }
       ]
     );
+  };
+
+  const handleDeleteChallenge = () => {
+    Alert.alert(
+      'Delete Challenge',
+      'Are you sure you want to delete this challenge? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            dispatch(deleteChallenge(challengeId));
+            navigation.goBack();
+          }
+        }
+      ]
+    );
+
   };
 
   const handleJoinTournament = () => {
@@ -174,7 +207,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
   if (!challenge) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading challenge details...</Text>
+        <Text>Loading...</Text>
       </View>
     );
   }
@@ -183,278 +216,308 @@ export default function ChallengeDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Clean Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialIcons name="arrow-back" size={24} color="white" />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <MaterialIcons name="arrow-back" size={24} color="#004d43" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Challenge Details</Text>
-        <TouchableOpacity
-          style={styles.shareButton}
-          onPress={handleShareChallenge}
-        >
-          <MaterialIcons name="share" size={24} color="white" />
+        <TouchableOpacity onPress={handleShareChallenge} style={styles.iconButton}>
+          <MaterialIcons name="share" size={24} color="#004d43" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Challenge Info Card */}
-        <Card style={styles.challengeCard}>
-          <Card.Content>
-            <View style={styles.challengeHeader}>
-              <View style={styles.challengeTypeContainer}>
-                <MaterialIcons
-                  name={getChallengeTypeIcon(challenge.type)}
-                  size={20}
-                  color="#229a60"
-                />
-                <Text style={styles.challengeType}>
-                  {challenge.type === 'tournament' ? 'Tournament' :
-                    challenge.type === 'private' ? 'Private Match' : 'Open Challenge'}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+        {/* Status Banner */}
+        <View style={styles.bannerContainer}>
+          <Chip
+            mode="flat"
+            style={[styles.statusChip, { backgroundColor: getStatusColor(challenge.status) + '20' }]} // 20% opacity
+            textStyle={{ color: getStatusColor(challenge.status), fontWeight: 'bold' }}
+            icon={() => <MaterialIcons name={challenge.status === 'open' ? 'lock-open' : 'lock'} size={16} color={getStatusColor(challenge.status)} />}
+          >
+            {challenge.status.toUpperCase()}
+          </Chip>
+          <Text style={styles.sportLabel}>{challenge.sport?.toUpperCase()}</Text>
+        </View>
+
+        {/* Title */}
+        <Text style={styles.mainTitle}>{challenge.title}</Text>
+
+        {/* VS Matchup Section */}
+        {isTournament ? (
+          <View style={styles.tournamentHeader}>
+            <View style={{
+              width: 100,
+              height: 100,
+              borderRadius: 50,
+              backgroundColor: '#fff8e1',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: 16,
+              borderWidth: 4,
+              borderColor: '#ffecb3'
+            }}>
+              <MaterialIcons name="emoji-events" size={60} color="#ffa000" />
+            </View>
+            <Text style={styles.tournamentTitle}>Tournament Challenge</Text>
+            <Text style={styles.tournamentSub}>
+              {challenge.participants?.length || 0} / {challenge.maxParticipants} Teams Joined
+            </Text>
+            <Chip icon="information" style={{ marginTop: 10, backgroundColor: '#e0f2f1' }} textStyle={{ color: '#004d43' }}>
+              Knockout Format
+            </Chip>
+          </View>
+        ) : (
+          <View style={styles.matchupContainer}>
+            {/* Team A - Creator */}
+            <View style={styles.teamColumn}>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}>
+                {(() => {
+                  let count = 1;
+                  if (challenge.sport === 'Padel') {
+                    if (challenge.format === '2v2') count = 2;
+                    else if (challenge.format === '4v4') count = 4;
+                  }
+                  const avatarSize = count > 2 ? 40 : 64;
+                  const overlap = -(avatarSize / 2.5);
+
+                  return Array.from({ length: Math.max(1, count) }).map((_, index) => {
+                    const isCaptain = index === 0;
+                    return (
+                      <View key={`creator-${index}`} style={{
+                        marginLeft: index === 0 ? 0 : overlap,
+                        zIndex: count - index,
+                        elevation: count - index,
+                        borderRadius: avatarSize,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                      }}>
+                        {isCaptain && challenge.creatorTeam?.avatar && challenge.creatorTeam.avatar.length > 2 ? (
+                          <Avatar.Image
+                            size={avatarSize}
+                            source={{ uri: challenge.creatorTeam.avatar }}
+                            style={{ backgroundColor: '#004d43' }}
+                          />
+                        ) : (
+                          <Avatar.Text
+                            size={avatarSize}
+                            label={isCaptain ? (challenge.creatorTeam.name?.charAt(0) || 'T') : '+'}
+                            style={{ backgroundColor: isCaptain ? '#004d43' : '#e0e0e0' }}
+                            color={isCaptain ? '#e8ee26' : '#757575'}
+                            labelStyle={{ fontWeight: 'bold' }}
+                          />
+                        )}
+                      </View>
+                    );
+                  });
+                })()}
+              </View>
+              <Text style={styles.teamName} numberOfLines={2}>{challenge.creatorTeam.name}</Text>
+              <Text style={styles.teamStat}>{challenge.creatorTeam.wins || 0} Wins</Text>
+            </View>
+
+            {/* VS */}
+            <View style={styles.vsColumn}>
+              <View style={styles.vsCircle}>
+                <Text style={styles.vsText}>
+                  {challenge.sport === 'Padel' && challenge.format ? challenge.format : 'VS'}
                 </Text>
               </View>
-              <Chip
-                style={[styles.statusChip, { backgroundColor: getStatusColor(challenge.status) }]}
-                textStyle={{ color: 'white', fontSize: 12 }}
-              >
-                {challenge.status.toUpperCase()}
-              </Chip>
             </View>
 
-            <Text style={styles.challengeTitle}>{challenge.title}</Text>
+            {/* Team B - Opponent */}
+            <View style={styles.teamColumn}>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}>
+                {(() => {
+                  let count = 1;
+                  if (challenge.sport === 'Padel') {
+                    if (challenge.format === '2v2') count = 2;
+                    else if (challenge.format === '4v4') count = 4;
+                  }
+                  const avatarSize = count > 2 ? 40 : 64;
+                  const overlap = -(avatarSize / 2.5);
 
-            <View style={styles.sportContainer}>
-              <MaterialIcons name={getSportIcon(challenge.sport)} size={24} color="#229a60" />
-              <Text style={styles.sportText}>{challenge.sport}</Text>
-            </View>
+                  const hasOpponent = !!challenge.acceptedTeam;
 
-            <Text style={styles.challengeDescription}>{challenge.description}</Text>
-          </Card.Content>
-        </Card>
-
-        {/* Match Details */}
-        <Card style={styles.detailsCard}>
-          <Card.Content>
-            <Text style={styles.sectionTitle}>Match Details</Text>
-
-            <View style={styles.detailRow}>
-              <MaterialIcons name="event" size={20} color="#666" />
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Date & Time</Text>
-                <Text style={styles.detailValue}>{dateTime.date}</Text>
-                <Text style={styles.detailValue}>{dateTime.time}</Text>
+                  return Array.from({ length: Math.max(1, count) }).map((_, index) => {
+                    const isCaptain = index === 0;
+                    return (
+                      <View key={`opponent-${index}`} style={{
+                        marginLeft: index === 0 ? 0 : overlap,
+                        zIndex: count - index,
+                        elevation: count - index,
+                        borderRadius: avatarSize,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                      }}>
+                        {hasOpponent && isCaptain ? (
+                          challenge.acceptedTeam?.avatar && challenge.acceptedTeam.avatar.length > 2 ? (
+                            <Avatar.Image
+                              size={avatarSize}
+                              source={{ uri: challenge.acceptedTeam.avatar }}
+                              style={{ backgroundColor: '#fff3e0' }}
+                            />
+                          ) : (
+                            <Avatar.Text
+                              size={avatarSize}
+                              label={challenge.acceptedTeam.name?.charAt(0) || 'O'}
+                              style={{ backgroundColor: '#fff3e0' }}
+                              color="#e65100"
+                              labelStyle={{ fontWeight: 'bold' }}
+                            />
+                          )
+                        ) : (
+                          // Placeholder or extra player
+                          <View style={[styles.emptyAvatar, {
+                            width: avatarSize,
+                            height: avatarSize,
+                            borderRadius: avatarSize / 2,
+                            marginBottom: 0,
+                            backgroundColor: hasOpponent ? '#f5f5f5' : '#fafafa'
+                          }]}>
+                            <MaterialIcons
+                              name={hasOpponent ? "person" : "person-outline"}
+                              size={avatarSize * 0.5}
+                              color={hasOpponent ? "#bdbdbd" : "#e0e0e0"}
+                            />
+                          </View>
+                        )}
+                      </View>
+                    );
+                  });
+                })()}
               </View>
-            </View>
-
-            <View style={styles.detailRow}>
-              <MaterialIcons name="location-on" size={20} color="#666" />
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Venue</Text>
-                <Text style={styles.detailValue}>{challenge.venue}</Text>
-                <Text style={styles.detailSubValue}>{challenge.venueAddress}</Text>
-              </View>
-            </View>
-
-            <View style={styles.detailRow}>
-              <MaterialIcons name="attach-money" size={20} color="#666" />
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Ground Fee</Text>
-                <Text style={styles.detailValue}>PKR {challenge.maxGroundFee}</Text>
-                <Text style={styles.detailSubValue}>
-                  {challenge.isWinnerTakesAll ? 'Winner takes all (Loser pays)' : 'Split equally'}
-                </Text>
-              </View>
-            </View>
-
-            {challenge.rules && (
-              <View style={styles.detailRow}>
-                <MaterialIcons name="rule" size={20} color="#666" />
-                <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Rules</Text>
-                  <Text style={styles.detailValue}>{challenge.rules}</Text>
-                </View>
-              </View>
-            )}
-          </Card.Content>
-        </Card>
-
-        {/* Creator Team Info */}
-        <Card style={styles.teamCard}>
-          <Card.Content>
-            <Text style={styles.sectionTitle}>Challenge Creator</Text>
-
-            <View style={styles.teamHeader}>
-              <Avatar.Text
-                size={50}
-                label={challenge.creatorTeam.avatar}
-                style={styles.teamAvatar}
-              />
-              <View style={styles.teamInfo}>
-                <Text style={styles.teamName}>{challenge.creatorTeam.name}</Text>
-                <Text style={styles.teamCaptain}>Captain: {challenge.creatorTeam.captain}</Text>
-                <View style={styles.teamStats}>
-                  <Text style={styles.teamStatText}>
-                    {challenge.creatorTeam.wins}W-{challenge.creatorTeam.losses}L-{challenge.creatorTeam.draws}D
-                  </Text>
-                  <Text style={styles.teamStatText}>ELO: {challenge.creatorTeam.eloRating}</Text>
-                  <View style={styles.fairPlayContainer}>
-                    <MaterialIcons name="star" size={14} color="#FFD700" />
-                    <Text style={styles.fairPlayText}>{challenge.creatorTeam.fairPlayScore}</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <Divider style={styles.divider} />
-
-            <View style={styles.teamDetails}>
-              <View style={styles.teamDetailItem}>
-                <Text style={styles.teamDetailLabel}>Founded</Text>
-                <Text style={styles.teamDetailValue}>{challenge.creatorTeam.founded}</Text>
-              </View>
-              <View style={styles.teamDetailItem}>
-                <Text style={styles.teamDetailLabel}>Home Ground</Text>
-                <Text style={styles.teamDetailValue}>{challenge.creatorTeam.homeGround}</Text>
-              </View>
-            </View>
-          </Card.Content>
-        </Card>
-
-        {/* Tournament Participants (if tournament) */}
-        {isTournament && (
-          <Card style={styles.participantsCard}>
-            <Card.Content>
-              <View style={styles.participantsHeader}>
-                <Text style={styles.sectionTitle}>Tournament Participants</Text>
-                <Chip
-                  style={styles.participantsChip}
-                  textStyle={styles.participantsChipText}
-                >
-                  {challenge.participants}/{challenge.maxParticipants}
-                </Chip>
-              </View>
-
-              {challenge.participantTeams.map((team, index) => (
-                <View key={team.id} style={styles.participantItem}>
-                  <Avatar.Text
-                    size={40}
-                    label={team.avatar}
-                    style={styles.participantAvatar}
-                  />
-                  <View style={styles.participantInfo}>
-                    <Text style={styles.participantName}>{team.name}</Text>
-                    <Text style={styles.participantStats}>
-                      {team.wins}W-{team.losses}L • ELO: {team.eloRating}
-                    </Text>
-                  </View>
-                  <Text style={styles.participantJoinTime}>
-                    {safeFormatDate(team.joinedAt, {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    }, 'Unknown Date')}
-                  </Text>
-                </View>
-              ))}
-
-              {challenge.participants < challenge.maxParticipants && (
-                <View style={styles.availableSlots}>
-                  <Text style={styles.availableSlotsText}>
-                    {challenge.maxParticipants - challenge.participants} slots remaining
-                  </Text>
-                </View>
+              {challenge.acceptedTeam ? (
+                <>
+                  <Text style={styles.teamName} numberOfLines={2}>{challenge.acceptedTeam.name}</Text>
+                  <Text style={styles.teamStat}>{challenge.acceptedTeam.wins || 0} Wins</Text>
+                </>
+              ) : (
+                <Text style={styles.waitingText}>Waiting for{'\n'}Opponent</Text>
               )}
-            </Card.Content>
-          </Card>
+            </View>
+          </View>
         )}
 
-        {/* Match History (if available) */}
-        {challenge.matchHistory && challenge.matchHistory.length > 0 && (
-          <Card style={styles.historyCard}>
-            <Card.Content>
-              <Text style={styles.sectionTitle}>Recent Match History</Text>
+        <Divider style={styles.divider} />
 
-              {challenge.matchHistory.map((match, index) => (
-                <View key={index} style={styles.historyItem}>
-                  <View style={styles.historyDate}>
-                    <Text style={styles.historyDateText}>
-                      {safeFormatDate(match.date, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      }, 'Unknown Date')}
-                    </Text>
-                  </View>
-                  <View style={styles.historyMatch}>
-                    <Text style={styles.historyOpponent}>vs {match.opponent}</Text>
-                    <View style={styles.historyResult}>
-                      <Text style={[
-                        styles.historyResultText,
-                        {
-                          color: match.result === 'W' ? '#229a60' :
-                            match.result === 'L' ? '#F44336' : '#FF9800'
-                        }
-                      ]}>
-                        {match.result === 'W' ? 'Won' : match.result === 'L' ? 'Lost' : 'Draw'}
-                      </Text>
-                      <Text style={styles.historyScore}>{match.score}</Text>
-                    </View>
-                  </View>
+        {/* Details List */}
+        <View style={styles.infoSection}>
+          <Text style={styles.sectionHeader}>MATCH DETAILS</Text>
+
+          <View style={styles.infoRow}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons name="calendar-today" size={20} color="#004d43" />
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Date & Time</Text>
+              <Text style={styles.infoValue}>{dateTime.date} • {dateTime.time}</Text>
+            </View>
+          </View>
+
+          <View style={styles.infoRow}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons name="location-on" size={20} color="#004d43" />
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Venue</Text>
+              <Text style={styles.infoValue}>{challenge.venue || 'No venue specified'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.infoRow}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons name={isTournament ? "emoji-events" : "payments"} size={20} color="#004d43" />
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>{isTournament ? "Winning Prize" : "Ground Fee"}</Text>
+              <Text style={styles.infoValue}>
+                PKR {Number(isTournament ? (challenge.winningPrize || 50000) : challenge.maxGroundFee).toLocaleString()}
+              </Text>
+              <Text style={styles.infoSub}>{isTournament ? 'Total Pool' : (challenge.isWinnerTakesAll ? 'Winner takes all' : 'Split equally')}</Text>
+            </View>
+          </View>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        {/* Specs */}
+        <View style={styles.infoSection}>
+          <Text style={styles.sectionHeader}>SPECIFICATIONS</Text>
+          <View style={styles.specsRow}>
+            {challenge.format && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.format}</Chip>}
+            {challenge.overs && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.overs} Overs</Chip>}
+            {challenge.ballType && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.ballType} Ball</Chip>}
+            <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.type === 'private' ? 'Private' : 'Public'}</Chip>
+          </View>
+
+          {challenge.description && (
+            <View style={styles.noteBox}>
+              <Text style={styles.noteText}>{challenge.description}</Text>
+            </View>
+          )}
+        </View>
+
+        {isTournament && (
+          <View style={styles.infoSection}>
+            <Text style={styles.sectionHeader}>PARTICIPANTS ({challenge.participants?.length || 0}/{challenge.maxParticipants})</Text>
+            {challenge.participants && challenge.participants.map((participant, index) => (
+              <View key={participant.id || index} style={styles.participantRow}>
+                {participant.avatar ? (
+                  <Avatar.Image size={32} source={{ uri: participant.avatar }} style={{ marginRight: 10 }} />
+                ) : (
+                  <Avatar.Text
+                    size={32}
+                    label={participant.name ? participant.name.charAt(0).toUpperCase() : 'T'}
+                    style={{ marginRight: 10, backgroundColor: '#e8f5f3' }}
+                    color="#004d43"
+                  />
+                )}
+                <View>
+                  <Text style={styles.participantName}>{participant.name}</Text>
+                  {participant.joinedAt && (
+                    <Text style={styles.participantJoined}>Joined {safeFormatDate(participant.joinedAt)}</Text>
+                  )}
                 </View>
-              ))}
-            </Card.Content>
-          </Card>
+              </View>
+            ))}
+            {(!challenge.participants || challenge.participants.length === 0) && (
+              <Text style={styles.noParticipantsText}>No teams have joined properly yet.</Text>
+            )}
+          </View>
         )}
+
       </ScrollView>
 
-      {/* Bottom Action Buttons */}
+      {/* Action Button */}
       {canJoin && (
-        <View style={styles.bottomActions}>
-          {isTournament ? (
-            <Button
-              mode="contained"
-              onPress={handleJoinTournament}
-              style={styles.joinButton}
-              buttonColor="#229a60"
-              contentStyle={styles.buttonContent}
-            >
-              Join Tournament
-            </Button>
-          ) : (
-            <Button
-              mode="contained"
-              onPress={handleAcceptChallenge}
-              style={styles.acceptButton}
-              buttonColor="#229a60"
-              contentStyle={styles.buttonContent}
-            >
-              Accept Challenge
-            </Button>
-          )}
+        <View style={styles.bottomBar}>
+          <Button
+            mode="contained"
+            onPress={isTournament ? handleJoinTournament : handleAcceptChallenge}
+            style={styles.actionButton}
+            contentStyle={{ height: 50 }}
+            labelStyle={{ fontSize: 16, fontWeight: 'bold' }}
+          >
+            {isTournament ? 'Join Tournament' : 'Accept Challenge'}
+          </Button>
         </View>
       )}
 
       {isOwnChallenge && (
-        <View style={styles.bottomActions}>
+        <View style={styles.bottomBar}>
           <Button
             mode="outlined"
-            onPress={() => Alert.alert('Info', 'Edit challenge feature coming soon!')}
-            style={styles.editButton}
-            textColor="#229a60"
+            onPress={handleDeleteChallenge}
+            style={{ borderColor: '#F44336' }}
+            textColor="#F44336"
+            icon="delete"
           >
-            Edit Challenge
+            Delete Challenge
           </Button>
-          <Button
-            mode="contained"
-            onPress={() => Alert.alert('Info', 'Manage participants feature coming soon!')}
-            style={styles.manageButton}
-            buttonColor="#229a60"
-          >
-            Manage
-          </Button>
+          <Text style={[styles.ownChallengeNote, { marginTop: 10 }]}>You created this challenge</Text>
         </View>
       )}
     </View>
@@ -464,7 +527,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#fff', // Clean white background
   },
   loadingContainer: {
     flex: 1,
@@ -475,314 +538,229 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
     paddingTop: 50,
-    paddingBottom: 15,
-    backgroundColor: '#229a60',
-  },
-  backButton: {
-    padding: 8,
+    paddingBottom: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    fontFamily: 'Montserrat_600SemiBold',
+    fontWeight: '600',
+    color: '#004d43',
   },
-  shareButton: {
+  iconButton: {
     padding: 8,
   },
-  content: {
-    flex: 1,
-    padding: 20,
+  scrollContent: {
+    paddingBottom: 100,
   },
-  challengeCard: {
-    marginBottom: 15,
-    elevation: 3,
-    borderRadius: 12,
-  },
-  challengeHeader: {
+  bannerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
-  },
-  challengeTypeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  challengeType: {
-    fontSize: 14,
-    color: '#229a60',
-    marginLeft: 8,
-    fontFamily: 'Montserrat_600SemiBold',
+    paddingHorizontal: 20,
+    marginTop: 20,
   },
   statusChip: {
     height: 28,
   },
-  challengeTitle: {
-    fontSize: 20,
+  sportLabel: {
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-    fontFamily: 'Montserrat_700Bold',
+    color: '#888',
+    letterSpacing: 1,
   },
-  sportContainer: {
+  mainTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#222',
+    marginVertical: 20,
+    paddingHorizontal: 20,
+  },
+  matchupContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-  },
-  sportText: {
-    fontSize: 16,
-    color: '#229a60',
-    marginLeft: 8,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  challengeDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  detailsCard: {
-    marginBottom: 15,
-    elevation: 3,
-    borderRadius: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
     marginBottom: 20,
   },
-  detailContent: {
-    marginLeft: 15,
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  detailValue: {
-    fontSize: 14,
-    color: '#333',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  detailSubValue: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  teamCard: {
-    marginBottom: 15,
-    elevation: 3,
-    borderRadius: 12,
-  },
-  teamHeader: {
-    flexDirection: 'row',
+  teamColumn: {
     alignItems: 'center',
-    marginBottom: 15,
-  },
-  teamAvatar: {
-    backgroundColor: '#229a60',
-  },
-  teamInfo: {
-    marginLeft: 15,
     flex: 1,
+  },
+  vsColumn: {
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vsCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e8ee26', // Secondary Brand Color
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+  },
+  vsText: {
+    fontSize: 14,
+    color: '#004d43',
+    fontWeight: '900',
   },
   teamName: {
-    fontSize: 18,
+    marginTop: 10,
     fontWeight: 'bold',
+    fontSize: 14,
+    textAlign: 'center',
     color: '#333',
-    fontFamily: 'Montserrat_700Bold',
+    height: 40, // Fixed height to prevent alignment shifts
   },
-  teamCaptain: {
+  teamStat: {
     fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-    fontFamily: 'Montserrat_400Regular',
+    color: '#888',
   },
-  teamStats: {
-    flexDirection: 'row',
+  emptyAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderStyle: 'dashed',
   },
-  teamStatText: {
+  waitingText: {
+    marginTop: 10,
     fontSize: 12,
-    color: '#666',
-    marginRight: 15,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  fairPlayContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  fairPlayText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
-    fontFamily: 'Montserrat_500Medium',
+    color: '#aaa',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   divider: {
-    marginVertical: 15,
+    height: 8,
+    backgroundColor: '#f8f9fa',
+    marginVertical: 10,
   },
-  teamDetails: {
+  infoSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#999',
+    marginBottom: 15,
+    letterSpacing: 1,
+  },
+  infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  teamDetailItem: {
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#e8ee26', // Secondary Brand Color
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  infoContent: {
     flex: 1,
   },
-  teamDetailLabel: {
+  infoLabel: {
     fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-    fontFamily: 'Montserrat_500Medium',
+    color: '#666',
+    marginBottom: 2,
   },
-  teamDetailValue: {
-    fontSize: 14,
-    color: '#333',
-    fontFamily: 'Montserrat_600SemiBold',
+  infoValue: {
+    fontSize: 16,
+    color: '#004d43',
+    fontWeight: '600',
   },
-  participantsCard: {
-    marginBottom: 15,
-    elevation: 3,
+  infoSub: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
+  },
+  specsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  specChip: {
+    backgroundColor: '#e8ee26', // Secondary Brand Color
+  },
+  noteBox: {
+    marginTop: 15,
+    padding: 15,
+    backgroundColor: '#f0f4c3', // Light secondary tint
     borderRadius: 12,
   },
-  participantsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+  noteText: {
+    fontSize: 14,
+    color: '#004d43',
+    fontStyle: 'italic',
   },
-  participantsChip: {
-    backgroundColor: '#FF9800',
-  },
-  participantsChipText: {
-    color: 'white',
-    fontSize: 12,
-  },
-  participantItem: {
+  participantRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-  },
-  participantAvatar: {
-    backgroundColor: '#229a60',
-  },
-  participantInfo: {
-    marginLeft: 12,
-    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   participantName: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#333',
-    fontFamily: 'Montserrat_600SemiBold',
   },
-  participantStats: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  participantJoinTime: {
-    fontSize: 11,
+  participantJoined: {
+    fontSize: 10,
     color: '#999',
-    fontFamily: 'Montserrat_400Regular',
   },
-  availableSlots: {
-    alignItems: 'center',
-    paddingVertical: 15,
+  noParticipantsText: {
+    fontSize: 13,
+    color: '#888',
+    fontStyle: 'italic',
+    paddingVertical: 10,
   },
-  availableSlotsText: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  historyCard: {
-    marginBottom: 15,
-    elevation: 3,
-    borderRadius: 12,
-  },
-  historyItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingVertical: 8,
-  },
-  historyDate: {
-    width: 80,
-  },
-  historyDateText: {
-    fontSize: 11,
-    color: '#999',
-    fontFamily: 'Montserrat_400Regular',
-  },
-  historyMatch: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  historyOpponent: {
-    fontSize: 14,
-    color: '#333',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  historyResult: {
-    alignItems: 'flex-end',
-  },
-  historyResultText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  historyScore: {
-    fontSize: 11,
-    color: '#666',
-    marginTop: 2,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  bottomActions: {
-    flexDirection: 'row',
+  bottomBar: {
     padding: 20,
-    backgroundColor: 'white',
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    gap: 10,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#fff',
   },
-  joinButton: {
-    flex: 1,
+  actionButton: {
     borderRadius: 12,
+    backgroundColor: '#004d43',
   },
-  acceptButton: {
-    flex: 1,
-    borderRadius: 12,
+  ownChallengeNote: {
+    textAlign: 'center',
+    color: '#999',
+    fontStyle: 'italic',
   },
-  editButton: {
-    flex: 1,
-    borderRadius: 12,
-    borderColor: '#229a60',
+  tournamentHeader: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: '#fff',
   },
-  manageButton: {
-    flex: 1,
-    borderRadius: 12,
+  tournamentTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#004d43',
+    marginTop: 10,
   },
-  buttonContent: {
-    paddingVertical: 8,
+  tournamentSub: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 5,
   },
 });

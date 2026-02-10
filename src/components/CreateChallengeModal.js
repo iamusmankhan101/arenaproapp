@@ -50,6 +50,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
     // New Fields
     minLevel: 'Intermediate', // For Open Challenge
     entryFee: '', // For Tournament
+    winningPrize: '', // For Tournament
     tournamentFormat: 'Knockout', // For Tournament
   });
 
@@ -75,9 +76,35 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
       return;
     }
 
+    // Robust Time Parsing
+    let hours = 0, minutes = 0;
+    const timeRegex = /(\d{1,2}):(\d{2})\s*(AM|PM)/i;
+    const match = formData.proposedTime.match(timeRegex);
+
+    if (match) {
+      hours = parseInt(match[1], 10);
+      minutes = parseInt(match[2], 10);
+      const period = match[3].toUpperCase();
+
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+    } else {
+      // Fallback or Alert? Assuming safe default or simple split if 24h
+      const [h, m] = formData.proposedTime.split(':');
+      hours = parseInt(h || 0, 10);
+      minutes = parseInt(m || 0, 10);
+    }
+
+    // Ensure two digits
+    const hoursStr = hours.toString().padStart(2, '0');
+    const minutesStr = minutes.toString().padStart(2, '0');
+
+    // Create safe date string
+    const dateTimeStr = `${formData.proposedDate}T${hoursStr}:${minutesStr}:00`;
+
     const challengeData = {
       ...formData,
-      proposedDateTime: `${formData.proposedDate}T${formData.proposedTime}:00`,
+      proposedDateTime: dateTimeStr,
       createdAt: new Date().toISOString(),
       status: 'open',
     };
@@ -107,6 +134,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
 
       minLevel: 'Intermediate',
       entryFee: '',
+      winningPrize: '',
       tournamentFormat: 'Knockout',
     });
   };
@@ -300,30 +328,107 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
 
           {/* Date and Time */}
           <View style={styles.row}>
-            <TextInput
-              label="Date"
-              value={formData.proposedDate}
-              onChangeText={(text) => setFormData({ ...formData, proposedDate: text })}
-              placeholder="YYYY-MM-DD"
-              style={[styles.input, styles.halfInput]}
-              mode="outlined"
-              outlineColor="#E0E0E0"
-              activeOutlineColor={theme.colors.primary}
-              right={<TextInput.Icon icon="calendar" color="#999" />}
-            />
+            <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.halfInput}>
+              <TextInput
+                label="Date"
+                value={formData.proposedDate}
+                editable={false}
+                placeholder="YYYY-MM-DD"
+                style={styles.input}
+                contentStyle={formData.proposedDate ? { fontSize: 13 } : {}}
+                mode="outlined"
+                outlineColor="#E0E0E0"
+                activeOutlineColor={theme.colors.primary}
+                right={<TextInput.Icon icon="calendar" color="#999" onPress={() => setShowDatePicker(true)} />}
+              />
+            </TouchableOpacity>
 
-            <TextInput
-              label="Time"
-              value={formData.proposedTime}
-              onChangeText={(text) => setFormData({ ...formData, proposedTime: text })}
-              placeholder="HH:MM"
-              style={[styles.input, styles.halfInput]}
-              mode="outlined"
-              outlineColor="#E0E0E0"
-              activeOutlineColor={theme.colors.primary}
-              right={<TextInput.Icon icon="clock-outline" color="#999" />}
-            />
+            <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.halfInput}>
+              <TextInput
+                label="Time"
+                value={formData.proposedTime}
+                editable={false}
+                placeholder="HH:MM"
+                style={styles.input}
+                contentStyle={formData.proposedTime ? { fontSize: 13 } : {}}
+                mode="outlined"
+                outlineColor="#E0E0E0"
+                activeOutlineColor={theme.colors.primary}
+                right={<TextInput.Icon icon="clock-outline" color="#999" onPress={() => setShowTimePicker(true)} />}
+              />
+            </TouchableOpacity>
           </View>
+
+          {/* Date Picker Modal */}
+          <Portal>
+            <Modal visible={showDatePicker} onDismiss={() => setShowDatePicker(false)} contentContainerStyle={styles.pickerModal}>
+              <Calendar
+                onDayPress={handleDateSelect}
+                markedDates={{
+                  [formData.proposedDate]: { selected: true, selectedColor: theme.colors.primary }
+                }}
+                theme={{
+                  todayTextColor: theme.colors.primary,
+                  arrowColor: theme.colors.primary,
+                  selectedDayBackgroundColor: theme.colors.primary,
+                }}
+              />
+            </Modal>
+          </Portal>
+
+          {/* Time Picker Modal */}
+          <Portal>
+            <Modal visible={showTimePicker} onDismiss={() => setShowTimePicker(false)} contentContainerStyle={styles.pickerModal}>
+              <Text style={styles.pickerTitle}>Select Time</Text>
+              <View style={styles.timePickerContainer}>
+
+                {/* Hour */}
+                <ScrollView style={styles.timeColumn} showsVerticalScrollIndicator={false}>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                    <TouchableOpacity
+                      key={h}
+                      style={[styles.timeItem, tempTime.hour == h && styles.selectedTimeItem]}
+                      onPress={() => setTempTime({ ...tempTime, hour: h.toString() })}
+                    >
+                      <Text style={[styles.timeText, tempTime.hour == h && styles.selectedTimeText]}>{h}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+                <Text style={styles.colon}>:</Text>
+
+                {/* Minute */}
+                <ScrollView style={styles.timeColumn} showsVerticalScrollIndicator={false}>
+                  {['00', '15', '30', '45'].map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[styles.timeItem, tempTime.minute == m && styles.selectedTimeItem]}
+                      onPress={() => setTempTime({ ...tempTime, minute: m })}
+                    >
+                      <Text style={[styles.timeText, tempTime.minute == m && styles.selectedTimeText]}>{m}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+                {/* AM/PM */}
+                <ScrollView style={styles.timeColumn} showsVerticalScrollIndicator={false}>
+                  {['AM', 'PM'].map((p) => (
+                    <TouchableOpacity
+                      key={p}
+                      style={[styles.timeItem, tempTime.period == p && styles.selectedTimeItem]}
+                      onPress={() => setTempTime({ ...tempTime, period: p })}
+                    >
+                      <Text style={[styles.timeText, tempTime.period == p && styles.selectedTimeText]}>{p}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+              </View>
+              <Button mode="contained" onPress={handleTimeConfirm} style={styles.confirmButton}>
+                Confirm Time
+              </Button>
+            </Modal>
+          </Portal>
 
           {/* Venue and Fee */}
           <TextInput
@@ -338,36 +443,55 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
             left={<TextInput.Icon icon="map-marker" color="#999" />}
           />
 
-          <TextInput
-            label="Max Ground Fee (PKR)"
-            value={formData.maxGroundFee}
-            onChangeText={(text) => setFormData({ ...formData, maxGroundFee: text })}
-            placeholder="0"
-            keyboardType="numeric"
-            style={styles.input}
-            mode="outlined"
-            outlineColor="#E0E0E0"
-            activeOutlineColor={theme.colors.primary}
-            left={<TextInput.Affix text="Rs." />}
-          />
+          {formData.type === 'tournament' ? (
+            <TextInput
+              label="Winning Prize (PKR)"
+              value={formData.winningPrize}
+              onChangeText={(text) => setFormData({ ...formData, winningPrize: text })}
+              placeholder="50000"
+              keyboardType="numeric"
+              style={styles.input}
+              mode="outlined"
+              outlineColor="#E0E0E0"
+              activeOutlineColor={theme.colors.primary}
+              left={<TextInput.Affix text="Rs." />}
+            />
+          ) : (
+            <TextInput
+              label="Max Ground Fee (PKR)"
+              value={formData.maxGroundFee}
+              onChangeText={(text) => setFormData({ ...formData, maxGroundFee: text })}
+              placeholder="0"
+              keyboardType="numeric"
+              style={styles.input}
+              mode="outlined"
+              outlineColor="#E0E0E0"
+              activeOutlineColor={theme.colors.primary}
+              left={<TextInput.Affix text="Rs." />}
+            />
+          )}
 
           {/* Rules and Settings */}
           <Text style={styles.sectionTitle}>Rules & Settings</Text>
 
           <View style={styles.switchContainer}>
             <View style={styles.switchRow}>
-              <View>
+              <View style={{ flex: 1, marginRight: 10 }}>
                 <Text style={styles.switchLabel}>Winner Takes All</Text>
                 <Text style={styles.switchDescription}>
                   {formData.isWinnerTakesAll ? 'Loser pays entire ground fee' : 'Split ground fee equally'}
                 </Text>
               </View>
-              <Switch
-                value={formData.isWinnerTakesAll}
-                onValueChange={(value) => setFormData({ ...formData, isWinnerTakesAll: value })}
-                color={theme.colors.secondary} // Bright lime accent
-                trackColor={{ true: theme.colors.primaryLight }}
-              />
+              <TouchableOpacity
+                onPress={() => setFormData({ ...formData, isWinnerTakesAll: !formData.isWinnerTakesAll })}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons
+                  name={formData.isWinnerTakesAll ? 'toggle-on' : 'toggle-off'}
+                  size={40}
+                  color={formData.isWinnerTakesAll ? theme.colors.secondary : '#CCC'}
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -739,7 +863,55 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
     lineHeight: 18,
   },
-  sectionContainer: {
-    marginBottom: 10,
+  pickerModal: {
+    backgroundColor: 'white',
+    padding: 20,
+    margin: 20,
+    borderRadius: 12,
+  },
+  pickerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#333',
+  },
+  timePickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 150,
+    marginBottom: 20,
+  },
+  timeColumn: {
+    width: 60,
+    marginHorizontal: 5,
+  },
+  timeItem: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  selectedTimeItem: {
+    backgroundColor: '#E0F2F1', // Light Primary
+  },
+  timeText: {
+    fontSize: 18,
+    color: '#555',
+  },
+  selectedTimeText: {
+    fontWeight: 'bold',
+    color: '#004d43',
+    fontSize: 20,
+  },
+  colon: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#333',
+    marginHorizontal: 5,
+  },
+  confirmButton: {
+    marginTop: 10,
+    backgroundColor: '#004d43',
   },
 });

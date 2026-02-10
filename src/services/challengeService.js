@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, doc, updateDoc, query, where, orderBy, getDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 // Collection reference
@@ -93,6 +93,29 @@ export const challengeService = {
         }
     },
 
+    // Join a Tournament
+    joinTournament: async (challengeId, teamId, teamProfile) => {
+        try {
+            const challengeRef = doc(db, 'challenges', challengeId);
+            // using arrayUnion to add team to participants array
+            // We must import arrayUnion from firebase/firestore
+            const { arrayUnion } = require('firebase/firestore');
+
+            await updateDoc(challengeRef, {
+                participants: arrayUnion({
+                    id: teamId,
+                    name: teamProfile.name,
+                    avatar: teamProfile.avatar || null,
+                    joinedAt: new Date().toISOString()
+                })
+            });
+            return { success: true };
+        } catch (error) {
+            console.error("Error joining tournament:", error);
+            return { success: false, error: error.message };
+        }
+    },
+
     // Get User's Challenges
     getUserChallenges: async (userId) => {
         try {
@@ -111,6 +134,18 @@ export const challengeService = {
         } catch (error) {
             console.error("Error fetching user challenges:", error);
             return [];
+        }
+    },
+
+    // Delete a Challenge
+    deleteChallenge: async (challengeId) => {
+        try {
+            const challengeRef = doc(db, 'challenges', challengeId);
+            await deleteDoc(challengeRef);
+            return { success: true };
+        } catch (error) {
+            console.error("Error deleting challenge:", error);
+            return { success: false, error: error.message };
         }
     }
 };

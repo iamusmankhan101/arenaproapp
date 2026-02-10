@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Alert, Share, Platform } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Alert, Share, Platform, Dimensions, Animated, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { Text, Searchbar } from 'react-native-paper';
@@ -20,6 +20,7 @@ import {
   VenueCardSkeleton,
   ChallengeCardSkeleton
 } from '../../components/SkeletonLoader';
+import ChallengeCard from '../../components/ChallengeCard';
 import { generateReferralCode } from '../../utils/referralUtils';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
@@ -71,11 +72,7 @@ const sportCategories = [
     name: 'Padel',
     color: '#004d43',
   },
-  {
-    id: 4,
-    name: 'Pickleball',
-    color: '#004d43',
-  }
+
 
 ];
 
@@ -91,6 +88,27 @@ export default function HomeScreen({ navigation }) {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showReferralModal, setShowReferralModal] = useState(false);
+  const bounceValue = useRef(new Animated.Value(0)).current;
+
+  // Banner Floating Animation
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceValue, {
+          toValue: -6,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceValue, {
+          toValue: 0,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        })
+      ])
+    ).start();
+  }, [bounceValue]);
 
   const { user } = useSelector(state => state.auth);
 
@@ -105,7 +123,7 @@ export default function HomeScreen({ navigation }) {
     }
   }, [user]);
   const { nearbyTurfs, loading: turfsLoading } = useSelector(state => state.turf);
-  const { challenges, loading: challengesLoading } = useSelector(state => state.team);
+  const { challenges, loading: challengesLoading, userTeam } = useSelector(state => state.team);
 
   // Load data on component mount and when screen comes into focus
   useEffect(() => {
@@ -292,12 +310,29 @@ export default function HomeScreen({ navigation }) {
 
         <View style={styles.venueFooter}>
           <View style={styles.venueIcons}>
-            <Text style={styles.venueIconText}>
-              {Array.isArray(venue.sports) && venue.sports.length > 0 ?
-                (venue.sports[0] === 'Cricket' ? '🏏' : venue.sports[0] === 'Football' ? '⚽' : venue.sports[0] === 'Padel' ? '🏓' : '⚽') :
-                typeof venue.sports === 'string' ?
-                  (venue.sports.includes('Cricket') ? '🏏' : venue.sports.includes('Football') ? '⚽' : venue.sports.includes('Padel') ? '🏓' : '⚽') :
-                  venue.sport === 'Cricket' ? '🏏' : venue.sport === 'Football' ? '⚽' : venue.sport === 'Padel' ? '🏓' : '⚽'}
+            {(Array.isArray(venue.sports) && venue.sports.length > 0) ? (
+              <MaterialIcons
+                name={venue.sports[0] === 'Cricket' ? 'sports-cricket' : venue.sports[0] === 'Football' ? 'sports-soccer' : venue.sports[0] === 'Padel' ? 'sports-tennis' : 'sports-soccer'}
+                size={20}
+                color="#666"
+              />
+            ) : typeof venue.sports === 'string' ? (
+              <MaterialIcons
+                name={venue.sports.includes('Cricket') ? 'sports-cricket' : venue.sports.includes('Football') ? 'sports-soccer' : venue.sports.includes('Padel') ? 'sports-tennis' : 'sports-soccer'}
+                size={20}
+                color="#666"
+              />
+            ) : (
+              <MaterialIcons
+                name={venue.sport === 'Cricket' ? 'sports-cricket' : venue.sport === 'Football' ? 'sports-soccer' : venue.sport === 'Padel' ? 'sports-tennis' : 'sports-soccer'}
+                size={20}
+                color="#666"
+              />
+            )}
+            <Text style={[styles.venueIconText, { marginLeft: 5, fontSize: 12, color: '#666' }]}>
+              {Array.isArray(venue.sports) && venue.sports.length > 0 ? venue.sports[0] :
+                typeof venue.sports === 'string' ? venue.sports.split(',')[0] :
+                  venue.sport || 'Sport'}
             </Text>
           </View>
           <TouchableOpacity style={styles.bookableButton}>
@@ -364,90 +399,27 @@ export default function HomeScreen({ navigation }) {
     );
   };
 
+  const { width } = Dimensions.get('window');
+  const cardWidth = width - 45; // Full width minus padding (20 left + 20 right + 5 margin)
+
   const renderChallengeCard = (challenge) => (
-    <TouchableOpacity
-      key={challenge.id}
-      style={styles.challengeCard}
-      onPress={() => navigation.navigate('ChallengeDetail', { challengeId: challenge.id })}
-      activeOpacity={0.8}
-    >
-      <View style={styles.challengeHeader}>
-        <View style={styles.challengeTypeContainer}>
-          {challenge.type === 'tournament' ? (
-            <MaterialIcons name="emoji-events" size={16} color="#229a60" />
-          ) : challenge.type === 'private' ? (
-            <MaterialIcons name="lock" size={16} color="#229a60" />
-          ) : (
-            <MaterialIcons name="people" size={16} color="#229a60" />
-          )}
-          <Text style={styles.challengeType}>
-            {challenge.type === 'tournament' ? 'Tournament' :
-              challenge.type === 'private' ? 'Private' : 'Open'}
-          </Text>
-        </View>
-        <View style={styles.sportBadge}>
-          <Text style={styles.sportBadgeText}>{challenge.sport}</Text>
-        </View>
-      </View>
-
-      <Text style={styles.challengeTitle} numberOfLines={2}>
-        {challenge.title}
-      </Text>
-
-      <View style={styles.challengeTeamInfo}>
-        <Text style={styles.challengeTeamName}>by {challenge.teamName}</Text>
-        <View style={styles.challengeStats}>
-          <Text style={styles.challengeStatText}>
-            {challenge.teamWins}W-{challenge.teamLosses}L
-          </Text>
-          <Text style={styles.challengeStatText}>
-            ELO: {challenge.teamElo}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.challengeDetails}>
-        <View style={styles.challengeDetailRow}>
-          <MaterialIcons name="event" size={14} color="#666" />
-          <Text style={styles.challengeDetailText}>
-            {safeFormatDate(challenge.proposedDateTime, {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }, 'TBD')}
-          </Text>
-        </View>
-        <View style={styles.challengeDetailRow}>
-          <MaterialIcons name="monetization-on" size={14} color="#666" />
-          <Text style={styles.challengeDetailText}>
-            PKR {challenge.maxGroundFee}
-          </Text>
-        </View>
-      </View>
-
-      {challenge.type === 'tournament' && (
-        <View style={styles.tournamentProgress}>
-          <Text style={styles.tournamentProgressText}>
-            {challenge.participants}/{challenge.maxParticipants} teams
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.challengeFooter}>
-        <Text style={styles.challengeTimeAgo}>{challenge.timeAgo}</Text>
-        <View style={styles.challengeActionButton}>
-          <Text style={styles.challengeActionText}>Join</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+    <View key={challenge.id} style={{ width: cardWidth, maxWidth: 400, marginRight: 15 }}>
+      <ChallengeCard
+        challenge={challenge}
+        onViewDetails={() => navigation.navigate('ChallengeDetail', { challengeId: challenge.id })}
+        userTeam={userTeam}
+      // Pass a prop to indicate it's in a horizontal scroll if needed, 
+      // to adjust width/margins, but ChallengeCard seems designed for full width.
+      // We wrap it in a View with fixed width for horizontal scrolling.
+      />
+    </View>
   );
 
   return (
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: Platform.OS === 'android' ? 100 + insets.bottom : 100 }}
+        contentContainerStyle={{ paddingBottom: Platform.OS === 'android' ? 200 + insets.bottom : 200 }}
       >
         {/* Header Section with Full-Width Image Slider */}
         {turfsLoading ? (
@@ -577,26 +549,36 @@ export default function HomeScreen({ navigation }) {
             </View>
 
             {challengesLoading ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.challengesScroll}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.challengesScroll}
+                snapToInterval={cardWidth + 15}
+                decelerationRate="fast"
+                snapToAlignment="start"
+                contentContainerStyle={{ paddingHorizontal: 20 }}
+              >
                 {[1, 2, 3].map((index) => (
                   <ChallengeCardSkeleton key={index} />
                 ))}
               </ScrollView>
             ) : challenges.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.challengesScroll}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.challengesScroll}
+                snapToInterval={cardWidth + 15}
+                decelerationRate="fast"
+                snapToAlignment="start"
+                contentContainerStyle={{ paddingHorizontal: 20 }}
+              >
                 {challenges.slice(0, 4).map(renderChallengeCard)}
               </ScrollView>
             ) : (
               <Text style={styles.noDataText}>No challenges available</Text>
             )}
 
-            <TouchableOpacity
-              style={styles.createChallengeButton}
-              onPress={() => navigation.navigate('Lalkaar')}
-            >
-              <MaterialIcons name="add" size={24} color="#e8ee26" />
-              <Text style={styles.createChallengeText}>Create Your Challenge</Text>
-            </TouchableOpacity>
+
           </View>
         )}
       </ScrollView>
@@ -611,13 +593,21 @@ export default function HomeScreen({ navigation }) {
       )}
 
       {/* Floating Referral Button */}
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={() => setShowReferralModal(true)}
-        activeOpacity={0.8}
-      >
-        <MaterialIcons name="card-giftcard" size={28} color="#e8ee26" />
-      </TouchableOpacity>
+      {/* Floating Referral Button with Banner */}
+      {/* Floating Referral Button with Banner */}
+      <View style={styles.floatingButtonContainer}>
+        <Animated.View style={[styles.referralBanner, { transform: [{ translateY: bounceValue }] }]}>
+          <Text style={styles.referralBannerText}>Earn 300 PKR</Text>
+          <View style={styles.referralBannerArrow} />
+        </Animated.View>
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => setShowReferralModal(true)}
+          activeOpacity={0.8}
+        >
+          <MaterialIcons name="card-giftcard" size={28} color="#e8ee26" />
+        </TouchableOpacity>
+      </View>
 
       {/* Referral Modal */}
       <Modal
@@ -1086,328 +1076,207 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   challengesScroll: {
-    marginHorizontal: -20,
     paddingHorizontal: 20,
+    marginHorizontal: -20,
   },
-  challengeCard: {
-    width: 280,
-    marginRight: 15,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    overflow: 'hidden',
-    padding: 15,
-  },
-  challengeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  challengeTypeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  challengeType: {
-    fontSize: 12,
-    color: '#229a60',
-    marginLeft: 4,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  sportBadge: {
-    backgroundColor: 'rgba(34, 154, 96, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  sportBadgeText: {
-    fontSize: 11,
-    color: '#229a60',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  challengeTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  challengeTeamInfo: {
-    marginBottom: 12,
-  },
-  challengeTeamName: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  challengeStats: {
-    flexDirection: 'row',
-  },
-  challengeStatText: {
-    fontSize: 11,
-    color: '#666',
-    marginRight: 12,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  challengeDetails: {
-    marginBottom: 12,
-  },
-  challengeDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  challengeDetailText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 6,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  tournamentProgress: {
-    backgroundColor: 'rgba(255, 152, 0, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  tournamentProgressText: {
-    fontSize: 11,
-    color: '#FF9800',
+  noDataText: {
     textAlign: 'center',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  challengeFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  challengeTimeAgo: {
-    fontSize: 11,
     color: '#999',
-    fontFamily: 'Montserrat_400Regular',
-  },
-  challengeActionButton: {
-    backgroundColor: '#229a60',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  challengeActionText: {
-    fontSize: 12,
-    color: 'white',
-    fontFamily: 'Montserrat_600SemiBold',
+    marginTop: 20,
+    fontFamily: 'Montserrat_500Medium',
   },
   createChallengeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#004d43',
-    paddingVertical: 15,
+    padding: 15,
     borderRadius: 12,
-    marginTop: 15,
+    marginTop: 20,
   },
   createChallengeText: {
-    fontSize: 16,
-    color: '#e8ee26',
-    marginLeft: 8,
+    color: 'white',
+    fontWeight: 'bold',
+    marginLeft: 10,
     fontFamily: 'Montserrat_600SemiBold',
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    paddingVertical: 20,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  noDataText: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    paddingVertical: 20,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  // Floating Referral Button Styles
-  floatingButton: {
+  floatingButtonContainer: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 110,
     right: 20,
+    alignItems: 'center',
+  },
+  referralBanner: {
+    backgroundColor: '#e8ee26',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  referralBannerText: {
+    color: '#004d43',
+    fontWeight: 'bold',
+    fontSize: 12,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  referralBannerArrow: {
+    position: 'absolute',
+    bottom: -6,
+    left: '50%',
+    marginLeft: -6,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderStyle: 'solid',
+    backgroundColor: 'transparent',
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#e8ee26',
+  },
+  floatingButton: {
+    backgroundColor: '#004d43',
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#004d43',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 10,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    zIndex: 9999,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
-  // Referral Modal Styles
+  // ... Modal styles remain ...
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
-  modalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 40,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
     maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    marginBottom: 20,
   },
   modalIconContainer: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#e8ee26',
+    backgroundColor: '#E0F2F1',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalCloseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 5,
   },
   modalBody: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#004d43',
-    marginBottom: 8,
+    marginBottom: 10,
     fontFamily: 'Montserrat_700Bold',
+    textAlign: 'center',
   },
   modalSubtitle: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 24,
-    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 20,
     fontFamily: 'Montserrat_400Regular',
+    lineHeight: 20,
   },
   referralCodeContainer: {
-    marginBottom: 24,
+    width: '100%',
+    marginBottom: 20,
   },
   referralCodeLabel: {
     fontSize: 12,
     color: '#666',
     marginBottom: 8,
-    fontFamily: 'Montserrat_500Medium',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontFamily: 'Montserrat_600SemiBold',
   },
   referralCodeBox: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#004d43',
-    borderStyle: 'dashed',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    backgroundColor: '#F5F5F5',
+    padding: 15,
+    borderRadius: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderStyle: 'dashed',
   },
   referralCodeText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#004d43',
-    letterSpacing: 2,
     fontFamily: 'Montserrat_700Bold',
+    letterSpacing: 2,
   },
   referralCodePlaceholder: {
     fontSize: 16,
     color: '#999',
     fontStyle: 'italic',
-    fontFamily: 'Montserrat_400Regular',
   },
   benefitsContainer: {
-    marginBottom: 24,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 16,
+    width: '100%',
+    backgroundColor: '#F9F9F9',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
   },
   benefitsTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#004d43',
-    marginBottom: 12,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
     fontFamily: 'Montserrat_600SemiBold',
   },
   benefitItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   benefitText: {
+    marginLeft: 10,
     fontSize: 14,
     color: '#333',
-    marginLeft: 12,
     fontFamily: 'Montserrat_500Medium',
     flex: 1,
   },
-  lockedContainer: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    marginBottom: 24,
-  },
-  lockedText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
-    marginBottom: 8,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  lockedSubtext: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    fontFamily: 'Montserrat_400Regular',
-  },
   modalActions: {
     flexDirection: 'row',
-    gap: 12,
+    width: '100%',
+    gap: 15,
   },
   copyButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#e8ee26',
+    backgroundColor: '#E0F2F1',
+    padding: 15,
     borderRadius: 12,
-    paddingVertical: 14,
-    gap: 8,
   },
   copyButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    marginLeft: 8,
     color: '#004d43',
+    fontWeight: 'bold',
     fontFamily: 'Montserrat_600SemiBold',
   },
   shareButton: {
@@ -1416,14 +1285,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#004d43',
+    padding: 15,
     borderRadius: 12,
-    paddingVertical: 14,
-    gap: 8,
   },
   shareButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    marginLeft: 8,
+    color: 'white',
+    fontWeight: 'bold',
     fontFamily: 'Montserrat_600SemiBold',
+  },
+  lockedContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 20,
+  },
+  lockedText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#666',
+    marginTop: 10,
+    marginBottom: 5,
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  lockedSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    fontFamily: 'Montserrat_400Regular',
   },
 });

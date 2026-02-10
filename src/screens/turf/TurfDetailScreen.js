@@ -534,7 +534,7 @@ export default function TurfDetailScreen({ route, navigation }) {
       // 1. Add the new review to the subcollection
       const reviewsRef = collection(db, 'venues', turfId, 'reviews');
       await addDoc(reviewsRef, {
-        userName: user?.displayName || user?.fullName || user?.name || 'Anonymous User',
+        userName: user?.fullName || user?.displayName || user?.name || 'Anonymous User',
         userId: user?.uid || 'anonymous',
         rating: userRating,
         comment: reviewText.trim(),
@@ -738,10 +738,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.hoursRow}>
-                <MaterialIcons name="schedule" size={16} color="#666" />
-                <Text style={styles.hoursText}>{venue.hours}</Text>
-              </View>
+
 
               <View style={styles.ratingRow}>
                 <View style={[styles.starsContainer, {
@@ -838,7 +835,7 @@ export default function TurfDetailScreen({ route, navigation }) {
               {/* Reviews List */}
               <View style={styles.reviewsList}>
                 {reviews.slice(0, 3).map((review) => (
-                  <View key={review.id} style={styles.reviewItem}>
+                  <View key={review.id} style={styles.reviewCard}>
                     <View style={styles.reviewHeader}>
                       <View style={styles.reviewerInfo}>
                         <View style={[styles.reviewerAvatar, { backgroundColor: theme.colors.primary }]}>
@@ -846,16 +843,17 @@ export default function TurfDetailScreen({ route, navigation }) {
                             {review.userName.charAt(0).toUpperCase()}
                           </Text>
                         </View>
-                        <View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <Text style={styles.reviewerName}>{review.userName}</Text>
-                            <MaterialIcons name="verified" size={14} color={theme.colors.primary} />
+                        <View style={styles.reviewerMeta}>
+                          <Text style={styles.reviewerName}>{review.userName}</Text>
+                          <View style={styles.verifiedBadge}>
+                            <MaterialIcons name="verified" size={12} color={theme.colors.primary} />
+                            <Text style={[styles.verifiedText, { color: theme.colors.primary }]}>Verified</Text>
                           </View>
-                          <Text style={styles.reviewDate}>{formatReviewDate(review.date)}</Text>
                         </View>
                       </View>
                       <View style={styles.reviewRatingContainer}>
                         {renderReviewStars(review.rating, 14)}
+                        <Text style={styles.reviewDate}>{formatReviewDate(review.date)}</Text>
                       </View>
                     </View>
                     <Text style={styles.reviewComment}>{review.comment}</Text>
@@ -1697,18 +1695,25 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   reviewsList: {
-    gap: 16,
+    paddingBottom: 16,
   },
-  reviewItem: {
+  reviewCard: {
+    backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    // Shadow for iOS
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3.84,
+    // Elevation for Android
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    borderWidth: 0,
   },
   reviewHeader: {
     flexDirection: 'row',
@@ -1719,58 +1724,63 @@ const styles = StyleSheet.create({
   reviewerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     flex: 1,
   },
   reviewerAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-    elevation: 2,
+    marginRight: 12,
   },
   reviewerInitial: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: 'bold',
     fontFamily: 'Montserrat_700Bold',
+  },
+  reviewerMeta: {
+    justifyContent: 'center',
   },
   reviewerName: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#333',
-    fontFamily: 'Montserrat_700Bold',
+    fontFamily: 'Montserrat_600SemiBold',
     marginBottom: 2,
-    maxWidth: 150,
   },
-  reviewDate: {
-    fontSize: 12,
-    color: '#888',
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  verifiedText: {
+    fontSize: 10,
+    fontWeight: '500',
     fontFamily: 'Montserrat_500Medium',
   },
   reviewRatingContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    alignItems: 'flex-end',
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+    fontFamily: 'Montserrat_400Regular',
   },
   reviewComment: {
     fontSize: 14,
     color: '#444',
     lineHeight: 22,
     fontFamily: 'Montserrat_400Regular',
-    marginLeft: 4,
   },
   seeAllReviews: {
     alignItems: 'center',
     paddingVertical: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 12,
   },
   seeAllText: {
     fontSize: 14,

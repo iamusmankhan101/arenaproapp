@@ -46,6 +46,38 @@ export const acceptChallenge = createAsyncThunk(
   }
 );
 
+export const joinTournament = createAsyncThunk(
+  'team/joinTournament',
+  async ({ challengeId, teamId, teamProfile }, { rejectWithValue }) => {
+    try {
+      const result = await challengeService.joinTournament(challengeId, teamId, teamProfile);
+      if (result.success) {
+        return { id: challengeId, teamId, teamProfile };
+      } else {
+        return rejectWithValue(result.error);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteChallenge = createAsyncThunk(
+  'team/deleteChallenge',
+  async (challengeId, { rejectWithValue }) => {
+    try {
+      const result = await challengeService.deleteChallenge(challengeId);
+      if (result.success) {
+        return challengeId;
+      } else {
+        return rejectWithValue(result.error);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const teamSlice = createSlice({
   name: 'team',
   initialState: {
@@ -93,6 +125,9 @@ const teamSlice = createSlice({
         if (index !== -1) {
           state.challenges[index] = { ...state.challenges[index], ...action.payload };
         }
+      })
+      .addCase(deleteChallenge.fulfilled, (state, action) => {
+        state.challenges = state.challenges.filter(c => c.id !== action.payload);
       });
   },
 });
