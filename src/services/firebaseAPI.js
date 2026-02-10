@@ -202,17 +202,19 @@ export const turfAPI = {
   },
 
   // Get user favorites
-  async getFavorites() {
+  async getFavorites(fallbackUserId) {
     try {
       const user = auth.currentUser;
-      if (!user) {
+      const queryUserId = user ? user.uid : fallbackUserId;
+
+      if (!queryUserId) {
         // Return empty array if user is not authenticated instead of throwing error
-        console.log('⚠️ User not authenticated, returning empty favorites');
+        console.log('⚠️ User not authenticated and no fallback ID, returning empty favorites');
         return { data: [] };
       }
 
       const favoritesRef = collection(db, 'favorites');
-      const q = query(favoritesRef, where('userId', '==', user.uid));
+      const q = query(favoritesRef, where('userId', '==', queryUserId));
       const snapshot = await getDocs(q);
 
       const favoriteIds = snapshot.docs.map(doc => doc.data().turfId);
@@ -851,8 +853,8 @@ export const bookingAPI = {
   },
 
   // Get user bookings with extensive debugging
-  async getUserBookings() {
-    console.log('🔥 FIREBASE: getUserBookings called');
+  async getUserBookings(fallbackUserId) {
+    console.log('🔥 FIREBASE: getUserBookings called with fallbackId:', fallbackUserId);
 
     try {
       // WAIT FOR AUTH TO INITIALIZE
@@ -864,17 +866,20 @@ export const bookingAPI = {
 
       console.log('🔥 FIREBASE: Current user for getUserBookings:', user ? { uid: user.uid, email: user.email } : 'No user');
 
-      if (!user) {
-        console.log('⚠️ FIREBASE: User not authenticated, returning empty bookings');
+      // FALLBACK: Use Redux-provided ID if Auth is still not ready
+      let queryUserId = user ? user.uid : fallbackUserId;
+
+      if (!queryUserId) {
+        console.log('⚠️ FIREBASE: User not authenticated and no fallback ID, returning empty bookings');
         return { data: [] };
       }
 
-      console.log('🔥 FIREBASE: Querying bookings for userId:', user.uid);
+      console.log('🔥 FIREBASE: Querying bookings for userId:', queryUserId);
 
       const bookingsRef = collection(db, 'bookings');
       // Fix potential query issue: removed orderBy for now to rule out index issues
       const q = query(bookingsRef,
-        where('userId', '==', user.uid)
+        where('userId', '==', queryUserId)
         // orderBy('createdAt', 'desc') 
       );
 

@@ -34,13 +34,13 @@ export const createBooking = createAsyncThunk(
   'booking/create',
   async (bookingData, { rejectWithValue }) => {
     console.log('🔄 REDUX: createBooking action called with data:', bookingData);
-    
+
     try {
       // Validate booking data before processing
       if (!bookingData.date || !bookingData.startTime || !bookingData.endTime) {
         throw new Error('Missing required booking data: date, startTime, or endTime');
       }
-      
+
       // Extract date part if it's an ISO string, otherwise use as-is
       let dateString = bookingData.date;
       if (typeof dateString === 'string' && dateString.includes('T')) {
@@ -48,34 +48,34 @@ export const createBooking = createAsyncThunk(
         dateString = dateString.split('T')[0];
         console.log('🔄 REDUX: Extracted date from ISO string:', dateString);
       }
-      
+
       // Validate date format using safe utilities
       const testDate = safeDate(dateString);
       if (!isValidDate(testDate)) {
         throw new Error('Invalid date format in booking data');
       }
-      
+
       // Validate time formats using safe utilities
       const testStartTime = safeDate(`2000-01-01T${bookingData.startTime}:00`);
       const testEndTime = safeDate(`2000-01-01T${bookingData.endTime}:00`);
       if (!isValidDate(testStartTime) || !isValidDate(testEndTime)) {
         throw new Error('Invalid time format in booking data');
       }
-      
+
       // Test the final dateTime creation using safe utilities
       const testDateTime = safeDate(`${dateString}T${bookingData.startTime}:00`);
       if (!isValidDate(testDateTime)) {
         throw new Error('Invalid date/time combination in booking data');
       }
-      
+
       console.log('🔄 REDUX: All validations passed for booking data');
-      
+
       const bookingAPI = await getAPI();
       console.log('🔄 REDUX: Got booking API instance for createBooking');
-      
+
       const response = await bookingAPI.createBooking(bookingData);
       console.log('🔄 REDUX: createBooking response:', response);
-      
+
       return response.data;
     } catch (error) {
       console.error('❌ REDUX: createBooking error:', error);
@@ -86,17 +86,22 @@ export const createBooking = createAsyncThunk(
 
 export const fetchUserBookings = createAsyncThunk(
   'booking/fetchUserBookings',
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     console.log('🔄 REDUX: fetchUserBookings action called');
-    
+
     try {
+      const state = getState();
+      const userId = state.auth.user?.uid;
+      console.log('🔄 REDUX: Fetching bookings for user ID:', userId);
+
       const bookingAPI = await getAPI();
       console.log('🔄 REDUX: Got booking API instance');
-      
-      const response = await bookingAPI.getUserBookings();
+
+      // Pass userId as fallback in case Firebase Auth is not ready
+      const response = await bookingAPI.getUserBookings(userId);
       console.log('🔄 REDUX: getUserBookings response:', response);
       console.log('🔄 REDUX: Bookings data count:', response.data.length);
-      
+
       return response.data;
     } catch (error) {
       console.error('❌ REDUX: fetchUserBookings error:', error);
@@ -183,10 +188,10 @@ const bookingSlice = createSlice({
   },
 });
 
-export const { 
-  setSelectedSlot, 
-  setSelectedDate, 
-  clearCurrentBooking, 
+export const {
+  setSelectedSlot,
+  setSelectedDate,
+  clearCurrentBooking,
   clearError,
   clearAvailableSlots
 } = bookingSlice.actions;

@@ -58,10 +58,12 @@ export const toggleFavorite = createAsyncThunk(
 
 export const fetchFavorites = createAsyncThunk(
   'turf/fetchFavorites',
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
+      const state = getState();
+      const userId = state.auth.user?.uid;
       const turfAPI = await getAPI();
-      const response = await turfAPI.getFavorites();
+      const response = await turfAPI.getFavorites(userId);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
