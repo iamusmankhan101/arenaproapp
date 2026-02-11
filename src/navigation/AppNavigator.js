@@ -6,6 +6,7 @@ import { loadStoredAuth, initializeAuth } from '../store/slices/authSlice';
 import { theme } from '../theme/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import CustomTabBar from '../components/CustomTabBar';
+import * as Linking from 'expo-linking';
 
 // Admin Components
 import AdminLoginScreen from '../screens/admin/AdminLoginScreen';
@@ -39,6 +40,20 @@ import BookingConfirmScreen from '../screens/booking/BookingConfirmScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+export const linking = {
+  prefixes: [Linking.createURL('/'), 'https://arenapro.pk', 'arenapro://'],
+  config: {
+    screens: {
+      MainTabs: {
+        screens: {
+          Lalkaar: 'challenge',
+        },
+      },
+      ChallengeDetail: 'challenge/:challengeId',
+    },
+  },
+};
 
 function MainTabs() {
   return (

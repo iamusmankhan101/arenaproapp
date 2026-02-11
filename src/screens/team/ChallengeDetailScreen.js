@@ -22,7 +22,8 @@ export default function ChallengeDetailScreen({ route, navigation }) {
   const { challengeId } = route.params;
   const [challenge, setChallenge] = useState(null);
   const dispatch = useDispatch();
-  const { userTeam } = useSelector(state => state.auth);
+  const { userTeam } = useSelector(state => state.team);
+  const { user } = useSelector(state => state.auth);
 
   // Mock challenge data - in real app, this would come from API
 
@@ -200,9 +201,20 @@ export default function ChallengeDetailScreen({ route, navigation }) {
     }
   };
 
-  const isOwnChallenge = userTeam && challenge?.creatorTeam.id === userTeam.id;
+  // Robust check for own challenge
+  const isOwnChallenge = (user && String(challenge?.challengerId) === String(user.uid)) ||
+    (userTeam && (String(challenge?.challengerId) === String(userTeam.id) ||
+      String(challenge?.creatorTeam?.id) === String(userTeam.id)));
+
   const canJoin = !isOwnChallenge && challenge?.status === 'open';
   const isTournament = challenge?.type === 'tournament';
+
+  console.log('🔍 DEBUG: isOwnChallenge:', isOwnChallenge, {
+    currentUserId: user?.uid,
+    userTeamId: userTeam?.id,
+    challengeChallengerId: challenge?.challengerId,
+    challengeCreatorTeamId: challenge?.creatorTeam?.id
+  });
 
   if (!challenge) {
     return (

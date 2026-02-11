@@ -262,7 +262,7 @@ const authSlice = createSlice({
       })
       .addCase(initializeAuth.fulfilled, (state) => {
         // Auth listener is now stored outside Redux state
-        state.initializing = false;
+        // We don't set initializing = false here because we want to wait for the first listener callback
       })
       .addCase(initializeAuth.rejected, (state, action) => {
         state.initializing = false;
@@ -393,15 +393,16 @@ const authSlice = createSlice({
         state.initializing = true;
       })
       .addCase(loadStoredAuth.fulfilled, (state, action) => {
-        state.initializing = false;
         if (action.payload) {
           state.user = action.payload.user;
           state.token = action.payload.token;
           state.isAuthenticated = true;
         }
+        // Do NOT set initializing = false here. 
+        // We want to keep regular splash until Firebase defines the true state.
       })
       .addCase(loadStoredAuth.rejected, (state) => {
-        state.initializing = false;
+        // Even if load fails, keep initializing true until Firebase responds
         state.isAuthenticated = false;
       })
       // Fetch User Profile

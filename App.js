@@ -7,7 +7,7 @@ import { useFonts, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600Se
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { store } from './src/store/store';
-import AppNavigator from './src/navigation/AppNavigator';
+import AppNavigator, { linking } from './src/navigation/AppNavigator';
 import { theme } from './src/theme/theme';
 import realtimeSyncService from './src/services/realtimeSync';
 
@@ -25,12 +25,12 @@ export default function App() {
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
-      
+
       // Initialize real-time sync when app starts
       realtimeSyncService.initialize();
       console.log('🚀 Real-time sync initialized');
     }
-    
+
     // Cleanup on app unmount
     return () => {
       realtimeSyncService.cleanup();
@@ -45,7 +45,7 @@ export default function App() {
     <SafeAreaProvider>
       <Provider store={store}>
         <PaperProvider theme={theme}>
-          <NavigationContainer>
+          <NavigationContainer linking={linking}>
             <AppNavigator />
           </NavigationContainer>
         </PaperProvider>

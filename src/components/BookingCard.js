@@ -10,20 +10,20 @@ export default function BookingCard({ booking }) {
   const dispatch = useDispatch();
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed': return '#4CAF50';
+      case 'confirmed': return '#004d43'; // Brand Primary
       case 'pending': return '#FF9800';
       case 'cancelled': return '#F44336';
-      case 'completed': return '#2196F3';
+      case 'completed': return '#006b5a'; // Tertiary
       default: return '#9E9E9E';
     }
   };
 
   const getStatusBgColor = (status) => {
     switch (status) {
-      case 'confirmed': return 'rgba(76, 175, 80, 0.1)';
+      case 'confirmed': return 'rgba(0, 77, 67, 0.1)';
       case 'pending': return 'rgba(255, 152, 0, 0.1)';
       case 'cancelled': return 'rgba(244, 67, 54, 0.1)';
-      case 'completed': return 'rgba(33, 150, 243, 0.1)';
+      case 'completed': return 'rgba(0, 107, 90, 0.1)';
       default: return 'rgba(158, 158, 158, 0.1)';
     }
   };
@@ -39,10 +39,10 @@ export default function BookingCard({ booking }) {
 
   const getSportColor = (sport) => {
     switch (sport?.toLowerCase()) {
-      case 'cricket': return '#FF6B35';
-      case 'football': return '#4CAF50';
-      case 'padel': return '#2196F3';
-      default: return '#666';
+      case 'cricket': return '#004d43';
+      case 'football': return '#004d43';
+      case 'padel': return '#004d43';
+      default: return '#004d43';
     }
   };
 
@@ -127,7 +127,7 @@ export default function BookingCard({ booking }) {
   const { date, time } = formatDateTime(booking.dateTime);
 
   return (
-    <Surface style={styles.card} elevation={2}>
+    <Surface style={styles.card} elevation={1}>
       <View style={styles.cardContent}>
         {/* Header */}
         <View style={styles.header}>
@@ -221,7 +221,8 @@ export default function BookingCard({ booking }) {
             <Button
               mode="contained"
               style={styles.payButton}
-              buttonColor="#4CAF50"
+              buttonColor="#004d43"
+              textColor="#FFFFFF"
               compact
               onPress={() => console.log('Pay now:', booking.id)}
             >
@@ -243,9 +244,12 @@ export default function BookingCard({ booking }) {
 
           {booking.status === 'completed' && !booking.rated && (
             <Button
-              mode="text"
+              mode="contained"
               style={styles.rateButton}
-              icon={() => <MaterialIcons name="star" size={16} color="#FF9800" />}
+              buttonColor="#e8ee26"
+              textColor="#004d43"
+              labelStyle={{ fontWeight: 'bold' }}
+              icon={() => <MaterialIcons name="star" size={16} color="#004d43" />}
               compact
               onPress={() => console.log('Rate turf:', booking.turfId)}
             >
@@ -272,7 +276,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   cardContent: {
-    padding: 20,
+    padding: 16,
   },
   header: {
     flexDirection: 'row',
@@ -289,10 +293,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#e8ee26', // Brand Secondary
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 77, 67, 0.1)',
   },
   venueDetails: {
     flex: 1,

@@ -126,6 +126,7 @@ const customMapStyle = [
 
 export default function MapScreen({ navigation }) {
   const [location, setLocation] = useState(null);
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const [region, setRegion] = useState({
     latitude: 31.5204, // Lahore coordinates where venues are located
     longitude: 74.3587,
@@ -225,9 +226,11 @@ export default function MapScreen({ navigation }) {
 
       if (status === 'granted') {
         console.log('✅ Location permission granted');
+        setHasLocationPermission(true);
         await getCurrentLocation();
       } else {
         console.log('❌ Location permission denied');
+        setHasLocationPermission(false);
         // Show user-friendly message but don't block the app
         Alert.alert(
           'Location Access',
@@ -444,8 +447,8 @@ export default function MapScreen({ navigation }) {
   };
 
   // Calculate distances from user location to venues
-  const calculateVenueDistances = (venues, userLocation) => {
-    if (!userLocation) {
+  const calculateVenueDistances = (venues, location) => {
+    if (!location) {
       console.log('📍 No user location available, using default distances');
       return venues.map(venue => ({
         ...venue,
@@ -454,7 +457,7 @@ export default function MapScreen({ navigation }) {
       }));
     }
 
-    console.log(`📏 Calculating distances from user location: ${userLocation.latitude}, ${userLocation.longitude}`);
+    console.log(`📏 Calculating distances from user location: ${location.latitude}, ${location.longitude}`);
 
     return venues.map(venue => {
       const coords = venue.coordinates || getVenueCoordinatesSync(venue);
@@ -468,8 +471,8 @@ export default function MapScreen({ navigation }) {
       }
 
       const distanceKm = calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
+        location.latitude,
+        location.longitude,
         coords.latitude,
         coords.longitude
       );
@@ -698,12 +701,24 @@ export default function MapScreen({ navigation }) {
     setMapType(mapTypes[nextIndex].key);
   };
 
+  const centerOnUserLocation = () => {
+    if (location && mapRef.current) {
+      console.log('📍 Centering map on user location:', location);
+      mapRef.current.animateToRegion({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 1000);
+    }
+  };
   const getCurrentLocation = async () => {
     setIsLoading(true);
     try {
       console.log('📍 Requesting location permissions...');
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
+        setHasLocationPermission(false);
         Alert.alert(
           'Location Permission Required',
           'Please enable location access to find nearby venues and get accurate distances.',
@@ -1222,7 +1237,21 @@ export default function MapScreen({ navigation }) {
         </Animated.View>
       )}
 
-      {/* FABs Removed for Cleaner UI */}
+      {/* Location FAB - Center on User Location */}
+      {hasLocationPermission && location && (
+        <FAB
+          icon={({ size, color }) => (
+            <MaterialIcons name="my-location" size={size} color={color} />
+          )}
+          style={[
+            styles.locationFab,
+            { backgroundColor: themeColors.colors.primary }
+          ]}
+          color={themeColors.colors.secondary}
+          onPress={centerOnUserLocation}
+          small
+        />
+      )}
     </View>
   );
 }
@@ -1665,5 +1694,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     fontFamily: 'Montserrat_600SemiBold',
+  },
+  locationFab: {
+    position: 'absolute',
+    right: 20,
+    bottom: Platform.OS === 'android' ? 180 : 160,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });

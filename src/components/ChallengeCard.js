@@ -58,7 +58,9 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
   const handleShare = async () => {
     try {
       const result = await Share.share({
-        message: `Join my match on Sports Vendor App! Challenge: ${challenge.title} vs ${challenge.teamName}.Type: ${challenge.type.toUpperCase()}.Venue: ${challenge.venue || 'TBD'}.`,
+        title: 'Arena Pro Challenge',
+        message: `Join my match on Arena Pro! \n\nChallenge: ${challenge.title} vs ${challenge.teamName}\nType: ${challenge.type.toUpperCase()}\nVenue: ${challenge.venue || 'TBD'}\n\nCheck it out here: https://arenapro.pk/challenge/${challenge.id}`,
+        url: `https://arenapro.pk/challenge/${challenge.id}`
       });
     } catch (error) {
       console.log(error.message);
@@ -360,10 +362,12 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                   mode="outlined"
                   onPress={handleShare}
                   style={{ marginRight: 6, borderColor: '#004d43', borderRadius: 8 }}
-                  icon="account-plus"
+                  icon={({ size, color }) => (
+                    <MaterialIcons name="share" size={size} color={color} />
+                  )}
                   textColor="#004d43"
-                  labelStyle={{ fontSize: 11, fontWeight: '600', marginVertical: 0, marginHorizontal: 4 }}
-                  contentStyle={{ height: 32, paddingHorizontal: 8 }}
+                  labelStyle={{ fontSize: 11, fontWeight: '600', marginVertical: 0 }}
+                  contentStyle={{ height: 32, paddingHorizontal: 8, gap: 8 }}
                 >
                   Invite
                 </Button>
