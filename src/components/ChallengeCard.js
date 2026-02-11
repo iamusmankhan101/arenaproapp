@@ -6,8 +6,16 @@ import { MaterialIcons } from '@expo/vector-icons';
 export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDelete, userTeam, currentUserId }) {
   if (!challenge) return null;
 
-  const isOwnChallenge = (currentUserId && String(challenge.challengerId) === String(currentUserId)) ||
-    (userTeam && challenge.challengerId === userTeam.id);
+  const isOwnChallenge = React.useMemo(() => {
+    if (!challenge) return false;
+    const normalizedCreatorId = String(challenge.creatorTeam?.id || challenge.challengerId || '').toLowerCase();
+    const normalizedUserId = String(currentUserId || '').toLowerCase();
+    const normalizedTeamId = String(userTeam?.id || '').toLowerCase();
+
+    return (normalizedUserId && normalizedCreatorId === normalizedUserId) ||
+      (normalizedTeamId && normalizedCreatorId === normalizedTeamId) ||
+      (normalizedUserId && String(challenge.challengerId).toLowerCase() === normalizedUserId);
+  }, [challenge, currentUserId, userTeam]);
 
   const isAccepted = challenge.status === 'accepted';
   const canAccept = !isOwnChallenge && !isAccepted && challenge.status === 'open';

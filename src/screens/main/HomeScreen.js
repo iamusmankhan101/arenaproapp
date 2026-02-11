@@ -408,6 +408,7 @@ export default function HomeScreen({ navigation }) {
         challenge={challenge}
         onViewDetails={() => navigation.navigate('ChallengeDetail', { challengeId: challenge.id })}
         userTeam={userTeam}
+        currentUserId={user?.uid}
       // Pass a prop to indicate it's in a horizontal scroll if needed, 
       // to adjust width/margins, but ChallengeCard seems designed for full width.
       // We wrap it in a View with fixed width for horizontal scrolling.
