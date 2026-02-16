@@ -263,12 +263,12 @@ export default function TurfDetailScreen({ route, navigation }) {
 
   function getSportImage(sport) {
     const images = {
-      'Cricket': require('../../images/cricket (1).png'),
+      'Cricket': require('../../images/cricket_icon.png'),
       'Football': require('../../images/game.png'),
       'Futsal': require('../../images/game.png'),
-      'Padel': require('../../images/padel (1).png'),
+      'Padel': require('../../images/padel_icon.png'),
       'Basketball': require('../../images/game.png'),
-      'Tennis': require('../../images/padel (1).png')
+      'Tennis': require('../../images/padel_icon.png')
     };
     return images[sport] || require('../../images/game.png');
   }

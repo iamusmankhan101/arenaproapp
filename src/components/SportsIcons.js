@@ -3,13 +3,13 @@ import { Image, View, StyleSheet, Text } from 'react-native';
 
 // Sports icon mapping - using the specific files requested by user
 const sportsIcons = {
-  cricket: require('../images/cricket (1).png'),
+  cricket: require('../images/cricket_icon.png'),
   football: require('../images/football.jpg'),
   futsal: require('../images/game.png'),
-  padel: require('../images/padel (1).png'),
+  padel: require('../images/padel_icon.png'),
   // Add more sports as needed
   basketball: require('../images/game.png'),
-  tennis: require('../images/padel (1).png'),
+  tennis: require('../images/padel_icon.png'),
 };
 
 // Sports icon component

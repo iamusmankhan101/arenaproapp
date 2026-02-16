@@ -534,7 +534,7 @@ export default function SignUpScreen({ navigation }) {
             disabled={loading}
           >
             <Image
-              source={require('../../images/2a5758d6-4edb-4047-87bb-e6b94dbbbab0-cover.png')}
+              source={require('../../images/google_cover_image.png')}
               style={styles.googleIcon}
             />
             <Text style={styles.googleButtonText}>Continue with Google</Text>

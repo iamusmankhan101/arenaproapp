@@ -5,10 +5,10 @@
     "scheme": "arenapro",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/images/arena pro logoqr (1).png",
+    "icon": "./src/images/arena_pro_logo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/images/arena pro logoqr (1).png",
+      "image": "./src/images/arena_pro_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#337f35"
     },
@@ -27,7 +27,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/images/arena pro logoqr (1).png",
+        "foregroundImage": "./src/images/arena_pro_logo.png",
         "backgroundColor": "#337f35"
       },
       "package": "arenapropk.online",
@@ -63,11 +63,11 @@
     "newArchEnabled": true,
     "extra": {
       "eas": {
-        "projectId": "ed7a00f7-8df2-40d8-9865-0dd96897fe11"
+        "projectId": "7edfef13-b409-4e33-bcc1-e171156dcc96"
       }
     },
     "updates": {
-      "url": "https://u.expo.dev/ed7a00f7-8df2-40d8-9865-0dd96897fe11"
+      "url": "https://u.expo.dev/7edfef13-b409-4e33-bcc1-e171156dcc96"
     }
   }
 }

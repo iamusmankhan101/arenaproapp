@@ -10,6 +10,7 @@ import { store } from './src/store/store';
 import AppNavigator, { linking } from './src/navigation/AppNavigator';
 import { theme } from './src/theme/theme';
 import realtimeSyncService from './src/services/realtimeSync';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -43,13 +44,15 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <Provider store={store}>
-        <PaperProvider theme={theme}>
-          <NavigationContainer linking={linking}>
-            <AppNavigator />
-          </NavigationContainer>
-        </PaperProvider>
-      </Provider>
+      <ErrorBoundary>
+        <Provider store={store}>
+          <PaperProvider theme={theme}>
+            <NavigationContainer linking={linking}>
+              <AppNavigator />
+            </NavigationContainer>
+          </PaperProvider>
+        </Provider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

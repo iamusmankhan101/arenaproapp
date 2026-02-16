@@ -9,7 +9,7 @@ export default function SplashScreen() {
     <View style={styles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={require('../images/arena pro logoqr.png')}
+          source={require('../images/arena_pro_logoqr.png')}
           style={styles.logo}
           resizeMode="contain"
         />

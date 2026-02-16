@@ -51,7 +51,7 @@ export default function WelcomeScreen({ navigation }) {
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../images/pitch it logo (500 x 200 px) (2).png')}
+              source={require('../../images/pitch_it_logo_wide_2.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -102,7 +102,7 @@ export default function WelcomeScreen({ navigation }) {
                 disabled={!request || loading}
               >
                 <Image
-                  source={require('../../images/2a5758d6-4edb-4047-87bb-e6b94dbbbab0-cover.png')}
+                  source={require('../../images/google_cover_image.png')}
                   style={styles.googleIcon}
                   resizeMode="contain"
                 />

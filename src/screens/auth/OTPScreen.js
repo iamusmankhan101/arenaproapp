@@ -29,12 +29,12 @@ export default function OTPScreen({ route, navigation }) {
     }
 
     try {
-      await dispatch(verifyOTP({ 
-        phoneNumber, 
-        otp, 
-        password, 
-        fullName, 
-        isSignup 
+      await dispatch(verifyOTP({
+        phoneNumber,
+        otp,
+        password,
+        fullName,
+        isSignup
       })).unwrap();
     } catch (error) {
       Alert.alert('Error', error.message || 'Invalid OTP');
@@ -58,10 +58,10 @@ export default function OTPScreen({ route, navigation }) {
         <View style={styles.decorativeCircle1} />
         <View style={styles.decorativeCircle2} />
         <View style={styles.decorativeCircle3} />
-        
+
         {/* Back button */}
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             if (navigation.canGoBack()) {
               navigation.goBack();
@@ -78,7 +78,7 @@ export default function OTPScreen({ route, navigation }) {
       {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
-          source={require('../../images/pitch it logo (2).png')}
+          source={require('../../images/pitch_it_logo_2.png')}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -94,7 +94,7 @@ export default function OTPScreen({ route, navigation }) {
             <Text variant="bodyMedium" style={styles.subtitle}>
               Enter the 6-digit code sent to {phoneNumber}
             </Text>
-            
+
             <TextInput
               label="OTP Code"
               value={otp}
@@ -107,11 +107,11 @@ export default function OTPScreen({ route, navigation }) {
               activeOutlineColor="#229a60"
               left={<Lock size={20} color="#666" style={{ marginLeft: 12 }} />}
             />
-            
+
             {error && (
               <Text style={styles.error}>{error}</Text>
             )}
-            
+
             <Button
               mode="contained"
               onPress={handleVerifyOTP}
@@ -122,8 +122,8 @@ export default function OTPScreen({ route, navigation }) {
             >
               Verify OTP
             </Button>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.resendContainer}
               onPress={handleResendOTP}
               disabled={countdown > 0}
