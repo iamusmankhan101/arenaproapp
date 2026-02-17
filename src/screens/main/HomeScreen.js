@@ -88,7 +88,7 @@ export default function HomeScreen({ navigation }) {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showReferralModal, setShowReferralModal] = useState(false);
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets() || { top: 0, bottom: 0, left: 0, right: 0 };
   const bounceValue = useRef(new Animated.Value(0)).current;
 
   // Banner Floating Animation
