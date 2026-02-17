@@ -32,6 +32,7 @@ import { safeDate, safeFormatDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import * as ImagePicker from 'expo-image-picker';
 import { turfAPI } from '../../services/firebaseAPI'; // Import API directly for upload
+import { emailService } from '../../services/emailService';
 import { REFERRAL_CONSTANTS, calculateDiscountedTotal } from '../../utils/referralUtils';
 
 const { width, height } = Dimensions.get('window');
@@ -243,6 +244,23 @@ export default function BookingConfirmScreen({ route, navigation }) {
         // Authenticated booking confirmed
         setConfirmBookingId(result.bookingId); // Store booking ID
         setShowSuccessModal(true);
+
+        // Send Email Confirmation via EmailJS
+        if (user && user.email) {
+          try {
+            const bookingDetailsForEmail = {
+              bookingId: result.bookingId,
+              turfName: turf.name,
+              date: formattedDate,
+              timeSlot: `${slot.startTime} - ${slot.endTime}`,
+              totalAmount: pricing.total.toString(),
+              turfAddress: turf.address
+            };
+            await emailService.sendBookingConfirmation(bookingDetailsForEmail, user);
+          } catch (emailError) {
+            console.log('⚠️ Failed to send booking email:', emailError);
+          }
+        }
       }
 
     } catch (error) {

@@ -8,9 +8,9 @@
     "icon": "./src/images/arena_pro_logo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/images/arena_pro_logo.png",
+      "image": "./src/images/arena_pro_logoqr.png",
       "resizeMode": "contain",
-      "backgroundColor": "#337f35"
+      "backgroundColor": "#004d43"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -27,8 +27,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/images/arena_pro_logo.png",
-        "backgroundColor": "#337f35"
+        "foregroundImage": "./src/images/arena_pro_logoqr.png",
+        "backgroundColor": "#004d43"
       },
       "package": "arenapropk.online",
       "googleServicesFile": "./google-services.json",
@@ -53,7 +53,7 @@
         }
       ]
     ],
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "extra": {
       "eas": {
         "projectId": "3e7192c7-524e-4146-801c-3960363da458"

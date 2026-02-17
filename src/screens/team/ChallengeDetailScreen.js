@@ -15,6 +15,7 @@ import { acceptChallenge, joinTournament, deleteChallenge } from '../../store/sl
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeDate, safeFormatDate } from '../../utils/dateUtils';
 import { challengeService } from '../../services/challengeService';
+import { emailService } from '../../services/emailService';
 
 const { width } = Dimensions.get('window');
 
@@ -69,12 +70,28 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Accept Challenge',
-          onPress: () => {
+          onPress: async () => {
             dispatch(acceptChallenge({
               challengeId,
               opponentId: userTeam.id,
               opponentTeamName: userTeam.name
             }));
+
+            // --- SEND EMAIL NOTIFICATIONS ---
+            try {
+              // 1. Notify Creator
+              if (challenge.creator) {
+                await emailService.sendChallengeAcceptanceToCreator(challenge, userTeam, challenge.creator);
+              }
+
+              // 2. Notify Acceptor (Self)
+              if (user) {
+                await emailService.sendChallengeJoinConfirmation(challenge, user);
+              }
+            } catch (emailError) {
+              console.log('⚠️ Failed to send challenge emails:', emailError);
+            }
+
             Alert.alert(
               'Challenge Accepted!',
               `You have accepted the challenge. Please book the venue (${challenge.venue}) to confirm.`,

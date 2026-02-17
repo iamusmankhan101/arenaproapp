@@ -76,6 +76,8 @@ export default function ChallengeScreen({ navigation }) {
     const enhancedData = {
       ...challengeData,
       challengerId: currentTeam.id,
+      teamName: currentTeam.name, // Ensure teamName is at root
+      teamAvatar: currentTeam.avatar, // Ensure avatar is at root if needed by some components
       creatorTeam: {
         id: currentTeam.id,
         name: currentTeam.name,
@@ -102,18 +104,42 @@ export default function ChallengeScreen({ navigation }) {
       return;
     }
 
+    const challenge = challenges.find(c => c.id === challengeId);
+    if (!challenge) return;
+
     Alert.alert(
       'Accept Challenge',
-      'Are you sure you want to accept this challenge? This will create a match booking.',
+      `Are you sure you want to accept this challenge? ${challenge.isWinnerTakesAll ? 'The loser will pay the entire ground fee.' : 'Ground fee will be split equally.'}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Accept',
-          onPress: () => dispatch(acceptChallenge({
-            challengeId,
-            opponentId: userTeam.id,
-            opponentTeamName: userTeam.name
-          }))
+          onPress: async () => {
+            try {
+              const result = await dispatch(acceptChallenge({
+                challengeId,
+                opponentId: userTeam.id,
+                opponentTeamName: userTeam.name
+              })).unwrap();
+
+              Alert.alert(
+                'Challenge Accepted!',
+                `You have accepted the challenge. Please book the venue (${challenge.venue || 'Any'}) to confirm.`,
+                [
+                  {
+                    text: 'Book Now',
+                    onPress: () => navigation.navigate('VenueList', { // Changed from 'Main', { screen: 'VenueList' ... } assuming VenueList is in the same stack or accessible
+                      searchQuery: challenge.venue,
+                      sport: challenge.sport
+                    })
+                  },
+                  { text: 'Later', style: 'cancel' }
+                ]
+              );
+            } catch (error) {
+              Alert.alert('Error', error || 'Failed to accept challenge');
+            }
+          }
         }
       ]
     );

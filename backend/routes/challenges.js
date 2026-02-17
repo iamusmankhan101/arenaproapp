@@ -2,11 +2,14 @@ const express = require('express');
 const Challenge = require('../models/Challenge');
 const Team = require('../models/Team');
 const { protect } = require('../middleware/auth');
-const { 
-  validateChallengeCreation, 
+const {
+  validateChallengeCreation,
   validateObjectId,
-  handleValidationErrors 
+  handleValidationErrors
 } = require('../middleware/validation');
+const sendEmail = require('../utils/sendEmail');
+
+const { sendNotification } = require('../config/firebaseAdmin');
 
 const router = express.Router();
 
@@ -15,14 +18,14 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { 
-      sport, 
-      type, 
-      status = 'open', 
-      page = 0, 
+    const {
+      sport,
+      type,
+      status = 'open',
+      page = 0,
       pageSize = 20,
       city,
-      skillLevel 
+      skillLevel
     } = req.query;
 
     // Build query
@@ -260,6 +263,117 @@ router.post('/:id/accept', [protect, validateObjectId('id'), handleValidationErr
     // Add participant
     await challenge.addParticipant(userTeam._id);
 
+    // --- SEND PUSH NOTIFICATION ---
+    try {
+      // Re-fetch creator to get FCM Token if not populated
+      const challengeCreator = await User.findById(challenge.creator);
+      if (challengeCreator && challengeCreator.fcmToken) {
+        await sendNotification(
+          challengeCreator.fcmToken,
+          'Challenge Accepted! ⚔️',
+          `${userTeam.name} has accepted your ${challenge.sport} challenge!`
+        );
+      }
+    } catch (pushError) {
+      console.warn('⚠️ Push notification failed:', pushError);
+    }
+
+    // --- SEND EMAIL NOTIFICATIONS ---
+    try {
+      // 1. Send email to Challenge Creator
+      // Re-fetch challenge to ensure we have populated fields if needed, or just rely on what we have if we populate correctly above.
+      // We need to populate creator to get email.
+      const challengeForEmail = await Challenge.findById(req.params.id)
+        .populate('creator', 'fullName email')
+        .populate('venue.turf', 'name location');
+
+      if (challengeForEmail && challengeForEmail.creator && challengeForEmail.creator.email) {
+
+        // Email to Creator
+        await sendEmail({
+          email: challengeForEmail.creator.email,
+          subject: `Challenge Accepted! ⚔️ - ${challengeForEmail.title}`,
+          message: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
+  .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .header { background: #004d43; color: #fff; padding: 15px; text-align: center; border-radius: 8px 8px 0 0; }
+  .content { padding: 20px; }
+  .button { display: inline-block; background: #ff9800; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Game On! ⚽</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${challengeForEmail.creator.fullName},</p>
+      <p>Your challenge <strong>"${challengeForEmail.title}"</strong> has been accepted by <strong>${userTeam.name}</strong>!</p>
+      
+      <h3>Challenge Details:</h3>
+      <ul>
+        <li><strong>Sport:</strong> ${challengeForEmail.sport}</li>
+        <li><strong>Date:</strong> ${new Date(challengeForEmail.proposedDateTime).toDateString()}</li>
+        <li><strong>Venue:</strong> ${challengeForEmail.venue.name || challengeForEmail.venue.turf?.name || 'TBD'}</li>
+      </ul>
+
+      <p>Get ready for the match!</p>
+      <center><a href="#" class="button">View Challenge</a></center>
+    </div>
+  </div>
+</body>
+</html>
+          `
+        });
+      }
+
+      // 2. Send email to Acceptor (Current User)
+      if (req.user.email) {
+        await sendEmail({
+          email: req.user.email,
+          subject: `You Joined a Challenge! 🛡️ - ${challenge.title}`,
+          message: `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
+  .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .header { background: #023c69; color: #fff; padding: 15px; text-align: center; border-radius: 8px 8px 0 0; }
+  .content { padding: 20px; }
+  .button { display: inline-block; background: #004d43; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Challenge Accepted!</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${req.user.fullName},</p>
+      <p>You have successfully accepted the challenge <strong>"${challenge.title}"</strong> with your team <strong>${userTeam.name}</strong>.</p>
+      
+      <p>Bring your A-game!</p>
+      <center><a href="#" class="button">View Challenge</a></center>
+    </div>
+  </div>
+</body>
+</html>
+          `
+        });
+      }
+
+    } catch (emailError) {
+      console.error('⚠️ Backend: Failed to send challenge emails:', emailError);
+      // Don't block response
+    }
+
     res.json({
       status: 'success',
       message: 'Successfully joined the challenge',
@@ -369,10 +483,10 @@ router.put('/:id', [protect, validateObjectId('id'), handleValidationErrors], as
     }
 
     const allowedUpdates = [
-      'title', 'description', 'proposedDateTime', 'venue', 
+      'title', 'description', 'proposedDateTime', 'venue',
       'maxGroundFee', 'requirements', 'rules'
     ];
-    
+
     const updates = {};
     Object.keys(req.body).forEach(key => {
       if (allowedUpdates.includes(key)) {
@@ -471,7 +585,7 @@ router.post('/:id/complete', [protect, validateObjectId('id'), handleValidationE
       status: 'active'
     });
 
-    const isParticipant = challenge.participants.some(p => 
+    const isParticipant = challenge.participants.some(p =>
       p.team._id.toString() === userTeam?._id.toString()
     ) || challenge.creatorTeam.toString() === userTeam?._id.toString();
 

@@ -136,7 +136,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                         ) : (
                           <Avatar.Text
                             size={avatarSize}
-                            label={isCaptain ? (challenge.teamName?.charAt(0) || 'T') : '+'}
+                            label={isCaptain ? ((challenge.teamName || challenge.creatorTeam?.name)?.charAt(0) || 'T') : '+'}
                             style={{ backgroundColor: isCaptain ? '#e8f5f3' : '#f0f0f0' }}
                             color={isCaptain ? '#004d43' : '#999'}
                             labelStyle={{ fontWeight: 'bold' }}

@@ -10,6 +10,8 @@ const {
 } = require('../middleware/validation');
 const sendEmail = require('../utils/sendEmail');
 
+const { sendNotification } = require('../config/firebaseAdmin');
+
 const router = express.Router();
 
 // @desc    Get available slots for a turf on a specific date
@@ -167,6 +169,16 @@ router.post('/', [protect, validateBookingCreation, handleValidationErrors], asy
     const populatedBooking = await Booking.findById(booking._id)
       .populate('turf', 'name location contact')
       .populate('user', 'fullName phoneNumber email');
+
+    // --- SEND PUSH NOTIFICATION ---
+    if (populatedBooking.user && populatedBooking.user.fcmToken) {
+      // Send to User
+      await sendNotification(
+        populatedBooking.user.fcmToken,
+        'Booking Confirmed! ✅',
+        `Your booking at ${populatedBooking.turf.name} is confirmed for ${new Date(date).toDateString()} at ${timeSlot}.`
+      );
+    }
 
     // --- SEND EMAIL CONFIRMATION ---
     try {

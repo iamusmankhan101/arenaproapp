@@ -11,6 +11,11 @@ import AppNavigator, { linking } from './src/navigation/AppNavigator';
 import { theme } from './src/theme/theme';
 import realtimeSyncService from './src/services/realtimeSync';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import FlashMessage, { showMessage } from "react-native-flash-message";
+import messaging from '@react-native-firebase/messaging';
+import { notificationService } from './src/services/notificationService';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db, auth } from './src/config/firebase';
 
 // Keep the splash screen visible while we fetch resources
 try {
@@ -31,13 +36,14 @@ export default function App() {
 
   useEffect(() => {
     async function prepare() {
-      if (fontsLoaded || fontError) {
-        try {
-          await SplashScreen.hideAsync();
-        } catch (e) {
-          console.warn('SplashScreen.hideAsync error:', e);
-        }
+      try {
+        // Hide native splash screen immediately, as we have our own SplashScreen component
+        await SplashScreen.hideAsync();
+      } catch (e) {
+        console.warn('SplashScreen.hideAsync error:', e);
+      }
 
+      if (fontsLoaded || fontError) {
         // Initialize real-time sync when app starts
         realtimeSyncService.initialize();
         console.log('🚀 Real-time sync initialized');
@@ -50,6 +56,51 @@ export default function App() {
       realtimeSyncService.cleanup();
     };
   }, [fontsLoaded, fontError]);
+
+  // --- NOTIFICATION SETUP ---
+  useEffect(() => {
+    const setupNotifications = async () => {
+      // 1. Request Permission
+      const hasPermission = await notificationService.requestUserPermission();
+
+      // 2. Get Token & Update User Profile
+      if (hasPermission) {
+        const token = await notificationService.getFCMToken();
+        if (token && auth.currentUser) {
+          try {
+            const userRef = doc(db, 'users', auth.currentUser.uid);
+            await updateDoc(userRef, { fcmToken: token });
+            console.log('✅ FCM Token updated for user');
+          } catch (e) {
+            console.log('Silent error updating FCM token:', e.message);
+          }
+        }
+      }
+
+      // 3. Foreground Message Listener
+      const unsubscribe = messaging().onMessage(async remoteMessage => {
+        console.log('Foreground Notification:', remoteMessage);
+        showMessage({
+          message: remoteMessage.notification?.title || 'New Notification',
+          description: remoteMessage.notification?.body || '',
+          type: "success",
+          icon: "success",
+          duration: 4000,
+          onPress: () => {
+            // navigation.navigate(...) - requires navigation ref or hook
+          }
+        });
+      });
+
+      return unsubscribe;
+    };
+
+    const notificationUnsubscribePromise = setupNotifications();
+
+    return () => {
+      notificationUnsubscribePromise.then(unsub => unsub && unsub());
+    };
+  }, []);
 
   // Safety mechanism: Force hide splash screen after 5 seconds
   useEffect(() => {
@@ -75,6 +126,7 @@ export default function App() {
           <PaperProvider theme={theme}>
             <NavigationContainer linking={linking}>
               <AppNavigator />
+              <FlashMessage position="top" />
             </NavigationContainer>
           </PaperProvider>
         </Provider>
