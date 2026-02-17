@@ -10,7 +10,8 @@ import {
   StatusBar,
   SafeAreaView,
   Platform,
-  ScrollView
+  ScrollView,
+  Linking
 } from 'react-native';
 import {
   Text,
@@ -221,8 +222,8 @@ export default function MapScreen({ navigation }) {
     try {
       console.log('📍 Checking location permissions...');
 
-      // Request permission first
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      // Request permission
+      let { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
 
       if (status === 'granted') {
         console.log('✅ Location permission granted');
@@ -231,20 +232,16 @@ export default function MapScreen({ navigation }) {
       } else {
         console.log('❌ Location permission denied');
         setHasLocationPermission(false);
-        // Show user-friendly message but don't block the app
+
+        // Custom alert logic
         Alert.alert(
-          'Location Access',
-          'Location access will help us show nearby venues and calculate distances. You can still browse all venues without it.',
+          'Location Access Required',
+          'We need your location to show nearby venues and calculate distances. Please enable it in your device settings.',
           [
-            { text: 'Maybe Later', style: 'cancel' },
+            { text: 'Cancel', style: 'cancel' },
             {
-              text: 'Enable Location',
-              onPress: async () => {
-                const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
-                if (newStatus === 'granted') {
-                  await getCurrentLocation();
-                }
-              }
+              text: 'Open Settings',
+              onPress: () => Linking.openSettings()
             }
           ]
         );

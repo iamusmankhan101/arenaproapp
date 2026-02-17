@@ -64,10 +64,59 @@ export default function SignInScreen({ navigation }) {
     dispatch(clearError());
   }, [dispatch]);
 
+  // Helper to map Firebase errors to friendly messages
+  const getFriendlyErrorMessage = (errorCode) => {
+    // Handle both error objects and string codes
+    const code = typeof errorCode === 'object' ? errorCode.code : errorCode;
+    const message = typeof errorCode === 'object' ? errorCode.message : errorCode;
+
+    // Check if the message itself contains the code (sometimes happening with Redux serialization)
+    if (typeof message === 'string') {
+      if (message.includes('auth/invalid-credential') || message.includes('INVALID_LOGIN_CREDENTIALS')) {
+        return 'Invalid email or password. Please check your credentials and try again.';
+      }
+      if (message.includes('auth/user-not-found') || message.includes('EMAIL_NOT_FOUND')) {
+        return 'No account found with this email. Please sign up first.';
+      }
+      if (message.includes('auth/wrong-password') || message.includes('INVALID_PASSWORD')) {
+        return 'Incorrect password. Please try again.';
+      }
+      if (message.includes('auth/invalid-email')) {
+        return 'Please enter a valid email address.';
+      }
+      if (message.includes('auth/too-many-requests')) {
+        return 'Too many failed login attempts. Please try again later.';
+      }
+      if (message.includes('auth/network-request-failed')) {
+        return 'Network error. Please check your internet connection.';
+      }
+    }
+
+    // Fallback to strict code checking if message parsing didn't work
+    switch (code) {
+      case 'auth/invalid-credential':
+      case 'auth/invalid-login-credentials':
+        return 'Invalid email or password. Please check your credentials and try again.';
+      case 'auth/user-not-found':
+        return 'No account found with this email. Please sign up first.';
+      case 'auth/wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/too-many-requests':
+        return 'Too many failed login attempts. Please try again later.';
+      case 'auth/network-request-failed':
+        return 'Network error. Please check your internet connection.';
+      default:
+        // formatting the raw message to be a bit cleaner if possible, otherwise return default
+        return message && message.length < 100 ? message : 'An unexpected error occurred. Please try again.';
+    }
+  };
+
   // Show error alert
   useEffect(() => {
     if (error) {
-      Alert.alert('Sign In Error', error, [
+      Alert.alert('Sign In Failed', getFriendlyErrorMessage(error), [
         { text: 'OK', onPress: () => dispatch(clearError()) }
       ]);
     }
@@ -100,7 +149,8 @@ export default function SignInScreen({ navigation }) {
           console.log('❌ Sign in failed:', resultAction.payload);
           // Error is handled by useEffect listening to state.error
           if (resultAction.payload) {
-            Alert.alert('Sign In Failed', resultAction.payload.message || 'Authentication failed');
+            // We rely on the useEffect to show the error from state, but if we wanted to show it here immediately:
+            // Alert.alert('Sign In Failed', getFriendlyErrorMessage(resultAction.payload.message || resultAction.error));
           }
         }
       } catch (err) {
