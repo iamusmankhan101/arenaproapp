@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, StatusBar, Modal, TouchableWithoutFeedback, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, StatusBar, Modal, TouchableWithoutFeedback, Image, Linking } from 'react-native';
 import { Text, TextInput, Avatar, Button } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -141,6 +141,21 @@ export default function ManageProfileScreen({ navigation }) {
   };
 
   const pickImage = async () => {
+    // Request permission first
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert(
+        "Photo Library Access",
+        "We need access to your photo library to select a profile picture.",
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() }
+        ]
+      );
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -157,7 +172,14 @@ export default function ManageProfileScreen({ navigation }) {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 
     if (permissionResult.granted === false) {
-      Alert.alert("Permission to access camera is required!");
+      Alert.alert(
+        "Camera Access Required",
+        "We need access to your camera to take a profile picture.",
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() }
+        ]
+      );
       return;
     }
 
