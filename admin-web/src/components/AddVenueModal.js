@@ -25,6 +25,8 @@ import {
 import { DateRange, CloudUpload, Close } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue, updateVenue } from '../store/slices/adminSlice';
+import { storage } from '../config/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const SPORTS_OPTIONS = ['Football', 'Cricket', 'Padel', 'Futsal', 'Basketball', 'Tennis'];
 const FACILITIES_OPTIONS = [
@@ -366,12 +368,32 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         });
       }
 
+      // Upload images to Firebase Storage and get download URLs
+      const imageUrls = [];
+      for (const img of formData.images) {
+        if (img.file) {
+          // New image — upload to Storage
+          const storageRef = ref(storage, `venues/${Date.now()}_${img.name}`);
+          const snapshot = await uploadBytes(storageRef, img.file);
+          const downloadURL = await getDownloadURL(snapshot.ref);
+          imageUrls.push(downloadURL);
+        } else if (typeof img === 'string') {
+          // Already a URL string (existing image)
+          imageUrls.push(img);
+        } else if (img.preview && img.existing) {
+          // Existing image from edit mode
+          imageUrls.push(img.preview);
+        }
+      }
+
       // Convert string numbers to actual numbers
       const venueData = {
         ...formData,
         basePrice: parseFloat(formData.basePrice),
         latitude: formData.latitude ? parseFloat(formData.latitude) : 31.5204,
         longitude: formData.longitude ? parseFloat(formData.longitude) : 74.3587,
+        // Use uploaded image URLs instead of File objects
+        images: imageUrls,
         // Remove basic time slots - only use date-specific slots
         dateSpecificSlots: dateSpecificAvailability,
         // Include vendorId if creating new provided via props, or preserve existing if editing
