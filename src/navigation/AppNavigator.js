@@ -95,7 +95,6 @@ function MainTabs() {
 export default function AppNavigator() {
   const dispatch = useDispatch();
   const { isAuthenticated, initializing, user } = useSelector(state => state.auth);
-  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     // Initialize Firebase auth listener
@@ -103,17 +102,10 @@ export default function AppNavigator() {
 
     // Load stored authentication on app start
     dispatch(loadStoredAuth());
-
-    // Show splash screen for 3 seconds then proceed to main app
-    const splashTimer = setTimeout(() => {
-      setShowSplash(false);
-    }, 3000);
-
-    return () => clearTimeout(splashTimer);
   }, [dispatch]);
 
-  // Show splash screen first
-  if (showSplash || initializing) {
+  // Show splash screen only while initializing auth
+  if (initializing) {
     return <SplashScreen />;
   }
 
@@ -121,8 +113,7 @@ export default function AppNavigator() {
   console.log('🔍 NAVIGATOR DEBUG: Auth state:', {
     isAuthenticated,
     initializing,
-    hasUser: !!user,
-    showSplash
+    hasUser: !!user
   });
 
   if (isAuthenticated) {

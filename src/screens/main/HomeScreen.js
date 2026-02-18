@@ -9,7 +9,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { safeFormatDate } from '../../utils/dateUtils';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
-import { fetchChallenges } from '../../store/slices/teamSlice';
+import { fetchChallenges, acceptChallenge } from '../../store/slices/teamSlice';
 import RealtimeNotification from '../../components/RealtimeNotification';
 import realtimeSyncService from '../../services/realtimeSync';
 import { SportsIcon } from '../../components/SportsIcons';
@@ -403,6 +403,53 @@ export default function HomeScreen({ navigation }) {
   const { width } = Dimensions.get('window');
   const cardWidth = width - 45; // Full width minus padding (20 left + 20 right + 5 margin)
 
+  const handleAcceptChallenge = (challengeId) => {
+    if (!userTeam) {
+      Alert.alert('Error', 'You must have a team to accept challenges.');
+      return;
+    }
+
+    const challenge = challenges.find(c => c.id === challengeId);
+    if (!challenge) return;
+
+    Alert.alert(
+      'Accept Challenge',
+      `Are you sure you want to accept this challenge? ${challenge.isWinnerTakesAll ? 'The loser will pay the entire ground fee.' : 'Ground fee will be split equally.'}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Accept',
+          onPress: async () => {
+            try {
+              const result = await dispatch(acceptChallenge({
+                challengeId,
+                opponentId: userTeam.id,
+                opponentTeamName: userTeam.name
+              })).unwrap();
+
+              Alert.alert(
+                'Challenge Accepted!',
+                `You have accepted the challenge. Please book the venue (${challenge.venue || 'Any'}) to confirm.`,
+                [
+                  {
+                    text: 'Book Now',
+                    onPress: () => navigation.navigate('VenueList', {
+                      searchQuery: challenge.venue,
+                      sport: challenge.sport
+                    })
+                  },
+                  { text: 'Later', style: 'cancel' }
+                ]
+              );
+            } catch (error) {
+              Alert.alert('Error', error || 'Failed to accept challenge');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderChallengeCard = (challenge) => (
     <View key={challenge.id} style={{ width: cardWidth, maxWidth: 400, marginRight: 15 }}>
       <ChallengeCard
@@ -410,6 +457,7 @@ export default function HomeScreen({ navigation }) {
         onViewDetails={() => navigation.navigate('ChallengeDetail', { challengeId: challenge.id })}
         userTeam={userTeam}
         currentUserId={user?.uid}
+        onAccept={() => handleAcceptChallenge(challenge.id)}
       // Pass a prop to indicate it's in a horizontal scroll if needed, 
       // to adjust width/margins, but ChallengeCard seems designed for full width.
       // We wrap it in a View with fixed width for horizontal scrolling.
