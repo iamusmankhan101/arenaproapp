@@ -14,13 +14,10 @@ import {
 import {
     Event,
     Today,
-    Payments,
     LocationOn,
-    People,
     Pending,
-    VideoLabel,
     Refresh,
-} from '@mui/icons-material';
+} from '@mui/icons-material'; // VideoLabel, Payments, People removed
 import { fetchDashboardStats } from '../../store/slices/adminSlice';
 
 const StatCard = ({ title, value, icon, color }) => (
