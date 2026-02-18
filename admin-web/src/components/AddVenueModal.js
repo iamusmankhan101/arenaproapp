@@ -36,7 +36,15 @@ const FACILITIES_OPTIONS = [
   'Scoreboard', 'Pavilion', 'Indoor Court'
 ];
 
-// Force deployment update
+// Convert 24hr time string to 12hr AM/PM format
+const formatTo12Hour = (time24) => {
+  if (!time24) return '';
+  const [h, m] = time24.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${m.toString().padStart(2, '0')} ${period}`;
+};
+
 export default function AddVenueModal({ open, onClose, editVenue = null, vendorId = null }) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -55,8 +63,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
     sports: [],
     facilities: [],
     basePrice: '1000', // Default base price
-    openTime: '06:00',
-    closeTime: '23:00',
+    openTime: '00:00',
+    closeTime: '00:00',
     images: [],
     slotDuration: '60', // minutes
     availableSlots: [], // All possible slots based on operating hours
@@ -142,8 +150,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         sports: [],
         facilities: [],
         basePrice: '1000',
-        openTime: '06:00',
-        closeTime: '23:00',
+        openTime: '00:00',
+        closeTime: '00:00',
         images: [],
         slotDuration: '60',
         availableSlots: [],
@@ -195,7 +203,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
 
   // Generate all possible time slots based on operating hours
   const generateAllPossibleSlots = useCallback(() => {
-    if (!formData.openTime || !formData.closeTime) return [];
+    if (formData.openTime === undefined || formData.closeTime === undefined) return [];
 
     const slots = [];
     const startHour = parseInt(formData.openTime.split(':')[0]);
@@ -206,13 +214,18 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
 
     // Convert to minutes for easier calculation
     const startTotalMinutes = startHour * 60 + startMinute;
-    const endTotalMinutes = endHour * 60 + endMinute;
+    let endTotalMinutes = endHour * 60 + endMinute;
+
+    // If start == end (e.g. 00:00 to 00:00), treat as full 24-hour day
+    if (endTotalMinutes <= startTotalMinutes) {
+      endTotalMinutes = 24 * 60; // 1440 minutes
+    }
 
     for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += duration) {
-      const slotStartHour = Math.floor(minutes / 60);
+      const slotStartHour = Math.floor(minutes / 60) % 24;
       const slotStartMinute = minutes % 60;
       const slotEndMinutes = minutes + duration;
-      const slotEndHour = Math.floor(slotEndMinutes / 60);
+      const slotEndHour = Math.floor(slotEndMinutes / 60) % 24;
       const slotEndMinute = slotEndMinutes % 60;
 
       // Skip if end time exceeds closing time
@@ -222,15 +235,15 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
       const endTime = `${slotEndHour.toString().padStart(2, '0')}:${slotEndMinute.toString().padStart(2, '0')}`;
 
       const slotId = `slot-${slotStartHour}-${slotStartMinute}`;
-      const basePrice = parseFloat(formData.basePrice) || 1000; // Default base price
+      const basePrice = parseFloat(formData.basePrice) || 1000;
 
       slots.push({
         id: slotId,
         startTime,
         endTime,
-        price: basePrice, // Use base price for all slots
+        price: basePrice,
         available: true,
-        selected: true // Default to selected
+        selected: true
       });
     }
 
@@ -442,8 +455,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         sports: [],
         facilities: [],
         basePrice: '1000',
-        openTime: '06:00',
-        closeTime: '23:00',
+        openTime: '00:00',
+        closeTime: '00:00',
         images: [],
         slotDuration: '60',
         availableSlots: [],
@@ -897,7 +910,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                                       color="primary"
                                     />
                                     <Typography variant="caption" fontWeight="bold">
-                                      {slot.startTime} - {slot.endTime}
+                                      {formatTo12Hour(slot.startTime)} - {formatTo12Hour(slot.endTime)}
                                     </Typography>
                                   </Box>
 
