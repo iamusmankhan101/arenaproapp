@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -32,7 +32,7 @@ import {
   AccountCircle,
   RateReview,
 } from '@mui/icons-material';
-import { logoutAdmin, loadStoredAuth } from '../store/slices/authSlice';
+import { logoutAdmin } from '../store/slices/authSlice';
 
 const drawerWidth = 240;
 
@@ -64,10 +64,6 @@ export default function Layout({ children }) {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-
-  useEffect(() => {
-    dispatch(loadStoredAuth());
-  }, [dispatch]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);

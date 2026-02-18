@@ -12,20 +12,16 @@ import {
   Paper,
 } from '@mui/material';
 import { AdminPanelSettings } from '@mui/icons-material';
-import { loginAdmin, clearError, loadStoredAuth } from '../store/slices/authSlice';
+import { loginAdmin, clearError } from '../store/slices/authSlice';
 
 export default function LoginPage() {
   const dispatch = useDispatch();
-  const { loading, error, initializing } = useSelector(state => state.auth);
-  
+  const { loading, error } = useSelector(state => state.auth);
+
   const [formData, setFormData] = useState({
     email: 'admin@pitchit.com',
     password: 'admin123',
   });
-
-  useEffect(() => {
-    dispatch(loadStoredAuth());
-  }, [dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -47,22 +43,6 @@ export default function LoginPage() {
     e.preventDefault();
     dispatch(loginAdmin(formData));
   };
-
-  if (initializing) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          backgroundColor: 'background.default',
-        }}
-      >
-        <Typography>Loading...</Typography>
-      </Box>
-    );
-  }
 
   return (
     <Box
@@ -110,14 +90,14 @@ export default function LoginPage() {
               Manage your turf booking platform
             </Typography>
           </Box>
-          
+
           <CardContent sx={{ p: 4 }}>
             {error && (
               <Alert severity="error" sx={{ mb: 3 }}>
                 {error}
               </Alert>
             )}
-            
+
             <Box component="form" onSubmit={handleSubmit}>
               <TextField
                 fullWidth
@@ -131,7 +111,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 autoFocus
               />
-              
+
               <TextField
                 fullWidth
                 label="Password"
@@ -143,7 +123,7 @@ export default function LoginPage() {
                 required
                 autoComplete="current-password"
               />
-              
+
               <Button
                 type="submit"
                 fullWidth
@@ -155,7 +135,7 @@ export default function LoginPage() {
                 {loading ? 'Signing In...' : 'Sign In'}
               </Button>
             </Box>
-            
+
             <Box
               sx={{
                 mt: 3,

@@ -14,7 +14,7 @@ import ReviewsPage from './pages/ReviewsPage';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorVenuePage from './pages/vendor/VendorVenuePage';
 import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
-import { /* loadStoredAuth, */ setInitialized } from './store/slices/authSlice';
+import { loadStoredAuth, setInitialized } from './store/slices/authSlice';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
 
 function App() {
@@ -22,12 +22,12 @@ function App() {
   const { isAuthenticated, admin, initializing } = useSelector(state => state.auth);
 
   useEffect(() => {
-    // dispatch(loadStoredAuth());
+    dispatch(loadStoredAuth());
 
     // Safety timeout to prevent infinite loading
     const timer = setTimeout(() => {
       dispatch(setInitialized(true));
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [dispatch]);
@@ -36,10 +36,7 @@ function App() {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: 2 }}>
         <CircularProgress />
-        <Typography variant="h6">Loading App... (v3)</Typography>
-        <Typography variant="caption" sx={{ mt: 1, fontFamily: 'monospace', color: 'text.secondary' }}>
-          Init: {String(initializing)} | Auth: {String(isAuthenticated)}
-        </Typography>
+        <Typography variant="h6">Loading App...</Typography>
         <Button
           variant="text"
           color="error"
