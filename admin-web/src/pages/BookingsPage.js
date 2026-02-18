@@ -32,10 +32,10 @@ import { fetchBookings, updateBookingStatus } from '../store/slices/adminSlice';
 import { format } from 'date-fns';
 
 const statusColors = {
-  confirmed: '#4CAF50',
-  pending: '#FF9800',
-  cancelled: '#F44336',
-  completed: '#2196F3',
+  confirmed: '#2e7d32', // Brand Green
+  pending: '#ed6c02',   // Brand Orange
+  cancelled: '#d32f2f', // Brand Red
+  completed: '#0288d1', // Brand Blue
 };
 
 const StatusChip = ({ status }) => (
@@ -332,9 +332,7 @@ export default function BookingsPage() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Bookings Management
-        </Typography>
+
         <Button
           variant="outlined"
           startIcon={<Refresh />}
@@ -404,12 +402,21 @@ export default function BookingsPage() {
           loading={bookingsLoading}
           disableRowSelectionOnClick
           sx={{
+            border: 'none',
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
             },
             '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: '#fafafa',
-              borderBottom: '2px solid #e0e0e0',
+              backgroundColor: '#f5f5f5',
+              borderBottom: 'none',
+              fontWeight: 'bold',
+              color: '#004d43', // Brand Green
+            },
+            '& .MuiDataGrid-row:hover': {
+              backgroundColor: '#f9fafb',
+            },
+            '& .MuiTablePagination-root': {
+              color: '#004d43',
             },
           }}
         />

@@ -122,10 +122,11 @@ export default function ReviewsPage() {
                             color: status === 'approved' ? '#2e7d32' : status === 'pending' ? '#ef6c00' : '#c62828',
                             borderRadius: '16px',
                             px: 1.5,
-                            py: 0.25,
+                            py: 0.5,
                             fontSize: '0.75rem',
                             fontWeight: 'bold',
-                            textTransform: 'capitalize'
+                            textTransform: 'capitalize',
+                            display: 'inline-block'
                         }}
                     >
                         {status}
@@ -174,9 +175,7 @@ export default function ReviewsPage() {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" component="h1">
-                    Reviews
-                </Typography>
+
                 <Button
                     variant="outlined"
                     startIcon={<Refresh />}
@@ -205,12 +204,21 @@ export default function ReviewsPage() {
                     loading={reviewsLoading}
                     disableRowSelectionOnClick
                     sx={{
+                        border: 'none',
                         '& .MuiDataGrid-cell': {
                             borderBottom: '1px solid #f0f0f0',
                         },
                         '& .MuiDataGrid-columnHeaders': {
-                            backgroundColor: '#fafafa',
-                            borderBottom: '2px solid #e0e0e0',
+                            backgroundColor: '#f5f5f5',
+                            borderBottom: 'none',
+                            fontWeight: 'bold',
+                            color: '#004d43',
+                        },
+                        '& .MuiDataGrid-row:hover': {
+                            backgroundColor: '#f9fafb',
+                        },
+                        '& .MuiTablePagination-root': {
+                            color: '#004d43',
                         },
                     }}
                 />

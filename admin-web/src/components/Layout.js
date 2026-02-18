@@ -199,7 +199,11 @@ export default function Layout({ children }) {
             <MenuIcon />
           </IconButton>
 
-          <Box sx={{ flexGrow: 1 }} />
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" noWrap component="div" sx={{ color: 'text.primary', fontWeight: 700 }}>
+              {menuItems.find(item => item.path === location.pathname)?.text || 'Dashboard'}
+            </Typography>
+          </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton
