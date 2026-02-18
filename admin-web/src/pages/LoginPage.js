@@ -52,23 +52,12 @@ export default function LoginPage({ onSwitchToRegister }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(180deg, #004d43 0%, #006b5a 30%, #b3d9d2 60%, #e6f2f0 80%, #ffffff 100%)',
+        background: 'url(/login-bg.jpg) center/cover no-repeat',
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Decorative gradient overlay */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '40%',
-          background: 'linear-gradient(180deg, rgba(0,77,67,0.15) 0%, transparent 100%)',
-          pointerEvents: 'none',
-        }}
-      />
+      {/* Decorative gradient overlay removed - using image directly */}
 
       <Box sx={{ mb: 1, textAlign: 'center', zIndex: 1 }}>
         <img
