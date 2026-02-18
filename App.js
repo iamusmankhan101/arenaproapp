@@ -37,8 +37,8 @@ export default function App() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Hide native splash screen immediately, as we have our own SplashScreen component
-        await SplashScreen.hideAsync();
+        // Keep the splash screen visible while we fetch resources
+        // await SplashScreen.hideAsync(); // Removed to let AppNavigator control hiding
       } catch (e) {
         console.warn('SplashScreen.hideAsync error:', e);
       }

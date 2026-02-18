@@ -13,7 +13,7 @@ import AdminLoginScreen from '../screens/admin/AdminLoginScreen';
 import AdminNavigator from './AdminNavigator';
 
 // Splash Screen
-import SplashScreen from '../screens/SplashScreen';
+import * as SplashScreen from 'expo-splash-screen';
 
 // Auth Screens
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
@@ -104,9 +104,15 @@ export default function AppNavigator() {
     dispatch(loadStoredAuth());
   }, [dispatch]);
 
-  // Show splash screen only while initializing auth
+  // Handle splash screen
+  useEffect(() => {
+    if (!initializing) {
+      SplashScreen.hideAsync().catch(console.warn);
+    }
+  }, [initializing]);
+
   if (initializing) {
-    return <SplashScreen />;
+    return null; // Render nothing while splash screen is visible
   }
 
   // Debug what screen should be shown

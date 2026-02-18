@@ -4,12 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchUserProfile } from '../../store/slices/authSlice';
+import { fetchUserProfile, updateProfile } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeFormatDate } from '../../utils/dateUtils';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
-import { fetchChallenges, acceptChallenge } from '../../store/slices/teamSlice';
+import { fetchChallenges, acceptChallenge, setUserTeam } from '../../store/slices/teamSlice';
 import RealtimeNotification from '../../components/RealtimeNotification';
 import realtimeSyncService from '../../services/realtimeSync';
 import { SportsIcon } from '../../components/SportsIcons';
@@ -404,50 +404,88 @@ export default function HomeScreen({ navigation }) {
   const cardWidth = width - 45; // Full width minus padding (20 left + 20 right + 5 margin)
 
   const handleAcceptChallenge = (challengeId) => {
-    if (!userTeam) {
-      Alert.alert('Error', 'You must have a team to accept challenges.');
-      return;
-    }
-
     const challenge = challenges.find(c => c.id === challengeId);
     if (!challenge) return;
 
-    Alert.alert(
-      'Accept Challenge',
-      `Are you sure you want to accept this challenge? ${challenge.isWinnerTakesAll ? 'The loser will pay the entire ground fee.' : 'Ground fee will be split equally.'}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Accept',
-          onPress: async () => {
-            try {
-              const result = await dispatch(acceptChallenge({
-                challengeId,
-                opponentId: userTeam.id,
-                opponentTeamName: userTeam.name
-              })).unwrap();
+    const performAccept = (teamToUse) => {
+      Alert.alert(
+        'Accept Challenge',
+        `Are you sure you want to accept this challenge? ${challenge.isWinnerTakesAll ? 'The loser will pay the entire ground fee.' : 'Ground fee will be split equally.'}`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Accept',
+            onPress: async () => {
+              try {
+                const result = await dispatch(acceptChallenge({
+                  challengeId,
+                  opponentId: teamToUse.id,
+                  opponentTeamName: teamToUse.name
+                })).unwrap();
 
-              Alert.alert(
-                'Challenge Accepted!',
-                `You have accepted the challenge. Please book the venue (${challenge.venue || 'Any'}) to confirm.`,
-                [
-                  {
-                    text: 'Book Now',
-                    onPress: () => navigation.navigate('VenueList', {
-                      searchQuery: challenge.venue,
-                      sport: challenge.sport
-                    })
-                  },
-                  { text: 'Later', style: 'cancel' }
-                ]
-              );
-            } catch (error) {
-              Alert.alert('Error', error || 'Failed to accept challenge');
+                Alert.alert(
+                  'Challenge Accepted!',
+                  `You have accepted the challenge. Please book the venue (${challenge.venue || 'Any'}) to confirm.`,
+                  [
+                    {
+                      text: 'Book Now',
+                      onPress: () => navigation.navigate('VenueList', {
+                        searchQuery: challenge.venue,
+                        sport: challenge.sport
+                      })
+                    },
+                    { text: 'Later', style: 'cancel' }
+                  ]
+                );
+              } catch (error) {
+                Alert.alert('Error', error || 'Failed to accept challenge');
+              }
             }
           }
-        }
-      ]
-    );
+        ]
+      );
+    };
+
+    if (!userTeam) {
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to accept challenges.');
+        return;
+      }
+
+      Alert.alert(
+        'Create Team',
+        'You need a team profile to accept challenges. Would you like to create one automatically using your profile details?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Create & Continue',
+            onPress: () => {
+              const newTeam = {
+                id: user.uid,
+                name: `${user.fullName || 'Player'}'s Team`,
+                captain: user.fullName || 'Captain',
+                avatar: user.photoURL || null,
+                founded: new Date().getFullYear().toString(),
+                homeGround: user.city || 'Home Ground',
+                wins: 0,
+                losses: 0,
+                draws: 0,
+                eloRating: 1200,
+                fairPlayScore: 5.0,
+              };
+
+              dispatch(setUserTeam(newTeam));
+              dispatch(updateProfile({ teamProfile: newTeam }));
+
+              performAccept(newTeam);
+            }
+          }
+        ]
+      );
+      return;
+    }
+
+    performAccept(userTeam);
   };
 
   const renderChallengeCard = (challenge) => (
