@@ -25,8 +25,9 @@ import {
 import { DateRange, CloudUpload, Close } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue, updateVenue } from '../store/slices/adminSlice';
-import { storage } from '../config/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+const CLOUDINARY_CLOUD_NAME = 'dykbxopqn';
+const CLOUDINARY_UPLOAD_PRESET = 'venue_images';
 
 const SPORTS_OPTIONS = ['Football', 'Cricket', 'Padel', 'Futsal', 'Basketball', 'Tennis'];
 const FACILITIES_OPTIONS = [
@@ -368,24 +369,32 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         });
       }
 
-      // Upload images to Firebase Storage and get download URLs
+      // Upload images to Cloudinary and get download URLs
       const imageUrls = [];
       for (const img of formData.images) {
         try {
           if (img.file) {
-            // New image — upload to Storage
-            const storageRef = ref(storage, `venues/${Date.now()}_${img.name}`);
-            const snapshot = await uploadBytes(storageRef, img.file);
-            const downloadURL = await getDownloadURL(snapshot.ref);
-            imageUrls.push(downloadURL);
+            // New image — upload to Cloudinary
+            const cloudFormData = new FormData();
+            cloudFormData.append('file', img.file);
+            cloudFormData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            const res = await fetch(
+              `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+              { method: 'POST', body: cloudFormData }
+            );
+            const data = await res.json();
+            if (data.secure_url) {
+              imageUrls.push(data.secure_url);
+            } else {
+              console.warn('⚠️ Cloudinary upload returned no URL:', data);
+            }
           } else if (typeof img === 'string') {
             imageUrls.push(img);
           } else if (img.preview && img.existing) {
             imageUrls.push(img.preview);
           }
         } catch (uploadErr) {
-          console.warn('⚠️ Image upload failed (CORS or permissions):', uploadErr.message);
-          // Continue without this image — don't block venue creation
+          console.warn('⚠️ Image upload failed:', uploadErr.message);
         }
       }
 
