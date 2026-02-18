@@ -1,6 +1,6 @@
 {
-  "short_name": "PitchIt Admin",
-  "name": "PitchIt Sports Venue Admin Panel",
+  "short_name": "Arena Pro",
+  "name": "Arena Pro Admin Panel",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,6 +10,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#004d43",
   "background_color": "#ffffff"
 }

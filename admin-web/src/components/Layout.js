@@ -14,7 +14,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Avatar,
   Menu,
   MenuItem,
   useTheme,
@@ -87,10 +86,10 @@ export default function Layout({ children }) {
   const drawer = (
     <div>
       <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar sx={{ bgcolor: 'primary.main' }}>P</Avatar>
-          <Typography variant="h6" noWrap component="div" color="primary">
-            {admin?.role === 'vendor' ? 'Vendor Portal' : 'PitchIt Admin'}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <img src="/logo.png" alt="Arena Pro" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+          <Typography variant="h6" noWrap component="div" sx={{ color: '#004d43', fontWeight: 700 }}>
+            {admin?.role === 'vendor' ? 'Vendor Portal' : 'Arena Pro'}
           </Typography>
         </Box>
       </Toolbar>
