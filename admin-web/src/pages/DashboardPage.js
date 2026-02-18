@@ -8,22 +8,17 @@ import {
   Box,
   Avatar,
   IconButton,
-  Paper,
 } from '@mui/material';
 import {
   Event,
-  Today,
   Payments,
   LocationOn,
   People,
-  Pending,
   TrendingUp,
   TrendingDown,
   Refresh,
 } from '@mui/icons-material';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -138,7 +133,7 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
 
 export default function DashboardPage() {
   const dispatch = useDispatch();
-  const { dashboardStats, loading } = useSelector(state => state.admin);
+  const { dashboardStats } = useSelector(state => state.admin);
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
