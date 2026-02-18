@@ -23,6 +23,7 @@ const sportCategories = ['All', 'Cricket', 'Football', 'Padel', 'Futsal'];
 
 export default function VenueListScreen({ navigation, route }) {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredVenues, setFilteredVenues] = useState([]);
