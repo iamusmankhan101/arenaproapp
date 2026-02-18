@@ -216,9 +216,10 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
     const startTotalMinutes = startHour * 60 + startMinute;
     let endTotalMinutes = endHour * 60 + endMinute;
 
-    // If start == end (e.g. 00:00 to 00:00), treat as full 24-hour day
+    // If end <= start, it wraps past midnight (e.g. 8 PM to 2 AM, or 12 AM to 12 AM)
+    // Add 24 hours to the end so slots continue past midnight
     if (endTotalMinutes <= startTotalMinutes) {
-      endTotalMinutes = 24 * 60; // 1440 minutes
+      endTotalMinutes += 24 * 60; // e.g. 2 AM becomes 26:00 (1560 min)
     }
 
     for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += duration) {
