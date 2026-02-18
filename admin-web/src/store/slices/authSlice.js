@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase';
 
 export const loginAdmin = createAsyncThunk(
@@ -57,6 +57,65 @@ export const loginAdmin = createAsyncThunk(
         errorMessage = 'Invalid email or password';
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = 'Too many failed attempts. Please try again later.';
+      }
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const registerAdmin = createAsyncThunk(
+  'auth/registerAdmin',
+  async ({ email, password, fullName, role }, { rejectWithValue }) => {
+    try {
+      console.log(`📝 Registering new ${role}...`);
+
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Write user profile to Firestore
+      const userProfile = {
+        fullName,
+        email,
+        role, // 'admin' or 'vendor'
+        status: 'active',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      if (role === 'vendor') {
+        userProfile.vendorId = user.uid;
+      }
+
+      await setDoc(doc(db, 'users', user.uid), userProfile);
+
+      // 3. Build admin data (auto-login)
+      const adminData = {
+        uid: user.uid,
+        email: user.email,
+        name: fullName,
+        role: role,
+        photoURL: null,
+        vendorId: role === 'vendor' ? user.uid : null,
+        permissions: role === 'admin' || role === 'super_admin' ? ['all'] : ['vendor_access'],
+        lastLogin: new Date().toISOString(),
+      };
+
+      // Store in localStorage
+      localStorage.setItem('adminToken', await user.getIdToken());
+      localStorage.setItem('adminData', JSON.stringify(adminData));
+
+      console.log(`✅ Registration successful as ${role}`);
+      return adminData;
+    } catch (error) {
+      console.error('❌ Registration failed:', error.message);
+      let errorMessage = error.message;
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already registered.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password should be at least 6 characters.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
       }
       return rejectWithValue(errorMessage);
     }
@@ -171,6 +230,23 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.admin = null;
         state.error = action.payload;
+      })
+
+      // Register
+      .addCase(registerAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.admin = action.payload;
+      })
+      .addCase(registerAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.isAuthenticated = false;
+        state.admin = null;
       });
   },
 });

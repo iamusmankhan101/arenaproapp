@@ -14,13 +14,13 @@ import {
 import { AdminPanelSettings } from '@mui/icons-material';
 import { loginAdmin, clearError } from '../store/slices/authSlice';
 
-export default function LoginPage() {
+export default function LoginPage({ onSwitchToRegister }) {
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
 
   const [formData, setFormData] = useState({
-    email: 'admin@pitchit.com',
-    password: 'admin123',
+    email: '',
+    password: '',
   });
 
   useEffect(() => {
@@ -84,10 +84,10 @@ export default function LoginPage() {
               <AdminPanelSettings fontSize="large" />
             </Avatar>
             <Typography variant="h4" component="h1" gutterBottom>
-              PitchIt Admin
+              Arena Pro
             </Typography>
             <Typography variant="subtitle1">
-              Manage your turf booking platform
+              Admin & Vendor Portal
             </Typography>
           </Box>
 
@@ -136,24 +136,17 @@ export default function LoginPage() {
               </Button>
             </Box>
 
-            <Box
-              sx={{
-                mt: 3,
-                p: 2,
-                backgroundColor: 'grey.50',
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'grey.200',
-              }}
-            >
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Demo Credentials:
-              </Typography>
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                Email: admin@pitchit.com
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Password: admin123
+                Don't have an account?{' '}
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={onSwitchToRegister}
+                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                >
+                  Create Account
+                </Button>
               </Typography>
             </Box>
           </CardContent>

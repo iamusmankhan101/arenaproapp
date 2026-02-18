@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import BookingsPage from './pages/BookingsPage';
 import VenuesPage from './pages/VenuesPage';
@@ -20,6 +21,8 @@ import { Box, CircularProgress, Typography, Button } from '@mui/material';
 function App() {
   const dispatch = useDispatch();
   const { isAuthenticated, admin, initializing } = useSelector(state => state.auth);
+
+  const [showRegister, setShowRegister] = useState(false);
 
   useEffect(() => {
     dispatch(loadStoredAuth());
@@ -53,7 +56,9 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    return <LoginPage />;
+    return showRegister
+      ? <RegisterPage onSwitchToLogin={() => setShowRegister(false)} />
+      : <LoginPage onSwitchToRegister={() => setShowRegister(true)} />;
   }
 
   return (
