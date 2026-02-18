@@ -52,7 +52,7 @@ export default function LoginPage({ onSwitchToRegister }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(180deg, #ffffff 0%, #e6f2f0 40%, #b3d9d2 70%, #004d43 100%)',
+        background: 'linear-gradient(180deg, #004d43 0%, #006b5a 30%, #b3d9d2 60%, #e6f2f0 80%, #ffffff 100%)',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -65,7 +65,7 @@ export default function LoginPage({ onSwitchToRegister }) {
           left: 0,
           right: 0,
           height: '40%',
-          background: 'linear-gradient(180deg, transparent 0%, rgba(0,77,67,0.15) 100%)',
+          background: 'linear-gradient(180deg, rgba(0,77,67,0.15) 0%, transparent 100%)',
           pointerEvents: 'none',
         }}
       />
@@ -75,8 +75,8 @@ export default function LoginPage({ onSwitchToRegister }) {
           src="/logo.png"
           alt="Arena Pro"
           style={{
-            width: 80,
-            height: 80,
+            width: 180,
+            height: 180,
             objectFit: 'contain',
             marginBottom: 8,
           }}
@@ -88,7 +88,7 @@ export default function LoginPage({ onSwitchToRegister }) {
         variant="h3"
         sx={{
           fontWeight: 700,
-          color: '#004d43',
+          color: '#ffffff',
           mb: 5,
           zIndex: 1,
           textAlign: 'center',
