@@ -15,7 +15,7 @@ import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorVenuePage from './pages/vendor/VendorVenuePage';
 import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
 import { loadStoredAuth } from './store/slices/authSlice';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Typography, Button } from '@mui/material';
 
 function App() {
   const dispatch = useDispatch();
