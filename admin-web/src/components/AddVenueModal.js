@@ -252,26 +252,48 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
 
   // Update available slots when operating hours or pricing changes
   useEffect(() => {
-    if (formData.openTime && formData.closeTime) {
-      const allSlots = generateAllPossibleSlots();
-      setFormData(prev => ({
-        ...prev,
-        availableSlots: allSlots
-      }));
-    }
-  }, [generateAllPossibleSlots, formData.openTime, formData.closeTime]);
-
-  // Generate initial slots when component mounts
-  useEffect(() => {
-    // Generate slots with default values on component mount
     const allSlots = generateAllPossibleSlots();
-    if (allSlots.length > 0) {
-      setFormData(prev => ({
+    setFormData(prev => ({
+      ...prev,
+      availableSlots: allSlots
+    }));
+  }, [generateAllPossibleSlots]);
+
+  // Auto-regenerate ALL date-specific slots when operating hours or duration change
+  useEffect(() => {
+    setFormData(prev => {
+      const existingDates = Object.keys(prev.dateSpecificSlots);
+      if (existingDates.length === 0) return prev;
+
+      const newSlots = generateAllPossibleSlots();
+      const updatedDateSlots = {};
+
+      existingDates.forEach(date => {
+        const oldDateSlots = prev.dateSpecificSlots[date];
+        // Map old selection state by time range
+        const oldSelectionMap = {};
+        oldDateSlots.forEach(s => {
+          oldSelectionMap[`${s.startTime}-${s.endTime}`] = s.selected;
+        });
+
+        // Regenerate slots for this date, preserving selection where possible
+        updatedDateSlots[date] = newSlots.map(slot => ({
+          ...slot,
+          id: `${date}-${slot.id}`,
+          date: date,
+          selected: oldSelectionMap[`${slot.startTime}-${slot.endTime}`] !== undefined
+            ? oldSelectionMap[`${slot.startTime}-${slot.endTime}`]
+            : true
+        }));
+      });
+
+      return {
         ...prev,
-        availableSlots: allSlots
-      }));
-    }
-  }, [generateAllPossibleSlots]); // Include generateAllPossibleSlots as dependency
+        dateSpecificSlots: updatedDateSlots
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.openTime, formData.closeTime, formData.slotDuration]);
 
   // Handle date change for date-specific slots
   const handleDateChange = (event) => {
