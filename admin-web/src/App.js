@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import BookingsPage from './pages/BookingsPage';
@@ -10,9 +11,27 @@ import CustomersPage from './pages/CustomersPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import ReviewsPage from './pages/ReviewsPage';
+import VendorDashboard from './pages/vendor/VendorDashboard';
+import VendorVenuePage from './pages/vendor/VendorVenuePage';
+import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
+import { loadStoredAuth } from './store/slices/authSlice';
+import { Box, CircularProgress } from '@mui/material';
 
 function App() {
-  const { isAuthenticated } = useSelector(state => state.auth);
+  const dispatch = useDispatch();
+  const { isAuthenticated, admin, initializing } = useSelector(state => state.auth);
+
+  useEffect(() => {
+    dispatch(loadStoredAuth());
+  }, [dispatch]);
+
+  if (initializing) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginPage />;
@@ -21,15 +40,24 @@ function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/bookings" element={<BookingsPage />} />
-        <Route path="/venues" element={<VenuesPage />} />
-        <Route path="/customers" element={<CustomersPage />} />
-        <Route path="/reports" element={<ReportsPage />} />
-        <Route path="/reviews" element={<ReviewsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to={admin?.role === 'vendor' ? "/vendor/dashboard" : "/dashboard"} replace />} />
+
+        {/* Admin Routes */}
+        <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><DashboardPage /></ProtectedRoute>} />
+        <Route path="/bookings" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><BookingsPage /></ProtectedRoute>} />
+        <Route path="/venues" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><VenuesPage /></ProtectedRoute>} />
+        <Route path="/customers" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><CustomersPage /></ProtectedRoute>} />
+        <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ReportsPage /></ProtectedRoute>} />
+        <Route path="/reviews" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ReviewsPage /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><SettingsPage /></ProtectedRoute>} />
+
+        {/* Vendor Routes */}
+        <Route path="/vendor/dashboard" element={<ProtectedRoute allowedRoles={['vendor']}><VendorDashboard /></ProtectedRoute>} />
+        <Route path="/vendor/venues" element={<ProtectedRoute allowedRoles={['vendor']}><VendorVenuePage /></ProtectedRoute>} />
+        <Route path="/vendor/bookings" element={<ProtectedRoute allowedRoles={['vendor']}><VendorBookingsPage /></ProtectedRoute>} />
+        <Route path="/vendor/settings" element={<ProtectedRoute allowedRoles={['vendor']}><SettingsPage /></ProtectedRoute>} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
   );

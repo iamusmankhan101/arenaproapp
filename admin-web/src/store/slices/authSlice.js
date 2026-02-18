@@ -1,91 +1,64 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-
-// Mock admin credentials and data
-const mockAdminCredentials = {
-  'admin@pitchit.com': 'admin123',
-  'manager@pitchit.com': 'manager123'
-};
-
-const mockAdminData = {
-  'admin@pitchit.com': {
-    id: 'admin1',
-    email: 'admin@pitchit.com',
-    name: 'Admin User',
-    role: 'super_admin',
-    permissions: ['all'],
-    lastLogin: new Date().toISOString(),
-  },
-  'manager@pitchit.com': {
-    id: 'manager1',
-    email: 'manager@pitchit.com',
-    name: 'Manager User',
-    role: 'manager',
-    permissions: ['venues', 'bookings', 'customers'],
-    lastLogin: new Date().toISOString(),
-  }
-};
-
-const mockAuthAPI = {
-  login: async (credentials) => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const { email, password } = credentials;
-    
-    // Check credentials
-    if (mockAdminCredentials[email] === password) {
-      const admin = mockAdminData[email];
-      const token = `mock-jwt-token-${Date.now()}`;
-      
-      return {
-        token,
-        admin: {
-          ...admin,
-          lastLogin: new Date().toISOString()
-        }
-      };
-    } else {
-      throw new Error('Invalid email or password');
-    }
-  },
-
-  logout: async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return { success: true };
-  },
-
-  refreshToken: async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const token = localStorage.getItem('adminToken');
-    const adminData = localStorage.getItem('adminData');
-    
-    if (token && adminData) {
-      return {
-        token: `refreshed-${Date.now()}`,
-        admin: JSON.parse(adminData)
-      };
-    } else {
-      throw new Error('No valid session found');
-    }
-  }
-};
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../../config/firebase';
 
 export const loginAdmin = createAsyncThunk(
   'auth/loginAdmin',
   async (credentials, { rejectWithValue }) => {
     try {
-      console.log('🔐 Attempting admin login with mock auth');
-      const response = await mockAuthAPI.login(credentials);
-      
+      console.log('🔐 Attempting login with Firebase Auth...');
+      const { email, password } = credentials;
+
+      // 1. Sign in with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Fetch user details and role from Firestore
+      console.log('👤 Fetching user profile for:', user.uid);
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        throw new Error('User profile not found in database');
+      }
+
+      const userData = userDoc.data();
+      const role = userData.role || 'guest';
+
+      // 3. Check if user has permission to access admin/vendor portal
+      if (role !== 'admin' && role !== 'vendor' && role !== 'super_admin') {
+        await signOut(auth);
+        throw new Error('Unauthorized access. Only Admins and Vendors can login here.');
+      }
+
+      const adminData = {
+        uid: user.uid,
+        email: user.email,
+        name: userData.fullName || userData.displayName || userData.name || 'User',
+        role: role,
+        photoURL: userData.photoURL || null,
+        vendorId: userData.vendorId || null, // If linked to a specific vendor profile
+        permissions: role === 'admin' || role === 'super_admin' ? ['all'] : ['vendor_access'],
+        lastLogin: new Date().toISOString(),
+      };
+
       // Store in localStorage
-      localStorage.setItem('adminToken', response.token);
-      localStorage.setItem('adminData', JSON.stringify(response.admin));
-      
-      console.log('✅ Admin login successful');
-      return response.admin;
+      localStorage.setItem('adminToken', await user.getIdToken());
+      localStorage.setItem('adminData', JSON.stringify(adminData));
+
+      console.log(`✅ Login successful as ${role}`);
+      return adminData;
     } catch (error) {
-      console.error('❌ Admin login failed:', error.message);
-      return rejectWithValue(error.message);
+      console.error('❌ Login failed:', error.message);
+      // Map Firebase error codes to user-friendly messages
+      let errorMessage = error.message;
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = 'Invalid email or password';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      }
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -94,13 +67,14 @@ export const logoutAdmin = createAsyncThunk(
   'auth/logoutAdmin',
   async (_, { rejectWithValue }) => {
     try {
-      await mockAuthAPI.logout();
+      await signOut(auth);
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminData');
-      console.log('✅ Admin logout successful');
+      console.log('✅ Logout successful');
       return null;
     } catch (error) {
-      // Even if logout fails, clear local storage
+      console.error('❌ Logout failed:', error);
+      // Force local cleanup anyway
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminData');
       return null;
@@ -113,32 +87,17 @@ export const loadStoredAuth = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const adminData = localStorage.getItem('adminData');
-      
-      if (token && adminData) {
-        console.log('🔄 Loading stored admin auth');
-        return JSON.parse(adminData);
+      const adminDataString = localStorage.getItem('adminData');
+
+      if (token && adminDataString) {
+        console.log('🔄 Loading stored session');
+        const adminData = JSON.parse(adminDataString);
+        return adminData;
       }
-      
+
       return null;
     } catch (error) {
       console.error('❌ Failed to load stored auth:', error.message);
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const refreshAuthToken = createAsyncThunk(
-  'auth/refreshAuthToken',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await mockAuthAPI.refreshToken();
-      localStorage.setItem('adminToken', response.token);
-      return response.admin;
-    } catch (error) {
-      // If refresh fails, logout user
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminData');
       return rejectWithValue(error.message);
     }
   }
@@ -181,7 +140,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.admin = null;
       })
-      
+
       // Logout
       .addCase(logoutAdmin.fulfilled, (state) => {
         state.isAuthenticated = false;
@@ -189,7 +148,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = null;
       })
-      
+
       // Load stored auth
       .addCase(loadStoredAuth.pending, (state) => {
         state.initializing = true;
@@ -209,15 +168,6 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.admin = null;
         state.error = action.payload;
-      })
-      
-      // Refresh token
-      .addCase(refreshAuthToken.fulfilled, (state, action) => {
-        state.admin = action.payload;
-      })
-      .addCase(refreshAuthToken.rejected, (state) => {
-        state.isAuthenticated = false;
-        state.admin = null;
       });
   },
 });

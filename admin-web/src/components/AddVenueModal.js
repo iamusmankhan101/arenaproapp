@@ -34,7 +34,7 @@ const FACILITIES_OPTIONS = [
 ];
 
 // Force deployment update
-export default function AddVenueModal({ open, onClose, editVenue = null }) {
+export default function AddVenueModal({ open, onClose, editVenue = null, vendorId = null }) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -373,13 +373,16 @@ export default function AddVenueModal({ open, onClose, editVenue = null }) {
         latitude: formData.latitude ? parseFloat(formData.latitude) : 31.5204,
         longitude: formData.longitude ? parseFloat(formData.longitude) : 74.3587,
         // Remove basic time slots - only use date-specific slots
-        dateSpecificSlots: dateSpecificAvailability
+        dateSpecificSlots: dateSpecificAvailability,
+        // Include vendorId if creating new provided via props, or preserve existing if editing
+        vendorId: isEditing ? editVenue.vendorId : (vendorId || null)
       };
 
       console.log('🔄 Submitting venue data:', {
         name: venueData.name,
         availableSlots: venueData.availableSlots?.length || 0,
-        isEditing: isEditing
+        isEditing: isEditing,
+        vendorId: venueData.vendorId
       });
 
       if (isEditing) {

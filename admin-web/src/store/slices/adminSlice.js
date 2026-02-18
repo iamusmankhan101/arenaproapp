@@ -4,9 +4,9 @@ import { workingAdminAPI } from '../../services/workingFirebaseAPI';
 // Dashboard Stats
 export const fetchDashboardStats = createAsyncThunk(
   'admin/fetchDashboardStats',
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      return await workingAdminAPI.getDashboardStats();
+      return await workingAdminAPI.getDashboardStats(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }

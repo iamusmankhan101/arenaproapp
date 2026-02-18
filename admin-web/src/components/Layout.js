@@ -36,7 +36,7 @@ import { logoutAdmin, loadStoredAuth } from '../store/slices/authSlice';
 
 const drawerWidth = 240;
 
-const menuItems = [
+const adminMenuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
   { text: 'Bookings', icon: <Event />, path: '/bookings' },
   { text: 'Venues', icon: <LocationOn />, path: '/venues' },
@@ -45,6 +45,14 @@ const menuItems = [
   { text: 'Reviews', icon: <RateReview />, path: '/reviews' },
   { text: 'Settings', icon: <Settings />, path: '/settings' },
 ];
+
+const vendorMenuItems = [
+  { text: 'Dashboard', icon: <Dashboard />, path: '/vendor/dashboard' },
+  { text: 'My Venues', icon: <LocationOn />, path: '/vendor/venues' },
+  { text: 'Bookings', icon: <Event />, path: '/vendor/bookings' },
+  { text: 'Settings', icon: <Settings />, path: '/vendor/settings' },
+];
+
 
 export default function Layout({ children }) {
   const theme = useTheme();
@@ -78,13 +86,15 @@ export default function Layout({ children }) {
     handleMenuClose();
   };
 
+  const menuItems = admin?.role === 'vendor' ? vendorMenuItems : adminMenuItems;
+
   const drawer = (
     <div>
       <Toolbar>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar sx={{ bgcolor: 'primary.main' }}>P</Avatar>
           <Typography variant="h6" noWrap component="div" color="primary">
-            PitchIt Admin
+            {admin?.role === 'vendor' ? 'Vendor Portal' : 'PitchIt Admin'}
           </Typography>
         </Box>
       </Toolbar>
@@ -142,7 +152,7 @@ export default function Layout({ children }) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {menuItems.find(item => item.path === location.pathname)?.text || 'Admin Panel'}
+            {menuItems.find(item => item.path === location.pathname)?.text || 'Dashboard'}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>

@@ -1,6 +1,6 @@
 // Working Firebase Admin API
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, orderBy, collectionGroup, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, orderBy, collectionGroup, deleteDoc, where } from 'firebase/firestore';
 
 // Firebase config
 const firebaseConfig = {
@@ -29,33 +29,46 @@ const initFirebase = () => {
 // Working Admin API
 export const workingAdminAPI = {
   // Get dashboard stats
-  async getDashboardStats() {
+  async getDashboardStats(params = {}) {
     try {
-      console.log('🔥 Fetching dashboard stats...');
+      console.log('🔥 Fetching dashboard stats...', params);
       const firestore = initFirebase();
 
       // Fetch venues count
-      const venuesQuery = collection(firestore, 'venues');
+      let venuesQuery = collection(firestore, 'venues');
+      if (params.vendorId) {
+        venuesQuery = query(venuesQuery, where('vendorId', '==', params.vendorId));
+      }
       const venuesSnapshot = await getDocs(venuesQuery);
       const totalVenues = venuesSnapshot.size;
       const activeVenues = venuesSnapshot.docs.filter(doc =>
         doc.data().status === 'active'
       ).length;
 
-      // Fetch bookings count (if bookings collection exists)
+      const vendorVenueIds = new Set(venuesSnapshot.docs.map(doc => doc.id));
+
+      // Fetch bookings count
       let totalBookings = 0;
       let todayBookings = 0;
       let pendingBookings = 0;
+
       try {
         const bookingsQuery = collection(firestore, 'bookings');
         const bookingsSnapshot = await getDocs(bookingsQuery);
-        totalBookings = bookingsSnapshot.size;
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         bookingsSnapshot.docs.forEach(doc => {
           const booking = doc.data();
+
+          // Filter by vendor if needed
+          if (params.vendorId && !vendorVenueIds.has(booking.turfId)) {
+            return;
+          }
+
+          totalBookings++;
+
           const bookingDate = booking.createdAt?.toDate?.() || new Date(booking.createdAt);
 
           // Count today's bookings
@@ -72,18 +85,24 @@ export const workingAdminAPI = {
         console.log('📅 No bookings collection found, using default values');
       }
 
-      // Fetch customers count (if users collection exists)
+      // Fetch customers count
       let totalCustomers = 0;
       try {
         const usersQuery = collection(firestore, 'users');
         const usersSnapshot = await getDocs(usersQuery);
-        totalCustomers = usersSnapshot.size;
+
+        if (params.vendorId) {
+          // For vendors, return 0 for now
+          totalCustomers = 0;
+        } else {
+          totalCustomers = usersSnapshot.size;
+        }
       } catch (userError) {
         console.log('👥 No users collection found, using default values');
       }
 
-      // Calculate revenue (mock for now, can be enhanced later)
-      const totalRevenue = totalBookings * 1500; // Assuming average booking of 1500 PKR
+      // Calculate revenue (mock for now)
+      const totalRevenue = totalBookings * 1500;
 
       const stats = {
         totalBookings,
@@ -93,8 +112,8 @@ export const workingAdminAPI = {
         totalVenues,
         totalCustomers,
         pendingBookings,
-        monthlyGrowth: 0, // Can be calculated based on historical data
-        revenueGrowth: 0, // Can be calculated based on historical data
+        monthlyGrowth: 0,
+        revenueGrowth: 0,
         weeklyStats: [
           { day: 'Mon', bookings: 0, revenue: 0 },
           { day: 'Tue', bookings: 0, revenue: 0 },
@@ -133,6 +152,11 @@ export const workingAdminAPI = {
 
       // Create query for venues collection
       let venuesQuery = collection(firestore, 'venues');
+
+      // Apply vendor filter if provided
+      if (params.vendorId) {
+        venuesQuery = query(venuesQuery, where('vendorId', '==', params.vendorId));
+      }
 
       // Add ordering
       venuesQuery = query(venuesQuery, orderBy('createdAt', 'desc'));
@@ -202,7 +226,6 @@ export const workingAdminAPI = {
         bookingsQuery = query(bookingsQuery, orderBy('createdAt', 'desc'));
       } catch (orderError) {
         console.warn('⚠️ Admin: Could not order by createdAt, using simple query');
-        // If ordering fails, use simple query
       }
 
       // Execute query
@@ -211,15 +234,21 @@ export const workingAdminAPI = {
       // Process results
       const bookings = [];
 
-      // Get venue names for better display
+      // Get venue names and filter set
       const venuesRef = collection(firestore, 'venues');
       const venuesSnapshot = await getDocs(venuesRef);
       const venuesMap = {};
+      const vendorVenueIds = new Set();
+
       venuesSnapshot.forEach((doc) => {
-        venuesMap[doc.id] = doc.data();
+        const venueData = doc.data();
+        venuesMap[doc.id] = venueData;
+        if (params.vendorId && venueData.vendorId === params.vendorId) {
+          vendorVenueIds.add(doc.id);
+        }
       });
 
-      // Fetch users map to resolve "Guest User" for authenticated bookings
+      // Fetch users map
       const usersRef = collection(firestore, 'users');
       const usersSnapshot = await getDocs(usersRef);
       const usersMap = {};
@@ -229,6 +258,11 @@ export const workingAdminAPI = {
 
       querySnapshot.forEach((doc) => {
         const bookingData = doc.data();
+
+        // Vendor Filter
+        if (params.vendorId && !vendorVenueIds.has(bookingData.turfId)) {
+          return;
+        }
 
         // Get venue information
         const venue = venuesMap[bookingData.turfId] || {};
@@ -335,7 +369,6 @@ export const workingAdminAPI = {
         usersQuery = query(usersQuery, orderBy('createdAt', 'desc'));
       } catch (orderError) {
         console.warn('⚠️ Admin: Could not order users by createdAt, using simple query');
-        // If ordering fails, use simple query
       }
 
       // Execute query
@@ -539,6 +572,8 @@ export const workingAdminAPI = {
         timeSlots: processedTimeSlots,
         // Include date-specific slots if provided
         ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
+        // Vendor Link
+        vendorId: venueData.vendorId || null,
         // Status and timestamps
         isActive: true,
         status: 'active',
@@ -648,6 +683,8 @@ export const workingAdminAPI = {
         timeSlots: processedTimeSlots,
         // Include date-specific slots if provided
         ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
+        // Vendor Link
+        vendorId: venueData.vendorId || null,
         // Status and timestamps
         isActive: true,
         status: 'active',
@@ -711,8 +748,7 @@ export const workingAdminAPI = {
       console.error('❌ Admin: Error updating customer status:', error);
       throw new Error(`Failed to update customer status: ${error.message}`);
     }
-  }
-  ,
+  },
 
   // Get all reviews (using Collection Group Query)
   async getReviews(params = {}) {
@@ -733,13 +769,7 @@ export const workingAdminAPI = {
       const snapshot = await getDocs(reviewsQuery);
       const reviews = [];
 
-      // We need to fetch venue names effectively.
-      // Since reviews are subcollections of venues, the parent doc of a review is the venue.
-      // However, we can't easily get parent data from collectionGroup query result directly in a single shot without refs.
-      // For optimization, we might just show Venue ID or fetch venues if needed.
-      // Let's try to map them if we have venues cached or just fetch them.
-
-      // For now, let's fetch all venues to map IDs to Names (assuming < 100 venues this is fine)
+      // For now, let's fetch all venues to map IDs to Names
       const venuesRef = collection(firestore, 'venues');
       const venuesSnap = await getDocs(venuesRef);
       const venueMap = {};
