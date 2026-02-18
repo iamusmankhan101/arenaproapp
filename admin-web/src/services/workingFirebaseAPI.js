@@ -135,10 +135,10 @@ export const workingAdminAPI = {
       // Apply vendor filter if provided
       if (params.vendorId) {
         venuesQuery = query(venuesQuery, where('vendorId', '==', params.vendorId));
+      } else {
+        // Only use orderBy when there's no where clause (avoids composite index requirement)
+        venuesQuery = query(venuesQuery, orderBy('createdAt', 'desc'));
       }
-
-      // Add ordering
-      venuesQuery = query(venuesQuery, orderBy('createdAt', 'desc'));
 
       // Execute query
       const querySnapshot = await getDocs(venuesQuery);
@@ -169,6 +169,11 @@ export const workingAdminAPI = {
           images: Array.isArray(venueData.images) ? venueData.images : []
         });
       });
+
+      // Sort client-side when vendorId filter was used (no server-side orderBy)
+      if (params.vendorId) {
+        venues.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
 
       const result = {
         data: venues,

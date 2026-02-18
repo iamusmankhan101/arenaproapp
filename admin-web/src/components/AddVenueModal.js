@@ -371,18 +371,21 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
       // Upload images to Firebase Storage and get download URLs
       const imageUrls = [];
       for (const img of formData.images) {
-        if (img.file) {
-          // New image — upload to Storage
-          const storageRef = ref(storage, `venues/${Date.now()}_${img.name}`);
-          const snapshot = await uploadBytes(storageRef, img.file);
-          const downloadURL = await getDownloadURL(snapshot.ref);
-          imageUrls.push(downloadURL);
-        } else if (typeof img === 'string') {
-          // Already a URL string (existing image)
-          imageUrls.push(img);
-        } else if (img.preview && img.existing) {
-          // Existing image from edit mode
-          imageUrls.push(img.preview);
+        try {
+          if (img.file) {
+            // New image — upload to Storage
+            const storageRef = ref(storage, `venues/${Date.now()}_${img.name}`);
+            const snapshot = await uploadBytes(storageRef, img.file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            imageUrls.push(downloadURL);
+          } else if (typeof img === 'string') {
+            imageUrls.push(img);
+          } else if (img.preview && img.existing) {
+            imageUrls.push(img.preview);
+          }
+        } catch (uploadErr) {
+          console.warn('⚠️ Image upload failed (CORS or permissions):', uploadErr.message);
+          // Continue without this image — don't block venue creation
         }
       }
 
