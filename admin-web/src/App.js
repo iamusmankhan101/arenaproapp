@@ -22,7 +22,7 @@ function App() {
   const { isAuthenticated, admin, initializing } = useSelector(state => state.auth);
 
   useEffect(() => {
-    dispatch(loadStoredAuth());
+    // dispatch(loadStoredAuth());
 
     // Safety timeout to prevent infinite loading
     const timer = setTimeout(() => {
