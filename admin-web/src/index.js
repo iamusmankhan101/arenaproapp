@@ -12,17 +12,22 @@ import './index.css';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <Provider store={store}>
-        <BrowserRouter>
-          <ThemeProvider theme={adminTheme}>
-            <CssBaseline />
-            <App />
-          </ThemeProvider>
-        </BrowserRouter>
-      </Provider>
-    </ErrorBoundary>
-  </React.StrictMode>
-);
+try {
+  root.render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <Provider store={store}>
+          <BrowserRouter>
+            <ThemeProvider theme={adminTheme}>
+              <CssBaseline />
+              <App />
+            </ThemeProvider>
+          </BrowserRouter>
+        </Provider>
+      </ErrorBoundary>
+    </React.StrictMode>
+  );
+} catch (e) {
+  document.body.innerHTML = '<div style="padding: 20px; color: red;"><h1>Critical Error</h1><pre>' + e.toString() + '</pre></div>';
+  console.error("Critical render error:", e);
+}
