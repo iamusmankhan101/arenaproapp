@@ -18,14 +18,12 @@ import {
   Alert,
   CircularProgress,
   Card,
-  CardContent,
   IconButton,
-  Checkbox,
   Stepper,
   Step,
   StepLabel
 } from '@mui/material';
-import { DateRange, CloudUpload, Close, ArrowForward, ArrowBack, Check } from '@mui/icons-material';
+import { CloudUpload, Close, ArrowForward, Check } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue, updateVenue } from '../store/slices/adminSlice';
 
@@ -297,15 +295,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
 
 
 
-  // Generate slots for a specific date
-  const generateSlotsForDate = (date) => {
-    const slots = generateAllPossibleSlots();
-    return slots.map(slot => ({
-      ...slot,
-      id: `${date}-${slot.id}`,
-      date: date
-    }));
-  };
+
 
 
 
