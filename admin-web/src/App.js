@@ -14,7 +14,7 @@ import ReviewsPage from './pages/ReviewsPage';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorVenuePage from './pages/vendor/VendorVenuePage';
 import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
-import { loadStoredAuth, setInitialized } from './store/slices/authSlice';
+import { /* loadStoredAuth, */ setInitialized } from './store/slices/authSlice';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
 
 function App() {
