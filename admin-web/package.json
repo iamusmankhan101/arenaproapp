@@ -2,6 +2,7 @@
   "name": "pitchit-admin-web",
   "version": "1.0.0",
   "description": "Web-based admin panel for PitchIt turf booking platform",
+  "homepage": ".",
   "private": true,
   "dependencies": {
     "@craco/craco": "^7.1.0",

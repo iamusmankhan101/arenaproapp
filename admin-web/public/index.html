@@ -29,6 +29,12 @@
 </head>
 
 <body>
+  <script>
+    console.log("✅ HTML Loaded - Inline Script Running");
+    window.onerror = function (msg, url, line, col, error) {
+      document.body.innerHTML += '<div style="color:red; background:white; padding:10px; border:1px solid red; margin:10px;">' + msg + ' at ' + line + ':' + col + '</div>';
+    };
+  </script>
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root">
     <div style="padding: 20px; font-family: sans-serif; text-align: center;">
