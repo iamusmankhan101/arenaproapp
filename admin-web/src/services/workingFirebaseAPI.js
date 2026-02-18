@@ -104,6 +104,66 @@ export const workingAdminAPI = {
         ]
       };
 
+      // Fetch recent activity
+      const recentActivity = [];
+
+      // Add recent bookings (last 5)
+      try {
+        const bookingsQuery = query(
+          collection(firestore, 'bookings'),
+          orderBy('createdAt', 'desc'),
+          // limit(5) // Limit not supported with collectionGroup in some cases, so slice later
+        );
+        const bookingsSnap = await getDocs(bookingsQuery);
+
+        bookingsSnap.docs.slice(0, 5).forEach(doc => {
+          const booking = doc.data();
+          // Filter by vendor if needed
+          if (params.vendorId && !vendorVenueIds.has(booking.turfId)) return;
+
+          recentActivity.push({
+            type: 'booking',
+            text: `New booking for ${booking.sport || 'Sports'}`,
+            subText: booking.customerName || 'Guest User',
+            time: booking.createdAt?.toDate?.() || new Date(booking.createdAt),
+            status: booking.status || 'pending',
+            id: doc.id
+          });
+        });
+      } catch (e) {
+        console.warn('Could not fetch recent bookings', e);
+      }
+
+      // Add recent users (last 5)
+      try {
+        if (!params.vendorId) {
+          const usersQuery = query(
+            collection(firestore, 'users'),
+            orderBy('createdAt', 'desc')
+          );
+          const usersSnap = await getDocs(usersQuery);
+
+          usersSnap.docs.slice(0, 5).forEach(doc => {
+            const user = doc.data();
+            recentActivity.push({
+              type: 'user',
+              text: `New customer registered`,
+              subText: user.fullName || user.displayName || 'New User',
+              time: user.createdAt?.toDate?.() || new Date(user.createdAt),
+              status: 'New',
+              id: doc.id
+            });
+          });
+        }
+      } catch (e) {
+        console.warn('Could not fetch recent users', e);
+      }
+
+      // Sort combined activity by time desc and take top 5
+      stats.recentActivity = recentActivity
+        .sort((a, b) => b.time - a.time)
+        .slice(0, 5);
+
       console.log('✅ Dashboard stats fetched:', stats);
       return stats;
 

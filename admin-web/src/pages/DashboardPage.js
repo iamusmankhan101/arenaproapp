@@ -7,7 +7,6 @@ import {
   Typography,
   Box,
   Avatar,
-  IconButton,
 } from '@mui/material';
 import {
   Event,
@@ -16,7 +15,6 @@ import {
   People,
   TrendingUp,
   TrendingDown,
-  Refresh,
 } from '@mui/icons-material';
 import {
   XAxis,
@@ -135,44 +133,31 @@ export default function DashboardPage() {
   const dispatch = useDispatch();
   const { dashboardStats } = useSelector(state => state.admin);
 
+  // Helper to get icon and color for activity
+  const getActivityConfig = (type, status) => {
+    switch (type) {
+      case 'booking':
+        if (status === 'confirmed') return { icon: <Event />, color: '#4CAF50' };
+        if (status === 'cancelled') return { icon: <Event />, color: '#F44336' };
+        return { icon: <Event />, color: '#FF9800' };
+      case 'user':
+        return { icon: <People />, color: '#2196F3' };
+      case 'venue':
+        return { icon: <LocationOn />, color: '#9C27B0' };
+      default:
+        return { icon: <TrendingUp />, color: '#757575' };
+    }
+  };
+
   useEffect(() => {
     dispatch(fetchDashboardStats());
   }, [dispatch]);
 
-  const handleRefresh = () => {
-    dispatch(fetchDashboardStats());
-  };
+
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, letterSpacing: -0.5 }}>
-          Dashboard
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <IconButton sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={handleRefresh}>
-            <Refresh />
-          </IconButton>
-          <Box
-            component="button"
-            sx={{
-              bgcolor: '#071a15',
-              color: 'white',
-              border: 'none',
-              borderRadius: 2,
-              px: 3,
-              py: 1,
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              '&:hover': { bgcolor: 'black', transform: 'translateY(-1px)' }
-            }}
-          >
-            Add Custom Widget
-          </Box>
-        </Box>
-      </Box>
+
 
       {/* Top Stats Row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -283,47 +268,53 @@ export default function DashboardPage() {
             </Box>
           </Box>
           <Box>
-            {[
-              { icon: <Event />, text: 'New booking at Elite Football Arena', time: '2 min ago', color: '#4CAF50', status: 'Confirmed' },
-              { icon: <People />, text: 'New customer registered: Ali Khan', time: '15 min ago', color: '#2196F3', status: 'New' },
-              { icon: <Payments />, text: 'Payment received for booking #PIT001234', time: '32 min ago', color: '#FF9800', status: 'Completed' },
-              { icon: <LocationOn />, text: 'New venue added: Champions Arena', time: '1 hour ago', color: '#9C27B0', status: 'Pending' },
-            ].map((activity, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  p: 3,
-                  borderBottom: index < 3 ? '1px solid' : 'none',
-                  borderColor: 'divider',
-                  '&:hover': { bgcolor: '#f9fafb' }
-                }}
-              >
-                <Avatar sx={{ bgcolor: `${activity.color}15`, color: activity.color, width: 48, height: 48, mr: 2, borderRadius: 3 }}>
-                  {React.cloneElement(activity.icon, { fontSize: 'small' })}
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{activity.text}</Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    {activity.time}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    px: 2,
-                    py: 0.5,
-                    borderRadius: 4,
-                    bgcolor: 'rgba(0,0,0,0.05)',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'text.secondary'
-                  }}
-                >
-                  {activity.status}
-                </Box>
+            {dashboardStats.recentActivity && dashboardStats.recentActivity.length > 0 ? (
+              dashboardStats.recentActivity.map((activity, index) => {
+                const config = getActivityConfig(activity.type, activity.status);
+                return (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      p: 3,
+                      borderBottom: index < dashboardStats.recentActivity.length - 1 ? '1px solid' : 'none',
+                      borderColor: 'divider',
+                      '&:hover': { bgcolor: '#f9fafb' }
+                    }}
+                  >
+                    <Avatar sx={{ bgcolor: `${config.color}15`, color: config.color, width: 48, height: 48, mr: 2, borderRadius: 3 }}>
+                      {React.cloneElement(config.icon, { fontSize: 'small' })}
+                    </Avatar>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{activity.text}</Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        {activity.subText} • {new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: 4,
+                        bgcolor: 'rgba(0,0,0,0.05)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: 'text.secondary'
+                      }}
+                    >
+                      {activity.status}
+                    </Box>
+                  </Box>
+                );
+              })
+            ) : (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="body2" color="textSecondary">
+                  No recent activity found.
+                </Typography>
               </Box>
-            ))}
+            )}
           </Box>
         </CardContent>
       </Card>

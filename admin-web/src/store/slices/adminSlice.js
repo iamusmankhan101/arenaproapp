@@ -190,7 +190,9 @@ const initialState = {
     pendingBookings: 0,
     monthlyGrowth: 0,
     revenueGrowth: 0,
+
     weeklyStats: [],
+    recentActivity: [],
   },
 
   // Bookings
