@@ -1,28 +1,7 @@
-// Working Firebase Admin API
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, orderBy, collectionGroup, deleteDoc, where } from 'firebase/firestore';
-
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyA7G3uLmKNCDhiyTuwK6GBbTxRJFvmGNpY",
-  authDomain: "arena-pro-97b5f.firebaseapp.com",
-  projectId: "arena-pro-97b5f",
-  storageBucket: "arena-pro-97b5f.firebasestorage.app",
-  messagingSenderId: "960416327217",
-  appId: "1:960416327217:android:bc3d63f865bef8be8f5710"
-};
-
-// Initialize Firebase directly in this file
-let app = null;
-let db = null;
+import { getDocs, addDoc, doc, updateDoc, query, orderBy, collection, collectionGroup, deleteDoc, where } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const initFirebase = () => {
-  if (!app) {
-    console.log('🔥 Initializing Firebase directly...');
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    console.log('✅ Firebase initialized successfully');
-  }
   return db;
 };
 
