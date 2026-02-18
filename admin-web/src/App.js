@@ -36,7 +36,10 @@ function App() {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: 2 }}>
         <CircularProgress />
-        <Typography>Loading App...</Typography>
+        <Typography variant="h6">Loading App... (v3)</Typography>
+        <Typography variant="caption" sx={{ mt: 1, fontFamily: 'monospace', color: 'text.secondary' }}>
+          Init: {String(initializing)} | Auth: {String(isAuthenticated)}
+        </Typography>
         <Button
           variant="text"
           color="error"
