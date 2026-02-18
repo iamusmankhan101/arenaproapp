@@ -18,6 +18,7 @@ import {
   MenuItem,
   useTheme,
   useMediaQuery,
+  Avatar,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -84,47 +85,94 @@ export default function Layout({ children }) {
   const menuItems = admin?.role === 'vendor' ? vendorMenuItems : adminMenuItems;
 
   const drawer = (
-    <div>
-      <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#071a15', color: 'white' }}>
+      <Toolbar sx={{ px: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 1 }}>
           <img src="/logo.png" alt="Arena Pro" style={{ width: 40, height: 40, objectFit: 'contain' }} />
-          <Typography variant="h6" noWrap component="div" sx={{ color: '#004d43', fontWeight: 700 }}>
-            {admin?.role === 'vendor' ? 'Vendor Portal' : 'Arena Pro'}
+          <Typography variant="h6" noWrap component="div" sx={{ color: 'white', fontWeight: 700, letterSpacing: 0.5 }}>
+            Arena Pro
           </Typography>
         </Box>
       </Toolbar>
-      <Divider />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => {
-                navigate(item.path);
-                if (isMobile) {
-                  setMobileOpen(false);
-                }
-              }}
-              sx={{
-                '&.Mui-selected': {
-                  backgroundColor: 'primary.main',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
-                  '& .MuiListItemIcon-root': {
-                    color: 'white',
-                  },
-                },
-              }}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </div>
+
+      <Box sx={{ px: 2, pb: 2 }}>
+        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontWeight: 600, pl: 1, mb: 1, display: 'block' }}>
+          NAVIGATION
+        </Typography>
+        <List>
+          {menuItems.map((item) => {
+            const isSelected = location.pathname === item.path;
+            return (
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  selected={isSelected}
+                  onClick={() => {
+                    navigate(item.path);
+                    if (isMobile) {
+                      setMobileOpen(false);
+                    }
+                  }}
+                  sx={{
+                    borderRadius: 2,
+                    mx: 0,
+                    '&.Mui-selected': {
+                      background: 'linear-gradient(90deg, #004d43 0%, #00695c 100%)',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: '#004d43',
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: 'white',
+                      },
+                    },
+                    '&:hover': {
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                    },
+                    color: isSelected ? 'white' : 'rgba(255,255,255,0.7)',
+                  }}
+                >
+                  <ListItemIcon sx={{ color: isSelected ? 'white' : 'rgba(255,255,255,0.7)', minWidth: 40 }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.text}
+                    primaryTypographyProps={{
+                      fontSize: '0.9rem',
+                      fontWeight: isSelected ? 600 : 400
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
+      </Box>
+
+      <Box sx={{ mt: 'auto', p: 2 }}>
+        <Box
+          sx={{
+            bgcolor: 'rgba(255,255,255,0.05)',
+            borderRadius: 2,
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5
+          }}
+        >
+          <Avatar sx={{ width: 32, height: 32, bgcolor: '#004d43', fontSize: '0.8rem' }}>
+            {admin?.name?.charAt(0) || 'A'}
+          </Avatar>
+          <Box sx={{ overflow: 'hidden' }}>
+            <Typography variant="subtitle2" noWrap sx={{ color: 'white' }}>
+              {admin?.name || 'Admin'}
+            </Typography>
+            <Typography variant="caption" noWrap sx={{ color: 'rgba(255,255,255,0.5)' }}>
+              {admin?.role === 'vendor' ? 'Vendor' : 'Administrator'}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 
   return (
@@ -134,6 +182,11 @@ export default function Layout({ children }) {
         sx={{
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
+          bgcolor: 'white',
+          color: 'text.primary',
+          boxShadow: 'none',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Toolbar>
@@ -146,13 +199,10 @@ export default function Layout({ children }) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {menuItems.find(item => item.path === location.pathname)?.text || 'Dashboard'}
-          </Typography>
+
+          <Box sx={{ flexGrow: 1 }} />
+
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              Welcome, {admin?.name || 'Admin'}
-            </Typography>
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -160,14 +210,18 @@ export default function Layout({ children }) {
               aria-haspopup="true"
               onClick={handleMenuClick}
               color="inherit"
+              sx={{
+                bgcolor: 'grey.100',
+                '&:hover': { bgcolor: 'grey.200' }
+              }}
             >
-              <AccountCircle />
+              <AccountCircle color="primary" />
             </IconButton>
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
               anchorOrigin={{
-                vertical: 'top',
+                vertical: 'bottom',
                 horizontal: 'right',
               }}
               keepMounted
@@ -177,6 +231,10 @@ export default function Layout({ children }) {
               }}
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
+              PaperProps={{
+                elevation: 3,
+                sx: { mt: 1.5, minWidth: 180, borderRadius: 2 }
+              }}
             >
               <MenuItem onClick={handleMenuClose}>
                 <ListItemIcon>
@@ -186,9 +244,9 @@ export default function Layout({ children }) {
               </MenuItem>
               <MenuItem onClick={handleLogout}>
                 <ListItemIcon>
-                  <Logout fontSize="small" />
+                  <Logout fontSize="small" color="error" />
                 </ListItemIcon>
-                Logout
+                <Typography color="error">Logout</Typography>
               </MenuItem>
             </Menu>
           </Box>
@@ -208,7 +266,7 @@ export default function Layout({ children }) {
           }}
           sx={{
             display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none', bgcolor: '#071a15' },
           }}
         >
           {drawer}
@@ -217,7 +275,7 @@ export default function Layout({ children }) {
           variant="permanent"
           sx={{
             display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, borderRight: 'none', bgcolor: '#071a15' },
           }}
           open
         >
@@ -231,7 +289,7 @@ export default function Layout({ children }) {
           p: 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           minHeight: '100vh',
-          backgroundColor: 'background.default',
+          backgroundColor: '#f4f6f8',
         }}
       >
         <Toolbar />
