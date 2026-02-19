@@ -10,7 +10,7 @@ import {
     Refresh, CalendarToday, Download, EventSeat, AccessTime,
     PersonAdd, PersonOff, Star, Schedule,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 
 const StatCard = ({ title, value, subtitle, icon, color, trend }) => (
@@ -58,49 +58,83 @@ export default function VendorDailyReportingPage() {
         if (!vendorId) return;
         setLoading(true);
         try {
-            const startOfDay = new Date(selectedDate);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(selectedDate);
-            endOfDay.setHours(23, 59, 59, 999);
+            // 1. Get Vendor's Venues (to filter bookings by turfId)
+            // App bookings might not have vendorId, so we rely on turfId
+            const venuesRef = collection(db, 'venues');
+            const venuesQ = query(venuesRef, where('vendorId', '==', vendorId));
+            const venuesSnap = await getDocs(venuesQ);
+            const vendorTurfIds = venuesSnap.docs.map(d => d.id);
 
+            if (vendorTurfIds.length === 0) {
+                setBookings([]);
+                setStats({ ...stats, totalBookings: 0, totalRevenue: 0 }); // Reset stats
+                setLoading(false);
+                return;
+            }
+
+            // 2. Fetch Bookings for these turfs
+            // Firestore 'in' limit is 10. For now assuming < 10 venues per vendor.
             const bookingsRef = collection(db, 'bookings');
-            // Convert start and end to Firestore Timestamps for query
-            const startTs = Timestamp.fromDate(startOfDay);
-            const endTs = Timestamp.fromDate(endOfDay);
-
-            const q = query(
+            const bookingsQ = query(
                 bookingsRef,
-                where('vendorId', '==', vendorId),
-                where('date', '>=', startTs),
-                where('date', '<=', endTs),
-                orderBy('date', 'desc')
+                where('turfId', 'in', vendorTurfIds.slice(0, 10))
             );
 
-            const snapshot = await getDocs(q);
+            const snapshot = await getDocs(bookingsQ);
+
+            // 3. Filter by Date in Memory (Handles Timestamp vs String inconsistencies)
             const dayBookings = [];
             let totalRev = 0, cash = 0, digital = 0;
             let completed = 0, cancelled = 0, noShows = 0;
             const customerSet = new Set();
             let peakHrs = 0, offPeakHrs = 0;
 
+            const selectedStart = new Date(selectedDate);
+            selectedStart.setHours(0, 0, 0, 0);
+            const selectedEnd = new Date(selectedDate);
+            selectedEnd.setHours(23, 59, 59, 999);
+
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
-                dayBookings.push({ id: docSnap.id, ...data });
 
-                const amount = data.totalAmount || data.amount || 0;
-                totalRev += amount;
-                if (data.paymentMethod === 'cash') cash += amount;
-                else digital += amount;
+                // Parse Date safely
+                let bookingDate;
+                if (data.date && data.date.toDate) {
+                    bookingDate = data.date.toDate();
+                } else if (data.date) {
+                    bookingDate = new Date(data.date);
+                } else if (data.dateTime) { // Fallback to dateTime field if date is missing
+                    bookingDate = new Date(data.dateTime);
+                } else {
+                    bookingDate = data.createdAt ? data.createdAt.toDate() : new Date();
+                }
 
-                if (data.status === 'completed' || data.status === 'confirmed') completed++;
-                else if (data.status === 'cancelled') cancelled++;
-                if (data.noShow) noShows++;
+                // Check if matches selected date
+                if (bookingDate >= selectedStart && bookingDate <= selectedEnd) {
+                    dayBookings.push({ id: docSnap.id, ...data });
 
-                if (data.userId) customerSet.add(data.userId);
+                    const amount = data.totalAmount || data.amount || 0;
+                    totalRev += amount;
+                    if (data.paymentMethod === 'cash') cash += amount;
+                    else digital += amount;
 
-                const hour = data.timeSlot ? parseInt(data.timeSlot.split(':')[0]) : 12;
-                if (hour >= 17 && hour <= 22) peakHrs++;
-                else offPeakHrs++;
+                    if (data.status === 'completed' || data.status === 'confirmed') completed++;
+                    else if (data.status === 'cancelled') cancelled++;
+                    if (data.noShow) noShows++;
+
+                    if (data.userId) customerSet.add(data.userId);
+
+                    const hour = data.timeSlot ? parseInt(data.timeSlot.split(':')[0]) : 12;
+                    if (hour >= 17 && hour <= 22) peakHrs++;
+                    else offPeakHrs++;
+                }
+            });
+
+            // Sort by time
+            dayBookings.sort((a, b) => {
+                const tA = a.timeSlot ? parseInt(a.timeSlot.split(':')[0]) : 0;
+                const tB = b.timeSlot ? parseInt(b.timeSlot.split(':')[0]) : 0;
+                return tB - tA;
             });
 
             setBookings(dayBookings);
