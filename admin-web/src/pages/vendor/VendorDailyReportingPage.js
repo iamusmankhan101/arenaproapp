@@ -9,6 +9,7 @@ import {
     Assessment, TrendingUp, TrendingDown, People, AttachMoney,
     Refresh, CalendarToday, Download, EventSeat, AccessTime,
     PersonAdd, PersonOff, Star, Schedule,
+
 } from '@mui/icons-material';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebase';
@@ -58,16 +59,17 @@ export default function VendorDailyReportingPage() {
         if (!vendorId) return;
         setLoading(true);
         try {
-            // 1. Get Vendor's Venues (to filter bookings by turfId)
-            // App bookings might not have vendorId, so we rely on turfId
+            // 1. Get Vendor's Venues
             const venuesRef = collection(db, 'venues');
             const venuesQ = query(venuesRef, where('vendorId', '==', vendorId));
             const venuesSnap = await getDocs(venuesQ);
             const vendorTurfIds = venuesSnap.docs.map(d => d.id);
 
+            console.log('🏟️ Vendor Turfs:', vendorTurfIds);
+
             if (vendorTurfIds.length === 0) {
                 setBookings([]);
-                setStats(prevStats => ({ ...prevStats, totalBookings: 0, totalRevenue: 0 })); // Reset stats
+                setStats(prev => ({ ...prev, totalBookings: 0, totalRevenue: 0 }));
                 setLoading(false);
                 return;
             }
@@ -81,18 +83,20 @@ export default function VendorDailyReportingPage() {
             );
 
             const snapshot = await getDocs(bookingsQ);
+            console.log('📅 Total Bookings Found (All Dates):', snapshot.size);
 
-            // 3. Filter by Date in Memory (Handles Timestamp vs String inconsistencies)
+            // 3. Filter by Date in Memory & Aggregate Stats
             const dayBookings = [];
             let totalRev = 0, cash = 0, digital = 0;
             let completed = 0, cancelled = 0, noShows = 0;
             const customerSet = new Set();
             let peakHrs = 0, offPeakHrs = 0;
 
-            const selectedStart = new Date(selectedDate);
-            selectedStart.setHours(0, 0, 0, 0);
-            const selectedEnd = new Date(selectedDate);
-            selectedEnd.setHours(23, 59, 59, 999);
+            const [sYear, sMonth, sDay] = selectedDate.split('-').map(Number);
+            const selectedStart = new Date(sYear, sMonth - 1, sDay, 0, 0, 0, 0);
+            const selectedEnd = new Date(sYear, sMonth - 1, sDay, 23, 59, 59, 999);
+
+            console.log('🔍 Filtering for Range:', selectedStart.toLocaleString(), ' - ', selectedEnd.toLocaleString());
 
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
@@ -103,13 +107,12 @@ export default function VendorDailyReportingPage() {
                     bookingDate = data.date.toDate();
                 } else if (data.date) {
                     bookingDate = new Date(data.date);
-                } else if (data.dateTime) { // Fallback to dateTime field if date is missing
+                } else if (data.dateTime) {
                     bookingDate = new Date(data.dateTime);
                 } else {
                     bookingDate = data.createdAt ? data.createdAt.toDate() : new Date();
                 }
 
-                // Check if matches selected date
                 if (bookingDate >= selectedStart && bookingDate <= selectedEnd) {
                     dayBookings.push({ id: docSnap.id, ...data });
 
@@ -122,7 +125,9 @@ export default function VendorDailyReportingPage() {
                     else if (data.status === 'cancelled') cancelled++;
                     if (data.noShow) noShows++;
 
-                    if (data.userId) customerSet.add(data.userId);
+                    // Robust Customer Tracking (User ID -> Phone -> Name)
+                    const uniqueCustomer = data.userId || data.customerPhone || data.customerName || data.guestInfo?.phone;
+                    if (uniqueCustomer) customerSet.add(uniqueCustomer);
 
                     const hour = data.timeSlot ? parseInt(data.timeSlot.split(':')[0]) : 12;
                     if (hour >= 17 && hour <= 22) peakHrs++;
@@ -137,21 +142,24 @@ export default function VendorDailyReportingPage() {
                 return tB - tA;
             });
 
+            console.log('✅ Matched Bookings:', dayBookings.length);
+
             setBookings(dayBookings);
-            setStats({
+            setStats(prev => ({
+                ...prev,
                 totalRevenue: totalRev,
                 cashCollection: cash,
                 digitalPayments: digital,
                 totalBookings: dayBookings.length,
                 completedBookings: completed,
                 cancelledBookings: cancelled,
-                newCustomers: Math.floor(customerSet.size * 0.3),
+                newCustomers: Math.floor(customerSet.size * 0.3), // Simulated for now
                 returningCustomers: Math.ceil(customerSet.size * 0.7),
                 noShows: noShows,
                 peakHourBookings: peakHrs,
                 offPeakBookings: offPeakHrs,
                 avgUtilization: dayBookings.length > 0 ? Math.min(Math.round((dayBookings.length / 20) * 100), 100) : 0,
-            });
+            }));
         } catch (err) {
             console.error('Error fetching daily data:', err);
         } finally {
