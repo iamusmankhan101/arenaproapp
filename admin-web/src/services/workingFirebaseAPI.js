@@ -1318,7 +1318,7 @@ export const workingAdminAPI = {
               ...data,
               date: data.date ? (data.date.toDate ? data.date.toDate() : new Date(data.date)) : new Date(),
               amount: Number(data.totalAmount || data.amount) || 0,
-              customerName: data.userName || data.customerName || 'Unknown User',
+              customerName: data.userName || data.customerName || data.name || (data.user && (data.user.name || data.user.displayName)) || 'Guest',
               venueName: venueMap[data.turfId] || data.turfName || 'Unknown Venue',
               status: data.status || 'completed'
             };

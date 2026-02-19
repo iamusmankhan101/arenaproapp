@@ -117,103 +117,134 @@ export default function ReportsPage() {
 
   const { monthlyData = [], sportsData = [], venuePerformance = [], summary = {}, recentTransactions = [] } = revenueReport || {};
 
-  const handleExport = () => {
-    const doc = new jsPDF();
-    const brandTeal = '#004d43';
+  const handleExport = async () => {
+    try {
+      console.log('📄 Exporting PDF report with identity...');
 
-    // --- Header Section ---
-    doc.setFillColor(brandTeal);
-    doc.rect(0, 0, 210, 40, 'F');
+      const loadImage = (url) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.src = url;
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+        });
+      };
 
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ARENA PRO', 14, 25);
+      const logoImg = await loadImage('/logo.png');
+      const doc = new jsPDF();
+      const brandTeal = '#004d43';
+      const brandGold = '#e8ee26'; // Brand Gold
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const dateStr = format(new Date(), 'dd MMM yyyy HH:mm');
-    doc.text(`Generated on: ${dateStr}`, 14, 32);
+      // --- Header Section ---
+      doc.setFillColor(brandTeal);
+      doc.rect(0, 0, 210, 40, 'F');
 
-    doc.setFontSize(14);
-    doc.text('SALES STATEMENT', 150, 25, { align: 'right' });
-
-    // --- Summary Cards Section ---
-    doc.setTextColor(brandTeal);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SUMMARY OVERVIEW', 14, 55);
-
-    // Render 4 summary boxes
-    const summaryItems = [
-      { label: 'Total Bookings', value: summary.totalBookings?.toLocaleString() || '0' },
-      { label: 'Total Revenue', value: `PKR ${summary.totalRevenue?.toLocaleString() || '0'}` },
-      { label: 'Active Venues', value: summary.activeVenues || '0' },
-      { label: 'Total Customers', value: summary.totalCustomers?.toLocaleString() || '0' }
-    ];
-
-    summaryItems.forEach((item, index) => {
-      const x = 14 + (index * 48);
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.1);
-      doc.rect(x, 60, 42, 25);
-
-      doc.setFontSize(8);
-      doc.setTextColor(100, 100, 100);
-      doc.text(item.label.toUpperCase(), x + 21, 68, { align: 'center' });
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ARENA PRO', 14, 25);
 
       doc.setFontSize(10);
-      doc.setTextColor(brandTeal);
-      doc.setFont('helvetica', 'bold');
-      doc.text(String(item.value), x + 21, 78, { align: 'center' });
-    });
+      doc.setFont('helvetica', 'normal');
+      const dateStr = format(new Date(), 'dd MMM yyyy HH:mm');
+      doc.text(`Generated on: ${dateStr}`, 14, 32);
 
-    // --- Detailed Table Section ---
-    doc.setTextColor(brandTeal);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('DETAILED SALES REPORT', 14, 100);
+      doc.setFontSize(14);
+      doc.text('SALES STATEMENT', 150, 25, { align: 'right' });
 
-    autoTable(doc, {
-      startY: 105,
-      head: [['Date', 'Booking ID', 'Customer', 'Venue', 'Sport', 'Amount', 'Status']],
-      body: recentTransactions.map(t => [
-        format(new Date(t.date), 'MMM dd, yyyy HH:mm'),
-        `#${t.id.slice(0, 8)}`,
-        t.customerName,
-        t.venueName,
-        t.sport || 'General',
-        `PKR ${t.amount.toLocaleString()}`,
-        t.status.toUpperCase()
-      ]),
-      headStyles: {
-        fillColor: [0, 77, 67], // #004d43
-        textColor: [255, 255, 255],
-        fontSize: 10,
-        fontStyle: 'bold'
-      },
-      bodyStyles: {
-        fontSize: 9,
-        textColor: [50, 50, 50]
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
-      },
-      columnStyles: {
-        5: { fontStyle: 'bold', textColor: [0, 77, 67] } // Amount column
-      },
-      margin: { top: 10, left: 14, right: 14 },
-      didDrawPage: (data) => {
-        // Footer: Page Number
-        const str = 'Page ' + doc.internal.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(str, 196, 285, { align: 'right' });
+      // Add Logo if exists
+      if (logoImg) {
+        doc.addImage(logoImg, 'PNG', 160, 6, 28, 14); // Positioned in header
       }
-    });
 
-    // --- Save the PDF ---
-    doc.save(`ArenaPro_Report_${format(new Date(), 'yyyyMMdd')}.pdf`);
+      // --- Summary Cards Section ---
+      doc.setTextColor(brandTeal);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('SUMMARY OVERVIEW', 14, 55);
+
+      // Render 4 summary boxes
+      const summaryItems = [
+        { label: 'Total Bookings', value: summary.totalBookings?.toLocaleString() || '0' },
+        { label: 'Total Revenue', value: `PKR ${summary.totalRevenue?.toLocaleString() || '0'}` },
+        { label: 'Active Venues', value: String(summary.activeVenues || '0') },
+        { label: 'Total Customers', value: summary.totalCustomers?.toLocaleString() || '0' }
+      ];
+
+      summaryItems.forEach((item, index) => {
+        const x = 14 + (index * 48);
+
+        // Branded border (using brand teal)
+        doc.setDrawColor(0, 77, 67);
+        doc.setLineWidth(0.5);
+        doc.rect(x, 60, 42, 25);
+
+        // Sub-box for label (gold background)
+        doc.setFillColor(232, 238, 38); // brand gold #e8ee26
+        doc.rect(x, 60, 42, 7, 'F');
+
+        doc.setFontSize(7);
+        doc.setTextColor(0, 77, 67); // dark teal text on gold
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(item.label).toUpperCase(), x + 21, 65, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setTextColor(brandTeal);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(item.value), x + 21, 78, { align: 'center' });
+      });
+
+      // --- Detailed Table Section ---
+      doc.setTextColor(brandTeal);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DETAILED SALES REPORT', 14, 100);
+
+      autoTable(doc, {
+        startY: 105,
+        head: [['Date', 'Booking ID', 'Customer', 'Venue', 'Sport', 'Amount', 'Status']],
+        body: recentTransactions.map(t => [
+          format(new Date(t.date), 'MMM dd, yyyy HH:mm'),
+          `#${String(t.id || '').split('-')[0].toUpperCase()}`, // Safer ID slice/format
+          String(t.customerName || 'N/A'),
+          String(t.venueName || 'N/A'),
+          String(t.sport || 'General'),
+          `PKR ${Number(t.amount || 0).toLocaleString()}`,
+          String(t.status || 'N/A').toUpperCase()
+        ]),
+        headStyles: {
+          fillColor: [0, 77, 67], // #004d43
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 9,
+          textColor: [50, 50, 50]
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        },
+        columnStyles: {
+          5: { fontStyle: 'bold', textColor: [0, 77, 67] } // Amount column
+        },
+        margin: { top: 10, left: 14, right: 14 },
+        didDrawPage: (data) => {
+          // Footer: Page Number
+          const str = 'Page ' + String(doc.internal.getNumberOfPages());
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(str, 196, 285, { align: 'right' });
+        }
+      });
+
+      // --- Save the PDF ---
+      doc.save(`ArenaPro_Report_${format(new Date(), 'yyyyMMdd')}.pdf`);
+      console.log('✅ PDF export successful');
+    } catch (error) {
+      console.error('❌ PDF Export Error:', error);
+      alert('Failed to generate report. Please try again.');
+    }
   };
 
   if (reportsLoading) {
