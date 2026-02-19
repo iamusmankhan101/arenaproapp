@@ -24,8 +24,6 @@ import {
   Event,
   LocationOn,
   People,
-  ArrowUpward,
-  Download,
   Payments,
   Assessment,
 } from '@mui/icons-material';
@@ -110,14 +108,6 @@ const StatCard = ({ title, value, icon, color, change }) => (
 export default function ReportsPage() {
   const dispatch = useDispatch();
   const { revenueReport, reportsLoading } = useSelector((state) => state.admin);
-
-  useEffect(() => {
-    dispatch(fetchRevenueReport());
-  }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(fetchRevenueReport());
-  }, [dispatch]);
 
   useEffect(() => {
     dispatch(fetchRevenueReport());
