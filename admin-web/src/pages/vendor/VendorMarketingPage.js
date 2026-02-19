@@ -147,11 +147,11 @@ export default function VendorMarketingPage() {
     return (
         <Box>
             {/* Header */}
-            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #e65100 0%, #ff9800 100%)' }}>
+            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)' }}>
                 <CardContent sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar sx={{ bgcolor: 'white', width: 48, height: 48 }}>
-                            <Campaign sx={{ color: '#e65100', fontSize: 28 }} />
+                            <Campaign sx={{ color: '#004d43', fontSize: 28 }} />
                         </Avatar>
                         <Box>
                             <Typography variant="h5" fontWeight={700} color="white">Marketing & Promos</Typography>
@@ -163,7 +163,7 @@ export default function VendorMarketingPage() {
                     {isPro ? (
                         <Chip icon={<Star sx={{ color: '#FFD700 !important' }} />} label="PRO ENABLED" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 700 }} />
                     ) : (
-                        <Button variant="contained" sx={{ bgcolor: 'white', color: '#e65100', fontWeight: 700 }}>Upgrade to Pro</Button>
+                        <Button variant="contained" sx={{ bgcolor: 'white', color: '#004d43', fontWeight: 700 }}>Upgrade to Pro</Button>
                     )}
                 </CardContent>
             </Card>
@@ -183,28 +183,39 @@ export default function VendorMarketingPage() {
                     {/* 1. Priority Placement Status */}
                     <Grid item xs={12} md={4}>
                         <Card sx={{ height: '100%', borderRadius: 3, position: 'relative', overflow: 'hidden' }}>
-                            <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 6, bgcolor: '#00c853' }} />
+                            <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 6, bgcolor: isPro ? '#00c853' : '#bdbdbd' }} />
                             <CardContent sx={{ p: 3 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                    <TrendingUp sx={{ color: '#00c853', fontSize: 28 }} />
+                                    <TrendingUp sx={{ color: isPro ? '#00c853' : '#757575', fontSize: 28 }} />
                                     <Typography variant="h6" fontWeight={700}>Priority Placement</Typography>
                                 </Box>
 
-                                <Box sx={{ p: 2, bgcolor: '#e8f5e9', borderRadius: 2, border: '1px solid #c8e6c9', mb: 3 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <CheckCircle sx={{ color: '#00c853', fontSize: 20 }} />
-                                        <Typography variant="subtitle2" fontWeight={700} color="#2e7d32">Active Search Boost</Typography>
+                                {isPro ? (
+                                    <>
+                                        <Box sx={{ p: 2, bgcolor: '#e8f5e9', borderRadius: 2, border: '1px solid #c8e6c9', mb: 3 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <CheckCircle sx={{ color: '#00c853', fontSize: 20 }} />
+                                                <Typography variant="subtitle2" fontWeight={700} color="#2e7d32">Active Search Boost</Typography>
+                                            </Box>
+                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                Your venues appear in top 3 results for your category.
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography variant="body2" color="text.secondary">Boosted Views</Typography>
+                                            <Typography variant="body2" fontWeight={700} color="#00c853">+{stats?.boostedViews || 0} views</Typography>
+                                        </Box>
+                                        <LinearProgress variant="determinate" value={75} color="success" sx={{ height: 6, borderRadius: 3 }} />
+                                    </>
+                                ) : (
+                                    <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 2, border: '1px solid #eeeeee', textAlign: 'center' }}>
+                                        <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1 }}>Feature Locked 🔒</Typography>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                            Upgrade to Pro to boost your venue's visibility by up to 300%.
+                                        </Typography>
+                                        <Button variant="outlined" color="primary" size="small">Upgrade Now</Button>
                                     </Box>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                                        Your venues appear in top 3 results for "Futsal" in Lahore.
-                                    </Typography>
-                                </Box>
-
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                    <Typography variant="body2" color="text.secondary">Boosted Views</Typography>
-                                    <Typography variant="body2" fontWeight={700} color="#00c853">+{stats?.boostedViews || 0} views</Typography>
-                                </Box>
-                                <LinearProgress variant="determinate" value={75} color="success" sx={{ height: 6, borderRadius: 3 }} />
+                                )}
                             </CardContent>
                         </Card>
                     </Grid>
@@ -220,23 +231,23 @@ export default function VendorMarketingPage() {
 
                                 <Grid container spacing={2}>
                                     <Grid item xs={4}>
-                                        <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 2, textAlign: 'center' }}>
-                                            <Visibility sx={{ color: '#1565c0', fontSize: 24, mb: 1 }} />
-                                            <Typography variant="h5" fontWeight={800}>{stats?.organicViews + stats?.boostedViews}</Typography>
+                                        <Box sx={{ p: 2, bgcolor: '#e0f2f1', borderRadius: 2, textAlign: 'center' }}>
+                                            <Visibility sx={{ color: '#004d43', fontSize: 24, mb: 1 }} />
+                                            <Typography variant="h5" fontWeight={800} color="#004d43">{stats?.organicViews + stats?.boostedViews}</Typography>
                                             <Typography variant="caption" color="text.secondary">Total Profile Views</Typography>
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Box sx={{ p: 2, bgcolor: '#fff3e0', borderRadius: 2, textAlign: 'center' }}>
-                                            <AdsClick sx={{ color: '#ef6c00', fontSize: 24, mb: 1 }} />
-                                            <Typography variant="h5" fontWeight={800} color="#ef6c00">{stats?.dealClicks}</Typography>
+                                        <Box sx={{ p: 2, bgcolor: '#e0f2f1', borderRadius: 2, textAlign: 'center' }}>
+                                            <AdsClick sx={{ color: '#00695c', fontSize: 24, mb: 1 }} />
+                                            <Typography variant="h5" fontWeight={800} color="#00695c">{stats?.dealClicks}</Typography>
                                             <Typography variant="caption" color="text.secondary">Promo Clicks</Typography>
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
                                         <Box sx={{ p: 2, bgcolor: '#e0f2f1', borderRadius: 2, textAlign: 'center' }}>
-                                            <LocalOffer sx={{ color: '#00695c', fontSize: 24, mb: 1 }} />
-                                            <Typography variant="h5" fontWeight={800} color="#00695c">{stats?.ctr}</Typography>
+                                            <LocalOffer sx={{ color: '#004d43', fontSize: 24, mb: 1 }} />
+                                            <Typography variant="h5" fontWeight={800} color="#004d43">{stats?.ctr}</Typography>
                                             <Typography variant="caption" color="text.secondary">Click-Through Rate</Typography>
                                         </Box>
                                     </Grid>
@@ -281,7 +292,7 @@ export default function VendorMarketingPage() {
                                     ))}
                                     {promos.length === 0 && (
                                         <Grid item xs={12}>
-                                            <Alert severity="info">No active promos. Create a "Weekend Special" to boost bookings!</Alert>
+                                            <Alert severity="info" sx={{ bgcolor: '#e0f2f1', color: '#004d43', border: '1px solid #b2dfdb' }}>No active promos. Create a "Weekend Special" to boost bookings!</Alert>
                                         </Grid>
                                     )}
                                 </Grid>
@@ -296,11 +307,11 @@ export default function VendorMarketingPage() {
                 <Grid container spacing={3}>
                     {/* Quota Card */}
                     <Grid item xs={12} md={4}>
-                        <Card sx={{ height: '100%', borderRadius: 3, bgcolor: '#263238', color: 'white' }}>
+                        <Card sx={{ height: '100%', borderRadius: 3, bgcolor: '#004d43', color: 'white' }}>
                             <CardContent sx={{ p: 3 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                                     <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.1)', width: 56, height: 56 }}>
-                                        <Message sx={{ color: '#4fc3f7', fontSize: 32 }} />
+                                        <Message sx={{ color: '#b2dfdb', fontSize: 32 }} />
                                     </Avatar>
                                     <Box>
                                         <Typography variant="h6" fontWeight={700}>Campaign Quota</Typography>
@@ -314,7 +325,7 @@ export default function VendorMarketingPage() {
                                     Campaigns remaining this month
                                 </Typography>
                                 <Button variant="contained" fullWidth onClick={() => setOpenPushDialog(true)} disabled={pushQuota.remaining <= 0}
-                                    sx={{ bgcolor: '#4fc3f7', color: '#000', fontWeight: 700, '&:hover': { bgcolor: '#29b6f6' } }}>
+                                    sx={{ bgcolor: 'white', color: '#004d43', fontWeight: 700, '&:hover': { bgcolor: '#e0f2f1' } }}>
                                     Create New Campaign
                                 </Button>
                             </CardContent>
@@ -339,7 +350,7 @@ export default function VendorMarketingPage() {
                                                             <Chip size="small" icon={<Visibility sx={{ fontSize: '14px !important' }} />} label={`${push.reach || 0} reached`} variant="outlined" />
                                                         </Box>
                                                     </Box>
-                                                    <Avatar sx={{ bgcolor: 'rgba(3, 169, 244, 0.1)', color: '#03a9f4' }}><Message /></Avatar>
+                                                    <Avatar sx={{ bgcolor: '#e0f2f1', color: '#004d43' }}><Message /></Avatar>
                                                 </CardContent>
                                             </Card>
                                         </Grid>
@@ -362,8 +373,8 @@ export default function VendorMarketingPage() {
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 0.5 }}>
                         <Grid item xs={12}>
-                            <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, border: '1px solid #bbdefb', mb: 2 }}>
-                                <Typography variant="subtitle2" fontWeight={700} color="#1565c0">🎯 Audience: 10km Radius</Typography>
+                            <Box sx={{ p: 2, bgcolor: '#e0f2f1', borderRadius: 2, border: '1px solid #b2dfdb', mb: 2 }}>
+                                <Typography variant="subtitle2" fontWeight={700} color="#004d43">🎯 Audience: 10km Radius</Typography>
                                 <Typography variant="body2" color="text.secondary">Automatically targeting users near your venue.</Typography>
                             </Box>
                         </Grid>
@@ -390,7 +401,7 @@ export default function VendorMarketingPage() {
                 <DialogActions>
                     <Button onClick={() => setOpenPushDialog(false)}>Cancel</Button>
                     <Button variant="contained" onClick={handleCreatePush} disabled={saving}
-                        sx={{ bgcolor: '#03a9f4', color: 'white', fontWeight: 700, '&:hover': { bgcolor: '#0288d1' } }}>
+                        sx={{ bgcolor: '#004d43', color: 'white', fontWeight: 700, '&:hover': { bgcolor: '#00332d' } }}>
                         Send Campaign ({pushQuota.remaining} left)
                     </Button>
                 </DialogActions>
@@ -433,7 +444,7 @@ export default function VendorMarketingPage() {
                 <DialogActions>
                     <Button onClick={() => setOpenPromoDialog(false)}>Cancel</Button>
                     <Button variant="contained" onClick={handleCreatePromo} disabled={saving}
-                        sx={{ bgcolor: '#e65100', '&:hover': { bgcolor: '#bf360c' } }}>
+                        sx={{ bgcolor: '#004d43', '&:hover': { bgcolor: '#00332d' } }}>
                         Launch Promo
                     </Button>
                 </DialogActions>

@@ -1086,21 +1086,27 @@ export const workingAdminAPI = {
     }
   },
 
-  // Get Marketing Stats (Mock for now)
+  // Get Marketing Stats (Real)
   async getMarketingStats(vendorId) {
     try {
       console.log('📊 Fetching marketing stats for vendor:', vendorId);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const firestore = db;
+      // improved: Fetch from a dedicated stats collection. 
+      // If no stats exist yet (new vendor), return 0s.
+      const statsRef = doc(firestore, 'vendor_stats', vendorId);
+      const statsSnap = await getDoc(statsRef);
 
-      // Mock Data
-      return {
-        organicViews: 1250,
-        boostedViews: 3400, // Priority Placement effect
-        dealClicks: 450,
-        ctr: '12.5%',
-        topVenueRank: '#1 in Futsal'
-      };
+      if (statsSnap.exists()) {
+        return statsSnap.data();
+      } else {
+        return {
+          organicViews: 0,
+          boostedViews: 0,
+          dealClicks: 0,
+          ctr: '0%',
+          topVenueRank: 'N/A'
+        };
+      }
     } catch (error) {
       console.error('❌ Error fetching marketing stats:', error);
       return null;
@@ -1117,8 +1123,8 @@ export const workingAdminAPI = {
       const campaignPayload = {
         ...campaignData,
         createdAt: new Date(),
-        status: 'scheduled', // or 'sent' immediately
-        reach: Math.floor(Math.random() * 500) + 100, // Mock reach for now
+        status: 'scheduled',
+        reach: 0, // Initial reach is 0 until sent
       };
 
       const docRef = await addDoc(campaignsRef, campaignPayload);
@@ -1130,19 +1136,37 @@ export const workingAdminAPI = {
     }
   },
 
-  // Get Push Quota (Mock)
+  // Get Push Quota (Real)
   async getPushQuota(vendorId) {
     try {
       console.log('📊 Fetching push quota for vendor:', vendorId);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const firestore = db;
+      const campaignsRef = collection(firestore, 'push_campaigns');
 
-      // Mock Quota: 5 total, random used
-      // In a real app, count documents in 'push_campaigns' where vendorId == vendorId AND date is this month
+      // Query specific to vendor
+      const q = query(campaignsRef, where('vendorId', '==', vendorId));
+      const querySnapshot = await getDocs(q);
+
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      // Filter for current month locally (avoids complex composite indexes for now)
+      const thisMonthCampaigns = querySnapshot.docs.filter(doc => {
+        const data = doc.data();
+        if (!data.createdAt) return false;
+        // Handle Firestore Timestamp or JS Date
+        const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      });
+
+      const used = thisMonthCampaigns.length;
+      const limit = 5; // Hardcoded limit for Pro Plan (could be fetched from plan details)
+
       return {
-        limit: 5,
-        used: 2, // Mock: Vendor has used 2 campaigns
-        remaining: 3
+        limit,
+        used,
+        remaining: Math.max(0, limit - used)
       };
     } catch (error) {
       console.error('❌ Error fetching push quota:', error);
