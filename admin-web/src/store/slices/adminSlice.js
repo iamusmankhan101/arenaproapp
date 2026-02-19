@@ -204,6 +204,18 @@ export const fetchVendors = createAsyncThunk(
   }
 );
 
+// Add vendor to Pro by email
+export const addVendorToPro = createAsyncThunk(
+  'admin/addVendorToPro',
+  async ({ email, name }, { rejectWithValue }) => {
+    try {
+      return await workingAdminAPI.addVendorToPro(email, name);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   // Dashboard
   dashboardStats: {
