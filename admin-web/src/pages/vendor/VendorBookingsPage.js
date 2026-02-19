@@ -18,8 +18,7 @@ import {
     Grid,
     FormControl,
     InputLabel,
-    Select,
-    CircularProgress
+    Select
 } from '@mui/material';
 import {
     Search,
@@ -29,8 +28,7 @@ import {
     Phone,
     Email,
     Refresh,
-    Add,
-    CalendarMonth
+    Add
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchBookings, updateBookingStatus, fetchVenues, createBooking } from '../../store/slices/adminSlice';
@@ -101,7 +99,7 @@ const ActionMenu = ({ booking, onAction }) => {
 
 export default function VendorBookingsPage() {
     const dispatch = useDispatch();
-    const { bookings, bookingsLoading, bookingsError, venues, loading } = useSelector(state => state.admin);
+    const { bookings, bookingsLoading, bookingsError, venues } = useSelector(state => state.admin);
     const { admin } = useSelector(state => state.auth);
 
     const [searchQuery, setSearchQuery] = useState('');
