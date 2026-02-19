@@ -1172,7 +1172,141 @@ export const workingAdminAPI = {
       console.error('❌ Error fetching push quota:', error);
       return { limit: 5, used: 0, remaining: 5 };
     }
-  }
+  },
+
+  // Get Revenue Report
+  async getRevenueReport(params = {}) {
+    try {
+      console.log('💰 Admin: Fetching revenue report...');
+      const firestore = initFirebase();
+      const bookingsRef = collection(firestore, 'bookings');
+
+      // Get all bookings (we'll filter in memory for simplicity as dataset is small)
+      // In production, use range queries
+      const querySnapshot = await getDocs(bookingsRef);
+
+      const monthlyData = {};
+      const sportsData = {};
+      const venuePerformance = {};
+
+      const now = new Date();
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(now.getMonth() - 5);
+      sixMonthsAgo.setDate(1);
+
+      // Initialize last 6 months
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(sixMonthsAgo);
+        d.setMonth(d.getMonth() + i);
+        const monthKey = d.toLocaleString('default', { month: 'short' });
+        monthlyData[monthKey] = { month: monthKey, bookings: 0, revenue: 0, customers: 0, customerSet: new Set() };
+      }
+
+      let totalRevenue = 0;
+      let totalBookings = 0;
+      let uniqueCustomers = new Set();
+      let activeVenues = new Set();
+
+      const bookings = [];
+
+      for (const doc of querySnapshot.docs) {
+        const booking = doc.data();
+
+        // Filter by vendor if needed
+        // Note: For now assuming global admin access or handling permissions elsewhere
+
+        const amount = Number(booking.totalAmount || booking.amount) || 0;
+        const date = booking.date ? (booking.date.toDate ? booking.date.toDate() : new Date(booking.date)) : new Date();
+        const monthKey = date.toLocaleString('default', { month: 'short' });
+
+        // Aggregate Global Stats
+        totalRevenue += amount;
+        totalBookings++;
+        if (booking.userId) uniqueCustomers.add(booking.userId);
+        if (booking.turfId) activeVenues.add(booking.turfId);
+
+        // Aggregate Monthly Data (only last 6 months)
+        if (monthlyData[monthKey]) {
+          monthlyData[monthKey].bookings++;
+          monthlyData[monthKey].revenue += amount;
+          if (booking.userId) monthlyData[monthKey].customerSet.add(booking.userId);
+        }
+
+        // Aggregate Sports Data
+        const sport = booking.sport || 'Other';
+        if (!sportsData[sport]) sportsData[sport] = 0;
+        sportsData[sport]++;
+
+        // Aggregate Venue Performance
+        // We'll need venue names, fetching venues...
+      }
+
+      // Process Monthly Data for Chart
+      const monthlyChartData = Object.values(monthlyData).map(d => ({
+        ...d,
+        customers: d.customerSet.size,
+        // Remove Set from final object
+        customerSet: undefined
+      }));
+
+      // Process Sports Data
+      const sportsChartData = Object.entries(sportsData)
+        .map(([name, value]) => ({
+          name,
+          value,
+          color: name === 'Football' ? '#004d43' : name === 'Cricket' ? '#e8ee26' : '#00796b' // Brand colors
+        }))
+        .sort((a, b) => b.value - a.value);
+
+      // Fetch Venue Details for Performance
+      // This might be expensive if many venues, optimizing...
+      // For now, let's just get top venues by ID and then fetch names if needed or use what's in booking
+      // Assuming booking has turfName snapshot
+
+      const venueStats = {};
+      querySnapshot.docs.forEach(doc => {
+        const b = doc.data();
+        const venueName = b.turfName || b.venueName || b.turfId || 'Unknown Venue';
+        if (!venueStats[venueName]) venueStats[venueName] = { name: venueName, bookings: 0, revenue: 0 };
+        venueStats[venueName].bookings++;
+        venueStats[venueName].revenue += (Number(b.totalAmount || b.amount) || 0);
+      });
+
+      const venuePerformanceData = Object.values(venueStats)
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5); // Top 5
+
+      // Calculate changes (simple comparison with last month)
+      const months = Object.keys(monthlyData);
+      const currentMonthKey = now.toLocaleString('default', { month: 'short' });
+      const lastMonthKey = months[months.length - 2]; // 2nd to last is "last month" relative to "current" in list?
+      // Actually monthlyData is fixed 6 months. Last element is current month (approx).
+
+      const lastMonthStats = monthlyData[months[months.length - 1]];
+      const prevMonthStats = monthlyData[months[months.length - 2]];
+
+      const revenueChange = prevMonthStats?.revenue ? ((lastMonthStats.revenue - prevMonthStats.revenue) / prevMonthStats.revenue * 100).toFixed(1) : 0;
+      const bookingsChange = prevMonthStats?.bookings ? ((lastMonthStats.bookings - prevMonthStats.bookings) / prevMonthStats.bookings * 100).toFixed(1) : 0;
+
+      return {
+        monthlyData: monthlyChartData,
+        sportsData: sportsChartData,
+        venuePerformance: venuePerformanceData,
+        summary: {
+          totalBookings,
+          totalRevenue,
+          activeVenues: activeVenues.size,
+          totalCustomers: uniqueCustomers.size,
+          revenueChange: Number(revenueChange),
+          bookingsChange: Number(bookingsChange)
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Admin: Error fetching revenue report:', error);
+      throw error;
+    }
+  },
 };
 
 export default workingAdminAPI;

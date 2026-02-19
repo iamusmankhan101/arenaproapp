@@ -1,4 +1,6 @@
-import React from 'react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchRevenueReport } from '../store/slices/adminSlice';
 import {
   Box,
   Typography,
@@ -35,28 +37,20 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const monthlyData = [
-  { month: 'Jan', bookings: 145, revenue: 217500, customers: 89 },
-  { month: 'Feb', bookings: 167, revenue: 250500, customers: 102 },
-  { month: 'Mar', bookings: 189, revenue: 283500, customers: 115 },
-  { month: 'Apr', bookings: 201, revenue: 301500, customers: 128 },
-  { month: 'May', bookings: 223, revenue: 334500, customers: 141 },
-  { month: 'Jun', bookings: 245, revenue: 367500, customers: 154 },
-];
-
-const sportsData = [
-  { name: 'Football', value: 45, color: '#4CAF50' },
-  { name: 'Cricket', value: 35, color: '#FF9800' },
-  { name: 'Padel', value: 20, color: '#2196F3' },
-];
-
-const venuePerformance = [
-  { name: 'Elite Football Arena', bookings: 89, revenue: 133500 },
-  { name: 'Sports Complex', bookings: 76, revenue: 114000 },
-  { name: 'Green Field', bookings: 65, revenue: 97500 },
-  { name: 'Victory Ground', bookings: 54, revenue: 81000 },
-  { name: 'Champions Arena', bookings: 43, revenue: 64500 },
-];
+// Custom Tooltip for Charts
+const CustomTooltip = ({ active, payload, label, measure = 'Value', prefix = '' }) => {
+  if (active && payload && payload.length) {
+    return (
+      <Paper sx={{ p: 1.5, border: '1px solid rgba(255,255,255,0.1)', bgcolor: 'rgba(255, 255, 255, 0.95)' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#004d43' }}>{label}</Typography>
+        <Typography variant="body2" sx={{ color: '#00796b' }}>
+          {measure}: {prefix}{Number(payload[0].value).toLocaleString()}
+        </Typography>
+      </Paper>
+    );
+  }
+  return null;
+};
 
 const StatCard = ({ title, value, icon, color, change }) => (
   <Card>
@@ -98,6 +92,15 @@ const StatCard = ({ title, value, icon, color, change }) => (
 );
 
 export default function ReportsPage() {
+  const dispatch = useDispatch();
+  const { revenueReport, reportsLoading } = useSelector((state) => state.admin);
+
+  useEffect(() => {
+    dispatch(fetchRevenueReport());
+  }, [dispatch]);
+
+  const { monthlyData = [], sportsData = [], venuePerformance = [], summary = {} } = revenueReport || {};
+
   return (
     <Box>
       {/* Header */}
@@ -131,37 +134,37 @@ export default function ReportsPage() {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Bookings"
-            value="1,247"
+            value={summary.totalBookings?.toLocaleString() || '0'}
             icon={<Event />}
-            color="#4CAF50"
-            change={12.5}
+            color="#004d43"
+            change={summary.bookingsChange || 0}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Revenue"
-            value="PKR 2.45M"
+            value={`PKR ${summary.totalRevenue?.toLocaleString() || '0'}`}
             icon={<Payments />}
-            color="#FF9800"
-            change={8.3}
+            color="#e8ee26"
+            change={summary.revenueChange || 0}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Active Venues"
-            value="15"
+            value={summary.activeVenues || '0'}
             icon={<LocationOn />}
-            color="#2196F3"
-            change={5.2}
+            color="#00897b"
+          // change={5.2}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Customers"
-            value="892"
+            value={summary.totalCustomers?.toLocaleString() || '0'}
             icon={<People />}
-            color="#9C27B0"
-            change={15.7}
+            color="#7b1fa2"
+          // change={15.7}
           />
         </Grid>
       </Grid>
@@ -177,14 +180,14 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => [`PKR ${value.toLocaleString()}`, 'Revenue']} />
+                <XAxis dataKey="month" stroke="#004d43" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#004d43" style={{ fontSize: '12px' }} />
+                <Tooltip content={<CustomTooltip measure="Revenue" prefix="PKR " />} />
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#4CAF50"
-                  fill="#4CAF50"
+                  stroke="#004d43"
+                  fill="#004d43"
                   fillOpacity={0.3}
                 />
               </AreaChart>
@@ -229,15 +232,15 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
+                <XAxis dataKey="month" stroke="#004d43" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#004d43" style={{ fontSize: '12px' }} />
+                <Tooltip content={<CustomTooltip measure="Bookings" />} />
                 <Line
                   type="monotone"
                   dataKey="bookings"
-                  stroke="#2196F3"
+                  stroke="#00796b"
                   strokeWidth={3}
-                  dot={{ fill: '#2196F3', strokeWidth: 2, r: 6 }}
+                  dot={{ fill: '#00796b', strokeWidth: 2, r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -253,10 +256,10 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="customers" fill="#9C27B0" radius={[4, 4, 0, 0]} />
+                <XAxis dataKey="month" stroke="#004d43" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#004d43" style={{ fontSize: '12px' }} />
+                <Tooltip content={<CustomTooltip measure="Active Customers" />} />
+                <Bar dataKey="customers" fill="#e8ee26" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Paper>
@@ -271,15 +274,15 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={venuePerformance} layout="horizontal">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} />
+                <XAxis type="number" stroke="#004d43" style={{ fontSize: '12px' }} />
+                <YAxis dataKey="name" type="category" width={150} stroke="#004d43" style={{ fontSize: '11px', fontWeight: 500 }} />
                 <Tooltip formatter={(value, name) => [
                   name === 'revenue' ? `PKR ${value.toLocaleString()}` : value,
                   name === 'revenue' ? 'Revenue' : 'Bookings'
                 ]} />
                 <Legend />
-                <Bar dataKey="bookings" fill="#4CAF50" name="Bookings" />
-                <Bar dataKey="revenue" fill="#FF9800" name="Revenue" />
+                <Bar dataKey="bookings" fill="#004d43" name="Bookings" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="revenue" fill="#e8ee26" name="Revenue" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Paper>
