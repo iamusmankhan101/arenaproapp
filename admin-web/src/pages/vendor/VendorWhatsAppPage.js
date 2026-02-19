@@ -15,11 +15,11 @@ import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } 
 import { db } from '../../config/firebase';
 
 const TEMPLATE_TYPES = [
-    { value: 'booking_confirmation', label: 'Booking Confirmation', icon: <CheckCircle sx={{ fontSize: 18 }} /> },
-    { value: 'reminder', label: 'Reminder', icon: <Schedule sx={{ fontSize: 18 }} /> },
-    { value: 'promotion', label: 'Promotion', icon: <Campaign sx={{ fontSize: 18 }} /> },
-    { value: 'follow_up', label: 'Follow Up', icon: <Message sx={{ fontSize: 18 }} /> },
-    { value: 'custom', label: 'Custom', icon: <Send sx={{ fontSize: 18 }} /> },
+    { value: 'booking_confirmation', label: 'Booking Confirmation', icon: <CheckCircle sx={{ fontSize: 18, color: '#004d43' }} /> },
+    { value: 'reminder', label: 'Reminder', icon: <Schedule sx={{ fontSize: 18, color: '#004d43' }} /> },
+    { value: 'promotion', label: 'Promotion', icon: <Campaign sx={{ fontSize: 18, color: '#004d43' }} /> },
+    { value: 'follow_up', label: 'Follow Up', icon: <Message sx={{ fontSize: 18, color: '#004d43' }} /> },
+    { value: 'custom', label: 'Custom', icon: <Send sx={{ fontSize: 18, color: '#004d43' }} /> },
 ];
 
 const DEFAULT_TEMPLATES = [
@@ -309,7 +309,7 @@ export default function VendorWhatsAppPage() {
                             </Grid>
                             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                                 <Button variant="contained" size="small" onClick={handleSaveSettings}
-                                    sx={{ bgcolor: '#075e54', '&:hover': { bgcolor: '#064e46' }, textTransform: 'none', fontWeight: 600, borderRadius: 2 }}>
+                                    sx={{ bgcolor: '#075e54', color: '#e8ee26', '&:hover': { bgcolor: '#064e46' }, textTransform: 'none', fontWeight: 600, borderRadius: 2 }}>
                                     Save Settings
                                 </Button>
                             </Box>
@@ -353,7 +353,7 @@ export default function VendorWhatsAppPage() {
                                                             </Box>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Chip label={typeInfo.label} size="small" sx={{ fontWeight: 600, fontSize: '0.75rem' }} />
+                                                            <Chip label={typeInfo.label} size="small" sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, fontSize: '0.75rem' }} />
                                                         </TableCell>
                                                         <TableCell sx={{ maxWidth: 300 }}>
                                                             <Typography variant="caption" color="text.secondary" sx={{
@@ -417,7 +417,7 @@ export default function VendorWhatsAppPage() {
                                             </TableCell>
                                             <TableCell>{log.recipientPhone}</TableCell>
                                             <TableCell>
-                                                <Chip label={log.type?.replace('_', ' ') || 'Notification'} size="small" variant="outlined" />
+                                                <Chip label={log.type?.replace('_', ' ') || 'Notification'} size="small" sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, fontSize: '0.75rem' }} />
                                             </TableCell>
                                             <TableCell sx={{ maxWidth: 300 }}>
                                                 <Typography variant="body2" sx={{

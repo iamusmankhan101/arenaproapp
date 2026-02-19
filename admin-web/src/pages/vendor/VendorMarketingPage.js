@@ -192,7 +192,7 @@ export default function VendorMarketingPage() {
 
                                 {isPro ? (
                                     <>
-                                        <Box sx={{ p: 2, bgcolor: 'rgba(231, 238, 38, 0.5)', mb: 3 }}>
+                                        <Box sx={{ p: 2, bgcolor: 'rgba(231, 238, 38, 0.5)', mb: 3, borderRadius: 2 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 <CheckCircle sx={{ color: '#004d43', fontSize: 20 }} />
                                                 <Typography variant="subtitle2" fontWeight={700} color="#004d43">Active Search Boost</Typography>
@@ -279,7 +279,7 @@ export default function VendorMarketingPage() {
                                                             <Typography variant="subtitle1" fontWeight={700}>{promo.title}</Typography>
                                                             <Typography variant="body2" color="text.secondary">{promo.venueName}</Typography>
                                                         </Box>
-                                                        <Avatar sx={{ bgcolor: '#e8ee26' }}><LocalOffer /></Avatar>
+                                                        <Avatar sx={{ bgcolor: '#004d43' }}><LocalOffer /></Avatar>
                                                     </Box>
                                                     <Divider sx={{ my: 1.5 }} />
                                                     <Typography variant="caption" display="block" sx={{ color: 'text.secondary', mb: 0.5 }}>

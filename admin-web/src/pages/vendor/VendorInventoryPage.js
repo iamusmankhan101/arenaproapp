@@ -170,34 +170,34 @@ export default function VendorInventoryPage() {
             {/* Stats */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={6} sm={3}>
-                    <Card sx={{ borderRadius: 2 }}>
+                    <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)', color: 'white' }}>
                         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                            <Typography variant="caption" color="text.secondary" fontWeight={600}>TOTAL ITEMS</Typography>
-                            <Typography variant="h5" fontWeight={800} color="#004d43">{totalItems}</Typography>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }} fontWeight={600}>TOTAL ITEMS</Typography>
+                            <Typography variant="h5" fontWeight={800} color="white">{totalItems}</Typography>
                         </CardContent>
                     </Card>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <Card sx={{ borderRadius: 2, border: '1px solid #fff3e0' }}>
+                    <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)', color: 'white' }}>
                         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                            <Typography variant="caption" color="text.secondary" fontWeight={600}>LOW STOCK</Typography>
-                            <Typography variant="h5" fontWeight={800} color="#e65100">{lowStockItems}</Typography>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }} fontWeight={600}>LOW STOCK</Typography>
+                            <Typography variant="h5" fontWeight={800} color="white">{lowStockItems}</Typography>
                         </CardContent>
                     </Card>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <Card sx={{ borderRadius: 2, border: '1px solid #ffebee' }}>
+                    <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)', color: 'white' }}>
                         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                            <Typography variant="caption" color="text.secondary" fontWeight={600}>OUT OF STOCK</Typography>
-                            <Typography variant="h5" fontWeight={800} color="#c62828">{outOfStockItems}</Typography>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }} fontWeight={600}>OUT OF STOCK</Typography>
+                            <Typography variant="h5" fontWeight={800} color="white">{outOfStockItems}</Typography>
                         </CardContent>
                     </Card>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <Card sx={{ borderRadius: 2 }}>
+                    <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)', color: 'white' }}>
                         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                            <Typography variant="caption" color="text.secondary" fontWeight={600}>TOTAL VALUE</Typography>
-                            <Typography variant="h5" fontWeight={800} color="#1565c0">PKR {totalValue.toLocaleString()}</Typography>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }} fontWeight={600}>TOTAL VALUE</Typography>
+                            <Typography variant="h5" fontWeight={800} color="white">PKR {totalValue.toLocaleString()}</Typography>
                         </CardContent>
                     </Card>
                 </Grid>

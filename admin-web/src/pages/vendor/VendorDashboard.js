@@ -156,7 +156,7 @@ export default function VendorDashboard() {
     const getActivityConfig = (type, status) => {
         switch (type) {
             case 'booking':
-                if (status === 'completed' || status === 'confirmed') return { icon: <CheckCircle />, color: '#4CAF50' };
+                if (status === 'completed' || status === 'confirmed') return { icon: <CheckCircle />, color: '#004d43' };
                 if (status === 'cancelled') return { icon: <Warning />, color: '#F44336' };
                 return { icon: <Schedule />, color: '#FF9800' };
             case 'user':
@@ -191,9 +191,9 @@ export default function VendorDashboard() {
                         title="Total Bookings"
                         value={dashboardStats?.totalBookings?.toLocaleString() || 0}
                         icon={<Event />}
-                        color="#4CAF50"
+                        color="#e8ee26"
                         growth={dashboardStats?.monthlyGrowth || 0}
-                        variant="dark"
+                        variant="dark "
                     />
                 </Grid>
 
@@ -203,7 +203,7 @@ export default function VendorDashboard() {
                         title="Total Revenue"
                         value={`PKR ${(dashboardStats?.totalRevenue || 0).toLocaleString()}`}
                         icon={<Payments />}
-                        color="#FF9800"
+                        color="#004d43"
                         growth={dashboardStats?.revenueGrowth || 0}
                     />
                 </Grid>
@@ -225,8 +225,8 @@ export default function VendorDashboard() {
                         <CardContent sx={{ p: 4 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                                 <Typography variant="h6" sx={{ fontWeight: 700 }}>Weekly Trends</Typography>
-                                <Box sx={{ bgcolor: '#f5f5f5', borderRadius: 2, px: 1.5, py: 0.5 }}>
-                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Last 7 Days</Typography>
+                                <Box sx={{ bgcolor: '#e8ee26', borderRadius: 2, px: 1.5, py: 0.5 }}>
+                                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#004d43' }}>Last 7 Days</Typography>
                                 </Box>
                             </Box>
 
@@ -240,7 +240,7 @@ export default function VendorDashboard() {
                                         contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
                                     />
                                     <Bar dataKey="bookings" fill="#004d43" radius={[4, 4, 0, 0]} name="Bookings" />
-                                    <Bar dataKey="revenue" fill="#4CAF50" radius={[4, 4, 0, 0]} name="Revenue" />
+                                    <Bar dataKey="revenue" fill="#004d43" radius={[4, 4, 0, 0]} name="Revenue" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
