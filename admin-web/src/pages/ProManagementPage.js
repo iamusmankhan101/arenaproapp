@@ -16,6 +16,7 @@ import {
     Alert,
     Snackbar,
     Grid,
+    TextField,
 } from '@mui/material';
 import {
     WorkspacePremium,
@@ -26,9 +27,10 @@ import {
     Inventory2,
     WhatsApp,
     Star,
+    PersonAdd,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
-import { toggleVendorPro, fetchVendors } from '../store/slices/adminSlice';
+import { toggleVendorPro, fetchVendors, addVendorToPro } from '../store/slices/adminSlice';
 
 const PRO_FEATURES_LIST = [
     { title: 'Daily Reporting', icon: <Assessment sx={{ fontSize: 20 }} />, color: '#004d43' },
@@ -41,6 +43,7 @@ export default function ProManagementPage() {
     const [vendors, setVendors] = useState([]);
     const [vendorsLoading, setVendorsLoading] = useState(true);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, vendor: null, activate: false });
+    const [addDialog, setAddDialog] = useState({ open: false, email: '', name: '' });
     const [actionLoading, setActionLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -79,6 +82,27 @@ export default function ProManagementPage() {
         }
     };
 
+    const handleAddVendor = async () => {
+        if (!addDialog.email.trim()) return;
+        setActionLoading(true);
+        try {
+            const result = await dispatch(addVendorToPro({ email: addDialog.email.trim(), name: addDialog.name.trim() })).unwrap();
+            setSnackbar({
+                open: true,
+                message: result.updated
+                    ? `Pro activated for existing vendor: ${addDialog.email}`
+                    : `New vendor added with Pro: ${addDialog.email}`,
+                severity: 'success',
+            });
+            setAddDialog({ open: false, email: '', name: '' });
+            loadVendors();
+        } catch (err) {
+            setSnackbar({ open: true, message: err.message || 'Failed to add vendor', severity: 'error' });
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const columns = [
         {
             field: 'name',
@@ -90,9 +114,14 @@ export default function ProManagementPage() {
                     <Avatar sx={{ bgcolor: '#004d43', width: 32, height: 32, fontSize: '0.85rem' }}>
                         {(params.value || 'V')[0].toUpperCase()}
                     </Avatar>
-                    <Typography variant="body2" fontWeight={600}>
-                        {params.value || 'Unnamed'}
-                    </Typography>
+                    <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                            {params.value || 'Unnamed'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {params.row.role || 'vendor'}
+                        </Typography>
+                    </Box>
                 </Box>
             ),
         },
@@ -180,10 +209,12 @@ export default function ProManagementPage() {
                             </Typography>
                         </Box>
                     </Box>
-                    <Chip
-                        label={`${vendors.filter((v) => v.proActive).length} Active`}
-                        sx={{ bgcolor: 'rgba(255,215,0,0.2)', color: '#FFD700', fontWeight: 'bold' }}
-                    />
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        <Chip
+                            label={`${vendors.filter((v) => v.proActive).length} Active`}
+                            sx={{ bgcolor: 'rgba(255,215,0,0.2)', color: '#FFD700', fontWeight: 'bold' }}
+                        />
+                    </Box>
                 </CardContent>
             </Card>
 
@@ -218,14 +249,30 @@ export default function ProManagementPage() {
                         <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#004d43' }}>
                             All Vendors ({vendors.length})
                         </Typography>
-                        <Button
-                            variant="outlined"
-                            startIcon={<Refresh />}
-                            onClick={loadVendors}
-                            sx={{ color: '#004d43', borderColor: '#004d43', textTransform: 'none' }}
-                        >
-                            Refresh
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button
+                                variant="contained"
+                                startIcon={<PersonAdd />}
+                                onClick={() => setAddDialog({ open: true, email: '', name: '' })}
+                                sx={{
+                                    bgcolor: '#004d43',
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    borderRadius: 2,
+                                    '&:hover': { bgcolor: '#00695c' },
+                                }}
+                            >
+                                Add Vendor
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<Refresh />}
+                                onClick={loadVendors}
+                                sx={{ color: '#004d43', borderColor: '#004d43', textTransform: 'none' }}
+                            >
+                                Refresh
+                            </Button>
+                        </Box>
                     </Box>
                     <DataGrid
                         rows={vendors}
@@ -251,7 +298,68 @@ export default function ProManagementPage() {
                 </CardContent>
             </Card>
 
-            {/* Confirm Dialog */}
+            {/* Add Vendor Dialog */}
+            <Dialog
+                open={addDialog.open}
+                onClose={() => !actionLoading && setAddDialog({ open: false, email: '', name: '' })}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 3 } }}
+            >
+                <DialogTitle sx={{ fontWeight: 700, color: '#004d43' }}>
+                    Add Vendor to Pro
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Enter the vendor's details. If they already exist, their Pro status will be activated. Otherwise, a new vendor entry will be created.
+                    </Typography>
+                    <TextField
+                        label="Vendor Email"
+                        type="email"
+                        fullWidth
+                        required
+                        value={addDialog.email}
+                        onChange={(e) => setAddDialog({ ...addDialog, email: e.target.value })}
+                        sx={{ mb: 2 }}
+                        placeholder="vendor@example.com"
+                    />
+                    <TextField
+                        label="Vendor Name"
+                        fullWidth
+                        value={addDialog.name}
+                        onChange={(e) => setAddDialog({ ...addDialog, name: e.target.value })}
+                        placeholder="Business or owner name"
+                    />
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                        Pro will be activated immediately at PKR 2,000/month. The vendor will get access to Daily Reporting, Inventory Tracking, and WhatsApp Integration.
+                    </Alert>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button
+                        onClick={() => setAddDialog({ open: false, email: '', name: '' })}
+                        disabled={actionLoading}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleAddVendor}
+                        disabled={actionLoading || !addDialog.email.trim()}
+                        startIcon={actionLoading ? <CircularProgress size={20} color="inherit" /> : <PersonAdd />}
+                        sx={{
+                            bgcolor: '#004d43',
+                            '&:hover': { bgcolor: '#00695c' },
+                            textTransform: 'none',
+                            fontWeight: 600,
+                        }}
+                    >
+                        Add & Activate Pro
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Confirm Toggle Dialog */}
             <Dialog
                 open={confirmDialog.open}
                 onClose={() => !actionLoading && setConfirmDialog({ open: false, vendor: null, activate: false })}
