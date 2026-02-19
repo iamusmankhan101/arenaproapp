@@ -1,4 +1,4 @@
-import { getDocs, addDoc, doc, updateDoc, query, orderBy, collection, collectionGroup, deleteDoc, where } from 'firebase/firestore';
+import { getDocs, addDoc, doc, getDoc, updateDoc, query, orderBy, collection, collectionGroup, deleteDoc, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const initFirebase = () => {
@@ -27,9 +27,22 @@ export const workingAdminAPI = {
       const vendorVenueIds = new Set(venuesSnapshot.docs.map(doc => doc.id));
 
       // Fetch bookings count
+      const vendorCustomers = new Set();
       let totalBookings = 0;
       let todayBookings = 0;
       let pendingBookings = 0;
+      let totalRevenue = 0;
+
+      // Initialize weekly map
+      const weeklyMap = {
+        'Mon': { bookings: 0, revenue: 0 },
+        'Tue': { bookings: 0, revenue: 0 },
+        'Wed': { bookings: 0, revenue: 0 },
+        'Thu': { bookings: 0, revenue: 0 },
+        'Fri': { bookings: 0, revenue: 0 },
+        'Sat': { bookings: 0, revenue: 0 },
+        'Sun': { bookings: 0, revenue: 0 },
+      };
 
       try {
         const bookingsQuery = collection(firestore, 'bookings');
@@ -50,6 +63,24 @@ export const workingAdminAPI = {
 
           const bookingDate = booking.createdAt?.toDate?.() || new Date(booking.createdAt);
 
+
+          // Calculate usage for weekly stats
+          const bookingAmt = parseFloat(booking.totalAmount || booking.amount || 0);
+          totalRevenue += bookingAmt;
+
+          // Weekly Stats (last 7 days)
+          const diffTime = Math.abs(today - bookingDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays <= 7) {
+            const dayName = bookingDate.toLocaleDateString('en-US', { weekday: 'short' });
+            if (weeklyMap[dayName]) {
+              weeklyMap[dayName].bookings++;
+              weeklyMap[dayName].revenue += bookingAmt;
+            }
+          }
+
+
           // Count today's bookings
           if (bookingDate >= today) {
             todayBookings++;
@@ -59,10 +90,23 @@ export const workingAdminAPI = {
           if (booking.status === 'pending') {
             pendingBookings++;
           }
+
+          if (params.vendorId && booking.userId) {
+            vendorCustomers.add(booking.userId);
+          }
         });
+
       } catch (bookingError) {
         console.log('📅 No bookings collection found, using default values');
       }
+
+      // Format weekly stats for chart (Mon-Sun)
+      const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const weeklyStats = daysOrder.map(day => ({
+        day,
+        bookings: weeklyMap[day]?.bookings || 0,
+        revenue: weeklyMap[day]?.revenue || 0
+      }));
 
       // Fetch customers count
       let totalCustomers = 0;
@@ -71,17 +115,13 @@ export const workingAdminAPI = {
         const usersSnapshot = await getDocs(usersQuery);
 
         if (params.vendorId) {
-          // For vendors, return 0 for now
-          totalCustomers = 0;
+          totalCustomers = vendorCustomers.size;
         } else {
           totalCustomers = usersSnapshot.size;
         }
       } catch (userError) {
         console.log('👥 No users collection found, using default values');
       }
-
-      // Calculate revenue (mock for now)
-      const totalRevenue = totalBookings * 1500;
 
       const stats = {
         totalBookings,
@@ -93,15 +133,7 @@ export const workingAdminAPI = {
         pendingBookings,
         monthlyGrowth: 0,
         revenueGrowth: 0,
-        weeklyStats: [
-          { day: 'Mon', bookings: 0, revenue: 0 },
-          { day: 'Tue', bookings: 0, revenue: 0 },
-          { day: 'Wed', bookings: 0, revenue: 0 },
-          { day: 'Thu', bookings: 0, revenue: 0 },
-          { day: 'Fri', bookings: 0, revenue: 0 },
-          { day: 'Sat', bookings: 0, revenue: 0 },
-          { day: 'Sun', bookings: 0, revenue: 0 },
-        ]
+        weeklyStats
       };
 
       // Fetch recent activity
@@ -922,6 +954,110 @@ export const workingAdminAPI = {
       return { success: true, vendorId, activate };
     } catch (error) {
       console.error('❌ Admin: Error toggling vendor Pro:', error);
+      throw error;
+    }
+  },
+
+  // Create Manual Booking
+  async createBooking(bookingData) {
+    try {
+      console.log('📅 Admin: Creating new booking...', bookingData);
+      const firestore = db;
+
+      // 1. Create Booking Document
+      const bookingPayload = {
+        ...bookingData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: 'confirmed', // Manual bookings are confirmed
+        paymentStatus: 'pending',
+        origin: 'admin_panel'
+      };
+
+      const bookingRef = await addDoc(collection(firestore, 'bookings'), bookingPayload);
+      console.log('✅ Booking created with ID:', bookingRef.id);
+
+      // 2. Notification Logic
+      try {
+        const vendorId = bookingData.vendorId;
+
+        // Fetch Vendor Profile & Settings
+        let isPro = false;
+        let vendorPhone = null;
+        let vendorEmail = null;
+        let settings = {};
+
+        if (vendorId) {
+          const vendorDoc = await getDoc(doc(firestore, 'users', vendorId));
+          if (vendorDoc.exists()) {
+            const vData = vendorDoc.data();
+            isPro = vData.proActive || false;
+            vendorPhone = vData.phone || vData.phoneNumber;
+            vendorEmail = vData.email;
+          }
+
+          // Fetch WhatsApp Settings only if Pro
+          if (isPro) {
+            const settingsRef = collection(firestore, 'whatsapp_settings');
+            const q = query(settingsRef, where('vendorId', '==', vendorId));
+            const settingsSnap = await getDocs(q);
+            settings = settingsSnap.empty ? {} : settingsSnap.docs[0].data();
+          }
+        }
+
+        // --- Common: Email to Customer (Simulated) ---
+        // "and also emails to user for now"
+        if (bookingData.customerEmail || bookingData.customerName) {
+          console.log(`📧 Email to Customer (${bookingData.customerEmail || 'No Email'}): Hi ${bookingData.customerName}, your booking is confirmed!`);
+        }
+
+        // --- Conditional Logic ---
+        if (isPro) {
+          // === PRO VENDOR: WhatsApp ===
+
+          // Send to Vendor (if enabled)
+          if (settings.vendorNotification && vendorPhone) {
+            console.log(`📲 WhatsApp to Vendor (${vendorPhone}): New Booking!`);
+            await addDoc(collection(firestore, 'whatsapp_logs'), {
+              vendorId,
+              recipientPhone: vendorPhone,
+              message: `New Booking! ${bookingData.customerName} booked ${bookingData.turfName} on ${new Date(bookingData.date).toLocaleDateString()}`,
+              type: 'vendor_notification',
+              status: 'sent',
+              sentAt: new Date().toISOString()
+            });
+          }
+
+          // Send to Customer
+          if (bookingData.customerPhone) {
+            console.log(`📲 WhatsApp to Customer (${bookingData.customerPhone}): Booking Confirmed!`);
+            await addDoc(collection(firestore, 'whatsapp_logs'), {
+              vendorId,
+              recipientPhone: bookingData.customerPhone,
+              message: `Hi ${bookingData.customerName}, your booking at ${bookingData.turfName} is confirmed!`,
+              type: 'booking_confirmation',
+              status: 'sent',
+              sentAt: new Date().toISOString()
+            });
+          }
+        } else {
+          // === NON-PRO VENDOR: Email ===
+
+          // Send Email to Vendor (Simulated)
+          if (vendorEmail) {
+            console.log(`📧 Email to Vendor (${vendorEmail}): New Booking Alert! (Non-Pro Fallback)`);
+          } else {
+            console.log(`📧 Email to Vendor (Unknown Email}): New Booking Alert! (Non-Pro Fallback)`);
+          }
+        }
+
+      } catch (waError) {
+        console.error('⚠️ Notification error:', waError);
+      }
+
+      return { success: true, id: bookingRef.id };
+    } catch (error) {
+      console.error('❌ Admin: Error creating booking:', error);
       throw error;
     }
   }

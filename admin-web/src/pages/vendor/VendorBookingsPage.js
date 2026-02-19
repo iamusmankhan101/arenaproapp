@@ -15,6 +15,11 @@ import {
     DialogContent,
     DialogActions,
     Alert,
+    Grid,
+    FormControl,
+    InputLabel,
+    Select,
+    CircularProgress
 } from '@mui/material';
 import {
     Search,
@@ -24,9 +29,11 @@ import {
     Phone,
     Email,
     Refresh,
-} from '@mui/icons-material'; // FilterList removed
+    Add,
+    CalendarMonth
+} from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
-import { fetchBookings, updateBookingStatus } from '../../store/slices/adminSlice';
+import { fetchBookings, updateBookingStatus, fetchVenues, createBooking } from '../../store/slices/adminSlice';
 import { format } from 'date-fns';
 
 const statusColors = {
@@ -38,11 +45,11 @@ const statusColors = {
 
 const StatusChip = ({ status }) => (
     <Chip
-        label={status.toUpperCase()}
+        label={status ? status.toUpperCase() : 'UNKNOWN'}
         size="small"
         sx={{
-            backgroundColor: `${statusColors[status]}20`,
-            color: statusColors[status],
+            backgroundColor: `${statusColors[status] || '#9e9e9e'}20`,
+            color: statusColors[status] || '#9e9e9e',
             fontWeight: 'bold',
             fontSize: '10px',
         }}
@@ -94,7 +101,7 @@ const ActionMenu = ({ booking, onAction }) => {
 
 export default function VendorBookingsPage() {
     const dispatch = useDispatch();
-    const { bookings, bookingsLoading, bookingsError } = useSelector(state => state.admin);
+    const { bookings, bookingsLoading, bookingsError, venues, loading } = useSelector(state => state.admin);
     const { admin } = useSelector(state => state.auth);
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -105,6 +112,19 @@ export default function VendorBookingsPage() {
     });
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
+
+    // Create Booking State
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
+    const [newBooking, setNewBooking] = useState({
+        customerName: '',
+        customerPhone: '',
+        venueId: '',
+        sport: 'Football',
+        date: '', // YYYY-MM-DD
+        time: '', // HH:MM
+        duration: 60,
+        amount: ''
+    });
 
     // Vendor ID
     const vendorId = admin?.vendorId || admin?.uid;
@@ -127,6 +147,7 @@ export default function VendorBookingsPage() {
                 search: searchQuery,
                 vendorId: vendorId
             }));
+            dispatch(fetchVenues({ vendorId })); // Fetch venues for the create dialog
         }
     }, [dispatch, paginationModel, selectedFilter, searchQuery, vendorId]);
 
@@ -162,6 +183,45 @@ export default function VendorBookingsPage() {
                 vendorId: vendorId
             }));
         }
+    };
+
+    const handleCreateSave = async () => {
+        if (!newBooking.venueId || !newBooking.date || !newBooking.time || !newBooking.customerName || !newBooking.customerPhone) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        const selectedVenue = venues?.data?.find(v => v.id === newBooking.venueId);
+
+        // Combine date and time
+        const dateTime = new Date(`${newBooking.date}T${newBooking.time}`);
+
+        const payload = {
+            vendorId,
+            customerName: newBooking.customerName,
+            customerPhone: newBooking.customerPhone,
+            turfId: newBooking.venueId,
+            turfName: selectedVenue?.name || 'Unknown Venue',
+            sport: newBooking.sport,
+            date: dateTime.toISOString(),
+            duration: Number(newBooking.duration),
+            totalAmount: Number(newBooking.amount) || (Number(selectedVenue?.basePrice) || 0),
+            status: 'confirmed'
+        };
+
+        await dispatch(createBooking(payload));
+        setCreateDialogOpen(false);
+        setNewBooking({
+            customerName: '',
+            customerPhone: '',
+            venueId: '',
+            sport: 'Football',
+            date: '',
+            time: '',
+            duration: 60,
+            amount: ''
+        });
+        handleRefresh();
     };
 
     const columns = [
@@ -305,14 +365,24 @@ export default function VendorBookingsPage() {
                 <Typography variant="h4" component="h1">
                     My Bookings
                 </Typography>
-                <Button
-                    variant="outlined"
-                    startIcon={<Refresh />}
-                    onClick={handleRefresh}
-                    disabled={bookingsLoading}
-                >
-                    Refresh
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => setCreateDialogOpen(true)}
+                        sx={{ bgcolor: '#004d43', '&:hover': { bgcolor: '#003831' } }}
+                    >
+                        New Booking
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<Refresh />}
+                        onClick={handleRefresh}
+                        disabled={bookingsLoading}
+                    >
+                        Refresh
+                    </Button>
+                </Box>
             </Box>
 
             {/* Search and Filters */}
@@ -402,6 +472,101 @@ export default function VendorBookingsPage() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setDialogOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Create Booking Dialog */}
+            <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: 700, color: '#004d43' }}>New Walk-in Booking</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TextField
+                            label="Customer Name"
+                            fullWidth
+                            required
+                            value={newBooking.customerName}
+                            onChange={(e) => setNewBooking({ ...newBooking, customerName: e.target.value })}
+                        />
+                        <TextField
+                            label="Customer Phone"
+                            fullWidth
+                            required
+                            value={newBooking.customerPhone}
+                            onChange={(e) => setNewBooking({ ...newBooking, customerPhone: e.target.value })}
+                            InputProps={{
+                                startAdornment: <InputAdornment position="start">+92</InputAdornment>,
+                            }}
+                        />
+                        <FormControl fullWidth required>
+                            <InputLabel>Venue</InputLabel>
+                            <Select
+                                value={newBooking.venueId}
+                                label="Venue"
+                                onChange={(e) => setNewBooking({ ...newBooking, venueId: e.target.value })}
+                            >
+                                {venues?.data?.map((venue) => (
+                                    <MenuItem key={venue.id} value={venue.id}>
+                                        {venue.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                                <TextField
+                                    label="Date"
+                                    type="date"
+                                    fullWidth
+                                    required
+                                    InputLabelProps={{ shrink: true }}
+                                    value={newBooking.date}
+                                    onChange={(e) => setNewBooking({ ...newBooking, date: e.target.value })}
+                                />
+                            </Grid>
+                            <Grid item xs={6}>
+                                <TextField
+                                    label="Time"
+                                    type="time"
+                                    fullWidth
+                                    required
+                                    InputLabelProps={{ shrink: true }}
+                                    value={newBooking.time}
+                                    onChange={(e) => setNewBooking({ ...newBooking, time: e.target.value })}
+                                />
+                            </Grid>
+                        </Grid>
+                        <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Duration</InputLabel>
+                                    <Select
+                                        value={newBooking.duration}
+                                        label="Duration"
+                                        onChange={(e) => setNewBooking({ ...newBooking, duration: e.target.value })}
+                                    >
+                                        <MenuItem value={60}>60 Minutes</MenuItem>
+                                        <MenuItem value={90}>90 Minutes</MenuItem>
+                                        <MenuItem value={120}>120 Minutes</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <TextField
+                                    label="Amount (PKR)"
+                                    type="number"
+                                    fullWidth
+                                    value={newBooking.amount}
+                                    onChange={(e) => setNewBooking({ ...newBooking, amount: e.target.value })}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={handleCreateSave} sx={{ bgcolor: '#004d43' }}>
+                        Create Booking
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Box>

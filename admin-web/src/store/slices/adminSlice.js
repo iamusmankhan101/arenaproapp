@@ -49,6 +49,17 @@ export const cancelBooking = createAsyncThunk(
   }
 );
 
+export const createBooking = createAsyncThunk(
+  'admin/createBooking',
+  async (bookingData, { rejectWithValue }) => {
+    try {
+      return await workingAdminAPI.createBooking(bookingData);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Venues
 export const fetchVenues = createAsyncThunk(
   'admin/fetchVenues',
@@ -364,6 +375,20 @@ const adminSlice = createSlice({
           booking.status = status;
         }
         state.successMessage = 'Booking cancelled successfully';
+      })
+
+      // Create Booking
+      .addCase(createBooking.pending, (state) => {
+        state.bookingsLoading = true;
+        state.bookingsError = null;
+      })
+      .addCase(createBooking.fulfilled, (state, action) => {
+        state.bookingsLoading = false;
+        state.successMessage = 'Booking created successfully';
+      })
+      .addCase(createBooking.rejected, (state, action) => {
+        state.bookingsLoading = false;
+        state.bookingsError = action.payload;
       })
 
       // Venues

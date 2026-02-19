@@ -64,6 +64,7 @@ export default function VendorWhatsAppPage() {
         autoConfirmation: true,
         autoReminder: true,
         autoFollowUp: false,
+        vendorNotification: true,
     });
 
     const fetchData = useCallback(async () => {
@@ -273,7 +274,7 @@ export default function VendorWhatsAppPage() {
                                 <Typography variant="subtitle1" fontWeight={700} color="#075e54">Automation Settings</Typography>
                             </Box>
                             <Grid container spacing={2}>
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={6}>
                                     <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                                         <FormControlLabel
                                             control={<Switch checked={settings.autoConfirmation} onChange={(e) => setSettings({ ...settings, autoConfirmation: e.target.checked })} color="success" />}
@@ -281,7 +282,7 @@ export default function VendorWhatsAppPage() {
                                         />
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={6}>
                                     <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                                         <FormControlLabel
                                             control={<Switch checked={settings.autoReminder} onChange={(e) => setSettings({ ...settings, autoReminder: e.target.checked })} color="success" />}
@@ -289,11 +290,19 @@ export default function VendorWhatsAppPage() {
                                         />
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={6}>
                                     <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                                         <FormControlLabel
                                             control={<Switch checked={settings.autoFollowUp} onChange={(e) => setSettings({ ...settings, autoFollowUp: e.target.checked })} color="success" />}
                                             label={<Box><Typography variant="body2" fontWeight={600}>Auto Follow-Up</Typography><Typography variant="caption" color="text.secondary">Send thank you after booking</Typography></Box>}
+                                        />
+                                    </Paper>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                                        <FormControlLabel
+                                            control={<Switch checked={settings.vendorNotification} onChange={(e) => setSettings({ ...settings, vendorNotification: e.target.checked })} color="success" />}
+                                            label={<Box><Typography variant="body2" fontWeight={600}>Vendor Notification</Typography><Typography variant="caption" color="text.secondary">Receive WhatsApp when booked</Typography></Box>}
                                         />
                                     </Paper>
                                 </Grid>
