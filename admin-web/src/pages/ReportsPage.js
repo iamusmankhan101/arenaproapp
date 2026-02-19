@@ -140,7 +140,7 @@ export default function ReportsPage() {
 
       // Add Logo on the left (replacing text)
       if (logoImg) {
-        doc.addImage(logoImg, 'PNG', 14, 10, 36, 18); // Larger logo on left
+        doc.addImage(logoImg, 'PNG', 14, 8, 48, 24); // Taller logo on left
       } else {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
