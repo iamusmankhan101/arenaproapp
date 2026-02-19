@@ -165,7 +165,7 @@ export default function ReportsPage() {
       doc.setFontSize(10);
       doc.setTextColor(brandTeal);
       doc.setFont('helvetica', 'bold');
-      doc.text(item.value, x + 21, 78, { align: 'center' });
+      doc.text(String(item.value), x + 21, 78, { align: 'center' });
     });
 
     // --- Detailed Table Section ---
