@@ -215,7 +215,7 @@ export default function VendorDailyReportingPage() {
             <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
                 <CardContent sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: '#FFD700', width: 48, height: 48 }}>
+                        <Avatar sx={{ bgcolor: '#e8ee26', width: 48, height: 48 }}>
                             <Assessment sx={{ color: '#004d43', fontSize: 28 }} />
                         </Avatar>
                         <Box>
@@ -256,7 +256,7 @@ export default function VendorDailyReportingPage() {
 
                         <IconButton onClick={fetchDailyData} sx={{ color: 'white' }}><Refresh /></IconButton>
                         <Button variant="contained" startIcon={<Download />} onClick={handleExportPDF}
-                            sx={{ bgcolor: '#FFD700', color: '#004d43', fontWeight: 700, borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: '#FFC107' } }}>
+                            sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: '#FFC107' } }}>
                             Export
                         </Button>
                     </Box>
