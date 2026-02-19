@@ -133,7 +133,6 @@ export default function ReportsPage() {
       const logoImg = await loadImage('/logo.png');
       const doc = new jsPDF();
       const brandTeal = '#004d43';
-      const brandGold = '#e8ee26'; // Brand Gold
 
       // --- Header Section ---
       doc.setFillColor(brandTeal);
