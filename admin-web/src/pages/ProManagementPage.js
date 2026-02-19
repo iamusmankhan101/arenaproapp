@@ -27,7 +27,7 @@ import { fetchCustomers, toggleVendorPro } from '../store/slices/adminSlice';
 
 export default function ProManagementPage() {
     const dispatch = useDispatch();
-    const { customers, loading } = useSelector((state) => state.admin);
+    const { customers, customersLoading: loading } = useSelector((state) => state.admin);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, vendor: null, activate: false });
     const [actionLoading, setActionLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -37,7 +37,7 @@ export default function ProManagementPage() {
     }, [dispatch]);
 
     // Filter only vendors
-    const vendors = (customers || []).filter((c) => c.role === 'vendor');
+    const vendors = (customers?.data || []).filter((c) => c.role === 'vendor');
 
     const handleTogglePro = async () => {
         const { vendor, activate } = confirmDialog;
