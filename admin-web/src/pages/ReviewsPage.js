@@ -7,13 +7,15 @@ import {
     IconButton,
     Alert,
     Tooltip,
-    Rating
+    Rating,
+    Card,
+    CardContent,
 } from '@mui/material';
 import {
     Refresh,
     Delete,
     Check,
-
+    RateReview,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchReviews, deleteReview, updateReviewStatus } from '../store/slices/adminSlice';
@@ -174,17 +176,33 @@ export default function ReviewsPage() {
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-
-                <Button
-                    variant="outlined"
-                    startIcon={<Refresh />}
-                    onClick={handleRefresh}
-                    disabled={reviewsLoading}
-                >
-                    Refresh
-                </Button>
-            </Box>
+            {/* Header */}
+            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
+                <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
+                            <RateReview sx={{ color: '#fff', fontSize: 28 }} />
+                        </Box>
+                        <Box>
+                            <Typography variant="h5" fontWeight={700} sx={{ color: '#fff' }}>
+                                Reviews Management
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
+                                Monitor and moderate user feedback
+                            </Typography>
+                        </Box>
+                    </Box>
+                    <Button
+                        variant="outlined"
+                        startIcon={<Refresh />}
+                        onClick={handleRefresh}
+                        disabled={reviewsLoading}
+                        sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' } }}
+                    >
+                        Refresh
+                    </Button>
+                </CardContent>
+            </Card>
 
             {reviewsError && (
                 <Alert severity="error" sx={{ mb: 2 }}>

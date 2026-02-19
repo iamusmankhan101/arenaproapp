@@ -14,6 +14,8 @@ import {
   LinearProgress,
   Alert,
   Snackbar,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Search,
@@ -24,6 +26,7 @@ import {
   ToggleOff,
   Analytics,
   Refresh,
+  Stadium,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchVenues, updateVenueStatus, clearSuccessMessage, clearError } from '../store/slices/adminSlice';
@@ -285,26 +288,43 @@ export default function VenuesPage() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Refresh />}
-            onClick={handleRefresh}
-            disabled={venuesLoading}
-          >
-            Refresh
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setAddVenueModalOpen(true)}
-          >
-            Add Venue
-          </Button>
-        </Box>
-      </Box>
+      {/* Header */}
+      <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
+        <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
+              <Stadium sx={{ color: '#fff', fontSize: 28 }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" fontWeight={700} sx={{ color: '#fff' }}>
+                Venues Management
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
+                Manage all sports venues, pricing, and availability
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={handleRefresh}
+              disabled={venuesLoading}
+              sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' } }}
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setAddVenueModalOpen(true)}
+              sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, '&:hover': { bgcolor: '#dce775' } }}
+            >
+              Add Venue
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Search and Filters */}
       <Box sx={{ mb: 3 }}>

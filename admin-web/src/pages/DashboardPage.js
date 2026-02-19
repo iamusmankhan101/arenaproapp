@@ -29,20 +29,23 @@ import { fetchDashboardStats } from '../store/slices/adminSlice';
 
 const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
   const isDark = variant === 'dark';
+  const isGradient = variant === 'gradient';
+  const textColor = isDark || isGradient ? 'white' : 'text.primary';
+  const subTextColor = isDark || isGradient ? 'rgba(255,255,255,0.7)' : 'text.secondary';
 
   return (
     <Card
       sx={{
         height: '100%',
-        bgcolor: isDark ? '#004d43' : 'white', // Primary Brand Color
-        color: isDark ? 'white' : 'text.primary',
+        background: isGradient ? 'linear-gradient(135deg, #004d43 0%, #00796b 100%)' : (isDark ? '#004d43' : 'white'),
+        color: textColor,
         borderRadius: 4,
-        boxShadow: isDark ? '0 10px 30px rgba(0, 77, 67, 0.4)' : '0 4px 20px rgba(0,0,0,0.05)',
+        boxShadow: isDark || isGradient ? '0 10px 30px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.05)',
         position: 'relative',
         overflow: 'hidden'
       }}
     >
-      {isDark && (
+      {(isDark) && (
         <Box
           sx={{
             position: 'absolute',
@@ -50,7 +53,7 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
             right: -50,
             width: 150,
             height: 150,
-            bgcolor: '#e8ee26', // Secondary Brand Color
+            bgcolor: '#e8ee26',
             opacity: 0.1,
             borderRadius: '50%',
             filter: 'blur(40px)',
@@ -62,7 +65,7 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
           <Typography
             variant="subtitle2"
             sx={{
-              color: isDark ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+              color: subTextColor,
               fontWeight: 600,
               fontSize: '0.75rem',
               textTransform: 'uppercase',
@@ -75,8 +78,8 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
             sx={{
               p: 1,
               borderRadius: 2,
-              bgcolor: isDark ? 'rgba(232, 238, 38, 0.1)' : '#004d43', // Brand Primary for Light Card Icon Bg
-              color: '#e8ee26' // Brand Secondary for Icon (Both Dark & Light)
+              bgcolor: isDark || isGradient ? 'rgba(255,255,255,0.15)' : `${color}15`,
+              color: isDark || isGradient ? '#e8ee26' : color
             }}
           >
             {React.cloneElement(icon, { fontSize: 'small' })}
@@ -85,25 +88,25 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
 
         <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h3" component="div" sx={{ fontWeight: 700, mb: 0.5, letterSpacing: -1 }}>
+            <Typography variant="h3" component="div" sx={{ fontWeight: 700, mb: 0.5, letterSpacing: -1, color: textColor }}>
               {value}
             </Typography>
 
             {growth !== undefined && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {growth >= 0 ? (
-                  <TrendingUp sx={{ color: isDark ? '#e8ee26' : 'success.main', fontSize: 16 }} />
+                  <TrendingUp sx={{ color: isDark || isGradient ? '#e8ee26' : 'success.main', fontSize: 16 }} />
                 ) : (
                   <TrendingDown sx={{ color: 'error.main', fontSize: 16 }} />
                 )}
                 <Typography
                   variant="body2"
                   sx={{
-                    color: growth >= 0 ? (isDark ? '#e8ee26' : 'success.main') : 'error.main',
+                    color: growth >= 0 ? (isDark || isGradient ? '#e8ee26' : 'success.main') : 'error.main',
                     fontWeight: 600,
                   }}
                 >
-                  {Math.abs(growth)}% <Box component="span" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'text.secondary', fontWeight: 400 }}>than last month</Box>
+                  {Math.abs(growth)}% <Box component="span" sx={{ color: subTextColor, fontWeight: 400 }}>than last month</Box>
                 </Typography>
               </Box>
             )}
@@ -117,7 +120,7 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
                 sx={{
                   width: 6,
                   height: `${Math.random() * 80 + 20}%`,
-                  bgcolor: isDark ? '#e8ee26' : color, // Secondary Color bars
+                  bgcolor: isDark || isGradient ? 'rgba(255,255,255,0.3)' : color, // Secondary Color bars
                   borderRadius: 1
                 }}
               />
@@ -137,7 +140,7 @@ export default function DashboardPage() {
   const getActivityConfig = (type, status) => {
     switch (type) {
       case 'booking':
-        if (status === 'confirmed') return { icon: <Event />, color: '#4CAF50' };
+        if (status === 'confirmed') return { icon: <Event />, color: '#004d43' };
         if (status === 'cancelled') return { icon: <Event />, color: '#F44336' };
         return { icon: <Event />, color: '#FF9800' };
       case 'user':
@@ -161,26 +164,26 @@ export default function DashboardPage() {
 
       {/* Top Stats Row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Dark Hero Card */}
+        {/* Gradient Cards */}
         <Grid item xs={12} md={4}>
           <StatCard
             title="Total Bookings"
             value={dashboardStats.totalBookings.toLocaleString()}
             icon={<Event />}
-            color="#4CAF50"
+            color="#e8ee26"
             growth={dashboardStats.monthlyGrowth}
-            variant="dark"
+            variant="gradient"
           />
         </Grid>
 
-        {/* Light Cards */}
         <Grid item xs={12} md={4}>
           <StatCard
             title="Total Revenue"
             value={`PKR ${(dashboardStats.totalRevenue / 1000).toFixed(0)}K`}
             icon={<Payments />}
-            color="#FF9800"
+            color="#e8ee26"
             growth={dashboardStats.revenueGrowth}
+            variant="gradient"
           />
         </Grid>
         <Grid item xs={12} md={4}>
@@ -188,8 +191,9 @@ export default function DashboardPage() {
             title="Active Venues"
             value={dashboardStats.activeVenues}
             icon={<LocationOn />}
-            color="#004d43"
+            color="#e8ee26"
             growth={5.1}
+            variant="gradient"
           />
         </Grid>
       </Grid>
@@ -201,8 +205,8 @@ export default function DashboardPage() {
             <CardContent sx={{ p: 4 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>Weekly Trends</Typography>
-                <Box sx={{ bgcolor: '#f5f5f5', borderRadius: 2, px: 1.5, py: 0.5 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Last 7 Days</Typography>
+                <Box sx={{ bgcolor: '#e8ee26', borderRadius: 2, px: 1.5, py: 0.5 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#004d43' }}>Last 7 Days</Typography>
                 </Box>
               </Box>
 
@@ -216,7 +220,7 @@ export default function DashboardPage() {
                     contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
                   />
                   <Bar dataKey="bookings" fill="#004d43" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="revenue" fill="#4CAF50" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="revenue" fill="#004d43" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -263,7 +267,7 @@ export default function DashboardPage() {
         <CardContent sx={{ p: 0 }}>
           <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>Recent Activity</Typography>
-            <Box sx={{ bgcolor: 'black', color: 'white', borderRadius: 4, px: 2, py: 0.5, fontSize: '0.75rem', fontWeight: 600 }}>
+            <Box sx={{ bgcolor: '#004d43', color: '#e8ee26', borderRadius: 4, px: 2, py: 0.5, fontSize: '0.75rem', fontWeight: 600 }}>
               All activities
             </Box>
           </Box>

@@ -15,6 +15,7 @@ import {
   LocationOn,
   People,
   Payments,
+  Assessment,
 } from '@mui/icons-material';
 import {
   LineChart,
@@ -99,14 +100,31 @@ const StatCard = ({ title, value, icon, color, change }) => (
 export default function ReportsPage() {
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Reports & Analytics
-        </Typography>
-        <Button variant="contained" startIcon={<GetApp />}>
-          Export Report
-        </Button>
-      </Box>
+      {/* Header */}
+      <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
+        <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
+              <Assessment sx={{ color: '#fff', fontSize: 28 }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" fontWeight={700} sx={{ color: '#fff' }}>
+                Reports & Analytics
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
+                Detailed insights into performance and revenue
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<GetApp />}
+            sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, '&:hover': { bgcolor: '#dce775' } }}
+          >
+            Export Report
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Summary Stats */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

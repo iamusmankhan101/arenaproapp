@@ -11,6 +11,8 @@ import {
   MenuItem,
   IconButton,
   Avatar,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Search,
@@ -20,6 +22,7 @@ import {
   Phone,
   Star,
   Refresh,
+  People,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchCustomers, updateCustomerStatus } from '../store/slices/adminSlice';
@@ -107,7 +110,7 @@ const ActionMenu = ({ customer, onAction }) => {
 export default function CustomersPage() {
   const dispatch = useDispatch();
   const { customers, customersLoading, customersError } = useSelector(state => state.admin);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [paginationModel, setPaginationModel] = useState({
@@ -130,7 +133,7 @@ export default function CustomersPage() {
       filter: selectedFilter,
       search: searchQuery,
     });
-    
+
     dispatch(fetchCustomers({
       page: paginationModel.page,
       pageSize: paginationModel.pageSize,
@@ -161,7 +164,7 @@ export default function CustomersPage() {
       dataLength: customers.data?.length || 0,
       firstCustomer: customers.data?.[0] || null
     });
-    
+
     // Force re-render if data exists but DataGrid is empty
     if (customers.data && customers.data.length > 0 && !customersLoading) {
       console.log('✅ CustomersPage: Data available, should display in DataGrid');
@@ -331,23 +334,37 @@ export default function CustomersPage() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Customers Management
-        </Typography>
-        
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={() => {
-            console.log('🔄 Manual refresh triggered');
-            handleRefresh();
-          }}
-          disabled={customersLoading}
-        >
-          {customersLoading ? 'Loading...' : 'Refresh'}
-        </Button>
-      </Box>
+      {/* Header */}
+      <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
+        <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
+              <People sx={{ color: '#fff', fontSize: 28 }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" fontWeight={700} sx={{ color: '#fff' }}>
+                Customers Management
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
+                View and manage registered users
+              </Typography>
+            </Box>
+          </Box>
+
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={() => {
+              console.log('🔄 Manual refresh triggered');
+              handleRefresh();
+            }}
+            disabled={customersLoading}
+            sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' } }}
+          >
+            {customersLoading ? 'Loading...' : 'Refresh'}
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Search and Filters */}
       <Box sx={{ mb: 3 }}>
@@ -382,16 +399,16 @@ export default function CustomersPage() {
       </Box>
 
       {/* Data Grid */}
-      
+
       {/* Error Display */}
       {customersError && (
         <Box sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: 1, border: '1px solid #f44336' }}>
           <Typography variant="body2" color="error">
             ❌ Error loading customers: {customersError}
           </Typography>
-          <Button 
-            variant="outlined" 
-            size="small" 
+          <Button
+            variant="outlined"
+            size="small"
             onClick={handleRefresh}
             sx={{ mt: 1 }}
           >
@@ -409,7 +426,7 @@ export default function CustomersPage() {
             </Typography>
           </Box>
         )}
-        
+
         <DataGrid
           rows={customers.data || []}
           columns={columns}
@@ -443,7 +460,7 @@ export default function CustomersPage() {
             console.error('❌ DataGrid error:', error);
           }}
         />
-        
+
         {/* Enhanced Debug info */}
         {process.env.NODE_ENV === 'development' && (
           <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>

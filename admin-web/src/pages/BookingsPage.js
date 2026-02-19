@@ -15,6 +15,8 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Search,
@@ -26,6 +28,7 @@ import {
   Email,
   Refresh,
   WhatsApp,
+  EventNote,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchBookings, updateBookingStatus } from '../store/slices/adminSlice';
@@ -33,6 +36,9 @@ import { format } from 'date-fns';
 
 const statusColors = {
   confirmed: '#2e7d32', // Brand Green
+  pending: '#ed6c02',   // Brand Orange
+  cancelled: '#d32f2f', // Brand Red
+  completed: '#004d43', // Brand Teal
   pending: '#ed6c02',   // Brand Orange
   cancelled: '#d32f2f', // Brand Red
   completed: '#0288d1', // Brand Blue
@@ -331,17 +337,34 @@ export default function BookingsPage() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      {/* Header */}
+      <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
+        <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
+              <EventNote sx={{ color: '#fff', fontSize: 28 }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" fontWeight={700} sx={{ color: '#fff' }}>
+                Bookings Overview
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
+                Track and manage all customer reservations
+              </Typography>
+            </Box>
+          </Box>
 
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={handleRefresh}
-          disabled={bookingsLoading}
-        >
-          Refresh
-        </Button>
-      </Box>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+            disabled={bookingsLoading}
+            sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' } }}
+          >
+            Refresh
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Search and Filters */}
       <Box sx={{ mb: 3 }}>

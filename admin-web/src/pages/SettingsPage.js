@@ -25,9 +25,22 @@ import {
 export default function SettingsPage() {
   return (
     <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Settings
-      </Typography>
+      {/* Header */}
+      <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
+        <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
+            <SettingsIcon sx={{ color: '#fff', fontSize: 28 }} />
+          </Box>
+          <Box>
+            <Typography variant="h5" fontWeight={700} sx={{ color: '#fff' }}>
+              System Settings
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
+              Manage application configurations and preferences
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
 
       <Grid container spacing={3}>
         {/* General Settings */}
@@ -35,8 +48,8 @@ export default function SettingsPage() {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <SettingsIcon sx={{ mr: 1 }} />
-                <Typography variant="h6">General Settings</Typography>
+                <SettingsIcon sx={{ mr: 1, color: '#004d43' }} />
+                <Typography variant="h6" sx={{ color: '#004d43', fontWeight: 700 }}>General Settings</Typography>
               </Box>
               <List>
                 <ListItem>
@@ -76,8 +89,8 @@ export default function SettingsPage() {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Notifications sx={{ mr: 1 }} />
-                <Typography variant="h6">Notifications</Typography>
+                <Notifications sx={{ mr: 1, color: '#004d43' }} />
+                <Typography variant="h6" sx={{ color: '#004d43', fontWeight: 700 }}>Notifications</Typography>
               </Box>
               <List>
                 <ListItem>
@@ -117,8 +130,8 @@ export default function SettingsPage() {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Security sx={{ mr: 1 }} />
-                <Typography variant="h6">Security</Typography>
+                <Security sx={{ mr: 1, color: '#004d43' }} />
+                <Typography variant="h6" sx={{ color: '#004d43', fontWeight: 700 }}>Security</Typography>
               </Box>
               <List>
                 <ListItem>
@@ -160,8 +173,8 @@ export default function SettingsPage() {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Payment sx={{ mr: 1 }} />
-                <Typography variant="h6">Payment Settings</Typography>
+                <Payment sx={{ mr: 1, color: '#004d43' }} />
+                <Typography variant="h6" sx={{ color: '#004d43', fontWeight: 700 }}>Payment Settings</Typography>
               </Box>
               <List>
                 <ListItem>
@@ -200,7 +213,7 @@ export default function SettingsPage() {
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" gutterBottom sx={{ color: '#004d43', fontWeight: 700 }}>
                 System Management
               </Typography>
               <Grid container spacing={2}>
@@ -256,7 +269,7 @@ export default function SettingsPage() {
               System Information
             </Typography>
             <Typography variant="body2">
-              Version: 1.0.0 | Last Updated: January 31, 2025 | Database: Connected | 
+              Version: 1.0.0 | Last Updated: January 31, 2025 | Database: Connected |
               Server Status: Online | Uptime: 99.9%
             </Typography>
           </Alert>
