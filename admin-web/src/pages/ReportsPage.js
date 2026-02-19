@@ -120,7 +120,6 @@ export default function ReportsPage() {
   const handleExport = () => {
     const doc = new jsPDF();
     const brandTeal = '#004d43';
-    const brandGold = '#e8ee26';
 
     // --- Header Section ---
     doc.setFillColor(brandTeal);
