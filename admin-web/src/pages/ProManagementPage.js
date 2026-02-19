@@ -58,7 +58,7 @@ export default function ProManagementPage() {
 
     useEffect(() => {
         loadVendors();
-    }, []);
+    }, [loadVendors]);
 
     const handleTogglePro = async () => {
         const { vendor, activate } = confirmDialog;
