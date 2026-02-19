@@ -54,20 +54,24 @@ const CustomTooltip = ({ active, payload, label, measure = 'Value', prefix = '' 
 };
 
 const StatCard = ({ title, value, icon, color, change }) => (
-  <Card>
+  <Card sx={{
+    background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)',
+    color: '#fff',
+    borderRadius: 2
+  }}>
     <CardContent>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
-          <Typography color="textSecondary" gutterBottom variant="overline">
+          <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.5px' }} gutterBottom variant="overline">
             {title}
           </Typography>
-          <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h4" component="div" sx={{ fontWeight: 700, color: '#fff' }}>
             {value}
           </Typography>
           {change && (
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-              <TrendingUp sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
-              <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 'medium' }}>
+              <TrendingUp sx={{ color: '#e8ee26', fontSize: 16, mr: 0.5 }} />
+              <Typography variant="body2" sx={{ color: '#e8ee26', fontWeight: 600, fontSize: '0.8rem' }}>
                 +{change}% from last month
               </Typography>
             </Box>
@@ -75,17 +79,18 @@ const StatCard = ({ title, value, icon, color, change }) => (
         </Box>
         <Box
           sx={{
-            bgcolor: color,
+            bgcolor: 'rgba(255,255,255,0.1)',
             borderRadius: '50%',
             width: 56,
             height: 56,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white',
+            border: '1px solid rgba(255,255,255,0.1)'
           }}
         >
-          {icon}
+          {/* Override icon color to Gold */}
+          {React.cloneElement(icon, { sx: { color: '#e8ee26', fontSize: 28 } })}
         </Box>
       </Box>
     </CardContent>
