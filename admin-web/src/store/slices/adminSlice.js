@@ -192,6 +192,18 @@ export const toggleVendorPro = createAsyncThunk(
   }
 );
 
+// Fetch vendors from admins collection
+export const fetchVendors = createAsyncThunk(
+  'admin/fetchVendors',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await workingAdminAPI.getVendors();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   // Dashboard
   dashboardStats: {

@@ -15,6 +15,7 @@ import ReviewsPage from './pages/ReviewsPage';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorVenuePage from './pages/vendor/VendorVenuePage';
 import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
+import ProManagementPage from './pages/ProManagementPage';
 import { loadStoredAuth, setInitialized } from './store/slices/authSlice';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
 
@@ -74,6 +75,7 @@ function App() {
         <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ReportsPage /></ProtectedRoute>} />
         <Route path="/reviews" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ReviewsPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><SettingsPage /></ProtectedRoute>} />
+        <Route path="/pro-management" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ProManagementPage /></ProtectedRoute>} />
 
         {/* Vendor Routes */}
         <Route path="/vendor/dashboard" element={<ProtectedRoute allowedRoles={['vendor']}><VendorDashboard /></ProtectedRoute>} />

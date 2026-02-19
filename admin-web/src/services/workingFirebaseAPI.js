@@ -876,6 +876,39 @@ export const workingAdminAPI = {
     }
   },
 
+  // Get all vendors from admins collection
+  async getVendors() {
+    try {
+      console.log('👥 Admin: Fetching vendors...');
+      const firestore = db;
+      const adminsRef = collection(firestore, 'admins');
+      const vendorsQuery = query(adminsRef, where('role', '==', 'vendor'));
+      const snapshot = await getDocs(vendorsQuery);
+
+      const vendors = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        vendors.push({
+          id: docSnap.id,
+          name: data.fullName || data.displayName || data.name || data.businessName || 'Unnamed Vendor',
+          email: data.email || 'N/A',
+          phone: data.phone || data.phoneNumber || 'N/A',
+          role: data.role,
+          proActive: data.proActive || false,
+          proActivatedAt: data.proActivatedAt || null,
+          proPricePerMonth: data.proPricePerMonth || null,
+          createdAt: data.createdAt,
+        });
+      });
+
+      console.log(`✅ Admin: Found ${vendors.length} vendors`);
+      return vendors;
+    } catch (error) {
+      console.error('❌ Admin: Error fetching vendors:', error);
+      throw error;
+    }
+  },
+
   // Toggle vendor Pro status
   async toggleVendorPro(vendorId, activate) {
     try {
@@ -884,7 +917,7 @@ export const workingAdminAPI = {
       await updateDoc(vendorRef, {
         proActive: activate,
         proActivatedAt: activate ? new Date().toISOString() : null,
-        proPricePerMonth: 1500,
+        proPricePerMonth: 2000,
       });
       return { success: true, vendorId, activate };
     } catch (error) {

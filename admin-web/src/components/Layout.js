@@ -48,6 +48,7 @@ const adminMenuItems = [
   { text: 'Customers', icon: <People />, path: '/customers' },
   { text: 'Reports', icon: <Analytics />, path: '/reports' },
   { text: 'Reviews', icon: <RateReview />, path: '/reviews' },
+  { text: 'Pro Features', icon: <WorkspacePremium />, path: '/pro-management' },
   { text: 'Settings', icon: <Settings />, path: '/settings' },
 ];
 
