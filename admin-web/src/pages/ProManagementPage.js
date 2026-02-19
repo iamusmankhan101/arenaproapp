@@ -144,17 +144,17 @@ export default function ProManagementPage() {
     return (
         <Box>
             {/* Header */}
-            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)', color: 'white' }}>
+            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
                 <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar sx={{ bgcolor: '#FFD700', width: 48, height: 48 }}>
                             <WorkspacePremium sx={{ color: '#004d43', fontSize: 28 }} />
                         </Avatar>
                         <Box>
-                            <Typography variant="h5" fontWeight={700}>
+                            <Typography variant="h5" fontWeight={700} sx={{ color: '#fff' }}>
                                 Pro Management
                             </Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.85 }}>
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
                                 Activate or deactivate Pro features for vendors • PKR 1,500/month
                             </Typography>
                         </Box>
