@@ -94,7 +94,7 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
 
                 <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                     <Box>
-                        <Typography variant="h3" component="div" sx={{ fontWeight: 700, mb: 0.5, letterSpacing: -1 }}>
+                        <Typography variant="h3" component="div" sx={{ fontWeight: 700, mb: 0.5, letterSpacing: -1, color: textColor }}>
                             {value}
                         </Typography>
 
