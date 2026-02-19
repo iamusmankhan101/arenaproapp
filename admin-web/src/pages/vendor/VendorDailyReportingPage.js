@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import {
     Box, Typography, Card, CardContent, Grid, Avatar, Chip, Divider,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Paper, IconButton, Button, TextField, CircularProgress, Alert,
+    IconButton, Button, TextField, CircularProgress, Alert,
 } from '@mui/material';
 import {
     Assessment, TrendingUp, TrendingDown, People, AttachMoney,
