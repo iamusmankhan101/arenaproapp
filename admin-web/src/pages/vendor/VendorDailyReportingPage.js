@@ -45,7 +45,8 @@ export default function VendorDailyReportingPage() {
     const { admin } = useSelector(state => state.auth);
     const vendorId = admin?.vendorId || admin?.uid;
 
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [rangeType, setRangeType] = useState('30');
+    const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
     const [loading, setLoading] = useState(true);
     const [bookings, setBookings] = useState([]);
     const [stats, setStats] = useState({
@@ -54,6 +55,34 @@ export default function VendorDailyReportingPage() {
         newCustomers: 0, returningCustomers: 0, noShows: 0,
         peakHourBookings: 0, offPeakBookings: 0, avgUtilization: 0,
     });
+
+    const getDateRange = useCallback(() => {
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        if (rangeType === 'custom') {
+            const [y, m, d] = customDate.split('-').map(Number);
+            const customStart = new Date(y, m - 1, d, 0, 0, 0, 0);
+            const customEnd = new Date(y, m - 1, d, 23, 59, 59, 999);
+            return { start: customStart, end: customEnd };
+        }
+
+        switch (rangeType) {
+            case 'today': break;
+            case 'yesterday':
+                start.setDate(start.getDate() - 1);
+                end.setDate(end.getDate() - 1);
+                end.setHours(23, 59, 59, 999);
+                break;
+            case '7': start.setDate(start.getDate() - 6); break;
+            case '15': start.setDate(start.getDate() - 14); break;
+            case '30': start.setDate(start.getDate() - 29); break;
+            default: break;
+        }
+        return { start, end };
+    }, [rangeType, customDate]);
 
     const fetchDailyData = useCallback(async () => {
         if (!vendorId) return;
@@ -92,9 +121,7 @@ export default function VendorDailyReportingPage() {
             const customerSet = new Set();
             let peakHrs = 0, offPeakHrs = 0;
 
-            const [sYear, sMonth, sDay] = selectedDate.split('-').map(Number);
-            const selectedStart = new Date(sYear, sMonth - 1, sDay, 0, 0, 0, 0);
-            const selectedEnd = new Date(sYear, sMonth - 1, sDay, 23, 59, 59, 999);
+            const { start: selectedStart, end: selectedEnd } = getDateRange();
 
             console.log('🔍 Filtering for Range:', selectedStart.toLocaleString(), ' - ', selectedEnd.toLocaleString());
 
@@ -135,8 +162,15 @@ export default function VendorDailyReportingPage() {
                 }
             });
 
-            // Sort by time
+            // Sort by Date then Time (since we now have multiple days)
             dayBookings.sort((a, b) => {
+                // Sort by Date Descending first
+                const dateA = a.date && a.date.toDate ? a.date.toDate() : new Date(a.date || a.dateTime);
+                const dateB = b.date && b.date.toDate ? b.date.toDate() : new Date(b.date || b.dateTime);
+                const dateDiff = dateB - dateA;
+                if (dateDiff !== 0) return dateDiff;
+
+                // Then by Time Slot
                 const tA = a.timeSlot ? parseInt(a.timeSlot.split(':')[0]) : 0;
                 const tB = b.timeSlot ? parseInt(b.timeSlot.split(':')[0]) : 0;
                 return tB - tA;
@@ -165,13 +199,16 @@ export default function VendorDailyReportingPage() {
         } finally {
             setLoading(false);
         }
-    }, [vendorId, selectedDate]);
+    }, [vendorId, getDateRange]);
 
     useEffect(() => { fetchDailyData(); }, [fetchDailyData]);
 
     const handleExportPDF = () => {
+        const { start, end } = getDateRange();
+        const dateStr = rangeType === 'custom' ? customDate : `Last ${rangeType} Days`;
+
         const reportData = `
-DAILY REPORT - ${selectedDate}
+REPORT - ${dateStr} (${start.toLocaleDateString()} - ${end.toLocaleDateString()})
 ================================
 Total Revenue: PKR ${stats.totalRevenue.toLocaleString()}
 Cash: PKR ${stats.cashCollection.toLocaleString()}
@@ -187,7 +224,7 @@ Utilization: ${stats.avgUtilization}%
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `daily-report-${selectedDate}.txt`;
+        a.download = `report-${dateStr.replace(/\s+/g, '_')}.txt`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -202,20 +239,41 @@ Utilization: ${stats.avgUtilization}%
                             <Assessment sx={{ color: '#004d43', fontSize: 28 }} />
                         </Avatar>
                         <Box>
-                            <Typography variant="h5" fontWeight={700} color="white">Daily Reporting</Typography>
+                            <Typography variant="h5" fontWeight={700} color="white">
+                                {rangeType === 'custom' ? 'Daily Reporting' : `${rangeType === 'today' ? 'Today\'s' : 'Period'} Reporting`}
+                            </Typography>
                             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
-                                Financial ledger, customer insights & utilization
+                                Financial ledger & insights
                             </Typography>
                         </Box>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                         <TextField
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
+                            select
+                            value={rangeType}
+                            onChange={(e) => setRangeType(e.target.value)}
                             size="small"
-                            sx={{ bgcolor: 'white', borderRadius: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                        />
+                            SelectProps={{ native: true }}
+                            sx={{ bgcolor: 'white', borderRadius: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 }, minWidth: 150 }}
+                        >
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="15">Last 15 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="custom">Specific Date</option>
+                        </TextField>
+
+                        {rangeType === 'custom' && (
+                            <TextField
+                                type="date"
+                                value={customDate}
+                                onChange={(e) => setCustomDate(e.target.value)}
+                                size="small"
+                                sx={{ bgcolor: 'white', borderRadius: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                            />
+                        )}
+
                         <IconButton onClick={fetchDailyData} sx={{ color: 'white' }}><Refresh /></IconButton>
                         <Button variant="contained" startIcon={<Download />} onClick={handleExportPDF}
                             sx={{ bgcolor: '#FFD700', color: '#004d43', fontWeight: 700, borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: '#FFC107' } }}>
@@ -290,7 +348,11 @@ Utilization: ${stats.avgUtilization}%
                                 <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#004d43' }}>
                                     Today's Bookings ({bookings.length})
                                 </Typography>
-                                <Chip label={selectedDate} size="small" icon={<CalendarToday sx={{ fontSize: '14px !important' }} />} />
+                                <Chip
+                                    label={rangeType === 'custom' ? customDate : `Last ${rangeType} Days`}
+                                    size="small"
+                                    icon={<CalendarToday sx={{ fontSize: '14px !important' }} />}
+                                />
                             </Box>
                             <Divider />
                             {bookings.length === 0 ? (
