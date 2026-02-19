@@ -15,6 +15,9 @@ import ReviewsPage from './pages/ReviewsPage';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorVenuePage from './pages/vendor/VendorVenuePage';
 import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
+import VendorDailyReportingPage from './pages/vendor/VendorDailyReportingPage';
+import VendorInventoryPage from './pages/vendor/VendorInventoryPage';
+import VendorWhatsAppPage from './pages/vendor/VendorWhatsAppPage';
 import ProManagementPage from './pages/ProManagementPage';
 import { loadStoredAuth, setInitialized } from './store/slices/authSlice';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
@@ -82,6 +85,9 @@ function App() {
         <Route path="/vendor/venues" element={<ProtectedRoute allowedRoles={['vendor']}><VendorVenuePage /></ProtectedRoute>} />
         <Route path="/vendor/bookings" element={<ProtectedRoute allowedRoles={['vendor']}><VendorBookingsPage /></ProtectedRoute>} />
         <Route path="/vendor/settings" element={<ProtectedRoute allowedRoles={['vendor']}><SettingsPage /></ProtectedRoute>} />
+        <Route path="/vendor/daily-reporting" element={<ProtectedRoute allowedRoles={['vendor']}><VendorDailyReportingPage /></ProtectedRoute>} />
+        <Route path="/vendor/inventory" element={<ProtectedRoute allowedRoles={['vendor']}><VendorInventoryPage /></ProtectedRoute>} />
+        <Route path="/vendor/whatsapp" element={<ProtectedRoute allowedRoles={['vendor']}><VendorWhatsAppPage /></ProtectedRoute>} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
