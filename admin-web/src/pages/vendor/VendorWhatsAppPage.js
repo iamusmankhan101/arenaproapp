@@ -233,34 +233,34 @@ export default function VendorWhatsAppPage() {
                     {/* Stats */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                         <Grid item xs={6} sm={3}>
-                            <Card sx={{ borderRadius: 2 }}>
+                            <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)', color: 'white' }}>
                                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                                    <Typography variant="caption" color="text.secondary" fontWeight={600}>TEMPLATES</Typography>
-                                    <Typography variant="h5" fontWeight={800} color="#075e54">{templates.length}</Typography>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }} fontWeight={600}>TEMPLATES</Typography>
+                                    <Typography variant="h5" fontWeight={800} color="white">{templates.length}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                            <Card sx={{ borderRadius: 2 }}>
+                            <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)', color: 'white' }}>
                                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                                    <Typography variant="caption" color="text.secondary" fontWeight={600}>ACTIVE</Typography>
-                                    <Typography variant="h5" fontWeight={800} color="#25D366">{activeTemplates}</Typography>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }} fontWeight={600}>ACTIVE</Typography>
+                                    <Typography variant="h5" fontWeight={800} color="white">{activeTemplates}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                            <Card sx={{ borderRadius: 2 }}>
+                            <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)', color: 'white' }}>
                                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                                    <Typography variant="caption" color="text.secondary" fontWeight={600}>SENT TODAY</Typography>
-                                    <Typography variant="h5" fontWeight={800} color="#1565c0">{sentToday}</Typography>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }} fontWeight={600}>SENT TODAY</Typography>
+                                    <Typography variant="h5" fontWeight={800} color="white">{sentToday}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                            <Card sx={{ borderRadius: 2 }}>
+                            <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)', color: 'white' }}>
                                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                                    <Typography variant="caption" color="text.secondary" fontWeight={600}>TOTAL SENT</Typography>
-                                    <Typography variant="h5" fontWeight={800} color="#5e35b1">{logs.length}</Typography>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }} fontWeight={600}>TOTAL SENT</Typography>
+                                    <Typography variant="h5" fontWeight={800} color="white">{logs.length}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>

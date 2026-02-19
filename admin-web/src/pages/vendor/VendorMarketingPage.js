@@ -192,7 +192,7 @@ export default function VendorMarketingPage() {
 
                                 {isPro ? (
                                     <>
-                                        <Box sx={{ p: 2, bgcolor: '#e8f5e9', borderRadius: 2, border: '1px solid #e7ee26ef', mb: 3 }}>
+                                        <Box sx={{ p: 2, bgcolor: 'rgba(231, 238, 38, 0.5)', mb: 3 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 <CheckCircle sx={{ color: '#004d43', fontSize: 20 }} />
                                                 <Typography variant="subtitle2" fontWeight={700} color="#004d43">Active Search Boost</Typography>
@@ -231,21 +231,21 @@ export default function VendorMarketingPage() {
 
                                 <Grid container spacing={2}>
                                     <Grid item xs={4}>
-                                        <Box sx={{ p: 2, bgcolor: '#e7ee26ef', borderRadius: 2, textAlign: 'center' }}>
+                                        <Box sx={{ p: 2, bgcolor: 'rgba(231, 238, 38, 0.5)', borderRadius: 2, textAlign: 'center' }}>
                                             <Visibility sx={{ color: '#004d43', fontSize: 24, mb: 1 }} />
                                             <Typography variant="h5" fontWeight={800} color="#004d43">{stats?.organicViews + stats?.boostedViews}</Typography>
                                             <Typography variant="caption" color="text.secondary">Total Profile Views</Typography>
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Box sx={{ p: 2, bgcolor: '#e7ee26ef', borderRadius: 2, textAlign: 'center' }}>
+                                        <Box sx={{ p: 2, bgcolor: 'rgba(231, 238, 38, 0.5)', borderRadius: 2, textAlign: 'center' }}>
                                             <AdsClick sx={{ color: '#00695c', fontSize: 24, mb: 1 }} />
                                             <Typography variant="h5" fontWeight={800} color="#00695c">{stats?.dealClicks}</Typography>
                                             <Typography variant="caption" color="text.secondary">Promo Clicks</Typography>
                                         </Box>
                                     </Grid>
                                     <Grid item xs={4}>
-                                        <Box sx={{ p: 2, bgcolor: '#e7ee26ef', borderRadius: 2, textAlign: 'center' }}>
+                                        <Box sx={{ p: 2, bgcolor: 'rgba(231, 238, 38, 0.5)', borderRadius: 2, textAlign: 'center' }}>
                                             <LocalOffer sx={{ color: '#004d43', fontSize: 24, mb: 1 }} />
                                             <Typography variant="h5" fontWeight={800} color="#004d43">{stats?.ctr}</Typography>
                                             <Typography variant="caption" color="text.secondary">Click-Through Rate</Typography>
