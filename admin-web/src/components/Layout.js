@@ -36,6 +36,9 @@ import {
   AccountCircle,
   RateReview,
   WorkspacePremium,
+  Assessment,
+  Inventory2,
+  WhatsApp,
 } from '@mui/icons-material';
 import { logoutAdmin } from '../store/slices/authSlice';
 
@@ -57,6 +60,12 @@ const vendorMenuItems = [
   { text: 'My Venues', icon: <LocationOn />, path: '/vendor/venues' },
   { text: 'Bookings', icon: <Event />, path: '/vendor/bookings' },
   { text: 'Settings', icon: <Settings />, path: '/vendor/settings' },
+];
+
+const vendorProMenuItems = [
+  { text: 'Daily Reporting', icon: <Assessment />, path: '/vendor/daily-reporting', pro: true },
+  { text: 'Inventory', icon: <Inventory2 />, path: '/vendor/inventory', pro: true },
+  { text: 'WhatsApp API', icon: <WhatsApp />, path: '/vendor/whatsapp', pro: true },
 ];
 
 
@@ -89,7 +98,11 @@ export default function Layout({ children }) {
     handleMenuClose();
   };
 
-  const menuItems = admin?.role === 'vendor' ? vendorMenuItems : adminMenuItems;
+  const menuItems = admin?.role === 'vendor'
+    ? (admin?.proActive
+      ? [...vendorMenuItems.slice(0, -1), ...vendorProMenuItems, ...vendorMenuItems.slice(-1)]
+      : vendorMenuItems)
+    : adminMenuItems;
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#071a15', color: 'white' }}>
