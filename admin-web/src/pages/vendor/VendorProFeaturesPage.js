@@ -71,7 +71,7 @@ export default function VendorProFeaturesPage() {
             <Card
                 sx={{
                     mb: 4,
-                    background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)',
+                    background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)',
                     borderRadius: 3,
                     overflow: 'hidden',
                 }}
@@ -80,7 +80,7 @@ export default function VendorProFeaturesPage() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                         <Avatar
                             sx={{
-                                bgcolor: '#FFD700',
+                                bgcolor: '#e8ee26',
                                 width: 56,
                                 height: 56,
                             }}
@@ -97,7 +97,7 @@ export default function VendorProFeaturesPage() {
                         </Box>
                         {isProActive ? (
                             <Chip
-                                icon={<Star sx={{ color: '#FFD700 !important' }} />}
+                                icon={<Star sx={{ color: '#004d43 !important' }} />}
                                 label="ACTIVE"
                                 sx={{
                                     bgcolor: 'rgba(255,215,0,0.2)',

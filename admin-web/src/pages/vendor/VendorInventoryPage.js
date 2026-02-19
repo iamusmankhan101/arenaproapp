@@ -144,10 +144,10 @@ export default function VendorInventoryPage() {
     return (
         <Box>
             {/* Header */}
-            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
+            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)' }}>
                 <CardContent sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: '#FFD700', width: 48, height: 48 }}>
+                        <Avatar sx={{ bgcolor: '#e8ee26', width: 48, height: 48 }}>
                             <Inventory2 sx={{ color: '#004d43', fontSize: 28 }} />
                         </Avatar>
                         <Box>
@@ -159,7 +159,7 @@ export default function VendorInventoryPage() {
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button variant="contained" startIcon={<Add />} onClick={handleOpenAdd}
-                            sx={{ bgcolor: '#FFD700', color: '#004d43', fontWeight: 700, borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: '#FFC107' } }}>
+                            sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: '#d4d915' } }}>
                             Add Item
                         </Button>
                         <IconButton onClick={fetchInventory} sx={{ color: 'white' }}><Refresh /></IconButton>

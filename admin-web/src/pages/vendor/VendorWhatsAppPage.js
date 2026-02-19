@@ -203,11 +203,11 @@ export default function VendorWhatsAppPage() {
     return (
         <Box>
             {/* Header */}
-            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #075e54 0%, #25D366 100%)' }}>
+            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)' }}>
                 <CardContent sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'white', width: 48, height: 48 }}>
-                            <WhatsApp sx={{ color: '#25D366', fontSize: 28 }} />
+                        <Avatar sx={{ bgcolor: '#e8ee26', width: 48, height: 48 }}>
+                            <WhatsApp sx={{ color: '#004d43', fontSize: 28 }} />
                         </Avatar>
                         <Box>
                             <Typography variant="h5" fontWeight={700} color="white">WhatsApp Integration</Typography>
@@ -218,7 +218,7 @@ export default function VendorWhatsAppPage() {
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button variant="contained" startIcon={<Add />} onClick={handleOpenAdd}
-                            sx={{ bgcolor: 'white', color: '#075e54', fontWeight: 700, borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: '#f0f0f0' } }}>
+                            sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: '#d4d915' } }}>
                             New Template
                         </Button>
                         <IconButton onClick={fetchData} sx={{ color: 'white' }}><Refresh /></IconButton>
@@ -227,7 +227,7 @@ export default function VendorWhatsAppPage() {
             </Card>
 
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#25D366' }} /></Box>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#004d43' }} /></Box>
             ) : (
                 <>
                     {/* Stats */}

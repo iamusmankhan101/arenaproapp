@@ -34,10 +34,10 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
     <Card
       sx={{
         height: '100%',
-        bgcolor: isDark ? '#071a15' : 'white',
+        bgcolor: isDark ? '#004d43' : 'white', // Primary Brand Color
         color: isDark ? 'white' : 'text.primary',
         borderRadius: 4,
-        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : '0 4px 20px rgba(0,0,0,0.05)',
+        boxShadow: isDark ? '0 10px 30px rgba(0, 77, 67, 0.4)' : '0 4px 20px rgba(0,0,0,0.05)',
         position: 'relative',
         overflow: 'hidden'
       }}
@@ -50,8 +50,8 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
             right: -50,
             width: 150,
             height: 150,
-            bgcolor: '#004d43',
-            opacity: 0.2,
+            bgcolor: '#e8ee26', // Secondary Brand Color
+            opacity: 0.1,
             borderRadius: '50%',
             filter: 'blur(40px)',
           }}
@@ -75,8 +75,8 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
             sx={{
               p: 1,
               borderRadius: 2,
-              bgcolor: isDark ? 'rgba(255,255,255,0.1)' : `${color}15`,
-              color: isDark ? '#4CAF50' : color
+              bgcolor: isDark ? 'rgba(232, 238, 38, 0.1)' : '#004d43', // Brand Primary for Light Card Icon Bg
+              color: '#e8ee26' // Brand Secondary for Icon (Both Dark & Light)
             }}
           >
             {React.cloneElement(icon, { fontSize: 'small' })}
@@ -92,14 +92,14 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
             {growth !== undefined && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {growth >= 0 ? (
-                  <TrendingUp sx={{ color: isDark ? '#4CAF50' : 'success.main', fontSize: 16 }} />
+                  <TrendingUp sx={{ color: isDark ? '#e8ee26' : 'success.main', fontSize: 16 }} />
                 ) : (
                   <TrendingDown sx={{ color: 'error.main', fontSize: 16 }} />
                 )}
                 <Typography
                   variant="body2"
                   sx={{
-                    color: growth >= 0 ? (isDark ? '#4CAF50' : 'success.main') : 'error.main',
+                    color: growth >= 0 ? (isDark ? '#e8ee26' : 'success.main') : 'error.main',
                     fontWeight: 600,
                   }}
                 >
@@ -117,7 +117,7 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
                 sx={{
                   width: 6,
                   height: `${Math.random() * 80 + 20}%`,
-                  bgcolor: isDark ? '#004d43' : color,
+                  bgcolor: isDark ? '#e8ee26' : color, // Secondary Color bars
                   borderRadius: 1
                 }}
               />
