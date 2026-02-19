@@ -10,7 +10,7 @@ import {
     Refresh, CalendarToday, Download, EventSeat, AccessTime,
     PersonAdd, PersonOff, Star, Schedule,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 
 const StatCard = ({ title, value, subtitle, icon, color, trend }) => (
@@ -67,7 +67,7 @@ export default function VendorDailyReportingPage() {
 
             if (vendorTurfIds.length === 0) {
                 setBookings([]);
-                setStats({ ...stats, totalBookings: 0, totalRevenue: 0 }); // Reset stats
+                setStats(prevStats => ({ ...prevStats, totalBookings: 0, totalRevenue: 0 })); // Reset stats
                 setLoading(false);
                 return;
             }
