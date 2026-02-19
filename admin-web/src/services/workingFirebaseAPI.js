@@ -874,6 +874,23 @@ export const workingAdminAPI = {
       console.error('❌ Admin: Error deleting review:', error);
       throw error;
     }
+  },
+
+  // Toggle vendor Pro status
+  async toggleVendorPro(vendorId, activate) {
+    try {
+      const firestore = db;
+      const vendorRef = doc(firestore, 'admins', vendorId);
+      await updateDoc(vendorRef, {
+        proActive: activate,
+        proActivatedAt: activate ? new Date().toISOString() : null,
+        proPricePerMonth: 1500,
+      });
+      return { success: true, vendorId, activate };
+    } catch (error) {
+      console.error('❌ Admin: Error toggling vendor Pro:', error);
+      throw error;
+    }
   }
 };
 

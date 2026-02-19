@@ -30,6 +30,7 @@ import {
   Logout,
   AccountCircle,
   RateReview,
+  WorkspacePremium,
 } from '@mui/icons-material';
 import { logoutAdmin } from '../store/slices/authSlice';
 
@@ -42,6 +43,7 @@ const adminMenuItems = [
   { text: 'Customers', icon: <People />, path: '/customers' },
   { text: 'Reports', icon: <Analytics />, path: '/reports' },
   { text: 'Reviews', icon: <RateReview />, path: '/reviews' },
+  { text: 'Pro Management', icon: <WorkspacePremium />, path: '/pro-management' },
   { text: 'Settings', icon: <Settings />, path: '/settings' },
 ];
 
@@ -49,6 +51,7 @@ const vendorMenuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/vendor/dashboard' },
   { text: 'My Venues', icon: <LocationOn />, path: '/vendor/venues' },
   { text: 'Bookings', icon: <Event />, path: '/vendor/bookings' },
+  { text: 'Pro Features', icon: <WorkspacePremium />, path: '/vendor/pro' },
   { text: 'Settings', icon: <Settings />, path: '/vendor/settings' },
 ];
 

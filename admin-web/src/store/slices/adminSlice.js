@@ -179,6 +179,19 @@ export const updateReviewStatus = createAsyncThunk(
   }
 );
 
+// Toggle vendor Pro status
+export const toggleVendorPro = createAsyncThunk(
+  'admin/toggleVendorPro',
+  async ({ vendorId, activate }, { rejectWithValue }) => {
+    try {
+      await workingAdminAPI.toggleVendorPro(vendorId, activate);
+      return { vendorId, activate };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   // Dashboard
   dashboardStats: {

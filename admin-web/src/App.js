@@ -15,6 +15,8 @@ import ReviewsPage from './pages/ReviewsPage';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorVenuePage from './pages/vendor/VendorVenuePage';
 import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
+import VendorProFeaturesPage from './pages/vendor/VendorProFeaturesPage';
+import ProManagementPage from './pages/ProManagementPage';
 import { loadStoredAuth, setInitialized } from './store/slices/authSlice';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
 
@@ -74,12 +76,14 @@ function App() {
         <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ReportsPage /></ProtectedRoute>} />
         <Route path="/reviews" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ReviewsPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><SettingsPage /></ProtectedRoute>} />
+        <Route path="/pro-management" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ProManagementPage /></ProtectedRoute>} />
 
         {/* Vendor Routes */}
         <Route path="/vendor/dashboard" element={<ProtectedRoute allowedRoles={['vendor']}><VendorDashboard /></ProtectedRoute>} />
         <Route path="/vendor/venues" element={<ProtectedRoute allowedRoles={['vendor']}><VendorVenuePage /></ProtectedRoute>} />
         <Route path="/vendor/bookings" element={<ProtectedRoute allowedRoles={['vendor']}><VendorBookingsPage /></ProtectedRoute>} />
         <Route path="/vendor/settings" element={<ProtectedRoute allowedRoles={['vendor']}><SettingsPage /></ProtectedRoute>} />
+        <Route path="/vendor/pro" element={<ProtectedRoute allowedRoles={['vendor']}><VendorProFeaturesPage /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
