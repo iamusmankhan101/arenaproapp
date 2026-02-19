@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import {
     Box, Typography, Card, CardContent, Grid, Button, Avatar, Chip,
@@ -52,9 +52,9 @@ export default function VendorMarketingPage() {
     useEffect(() => {
         if (!vendorId) return;
         fetchData();
-    }, [vendorId]);
+    }, [vendorId, fetchData]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
 
@@ -92,7 +92,7 @@ export default function VendorMarketingPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [vendorId]);
 
     const handleCreatePush = async () => {
         if (pushQuota.remaining <= 0) {
