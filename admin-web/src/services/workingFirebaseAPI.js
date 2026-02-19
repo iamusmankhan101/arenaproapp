@@ -1224,6 +1224,10 @@ export const workingAdminAPI = {
 
         const amount = Number(booking.totalAmount || booking.amount) || 0;
         const date = booking.date ? (booking.date.toDate ? booking.date.toDate() : new Date(booking.date)) : new Date();
+
+        // Skip if booking is older than 6 months or in future (basic sanity check)
+        if (date < sixMonthsAgo || date > new Date(now.getTime() + 86400000)) continue; {/* Allow up to tomorrow for timezone diffs */ }
+
         const monthKey = date.toLocaleString('default', { month: 'short' });
 
         // Aggregate Global Stats
