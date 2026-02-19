@@ -64,12 +64,21 @@ export default function VendorDailyReportingPage() {
             endOfDay.setHours(23, 59, 59, 999);
 
             const bookingsRef = collection(db, 'bookings');
+            // Create ISO strings for start and end of day in local time -> UTC
+            // Assuming 'date' field is stored as ISO string in UTC or consistent format
+            // createBooking stores date as: dateTime.toISOString()
+
+            // To filter correctly, we need the full ISO range for the selected day
+            const startIso = new Date(startOfDay).toISOString();
+            const endIso = new Date(endOfDay).toISOString();
+
             const q = query(
                 bookingsRef,
+
                 where('vendorId', '==', vendorId),
-                where('createdAt', '>=', Timestamp.fromDate(startOfDay)),
-                where('createdAt', '<=', Timestamp.fromDate(endOfDay)),
-                orderBy('createdAt', 'desc')
+                where('date', '>=', startIso),
+                where('date', '<=', endIso),
+                orderBy('date', 'desc')
             );
 
             const snapshot = await getDocs(q);
