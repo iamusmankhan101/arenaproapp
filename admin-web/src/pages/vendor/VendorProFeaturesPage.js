@@ -18,7 +18,7 @@ import {
 import {
     WhatsApp,
     Inventory2,
-    AccountBalance,
+    Assessment,
     WorkspacePremium,
     Star,
     CheckCircle,
@@ -27,12 +27,12 @@ import {
 
 const PRO_FEATURES = [
     {
-        title: 'Automated Partner Payouts',
+        title: 'Daily Reporting',
         description:
-            'If the venue has multiple investors or partners, the system can automatically split the net revenue and generate individual payout reports at the end of the month.',
-        icon: <AccountBalance sx={{ fontSize: 40 }} />,
+            'A complete end-of-day operations module: financial ledger reconciling digital deposits and cash collection, customer insights with new vs. returning player analytics, court utilization rates, and a one-click PDF/WhatsApp shift handover report.',
+        icon: <Assessment sx={{ fontSize: 40 }} />,
         color: '#004d43',
-        tag: 'Finance',
+        tag: 'Operations',
     },
     {
         title: 'Live Inventory Tracking',
@@ -235,12 +235,12 @@ export default function VendorProFeaturesPage() {
                     </Typography>
                     <Grid container spacing={2}>
                         {[
-                            'Automated Partner Payouts',
+                            'Daily Financial Ledger',
                             'Live Inventory Tracking',
                             'WhatsApp API Integration',
-                            'Priority Support',
-                            'Advanced Analytics',
-                            'Custom Branding',
+                            'Customer & No-Show Insights',
+                            'Court Utilization Analytics',
+                            'One-Click EOD Shift Handover',
                         ].map((item, i) => (
                             <Grid item xs={12} sm={6} md={4} key={i}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
