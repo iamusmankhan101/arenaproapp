@@ -39,6 +39,7 @@ export const loginAdmin = createAsyncThunk(
         role: role,
         photoURL: userData.photoURL || null,
         vendorId: userData.vendorId || null, // If linked to a specific vendor profile
+        proActive: userData.proActive || false,
         permissions: role === 'admin' || role === 'super_admin' ? ['all'] : ['vendor_access'],
         lastLogin: new Date().toISOString(),
       };
@@ -151,6 +152,21 @@ export const loadStoredAuth = createAsyncThunk(
       if (token && adminDataString) {
         console.log('🔄 Loading stored session');
         const adminData = JSON.parse(adminDataString);
+
+        // Re-fetch from Firestore to get latest proActive status
+        try {
+          const userDocRef = doc(db, 'users', adminData.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const freshData = userDoc.data();
+            adminData.proActive = freshData.proActive || false;
+            // Update localStorage with fresh data
+            localStorage.setItem('adminData', JSON.stringify(adminData));
+          }
+        } catch (fetchErr) {
+          console.warn('⚠️ Could not refresh Pro status:', fetchErr.message);
+        }
+
         return adminData;
       }
 
