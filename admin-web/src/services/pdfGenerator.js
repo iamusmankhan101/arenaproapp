@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const generateDailyReport = (stats, rangeType, dateRange, bookings) => {
     const doc = new jsPDF();
@@ -50,7 +50,7 @@ export const generateDailyReport = (stats, rangeType, dateRange, bookings) => {
         ['Utilization', `${stats.avgUtilization}%`],
     ];
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: 60,
         head: [['Metric', 'Value']],
         body: tableData,
@@ -113,7 +113,7 @@ export const generateDailyReport = (stats, rangeType, dateRange, bookings) => {
         b.status || '-'
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: finalY + 5,
         head: [['Customer', 'Date', 'Time', 'Amount', 'Payment', 'Status']],
         body: bookingRows,
