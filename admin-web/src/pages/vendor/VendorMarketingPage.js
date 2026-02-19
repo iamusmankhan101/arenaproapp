@@ -147,7 +147,7 @@ export default function VendorMarketingPage() {
     return (
         <Box>
             {/* Header */}
-            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #ffffff 100%)' }}>
+            <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)' }}>
                 <CardContent sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar sx={{ bgcolor: '#e8ee26', width: 48, height: 48 }}>
@@ -161,9 +161,9 @@ export default function VendorMarketingPage() {
                         </Box>
                     </Box>
                     {isPro ? (
-                        <Chip icon={<Star sx={{ color: '#004d43 !important' }} />} label="PRO ENABLED" sx={{ bgcolor: '#FFD700', color: '#004d43', fontWeight: 700 }} />
+                        <Chip icon={<Star sx={{ color: '#004d43 !important' }} />} label="PRO ENABLED" sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700 }} />
                     ) : (
-                        <Button variant="contained" sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, '&:hover': { bgcolor: '#ffca28' } }}>Upgrade to Pro</Button>
+                        <Button variant="contained" sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, '&:hover': { bgcolor: '#e8ee26' } }}>Upgrade to Pro</Button>
                     )}
                 </CardContent>
             </Card>
