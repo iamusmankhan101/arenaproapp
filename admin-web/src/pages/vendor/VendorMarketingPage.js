@@ -49,11 +49,6 @@ export default function VendorMarketingPage() {
     const [saving, setSaving] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-    useEffect(() => {
-        if (!vendorId) return;
-        fetchData();
-    }, [vendorId, fetchData]);
-
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -93,6 +88,11 @@ export default function VendorMarketingPage() {
             setLoading(false);
         }
     }, [vendorId]);
+
+    useEffect(() => {
+        if (!vendorId) return;
+        fetchData();
+    }, [vendorId, fetchData]);
 
     const handleCreatePush = async () => {
         if (pushQuota.remaining <= 0) {
