@@ -39,9 +39,6 @@ const statusColors = {
   pending: '#ed6c02',   // Brand Orange
   cancelled: '#d32f2f', // Brand Red
   completed: '#004d43', // Brand Teal
-  pending: '#ed6c02',   // Brand Orange
-  cancelled: '#d32f2f', // Brand Red
-  completed: '#0288d1', // Brand Blue
 };
 
 const StatusChip = ({ status }) => (
