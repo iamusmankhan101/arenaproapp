@@ -18,7 +18,12 @@ import {
   useTheme,
   useMediaQuery,
   Avatar,
+  Dialog,
+  DialogContent,
+  Chip,
 } from '@mui/material';
+import VendorProFeaturesPage from '../pages/vendor/VendorProFeaturesPage';
+import ProManagementPage from '../pages/ProManagementPage';
 import {
   Menu as MenuIcon,
   Dashboard,
@@ -43,7 +48,6 @@ const adminMenuItems = [
   { text: 'Customers', icon: <People />, path: '/customers' },
   { text: 'Reports', icon: <Analytics />, path: '/reports' },
   { text: 'Reviews', icon: <RateReview />, path: '/reviews' },
-  { text: 'Pro Management', icon: <WorkspacePremium />, path: '/pro-management' },
   { text: 'Settings', icon: <Settings />, path: '/settings' },
 ];
 
@@ -51,7 +55,6 @@ const vendorMenuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/vendor/dashboard' },
   { text: 'My Venues', icon: <LocationOn />, path: '/vendor/venues' },
   { text: 'Bookings', icon: <Event />, path: '/vendor/bookings' },
-  { text: 'Pro Features', icon: <WorkspacePremium />, path: '/vendor/pro' },
   { text: 'Settings', icon: <Settings />, path: '/vendor/settings' },
 ];
 
@@ -66,6 +69,7 @@ export default function Layout({ children }) {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [proDialogOpen, setProDialogOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -208,7 +212,20 @@ export default function Layout({ children }) {
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              icon={<WorkspacePremium sx={{ color: '#004d43 !important', fontSize: 20 }} />}
+              label="Pro"
+              onClick={() => setProDialogOpen(true)}
+              sx={{
+                bgcolor: '#FFD700',
+                color: '#004d43',
+                fontWeight: 700,
+                cursor: 'pointer',
+                '&:hover': { bgcolor: '#FFC107' },
+                px: 0.5,
+              }}
+            />
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -256,6 +273,23 @@ export default function Layout({ children }) {
               </MenuItem>
             </Menu>
           </Box>
+
+          {/* Pro Dialog */}
+          <Dialog
+            open={proDialogOpen}
+            onClose={() => setProDialogOpen(false)}
+            maxWidth="lg"
+            fullWidth
+            PaperProps={{ sx: { borderRadius: 3, maxHeight: '90vh' } }}
+          >
+            <DialogContent sx={{ p: 3 }}>
+              {admin?.role === 'vendor' ? (
+                <VendorProFeaturesPage />
+              ) : (
+                <ProManagementPage />
+              )}
+            </DialogContent>
+          </Dialog>
         </Toolbar>
       </AppBar>
       <Box
