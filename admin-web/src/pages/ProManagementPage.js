@@ -155,7 +155,7 @@ export default function ProManagementPage() {
                                 Pro Management
                             </Typography>
                             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
-                                Activate or deactivate Pro features for vendors • PKR 1,500/month
+                                Activate or deactivate Pro features for vendors • PKR 2,000/month
                             </Typography>
                         </Box>
                     </Box>
