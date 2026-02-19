@@ -263,7 +263,7 @@ export default function VendorMarketingPage() {
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                     <Typography variant="h6" fontWeight={700}>Active Campaigns</Typography>
                                     <Button startIcon={<Add />} variant="contained" onClick={() => setOpenPromoDialog(true)}
-                                        sx={{ bgcolor: '#e65100', '&:hover': { bgcolor: '#bf360c' } }}>
+                                        sx={{ bgcolor: '#004d43', '&:hover': { bgcolor: '#00332d' } }}>
                                         New Promo
                                     </Button>
                                 </Box>
@@ -275,17 +275,17 @@ export default function VendorMarketingPage() {
                                                 <CardContent>
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                         <Box>
-                                                            <Chip label={`${promo.discount}% OFF`} size="small" sx={{ bgcolor: '#ffe0b2', color: '#e65100', fontWeight: 700, mb: 1 }} />
+                                                            <Chip label={`${promo.discount}% OFF`} size="small" sx={{ bgcolor: '#e0f2f1', color: '#004d43', fontWeight: 700, mb: 1 }} />
                                                             <Typography variant="subtitle1" fontWeight={700}>{promo.title}</Typography>
                                                             <Typography variant="body2" color="text.secondary">{promo.venueName}</Typography>
                                                         </Box>
-                                                        <Avatar sx={{ bgcolor: '#e65100' }}><LocalOffer /></Avatar>
+                                                        <Avatar sx={{ bgcolor: '#004d43' }}><LocalOffer /></Avatar>
                                                     </Box>
                                                     <Divider sx={{ my: 1.5 }} />
                                                     <Typography variant="caption" display="block" sx={{ color: 'text.secondary', mb: 0.5 }}>
                                                         Runs until: {promo.endDate}
                                                     </Typography>
-                                                    <LinearProgress variant="determinate" value={60} sx={{ height: 4, borderRadius: 2, bgcolor: '#eee', '& .MuiLinearProgress-bar': { bgcolor: '#e65100' } }} />
+                                                    <LinearProgress variant="determinate" value={60} sx={{ height: 4, borderRadius: 2, bgcolor: '#e0f2f1', '& .MuiLinearProgress-bar': { bgcolor: '#004d43' } }} />
                                                 </CardContent>
                                             </Card>
                                         </Grid>
@@ -318,8 +318,8 @@ export default function VendorMarketingPage() {
                                         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Monthly Limit</Typography>
                                     </Box>
                                 </Box>
-                                <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
-                                    {pushQuota.remaining} <Typography component="span" variant="h6" sx={{ color: 'rgba(255,255,255,0.5)' }}>/ {pushQuota.limit}</Typography>
+                                <Typography variant="h3" fontWeight={700} sx={{ mb: 1, color: 'white' }}>
+                                    {pushQuota.remaining} <Typography component="span" variant="h6" sx={{ color: 'rgba(255,255,255,0.8)' }}>/ {pushQuota.limit}</Typography>
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 3 }}>
                                     Campaigns remaining this month
