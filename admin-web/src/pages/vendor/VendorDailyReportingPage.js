@@ -13,6 +13,7 @@ import {
 } from '@mui/icons-material';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import { generateDailyReport } from '../../services/pdfGenerator';
 
 const StatCard = ({ title, value, subtitle, icon, color, trend }) => (
     <Card sx={{ borderRadius: 3, height: '100%', border: `1px solid ${color}15` }}>
@@ -204,29 +205,8 @@ export default function VendorDailyReportingPage() {
     useEffect(() => { fetchDailyData(); }, [fetchDailyData]);
 
     const handleExportPDF = () => {
-        const { start, end } = getDateRange();
-        const dateStr = rangeType === 'custom' ? customDate : `Last ${rangeType} Days`;
-
-        const reportData = `
-REPORT - ${dateStr} (${start.toLocaleDateString()} - ${end.toLocaleDateString()})
-================================
-Total Revenue: PKR ${stats.totalRevenue.toLocaleString()}
-Cash: PKR ${stats.cashCollection.toLocaleString()}
-Digital: PKR ${stats.digitalPayments.toLocaleString()}
-Total Bookings: ${stats.totalBookings}
-Completed: ${stats.completedBookings}
-Cancelled: ${stats.cancelledBookings}
-No-Shows: ${stats.noShows}
-Utilization: ${stats.avgUtilization}%
-        `.trim();
-
-        const blob = new Blob([reportData], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `report-${dateStr.replace(/\s+/g, '_')}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const dateRange = getDateRange();
+        generateDailyReport(stats, rangeType, dateRange, bookings);
     };
 
     return (
