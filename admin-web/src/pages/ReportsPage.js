@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRevenueReport } from '../store/slices/adminSlice';
 import {
@@ -161,7 +161,7 @@ export default function ReportsPage() {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Revenue"
-            value={`PKR ${summary.totalRevenue?.toLocaleString() || '0'}`}
+            value={`PKR ${summary.totalRevenue?.toLocaleString() || '0'} `}
             icon={<Payments />}
             color="#e8ee26"
             change={summary.revenueChange || 0}
@@ -226,13 +226,13 @@ export default function ReportsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}% `}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
                   {sportsData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell - ${index} `} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -290,17 +290,17 @@ export default function ReportsPage() {
               Top Performing Venues
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={venuePerformance} layout="horizontal">
+              <BarChart data={venuePerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" stroke="#004d43" style={{ fontSize: '12px' }} />
-                <YAxis dataKey="name" type="category" width={150} stroke="#004d43" style={{ fontSize: '11px', fontWeight: 500 }} />
+                <XAxis dataKey="name" stroke="#004d43" style={{ fontSize: '11px', fontWeight: 500 }} />
+                <YAxis stroke="#004d43" style={{ fontSize: '12px' }} />
                 <Tooltip formatter={(value, name) => [
                   name === 'revenue' ? `PKR ${value.toLocaleString()}` : value,
                   name === 'revenue' ? 'Revenue' : 'Bookings'
-                ]} />
-                <Legend />
-                <Bar dataKey="bookings" fill="#004d43" name="Bookings" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="revenue" fill="#e8ee26" name="Revenue" radius={[0, 4, 4, 0]} />
+                ]} contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                <Bar dataKey="bookings" fill="#004d43" name="Bookings" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar dataKey="revenue" fill="#e8ee26" name="Revenue" radius={[4, 4, 0, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </Paper>

@@ -1180,6 +1180,14 @@ export const workingAdminAPI = {
       console.log('💰 Admin: Fetching revenue report...');
       const firestore = initFirebase();
       const bookingsRef = collection(firestore, 'bookings');
+      const venuesRef = collection(firestore, 'venues');
+
+      // Fetch venues for accurate naming
+      const venuesSnapshot = await getDocs(venuesRef);
+      const venueMap = {};
+      venuesSnapshot.forEach(doc => {
+        venueMap[doc.id] = doc.data().name || 'Unknown Venue';
+      });
 
       // Get all bookings (we'll filter in memory for simplicity as dataset is small)
       // In production, use range queries
@@ -1265,7 +1273,8 @@ export const workingAdminAPI = {
       const venueStats = {};
       querySnapshot.docs.forEach(doc => {
         const b = doc.data();
-        const venueName = b.turfName || b.venueName || b.turfId || 'Unknown Venue';
+        // Use mapped name from ID if available, fallback to booking data or Unknown
+        const venueName = venueMap[b.turfId] || b.turfName || b.venueName || 'Unknown Venue';
         if (!venueStats[venueName]) venueStats[venueName] = { name: venueName, bookings: 0, revenue: 0 };
         venueStats[venueName].bookings++;
         venueStats[venueName].revenue += (Number(b.totalAmount || b.amount) || 0);
