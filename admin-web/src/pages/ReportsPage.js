@@ -138,23 +138,24 @@ export default function ReportsPage() {
       doc.setFillColor(brandTeal);
       doc.rect(0, 0, 210, 40, 'F');
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ARENA PRO', 14, 25);
+      // Add Logo on the left (replacing text)
+      if (logoImg) {
+        doc.addImage(logoImg, 'PNG', 14, 10, 36, 18); // Larger logo on left
+      } else {
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text('ARENA PRO', 14, 25);
+      }
 
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const dateStr = format(new Date(), 'dd MMM yyyy HH:mm');
-      doc.text(`Generated on: ${dateStr}`, 14, 32);
+      doc.text(`Generated on: ${dateStr}`, 14, 34); // Shifted down a bit
 
       doc.setFontSize(14);
-      doc.text('SALES STATEMENT', 150, 25, { align: 'right' });
-
-      // Add Logo if exists
-      if (logoImg) {
-        doc.addImage(logoImg, 'PNG', 160, 6, 28, 14); // Positioned in header
-      }
+      doc.text('SALES STATEMENT', 196, 25, { align: 'right' });
 
       // --- Summary Cards Section ---
       doc.setTextColor(brandTeal);
