@@ -9,6 +9,7 @@ import {
   CardContent,
   Paper,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import {
   GetApp,
@@ -99,7 +100,19 @@ export default function ReportsPage() {
     dispatch(fetchRevenueReport());
   }, [dispatch]);
 
+  useEffect(() => {
+    dispatch(fetchRevenueReport());
+  }, [dispatch]);
+
   const { monthlyData = [], sportsData = [], venuePerformance = [], summary = {} } = revenueReport || {};
+
+  if (reportsLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <CircularProgress sx={{ color: '#004d43' }} />
+      </Box>
+    );
+  }
 
   return (
     <Box>

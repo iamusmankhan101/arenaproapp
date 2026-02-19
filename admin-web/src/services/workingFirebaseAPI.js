@@ -1187,7 +1187,6 @@ export const workingAdminAPI = {
 
       const monthlyData = {};
       const sportsData = {};
-      const venuePerformance = {};
 
       const now = new Date();
       const sixMonthsAgo = new Date();
@@ -1207,7 +1206,7 @@ export const workingAdminAPI = {
       let uniqueCustomers = new Set();
       let activeVenues = new Set();
 
-      const bookings = [];
+
 
       for (const doc of querySnapshot.docs) {
         const booking = doc.data();
@@ -1278,8 +1277,6 @@ export const workingAdminAPI = {
 
       // Calculate changes (simple comparison with last month)
       const months = Object.keys(monthlyData);
-      const currentMonthKey = now.toLocaleString('default', { month: 'short' });
-      const lastMonthKey = months[months.length - 2]; // 2nd to last is "last month" relative to "current" in list?
       // Actually monthlyData is fixed 6 months. Last element is current month (approx).
 
       const lastMonthStats = monthlyData[months[months.length - 1]];
