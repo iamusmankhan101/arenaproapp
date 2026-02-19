@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import {
     Box,
@@ -44,7 +44,7 @@ export default function ProManagementPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-    const loadVendors = async () => {
+    const loadVendors = useCallback(async () => {
         setVendorsLoading(true);
         try {
             const result = await dispatch(fetchVendors()).unwrap();
@@ -54,7 +54,7 @@ export default function ProManagementPage() {
         } finally {
             setVendorsLoading(false);
         }
-    };
+    }, [dispatch]);
 
     useEffect(() => {
         loadVendors();
