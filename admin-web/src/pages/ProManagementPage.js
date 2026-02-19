@@ -17,6 +17,7 @@ import {
     Snackbar,
     Grid,
     TextField,
+    Autocomplete,
 } from '@mui/material';
 import {
     WorkspacePremium,
@@ -30,7 +31,7 @@ import {
     PersonAdd,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
-import { toggleVendorPro, fetchVendors, addVendorToPro } from '../store/slices/adminSlice';
+import { toggleVendorPro, fetchVendors } from '../store/slices/adminSlice';
 
 const PRO_FEATURES_LIST = [
     { title: 'Daily Reporting', icon: <Assessment sx={{ fontSize: 20 }} />, color: '#004d43' },
@@ -43,7 +44,7 @@ export default function ProManagementPage() {
     const [vendors, setVendors] = useState([]);
     const [vendorsLoading, setVendorsLoading] = useState(true);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, vendor: null, activate: false });
-    const [addDialog, setAddDialog] = useState({ open: false, email: '', name: '' });
+    const [addDialog, setAddDialog] = useState({ open: false, selectedVendor: null });
     const [actionLoading, setActionLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -83,21 +84,20 @@ export default function ProManagementPage() {
     };
 
     const handleAddVendor = async () => {
-        if (!addDialog.email.trim()) return;
+        const vendor = addDialog.selectedVendor;
+        if (!vendor) return;
         setActionLoading(true);
         try {
-            const result = await dispatch(addVendorToPro({ email: addDialog.email.trim(), name: addDialog.name.trim() })).unwrap();
+            await dispatch(toggleVendorPro({ vendorId: vendor.id, activate: true })).unwrap();
             setSnackbar({
                 open: true,
-                message: result.updated
-                    ? `Pro activated for existing vendor: ${addDialog.email}`
-                    : `New vendor added with Pro: ${addDialog.email}`,
+                message: `Pro activated for ${vendor.name || vendor.email}`,
                 severity: 'success',
             });
-            setAddDialog({ open: false, email: '', name: '' });
+            setAddDialog({ open: false, selectedVendor: null });
             loadVendors();
         } catch (err) {
-            setSnackbar({ open: true, message: err.message || 'Failed to add vendor', severity: 'error' });
+            setSnackbar({ open: true, message: err.message || 'Failed to activate', severity: 'error' });
         } finally {
             setActionLoading(false);
         }
@@ -301,42 +301,52 @@ export default function ProManagementPage() {
             {/* Add Vendor Dialog */}
             <Dialog
                 open={addDialog.open}
-                onClose={() => !actionLoading && setAddDialog({ open: false, email: '', name: '' })}
+                onClose={() => !actionLoading && setAddDialog({ open: false, selectedVendor: null })}
                 maxWidth="sm"
                 fullWidth
                 PaperProps={{ sx: { borderRadius: 3 } }}
             >
                 <DialogTitle sx={{ fontWeight: 700, color: '#004d43' }}>
-                    Add Vendor to Pro
+                    Activate Pro for Vendor
                 </DialogTitle>
                 <DialogContent>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Enter the vendor's details. If they already exist, their Pro status will be activated. Otherwise, a new vendor entry will be created.
+                        Select a vendor from the dropdown to activate their Pro subscription.
                     </Typography>
-                    <TextField
-                        label="Vendor Email"
-                        type="email"
-                        fullWidth
-                        required
-                        value={addDialog.email}
-                        onChange={(e) => setAddDialog({ ...addDialog, email: e.target.value })}
+                    <Autocomplete
+                        options={vendors.filter((v) => !v.proActive)}
+                        getOptionLabel={(option) => `${option.name} (${option.email})`}
+                        value={addDialog.selectedVendor}
+                        onChange={(_, newValue) => setAddDialog({ ...addDialog, selectedVendor: newValue })}
+                        renderOption={(props, option) => (
+                            <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}>
+                                <Avatar sx={{ bgcolor: '#004d43', width: 32, height: 32, fontSize: '0.8rem' }}>
+                                    {(option.name || 'V')[0].toUpperCase()}
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{option.email}</Typography>
+                                </Box>
+                            </Box>
+                        )}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Select Vendor"
+                                placeholder="Search by name or email..."
+                                fullWidth
+                            />
+                        )}
+                        noOptionsText="All vendors already have Pro active"
                         sx={{ mb: 2 }}
-                        placeholder="vendor@example.com"
                     />
-                    <TextField
-                        label="Vendor Name"
-                        fullWidth
-                        value={addDialog.name}
-                        onChange={(e) => setAddDialog({ ...addDialog, name: e.target.value })}
-                        placeholder="Business or owner name"
-                    />
-                    <Alert severity="info" sx={{ mt: 2 }}>
+                    <Alert severity="info" sx={{ mt: 1 }}>
                         Pro will be activated immediately at PKR 2,000/month. The vendor will get access to Daily Reporting, Inventory Tracking, and WhatsApp Integration.
                     </Alert>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Button
-                        onClick={() => setAddDialog({ open: false, email: '', name: '' })}
+                        onClick={() => setAddDialog({ open: false, selectedVendor: null })}
                         disabled={actionLoading}
                         sx={{ textTransform: 'none' }}
                     >
@@ -345,7 +355,7 @@ export default function ProManagementPage() {
                     <Button
                         variant="contained"
                         onClick={handleAddVendor}
-                        disabled={actionLoading || !addDialog.email.trim()}
+                        disabled={actionLoading || !addDialog.selectedVendor}
                         startIcon={actionLoading ? <CircularProgress size={20} color="inherit" /> : <PersonAdd />}
                         sx={{
                             bgcolor: '#004d43',
@@ -354,7 +364,7 @@ export default function ProManagementPage() {
                             fontWeight: 600,
                         }}
                     >
-                        Add & Activate Pro
+                        Activate Pro
                     </Button>
                 </DialogActions>
             </Dialog>
