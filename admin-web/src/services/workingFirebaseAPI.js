@@ -1226,7 +1226,7 @@ export const workingAdminAPI = {
         const date = booking.date ? (booking.date.toDate ? booking.date.toDate() : new Date(booking.date)) : new Date();
 
         // Skip if booking is older than 6 months or in future (basic sanity check)
-        if (date < sixMonthsAgo || date > new Date(now.getTime() + 86400000)) continue; {/* Allow up to tomorrow for timezone diffs */ }
+        if (date < sixMonthsAgo || date > new Date(now.getTime() + 86400000)) continue; // Allow up to tomorrow for timezone diffs
 
         const monthKey = date.toLocaleString('default', { month: 'short' });
 
@@ -1309,7 +1309,22 @@ export const workingAdminAPI = {
           totalCustomers: uniqueCustomers.size,
           revenueChange: Number(revenueChange),
           bookingsChange: Number(bookingsChange)
-        }
+        },
+        recentTransactions: querySnapshot.docs
+          .map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              date: data.date ? (data.date.toDate ? data.date.toDate() : new Date(data.date)) : new Date(),
+              amount: Number(data.totalAmount || data.amount) || 0,
+              customerName: data.userName || data.customerName || 'Unknown User',
+              venueName: venueMap[data.turfId] || data.turfName || 'Unknown Venue',
+              status: data.status || 'completed'
+            };
+          })
+          .sort((a, b) => b.date - a.date)
+          .slice(0, 50) // Top 50 recent
       };
 
     } catch (error) {

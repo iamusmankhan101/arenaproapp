@@ -10,6 +10,13 @@ import {
   Paper,
   Button,
   CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
 } from '@mui/material';
 import {
   GetApp,
@@ -17,9 +24,12 @@ import {
   Event,
   LocationOn,
   People,
+  ArrowUpward,
+  Download,
   Payments,
   Assessment,
 } from '@mui/icons-material';
+import { format } from 'date-fns';
 import {
   LineChart,
   Line,
@@ -109,7 +119,41 @@ export default function ReportsPage() {
     dispatch(fetchRevenueReport());
   }, [dispatch]);
 
-  const { monthlyData = [], sportsData = [], venuePerformance = [], summary = {} } = revenueReport || {};
+  useEffect(() => {
+    dispatch(fetchRevenueReport());
+  }, [dispatch]);
+
+  const { monthlyData = [], sportsData = [], venuePerformance = [], summary = {}, recentTransactions = [] } = revenueReport || {};
+
+  const handleExport = () => {
+    // 1. Create CSV Content
+    const headers = ['Date', 'Booking ID', 'Customer', 'Venue', 'Sport', 'Amount (PKR)', 'Status'];
+    const rows = recentTransactions.map(t => [
+      format(new Date(t.date), 'yyyy-MM-dd HH:mm'),
+      t.id,
+      t.customerName,
+      t.venueName,
+      t.sport || 'N/A',
+      t.amount,
+      t.status
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // 2. Trigger Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `sales_report_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (reportsLoading) {
     return (
@@ -140,7 +184,16 @@ export default function ReportsPage() {
           <Button
             variant="contained"
             startIcon={<GetApp />}
-            sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 700, '&:hover': { bgcolor: '#dce775' } }}
+            onClick={handleExport}
+            sx={{
+              bgcolor: '#e8ee26',
+              color: '#004d43',
+              fontWeight: 700,
+              '&:hover': { bgcolor: '#dce775' },
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 3
+            }}
           >
             Export Report
           </Button>
@@ -306,6 +359,78 @@ export default function ReportsPage() {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Detailed Sales Report Table */}
+      <Card sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <Box sx={{ p: 3, background: '#fff' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#004d43', mb: 2 }}>
+            Detailed Sales Report
+          </Typography>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#004d43' }}>
+                  {['Date', 'Booking ID', 'Customer', 'Venue', 'Sport', 'Amount', 'Status'].map((head) => (
+                    <TableCell key={head} sx={{ color: '#fff', fontWeight: 600, borderBottom: 'none' }}>
+                      {head}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {recentTransactions.length > 0 ? (
+                  recentTransactions.map((row, index) => (
+                    <TableRow
+                      key={row.id}
+                      hover
+                      sx={{ '&:nth-of-type(even)': { bgcolor: 'rgba(0, 77, 67, 0.02)' } }}
+                    >
+                      <TableCell sx={{ color: '#004d43', fontWeight: 500 }}>
+                        {format(new Date(row.date), 'MMM dd, yyyy HH:mm')}
+                      </TableCell>
+                      <TableCell sx={{ color: '#555' }}>#{row.id.slice(0, 8)}...</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#333' }}>{row.customerName}</TableCell>
+                      <TableCell>{row.venueName}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={row.sport || 'General'}
+                          size="small"
+                          sx={{
+                            bgcolor: row.sport === 'Football' ? 'rgba(0, 77, 67, 0.1)' : 'rgba(232, 238, 38, 0.2)',
+                            color: row.sport === 'Football' ? '#004d43' : '#827717',
+                            fontWeight: 600
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: '#004d43' }}>
+                        PKR {row.amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={row.status}
+                          size="small"
+                          sx={{
+                            bgcolor: row.status === 'completed' || row.status === 'confirmed' ? '#e8f5e9' : '#ffebee',
+                            color: row.status === 'completed' || row.status === 'confirmed' ? '#2e7d32' : '#c62828',
+                            textTransform: 'capitalize',
+                            fontWeight: 600
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 4, color: '#666' }}>
+                      No recent transactions found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      </Card>
     </Box>
   );
 }
