@@ -10,7 +10,7 @@ import {
     Refresh, CalendarToday, Download, EventSeat, AccessTime,
     PersonAdd, PersonOff, Star, Schedule,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 
 const StatCard = ({ title, value, subtitle, icon, color, trend }) => (
@@ -64,20 +64,15 @@ export default function VendorDailyReportingPage() {
             endOfDay.setHours(23, 59, 59, 999);
 
             const bookingsRef = collection(db, 'bookings');
-            // Create ISO strings for start and end of day in local time -> UTC
-            // Assuming 'date' field is stored as ISO string in UTC or consistent format
-            // createBooking stores date as: dateTime.toISOString()
-
-            // To filter correctly, we need the full ISO range for the selected day
-            const startIso = new Date(startOfDay).toISOString();
-            const endIso = new Date(endOfDay).toISOString();
+            // Convert start and end to Firestore Timestamps for query
+            const startTs = Timestamp.fromDate(startOfDay);
+            const endTs = Timestamp.fromDate(endOfDay);
 
             const q = query(
                 bookingsRef,
-
                 where('vendorId', '==', vendorId),
-                where('date', '>=', startIso),
-                where('date', '<=', endIso),
+                where('date', '>=', startTs),
+                where('date', '<=', endTs),
                 orderBy('date', 'desc')
             );
 

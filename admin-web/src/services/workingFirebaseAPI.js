@@ -1,4 +1,4 @@
-import { getDocs, addDoc, doc, getDoc, updateDoc, query, orderBy, collection, collectionGroup, deleteDoc, where } from 'firebase/firestore';
+import { getDocs, addDoc, doc, getDoc, updateDoc, query, orderBy, collection, collectionGroup, deleteDoc, where, Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const initFirebase = () => {
@@ -967,6 +967,7 @@ export const workingAdminAPI = {
       // 1. Create Booking Document
       const bookingPayload = {
         ...bookingData,
+        date: Timestamp.fromDate(new Date(bookingData.date)), // Store as Timestamp for consistency
         createdAt: new Date(),
         updatedAt: new Date(),
         status: 'confirmed', // Manual bookings are confirmed
