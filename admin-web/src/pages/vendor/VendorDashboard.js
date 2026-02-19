@@ -35,20 +35,23 @@ import { fetchDashboardStats } from '../../store/slices/adminSlice';
 
 const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
     const isDark = variant === 'dark';
+    const isGradient = variant === 'gradient';
+    const textColor = isDark || isGradient ? 'white' : 'text.primary';
+    const subTextColor = isDark || isGradient ? 'rgba(255,255,255,0.7)' : 'text.secondary';
 
     return (
         <Card
             sx={{
                 height: '100%',
-                bgcolor: isDark ? '#071a15' : 'white',
-                color: isDark ? 'white' : 'text.primary',
+                background: isGradient ? 'linear-gradient(135deg, #004d43 0%, #00796b 100%)' : (isDark ? '#071a15' : 'white'),
+                color: textColor,
                 borderRadius: 4,
-                boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : '0 4px 20px rgba(0,0,0,0.05)',
+                boxShadow: isDark || isGradient ? '0 10px 30px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.05)',
                 position: 'relative',
                 overflow: 'hidden'
             }}
         >
-            {isDark && (
+            {(isDark) && (
                 <Box
                     sx={{
                         position: 'absolute',
@@ -68,7 +71,7 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
                     <Typography
                         variant="subtitle2"
                         sx={{
-                            color: isDark ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+                            color: subTextColor,
                             fontWeight: 600,
                             fontSize: '0.75rem',
                             textTransform: 'uppercase',
@@ -81,8 +84,8 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
                         sx={{
                             p: 1,
                             borderRadius: 2,
-                            bgcolor: isDark ? 'rgba(255,255,255,0.1)' : `${color}15`,
-                            color: isDark ? '#4CAF50' : color
+                            bgcolor: isDark || isGradient ? 'rgba(255,255,255,0.15)' : `${color}15`,
+                            color: isDark || isGradient ? '#e8ee26' : color
                         }}
                     >
                         {React.cloneElement(icon, { fontSize: 'small' })}
@@ -98,18 +101,18 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
                         {growth !== undefined && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 {growth >= 0 ? (
-                                    <TrendingUp sx={{ color: isDark ? '#4CAF50' : 'success.main', fontSize: 16 }} />
+                                    <TrendingUp sx={{ color: isDark || isGradient ? '#e8ee26' : 'success.main', fontSize: 16 }} />
                                 ) : (
                                     <TrendingDown sx={{ color: 'error.main', fontSize: 16 }} />
                                 )}
                                 <Typography
                                     variant="body2"
                                     sx={{
-                                        color: growth >= 0 ? (isDark ? '#4CAF50' : 'success.main') : 'error.main',
+                                        color: growth >= 0 ? (isDark || isGradient ? '#e8ee26' : 'success.main') : 'error.main',
                                         fontWeight: 600,
                                     }}
                                 >
-                                    {Math.abs(growth)}% <Box component="span" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'text.secondary', fontWeight: 400 }}>than last month</Box>
+                                    {Math.abs(growth)}% <Box component="span" sx={{ color: subTextColor, fontWeight: 400 }}>than last month</Box>
                                 </Typography>
                             </Box>
                         )}
@@ -123,7 +126,7 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
                                 sx={{
                                     width: 6,
                                     height: `${Math.random() * 80 + 20}%`,
-                                    bgcolor: isDark ? '#004d43' : color,
+                                    bgcolor: isDark || isGradient ? 'rgba(255,255,255,0.3)' : color,
                                     borderRadius: 1
                                 }}
                             />
@@ -185,7 +188,7 @@ export default function VendorDashboard() {
 
             {/* Top Stats Row */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                {/* Dark Hero Card */}
+                {/* Gradient Cards */}
                 <Grid item xs={12} md={4}>
                     <StatCard
                         title="Total Bookings"
@@ -193,18 +196,18 @@ export default function VendorDashboard() {
                         icon={<Event />}
                         color="#e8ee26"
                         growth={dashboardStats?.monthlyGrowth || 0}
-                        variant="dark "
+                        variant="gradient"
                     />
                 </Grid>
 
-                {/* Light Cards */}
                 <Grid item xs={12} md={4}>
                     <StatCard
                         title="Total Revenue"
                         value={`PKR ${(dashboardStats?.totalRevenue || 0).toLocaleString()}`}
                         icon={<Payments />}
-                        color="#004d43"
+                        color="#e8ee26"
                         growth={dashboardStats?.revenueGrowth || 0}
+                        variant="gradient"
                     />
                 </Grid>
                 <Grid item xs={12} md={4}>
@@ -212,8 +215,9 @@ export default function VendorDashboard() {
                         title="Active Venues"
                         value={dashboardStats?.activeVenues || 0}
                         icon={<LocationOn />}
-                        color="#004d43"
+                        color="#e8ee26"
                         growth={5.1}
+                        variant="gradient"
                     />
                 </Grid>
             </Grid>
@@ -287,7 +291,7 @@ export default function VendorDashboard() {
                 <CardContent sx={{ p: 0 }}>
                     <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="h6" sx={{ fontWeight: 700 }}>Recent Activity</Typography>
-                        <Box sx={{ bgcolor: 'black', color: 'white', borderRadius: 4, px: 2, py: 0.5, fontSize: '0.75rem', fontWeight: 600 }}>
+                        <Box sx={{ bgcolor: '#004d43', color: '#e8ee26', borderRadius: 4, px: 2, py: 0.5, fontSize: '0.75rem', fontWeight: 600 }}>
                             All activities
                         </Box>
                     </Box>
