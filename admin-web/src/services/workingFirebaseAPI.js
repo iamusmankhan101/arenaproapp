@@ -876,13 +876,14 @@ export const workingAdminAPI = {
     }
   },
 
-  // Get all vendors/admins from admins collection
+  // Get all vendors from users collection
   async getVendors() {
     try {
-      console.log('👥 Admin: Fetching all admins...');
+      console.log('👥 Admin: Fetching vendors from users collection...');
       const firestore = db;
-      const adminsRef = collection(firestore, 'admins');
-      const snapshot = await getDocs(adminsRef);
+      const usersRef = collection(firestore, 'users');
+      const vendorsQuery = query(usersRef, where('role', '==', 'vendor'));
+      const snapshot = await getDocs(vendorsQuery);
 
       const vendors = [];
       snapshot.forEach((docSnap) => {
@@ -900,48 +901,10 @@ export const workingAdminAPI = {
         });
       });
 
-      console.log(`✅ Admin: Found ${vendors.length} admins/vendors`);
+      console.log(`✅ Admin: Found ${vendors.length} vendors`);
       return vendors;
     } catch (error) {
       console.error('❌ Admin: Error fetching vendors:', error);
-      throw error;
-    }
-  },
-
-  // Add a vendor to Pro by email
-  async addVendorToPro(email, name) {
-    try {
-      const firestore = db;
-      const adminsRef = collection(firestore, 'admins');
-
-      // Check if vendor already exists
-      const existingQuery = query(adminsRef, where('email', '==', email));
-      const existingSnapshot = await getDocs(existingQuery);
-
-      if (!existingSnapshot.empty) {
-        // Update existing vendor
-        const docRef = existingSnapshot.docs[0].ref;
-        await updateDoc(docRef, {
-          proActive: true,
-          proActivatedAt: new Date().toISOString(),
-          proPricePerMonth: 2000,
-        });
-        return { success: true, id: existingSnapshot.docs[0].id, updated: true };
-      } else {
-        // Create new vendor entry
-        const newDoc = await addDoc(adminsRef, {
-          email: email,
-          name: name || email,
-          role: 'vendor',
-          proActive: true,
-          proActivatedAt: new Date().toISOString(),
-          proPricePerMonth: 2000,
-          createdAt: new Date().toISOString(),
-        });
-        return { success: true, id: newDoc.id, updated: false };
-      }
-    } catch (error) {
-      console.error('❌ Admin: Error adding vendor to Pro:', error);
       throw error;
     }
   },
@@ -950,7 +913,7 @@ export const workingAdminAPI = {
   async toggleVendorPro(vendorId, activate) {
     try {
       const firestore = db;
-      const vendorRef = doc(firestore, 'admins', vendorId);
+      const vendorRef = doc(firestore, 'users', vendorId);
       await updateDoc(vendorRef, {
         proActive: activate,
         proActivatedAt: activate ? new Date().toISOString() : null,
