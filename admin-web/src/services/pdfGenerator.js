@@ -8,8 +8,6 @@ export const generateDailyReport = (stats, rangeType, dateRange, bookings) => {
 
     // --- Colors ---
     const primaryColor = [0, 77, 67]; // #004d43
-    const secondaryColor = [255, 215, 0]; // #FFD700 (Gold)
-    const accentColor = [245, 245, 245]; // Light Grey
 
     // --- Helper Text ---
     const title = rangeType === 'custom'
