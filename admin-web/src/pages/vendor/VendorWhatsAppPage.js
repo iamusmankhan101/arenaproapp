@@ -386,6 +386,63 @@ export default function VendorWhatsAppPage() {
                 </>
             )}
 
+            {/* Message Logs */}
+            <Card sx={{ mt: 3, borderRadius: 3 }}>
+                <CardContent sx={{ p: 0 }}>
+                    <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#075e54' }}>
+                            Message History ({logs.length})
+                        </Typography>
+                    </Box>
+                    <Divider />
+                    {logs.length === 0 ? (
+                        <Alert severity="info" sx={{ m: 2 }}>No messages sent yet.</Alert>
+                    ) : (
+                        <TableContainer sx={{ maxHeight: 400 }}>
+                            <Table stickyHeader>
+                                <TableHead>
+                                    <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                                        <TableCell sx={{ fontWeight: 700 }}>Time</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Recipient</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Message</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {logs.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt)).map((log) => (
+                                        <TableRow key={log.id} hover>
+                                            <TableCell sx={{ fontSize: '0.875rem' }}>
+                                                {log.sentAt ? new Date(log.sentAt).toLocaleString() : '-'}
+                                            </TableCell>
+                                            <TableCell>{log.recipientPhone}</TableCell>
+                                            <TableCell>
+                                                <Chip label={log.type?.replace('_', ' ') || 'Notification'} size="small" variant="outlined" />
+                                            </TableCell>
+                                            <TableCell sx={{ maxWidth: 300 }}>
+                                                <Typography variant="body2" sx={{
+                                                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                                                }}>
+                                                    {log.message}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={log.status || 'sent'}
+                                                    size="small"
+                                                    color={log.status === 'failed' ? 'error' : 'success'}
+                                                    sx={{ textTransform: 'capitalize' }}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </CardContent>
+            </Card>
+
             {/* Add/Edit Dialog */}
             <Dialog open={dialog.open} onClose={() => !saving && setDialog({ ...dialog, open: false })}
                 maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>

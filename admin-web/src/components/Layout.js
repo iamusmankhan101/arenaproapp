@@ -39,6 +39,7 @@ import {
   Assessment,
   Inventory2,
   WhatsApp,
+  Campaign,
 } from '@mui/icons-material';
 import { logoutAdmin } from '../store/slices/authSlice';
 
@@ -66,6 +67,7 @@ const vendorProMenuItems = [
   { text: 'Daily Reporting', icon: <Assessment />, path: '/vendor/daily-reporting', pro: true },
   { text: 'Inventory', icon: <Inventory2 />, path: '/vendor/inventory', pro: true },
   { text: 'WhatsApp API', icon: <WhatsApp />, path: '/vendor/whatsapp', pro: true },
+  { text: 'Marketing', icon: <Campaign />, path: '/vendor/marketing', pro: true },
 ];
 
 

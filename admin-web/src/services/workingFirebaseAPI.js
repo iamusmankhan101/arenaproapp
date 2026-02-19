@@ -1061,6 +1061,93 @@ export const workingAdminAPI = {
       console.error('❌ Admin: Error creating booking:', error);
       throw error;
     }
+  },
+
+  // Create Promo
+  async createPromo(venueId, promoData) {
+    try {
+      console.log('📣 Admin: Creating promo for venue:', venueId, promoData);
+      const firestore = db;
+      const promosRef = collection(firestore, 'venues', venueId, 'promos');
+
+      const promoPayload = {
+        ...promoData,
+        createdAt: new Date(),
+        status: 'active',
+        vendorId: promoData.vendorId // Ensure vendorId is attached
+      };
+
+      const docRef = await addDoc(promosRef, promoPayload);
+      console.log('✅ Promo created with ID:', docRef.id);
+      return { success: true, id: docRef.id };
+    } catch (error) {
+      console.error('❌ Admin: Error creating promo:', error);
+      throw error;
+    }
+  },
+
+  // Get Marketing Stats (Mock for now)
+  async getMarketingStats(vendorId) {
+    try {
+      console.log('📊 Fetching marketing stats for vendor:', vendorId);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Mock Data
+      return {
+        organicViews: 1250,
+        boostedViews: 3400, // Priority Placement effect
+        dealClicks: 450,
+        ctr: '12.5%',
+        topVenueRank: '#1 in Futsal'
+      };
+    } catch (error) {
+      console.error('❌ Error fetching marketing stats:', error);
+      return null;
+    }
+  },
+
+  // Create Push Campaign
+  async createPushCampaign(campaignData) {
+    try {
+      console.log('📲 Admin: Creating push campaign:', campaignData);
+      const firestore = db;
+      const campaignsRef = collection(firestore, 'push_campaigns');
+
+      const campaignPayload = {
+        ...campaignData,
+        createdAt: new Date(),
+        status: 'scheduled', // or 'sent' immediately
+        reach: Math.floor(Math.random() * 500) + 100, // Mock reach for now
+      };
+
+      const docRef = await addDoc(campaignsRef, campaignPayload);
+      console.log('✅ Push campaign created with ID:', docRef.id);
+      return { success: true, id: docRef.id };
+    } catch (error) {
+      console.error('❌ Admin: Error creating push campaign:', error);
+      throw error;
+    }
+  },
+
+  // Get Push Quota (Mock)
+  async getPushQuota(vendorId) {
+    try {
+      console.log('📊 Fetching push quota for vendor:', vendorId);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Mock Quota: 5 total, random used
+      // In a real app, count documents in 'push_campaigns' where vendorId == vendorId AND date is this month
+      return {
+        limit: 5,
+        used: 2, // Mock: Vendor has used 2 campaigns
+        remaining: 3
+      };
+    } catch (error) {
+      console.error('❌ Error fetching push quota:', error);
+      return { limit: 5, used: 0, remaining: 5 };
+    }
   }
 };
 

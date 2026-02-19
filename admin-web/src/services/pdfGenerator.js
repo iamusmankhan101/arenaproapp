@@ -1,13 +1,25 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-export const generateDailyReport = (stats, rangeType, dateRange, bookings) => {
+export const generateDailyReport = async (stats, rangeType, dateRange, bookings) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
 
     // --- Colors ---
     const primaryColor = [0, 77, 67]; // #004d43
+
+    // --- Load Logo ---
+    const loadImage = (url) => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+        });
+    };
+
+    const logoImg = await loadImage('/logo.png');
 
     // --- Helper Text ---
     const title = rangeType === 'custom'
@@ -29,9 +41,17 @@ export const generateDailyReport = (stats, rangeType, dateRange, bookings) => {
     doc.setFont('helvetica', 'normal');
     doc.text(`Date Covered: ${dateStr}`, 14, 30);
 
-    // Vendor Name Placeholder (Ideally passed in props)
-    doc.setFontSize(12);
-    doc.text("PitchIt Vendor Admin", pageWidth - 14, 20, { align: 'right' });
+    // Add Logo
+    if (logoImg) {
+        const logoWidth = 25;
+        const logoHeight = 25;
+        // Maintain aspect ratio if needed, for now fixed size box
+        doc.addImage(logoImg, 'PNG', pageWidth - 40, 8, logoWidth, logoHeight);
+    } else {
+        // Fallback text if logo fails to load
+        doc.setFontSize(12);
+        doc.text("PitchIt Vendor Admin", pageWidth - 14, 20, { align: 'right' });
+    }
 
     // --- 2. Key Metrics Summary (The Big Table) ---
     doc.setTextColor(0, 0, 0);

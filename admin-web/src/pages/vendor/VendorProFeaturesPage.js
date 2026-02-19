@@ -23,6 +23,7 @@ import {
     Star,
     CheckCircle,
     Payment,
+    Campaign,
 } from '@mui/icons-material';
 
 const PRO_FEATURES = [
@@ -49,6 +50,13 @@ const PRO_FEATURES = [
         icon: <WhatsApp sx={{ fontSize: 40 }} />,
         color: '#25D366',
         tag: 'Communication',
+    },
+    {
+        title: 'Promo & In-App Marketing',
+        description: 'Boost your venue visibility by 3x. Get priority placement in search results and run exclusive "Dead Hour" or "Weekend" promos directly on the user home screen.',
+        icon: <Campaign sx={{ fontSize: 40 }} />,
+        color: '#e65100',
+        tag: 'Marketing',
     },
 ];
 
