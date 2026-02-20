@@ -30,7 +30,6 @@ import {
     Close,
     ContentCopy,
     Info,
-    Smartphone,
 } from '@mui/icons-material';
 
 
