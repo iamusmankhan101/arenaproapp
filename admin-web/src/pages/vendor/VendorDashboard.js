@@ -30,6 +30,7 @@ import {
     Inventory2,
     ArrowForward,
     Campaign,
+    WorkspacePremium,
 } from '@mui/icons-material';
 import {
     XAxis,
@@ -148,6 +149,110 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
     );
 };
 
+const ProBanner = ({ onNavigate }) => (
+    <Card
+        sx={{
+            mb: 4,
+            background: 'linear-gradient(135deg, #00332d 0%, #004d43 100%)',
+            borderRadius: 4,
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 10px 30px rgba(0,77,67,0.15)',
+            border: '1px solid rgba(232, 238, 38, 0.2)',
+        }}
+    >
+        {/* Decorative elements */}
+        <Box
+            sx={{
+                position: 'absolute',
+                top: -50,
+                right: -50,
+                width: 200,
+                height: 200,
+                bgcolor: 'rgba(232, 238, 38, 0.1)',
+                borderRadius: '50%',
+                filter: 'blur(50px)',
+            }}
+        />
+
+        <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+            <Grid container spacing={3} alignItems="center">
+                <Grid item xs={12} md={8}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <Box
+                            sx={{
+                                bgcolor: '#e8ee26',
+                                p: 1,
+                                borderRadius: 2,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            <WorkspacePremium sx={{ color: '#004d43' }} />
+                        </Box>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: 'white', letterSpacing: -0.5 }}>
+                            Scale with Arena Pro
+                        </Typography>
+                        <Chip
+                            label="25% OFF"
+                            size="small"
+                            sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 900, height: 20, fontSize: '0.65rem' }}
+                        />
+                    </Box>
+
+                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', mb: 3, maxWidth: 600, lineHeight: 1.6 }}>
+                        Unlock specialized tools for venue owners. Automated WhatsApp alerts,
+                        financial reporting, and live inventory management designed to boost your efficiency.
+                    </Typography>
+
+                    <Grid container spacing={2}>
+                        {[
+                            { icon: <WhatsApp fontSize="small" />, text: 'WhatsApp API' },
+                            { icon: <Assessment fontSize="small" />, text: 'Daily Reports' },
+                            { icon: <Inventory2 fontSize="small" />, text: 'Live Inventory' },
+                        ].map((item, i) => (
+                            <Grid item key={i}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255,255,255,0.7)' }}>
+                                    <Box sx={{ color: '#e8ee26' }}>{item.icon}</Box>
+                                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{item.text}</Typography>
+                                </Box>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Grid>
+
+                <Grid item xs={12} md={4} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                    <Button
+                        variant="contained"
+                        onClick={onNavigate}
+                        endIcon={<ArrowForward />}
+                        sx={{
+                            bgcolor: '#e8ee26',
+                            color: '#004d43',
+                            px: 4,
+                            py: 1.5,
+                            borderRadius: 3,
+                            fontWeight: 800,
+                            textTransform: 'none',
+                            fontSize: '1rem',
+                            boxShadow: '0 8px 20px rgba(232, 238, 38, 0.2)',
+                            '&:hover': {
+                                bgcolor: '#f4f93d',
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 12px 25px rgba(232, 238, 38, 0.3)',
+                            },
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Explore Pro Features
+                    </Button>
+                </Grid>
+            </Grid>
+        </CardContent>
+    </Card>
+);
+
 export default function VendorDashboard() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -220,6 +325,10 @@ export default function VendorDashboard() {
                     <Refresh />
                 </IconButton>
             </Box>
+
+            {!admin?.proActive && (
+                <ProBanner onNavigate={() => navigate('/vendor/pro-features')} />
+            )}
 
             {/* Top Stats Row */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
