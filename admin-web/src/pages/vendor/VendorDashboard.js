@@ -8,7 +8,10 @@ import {
     Box,
     Avatar,
     IconButton,
-    CircularProgress
+    CircularProgress,
+    Dialog,
+    DialogContent,
+    Button,
 } from '@mui/material';
 import {
     Event,
@@ -38,13 +41,6 @@ import {
     BarChart,
     Bar,
 } from 'recharts';
-import {
-    Dialog,
-    DialogContent,
-    Button,
-    Divider,
-    IconButton as MuiIconButton,
-} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats } from '../../store/slices/adminSlice';
 
@@ -389,7 +385,7 @@ export default function VendorDashboard() {
                     }
                 }}
             >
-                <MuiIconButton
+                <IconButton
                     onClick={() => setPromoOpen(false)}
                     sx={{
                         position: 'absolute',
@@ -401,7 +397,7 @@ export default function VendorDashboard() {
                     }}
                 >
                     <Close />
-                </MuiIconButton>
+                </IconButton>
 
                 <Box sx={{
                     background: 'linear-gradient(135deg, #00332d 0%, #004d43 100%)',
