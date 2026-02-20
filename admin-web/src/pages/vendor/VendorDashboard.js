@@ -24,7 +24,6 @@ import {
     Warning,
     CheckCircle,
     Schedule,
-    WorkspacePremium,
     Close,
     Assessment,
     WhatsApp,
