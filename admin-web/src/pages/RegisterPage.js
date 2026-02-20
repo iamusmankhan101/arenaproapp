@@ -6,7 +6,6 @@ import {
     Button,
     Typography,
     Alert,
-    Avatar,
     ToggleButton,
     ToggleButtonGroup,
     InputAdornment,
