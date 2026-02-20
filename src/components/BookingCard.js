@@ -97,7 +97,7 @@ export default function BookingCard({ booking }) {
       {/* Header with Venue Image & Status */}
       <View style={styles.header}>
         <Image
-          source={booking.turfImage ? { uri: booking.turfImage } : require('../../images/football.jpg')}
+          source={booking.turfImage ? { uri: booking.turfImage } : require('../images/football.jpg')}
           style={styles.turfImage}
           resizeMode="cover"
         />
