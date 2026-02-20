@@ -10,10 +10,13 @@ import {
     Chip,
     Avatar,
     Dialog,
-    DialogTitle,
     DialogContent,
     DialogActions,
     Divider,
+    IconButton,
+    Tooltip,
+    Snackbar,
+    Alert as MuiAlert,
 } from '@mui/material';
 import {
     WhatsApp,
@@ -29,7 +32,7 @@ import {
     Info,
     Smartphone,
 } from '@mui/icons-material';
-import { IconButton, Tooltip, Snackbar, Alert as MuiAlert } from '@mui/material';
+
 
 const PRO_FEATURES = [
     {
