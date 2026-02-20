@@ -140,7 +140,12 @@ export default function ReportsPage() {
 
       // Add Logo on the left (replacing text)
       if (logoImg) {
-        doc.addImage(logoImg, 'PNG', 14, 8, 48, 24); // Taller logo on left
+        const imgWidth = logoImg.width;
+        const imgHeight = logoImg.height;
+        const ratio = imgWidth / imgHeight;
+        const targetHeight = 22; // High prominence
+        const targetWidth = targetHeight * ratio;
+        doc.addImage(logoImg, 'PNG', 14, 8, targetWidth, targetHeight);
       } else {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
