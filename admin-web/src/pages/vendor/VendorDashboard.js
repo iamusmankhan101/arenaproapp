@@ -158,6 +158,13 @@ export default function VendorDashboard() {
 
     const promoTriggered = React.useRef(false);
     useEffect(() => {
+        console.log('🎯 Promo Trigger Effect:', {
+            uid: admin?.uid,
+            proActive: admin?.proActive,
+            sessionShown: sessionStorage.getItem('pro_promo_shown'),
+            triggeredRef: promoTriggered.current
+        });
+
         if (admin?.uid) {
             const vendorId = admin.vendorId || admin.uid;
             dispatch(fetchDashboardStats({ vendorId }));

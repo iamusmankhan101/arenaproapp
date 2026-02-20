@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Text, Card, Button, Surface, Chip } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchDashboardStats } from '../../store/slices/adminSlice';
+import PromoPopup from '../../components/admin/PromoPopup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 export default function AdminDashboardScreen({ navigation }) {
   const dispatch = useDispatch();
   const { dashboardStats, loading } = useSelector(state => state.admin);
+  const { user } = useSelector(state => state.auth);
   const [refreshing, setRefreshing] = useState(false);
+  const [promoVisible, setPromoVisible] = useState(false);
+  const promoTriggered = useRef(false);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -20,6 +26,25 @@ export default function AdminDashboardScreen({ navigation }) {
   useEffect(() => {
     dispatch(fetchDashboardStats());
   }, [dispatch]);
+
+  useEffect(() => {
+    const checkPromo = async () => {
+      if (user?.uid && !promoTriggered.current) {
+        const promoShown = await AsyncStorage.getItem('pro_promo_shown');
+        const isPro = user?.proActive === true;
+
+        if (!isPro && !promoShown) {
+          promoTriggered.current = true;
+          const timer = setTimeout(() => {
+            setPromoVisible(true);
+            AsyncStorage.setItem('pro_promo_shown', 'true');
+          }, 2000);
+          return () => clearTimeout(timer);
+        }
+      }
+    };
+    checkPromo();
+  }, [user?.uid, user?.proActive]);
 
   const StatCard = ({ title, value, icon, color, onPress }) => (
     <Card style={styles.statCard} onPress={onPress}>
@@ -50,7 +75,7 @@ export default function AdminDashboardScreen({ navigation }) {
   );
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -161,6 +186,15 @@ export default function AdminDashboardScreen({ navigation }) {
           </Card.Content>
         </Card>
       </View>
+
+      <PromoPopup
+        visible={promoVisible}
+        onClose={() => setPromoVisible(false)}
+        onExplore={() => {
+          setPromoVisible(false);
+          Alert.alert("Arena Pro", "Visit the web dashboard to upgrade to Arena Pro and unlock all premium features!");
+        }}
+      />
     </ScrollView>
   );
 }

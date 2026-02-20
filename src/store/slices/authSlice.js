@@ -214,7 +214,7 @@ const authSlice = createSlice({
       state.emailVerificationSent = false;
       state.passwordResetSent = false;
       // Clear AsyncStorage
-      AsyncStorage.multiRemove(['authToken', 'user']);
+      AsyncStorage.multiRemove(['authToken', 'user', 'pro_promo_shown']);
       // Sign out from Firebase
       firebaseAuthAPI.signOut();
       // Clean up auth listener

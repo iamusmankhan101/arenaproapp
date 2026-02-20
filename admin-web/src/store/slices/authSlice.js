@@ -47,6 +47,7 @@ export const loginAdmin = createAsyncThunk(
       // Store in localStorage
       localStorage.setItem('adminToken', await user.getIdToken());
       localStorage.setItem('adminData', JSON.stringify(adminData));
+      sessionStorage.removeItem('pro_promo_shown');
 
       console.log(`✅ Login successful as ${role}`);
       return adminData;
