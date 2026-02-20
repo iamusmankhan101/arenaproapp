@@ -12,7 +12,6 @@ import { theme } from './src/theme/theme';
 import realtimeSyncService from './src/services/realtimeSync';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import FlashMessage, { showMessage } from "react-native-flash-message";
-import messaging from '@react-native-firebase/messaging';
 import { notificationService } from './src/services/notificationService';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from './src/config/firebase';
@@ -60,45 +59,61 @@ export default function App() {
   // --- NOTIFICATION SETUP ---
   useEffect(() => {
     const setupNotifications = async () => {
-      // 1. Request Permission
-      const hasPermission = await notificationService.requestUserPermission();
+      try {
+        // 1. Request Permission
+        const hasPermission = await notificationService.requestUserPermission();
 
-      // 2. Get Token & Update User Profile
-      if (hasPermission) {
-        const token = await notificationService.getFCMToken();
-        if (token && auth.currentUser) {
-          try {
-            const userRef = doc(db, 'users', auth.currentUser.uid);
-            await updateDoc(userRef, { fcmToken: token });
-            console.log('✅ FCM Token updated for user');
-          } catch (e) {
-            console.log('Silent error updating FCM token:', e.message);
+        // 2. Get Token & Update User Profile
+        if (hasPermission) {
+          const token = await notificationService.getFCMToken();
+          if (token && auth.currentUser) {
+            try {
+              const userRef = doc(db, 'users', auth.currentUser.uid);
+              await updateDoc(userRef, { fcmToken: token });
+              console.log('✅ FCM Token updated for user');
+            } catch (e) {
+              console.log('Silent error updating FCM token:', e.message);
+            }
           }
         }
+
+        // 3. Foreground Message Listener
+        // Only attempt if messaging is available (checked inside notificationService)
+        // This is a safety check for App.js as well
+        let messagingModule;
+        try {
+          messagingModule = require('@react-native-firebase/messaging').default;
+        } catch (e) {
+          // Module not found, skip listener
+          return () => { };
+        }
+
+        if (messagingModule) {
+          const unsubscribe = messagingModule().onMessage(async remoteMessage => {
+            console.log('Foreground Notification:', remoteMessage);
+            showMessage({
+              message: remoteMessage.notification?.title || 'New Notification',
+              description: remoteMessage.notification?.body || '',
+              type: "success",
+              icon: "success",
+              duration: 4000,
+            });
+          });
+          return unsubscribe;
+        }
+      } catch (error) {
+        console.log('Error in setupNotifications:', error);
       }
-
-      // 3. Foreground Message Listener
-      const unsubscribe = messaging().onMessage(async remoteMessage => {
-        console.log('Foreground Notification:', remoteMessage);
-        showMessage({
-          message: remoteMessage.notification?.title || 'New Notification',
-          description: remoteMessage.notification?.body || '',
-          type: "success",
-          icon: "success",
-          duration: 4000,
-          onPress: () => {
-            // navigation.navigate(...) - requires navigation ref or hook
-          }
-        });
-      });
-
-      return unsubscribe;
+      return () => { };
     };
 
-    const notificationUnsubscribePromise = setupNotifications();
+    let unsubscriber;
+    setupNotifications().then(unsub => {
+      unsubscriber = unsub;
+    });
 
     return () => {
-      notificationUnsubscribePromise.then(unsub => unsub && unsub());
+      if (unsubscriber) unsubscriber();
     };
   }, []);
 
