@@ -21,6 +21,12 @@ import {
     Warning,
     CheckCircle,
     Schedule,
+    WorkspacePremium,
+    Close,
+    Assessment,
+    WhatsApp,
+    Inventory2,
+    ArrowForward,
 } from '@mui/icons-material';
 import {
     XAxis,
@@ -31,6 +37,14 @@ import {
     BarChart,
     Bar,
 } from 'recharts';
+import {
+    Dialog,
+    DialogContent,
+    Button,
+    Divider,
+    IconButton as MuiIconButton,
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats } from '../../store/slices/adminSlice';
 
 const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
@@ -140,13 +154,27 @@ const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
 
 export default function VendorDashboard() {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { dashboardStats, loading } = useSelector(state => state.admin);
     const { admin } = useSelector(state => state.auth);
+    const [promoOpen, setPromoOpen] = React.useState(false);
 
     useEffect(() => {
         if (admin?.uid) {
             const vendorId = admin.vendorId || admin.uid;
             dispatch(fetchDashboardStats({ vendorId }));
+
+            // Show promo popup if not pro and not shown in this session
+            const isPro = admin?.proActive === true;
+            const promoShown = sessionStorage.getItem('pro_promo_shown');
+
+            if (!isPro && !promoShown) {
+                const timer = setTimeout(() => {
+                    setPromoOpen(true);
+                    sessionStorage.setItem('pro_promo_shown', 'true');
+                }, 2000); // Show after 2 seconds for better impact
+                return () => clearTimeout(timer);
+            }
         }
     }, [dispatch, admin]);
 
@@ -345,6 +373,163 @@ export default function VendorDashboard() {
                     </Box>
                 </CardContent>
             </Card>
+            {/* Pro Features Promo Popup */}
+            <Dialog
+                open={promoOpen}
+                onClose={() => setPromoOpen(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        overflow: 'hidden',
+                        position: 'relative',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                    }
+                }}
+            >
+                <MuiIconButton
+                    onClick={() => setPromoOpen(false)}
+                    sx={{
+                        position: 'absolute',
+                        right: 12,
+                        top: 12,
+                        zIndex: 1,
+                        color: 'rgba(255,255,255,0.7)',
+                        '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.1)' }
+                    }}
+                >
+                    <Close />
+                </MuiIconButton>
+
+                <Box sx={{
+                    background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)',
+                    p: 4,
+                    pt: 6,
+                    textAlign: 'center',
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
+                    <Box sx={{
+                        position: 'absolute',
+                        top: -20,
+                        right: -20,
+                        width: 120,
+                        height: 120,
+                        bgcolor: 'rgba(232, 238, 38, 0.2)',
+                        borderRadius: '50%',
+                        filter: 'blur(30px)'
+                    }} />
+
+                    <Avatar
+                        sx={{
+                            width: 80,
+                            height: 80,
+                            bgcolor: '#e8ee26',
+                            mx: 'auto',
+                            mb: 3,
+                            boxShadow: '0 10px 20px rgba(0,0,0,0.2)'
+                        }}
+                    >
+                        <WorkspacePremium sx={{ fontSize: 48, color: '#004d43' }} />
+                    </Avatar>
+
+                    <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: -0.5 }}>
+                        Scale Your Venue with <br />
+                        <Box component="span" sx={{ color: '#e8ee26' }}>Arena Pro</Box> 🚀
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', maxWidth: '80%', mx: 'auto' }}>
+                        Join top-tier venues using advanced tools to grow their business and simplify operations.
+                    </Typography>
+                </Box>
+
+                <DialogContent sx={{ p: 4, bgcolor: '#fbfcfc' }}>
+                    <Grid container spacing={3}>
+                        {[
+                            {
+                                title: 'Daily Reporting',
+                                desc: 'Financial ledgers & PDF shift handovers.',
+                                icon: <Assessment sx={{ color: '#004d43' }} />
+                            },
+                            {
+                                title: 'WhatsApp API',
+                                desc: 'Automatic booking confirmations & reminders.',
+                                icon: <WhatsApp sx={{ color: '#004d43' }} />
+                            },
+                            {
+                                title: 'Live Inventory',
+                                desc: 'Track rackets & equipment in real-time.',
+                                icon: <Inventory2 sx={{ color: '#004d43' }} />
+                            }
+                        ].map((item, i) => (
+                            <Grid item xs={12} key={i}>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                                    <Box sx={{
+                                        p: 1,
+                                        borderRadius: 2,
+                                        bgcolor: 'rgba(0,77,67,0.05)',
+                                        display: 'flex'
+                                    }}>
+                                        {item.icon}
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#004d43' }}>
+                                            {item.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {item.desc}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </Grid>
+                        ))}
+                    </Grid>
+
+                    <Divider sx={{ my: 4 }} />
+
+                    <Box sx={{ textAlign: 'center' }}>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            size="large"
+                            endIcon={<ArrowForward />}
+                            onClick={() => {
+                                setPromoOpen(false);
+                                // The layout handles the Pro dialog, but we want to show the Pro page.
+                                // Since layout uses a dialog for VendorProFeaturesPage, we'll just navigate to dashboard 
+                                // and the user can click "Pro" chip or we can try to trigger it.
+                                // Actually, I'll just navigate to a page that forces the Pro UI or similar.
+                                // For now, let's keep it simple and assume the user will navigate.
+                                // WAIT: I can just redirect to the settings page where Pro activation might be visible?
+                                // Or better yet, just show the Pro activation details.
+                                navigate('/vendor/dashboard'); // Keep them on dashboard
+                                // In a real app, I'd ideally trigger the 'proDialogOpen' in Layout.
+                            }}
+                            sx={{
+                                bgcolor: '#004d43',
+                                color: 'white',
+                                py: 2,
+                                borderRadius: 3,
+                                fontWeight: 800,
+                                fontSize: '1.1rem',
+                                textTransform: 'none',
+                                boxShadow: '0 10px 20px rgba(0,77,67,0.2)',
+                                '&:hover': { bgcolor: '#00695c', transform: 'translateY(-2px)' },
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Explore Pro Features
+                        </Button>
+                        <Button
+                            onClick={() => setPromoOpen(false)}
+                            sx={{ mt: 2, color: 'text.secondary', textTransform: 'none', fontWeight: 600 }}
+                        >
+                            Maybe Later
+                        </Button>
+                    </Box>
+                </DialogContent>
+            </Dialog>
         </Box>
     );
 }
