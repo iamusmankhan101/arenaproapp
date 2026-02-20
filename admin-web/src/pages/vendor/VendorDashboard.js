@@ -9,8 +9,6 @@ import {
     Avatar,
     IconButton,
     CircularProgress,
-    Dialog,
-    DialogContent,
     Button,
     Chip,
 } from '@mui/material';
@@ -25,7 +23,6 @@ import {
     Warning,
     CheckCircle,
     Schedule,
-    Close,
     Assessment,
     WhatsApp,
     Inventory2,
@@ -260,37 +257,10 @@ export default function VendorDashboard() {
     const navigate = useNavigate();
     const { dashboardStats, loading } = useSelector(state => state.admin);
     const { admin } = useSelector(state => state.auth);
-    const [promoOpen, setPromoOpen] = React.useState(false);
-
-    const promoTriggered = React.useRef(false);
-    useEffect(() => {
-        console.log('🎯 Promo Trigger Effect:', {
-            uid: admin?.uid,
-            proActive: admin?.proActive,
-            sessionShown: sessionStorage.getItem('pro_promo_shown'),
-            triggeredRef: promoTriggered.current
-        });
-
-        if (admin?.uid) {
-            const vendorId = admin.vendorId || admin.uid;
-            dispatch(fetchDashboardStats({ vendorId }));
-
-            if (promoTriggered.current) return;
-
-            // Show promo popup if not pro and not shown in this session
-            const isPro = admin?.proActive === true;
-            const promoShown = sessionStorage.getItem('pro_promo_shown');
-
-            if (!isPro && !promoShown && !promoTriggered.current) {
-                const timer = setTimeout(() => {
-                    setPromoOpen(true);
-                    sessionStorage.setItem('pro_promo_shown', 'true');
-                    promoTriggered.current = true;
-                }, 1500);
-                return () => clearTimeout(timer);
-            }
-        }
-    }, [dispatch, admin?.uid, admin?.vendorId, admin?.proActive]);
+    if (admin?.uid) {
+        const vendorId = admin.vendorId || admin.uid;
+        dispatch(fetchDashboardStats({ vendorId }));
+    }
 
     const handleRefresh = () => {
         const vendorId = admin.vendorId || admin.uid;
@@ -491,168 +461,7 @@ export default function VendorDashboard() {
                     </Box>
                 </CardContent>
             </Card>
-            {/* Pro Features Promo Popup */}
-            <Dialog
-                open={promoOpen}
-                onClose={() => setPromoOpen(false)}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 4,
-                        overflow: 'hidden',
-                        position: 'relative',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-                    }
-                }}
-            >
-                <IconButton
-                    onClick={() => setPromoOpen(false)}
-                    sx={{
-                        position: 'absolute',
-                        right: 12,
-                        top: 12,
-                        zIndex: 1,
-                        color: 'rgba(255,255,255,0.7)',
-                        '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.1)' }
-                    }}
-                >
-                    <Close />
-                </IconButton>
-
-                <Box sx={{
-                    background: 'linear-gradient(135deg, #00332d 0%, #004d43 100%)',
-                    px: 4,
-                    pt: 3,
-                    pb: '20px',
-                    textAlign: 'center',
-                    color: 'white',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}>
-                    <Box sx={{
-                        position: 'absolute',
-                        top: -30,
-                        right: -30,
-                        width: 150,
-                        height: 150,
-                        bgcolor: 'rgba(232, 238, 38, 0.15)',
-                        borderRadius: '50%',
-                        filter: 'blur(40px)'
-                    }} />
-
-                    <Box
-                        component="img"
-                        src="/logo.png"
-                        sx={{
-                            height: 70,
-                            mb: 2,
-                            filter: 'brightness(0) invert(1)' // Make logo white if it's dark
-                        }}
-                    />
-
-
-                    <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: -1, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.3)', fontSize: '1.75rem' }}>
-                        Scale Your Venue with <br />
-                        <Box component="span" sx={{ color: '#e8ee26' }}>Arena Pro</Box>
-                    </Typography>
-
-                </Box>
-
-                <DialogContent sx={{ p: 4, bgcolor: '#fff' }}>
-                    <Grid container spacing={2.5}>
-                        {[
-                            {
-                                title: 'Daily Reporting',
-                                desc: 'One-click financial ledgers and shift reports.',
-                                icon: <Assessment sx={{ color: '#004d43' }} />
-                            },
-                            {
-                                title: 'WhatsApp API',
-                                desc: 'Automated confirmations and instant delay alerts.',
-                                icon: <WhatsApp sx={{ color: '#004d43' }} />
-                            },
-                            {
-                                title: 'Live Inventory',
-                                desc: 'Track premium rackets and equipment in real-time.',
-                                icon: <Inventory2 sx={{ color: '#004d43' }} />
-                            },
-                            {
-                                title: 'Marketing Pro',
-                                desc: 'Get 3x more visibility with priority search placement.',
-                                icon: <Campaign sx={{ color: '#004d43' }} />
-                            }
-                        ].map((item, i) => (
-                            <Grid item xs={12} sm={6} key={i}>
-                                <Box sx={{
-                                    p: 2,
-                                    borderRadius: 3,
-                                    bgcolor: '#f8faf9',
-                                    border: '1px solid #edf2f0',
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: 1.5,
-                                    transition: 'all 0.2s',
-                                    '&:hover': { bgcolor: '#f0f5f3', borderColor: '#d1e0da' }
-                                }}>
-                                    <Box sx={{
-                                        width: 40,
-                                        height: 40,
-                                        borderRadius: 2,
-                                        bgcolor: 'rgba(0,77,67,0.08)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        {item.icon}
-                                    </Box>
-                                    <Box>
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#004d43', mb: 0.5 }}>
-                                            {item.title}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4, display: 'block' }}>
-                                            {item.desc}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </Grid>
-                        ))}
-                    </Grid>
-
-                    <Box sx={{ mt: 5, textAlign: 'center' }}>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            size="large"
-                            endIcon={<ArrowForward />}
-                            onClick={() => {
-                                setPromoOpen(false);
-                                navigate('/vendor/pro-features');
-                            }}
-                            sx={{
-                                bgcolor: '#004d43',
-                                color: 'white',
-                                py: 2,
-                                borderRadius: 3,
-                                fontWeight: 800,
-                                fontSize: '1.05rem',
-                                textTransform: 'none',
-                                boxShadow: '0 8px 20px rgba(0,77,67,0.25)',
-                                '&:hover': { bgcolor: '#00695c' },
-                            }}
-                        >
-                            Explore Pro Features
-                        </Button>
-                        <Button
-                            onClick={() => setPromoOpen(false)}
-                            sx={{ mt: 1.5, color: '#666', textTransform: 'none', fontWeight: 600, '&:hover': { color: '#004d43', bgcolor: 'transparent' } }}
-                        >
-                            I'll decide later
-                        </Button>
-                    </Box>
-                </DialogContent>
-            </Dialog>
+            {/* Recent Activity Card end */}
         </Box>
     );
 }
