@@ -218,7 +218,7 @@ export default function VendorProFeaturesPage() {
                                 </Typography>
 
                                 <Box sx={{ mt: 3 }}>
-                                    {isProActive ? (
+                                    {isProActive && (
                                         <Chip
                                             icon={<CheckCircle sx={{ fontSize: '16px !important', color: '#004d43 !important' }} />}
                                             label="Active"
@@ -229,20 +229,6 @@ export default function VendorProFeaturesPage() {
                                                 fontWeight: 600,
                                             }}
                                         />
-                                    ) : (
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            sx={{
-                                                color: '#004d43',
-                                                borderColor: '#004d43',
-                                                borderRadius: 2,
-                                                textTransform: 'none',
-                                                fontWeight: 600,
-                                            }}
-                                        >
-                                            Coming Soon
-                                        </Button>
                                     )}
                                 </Box>
                             </CardContent>
