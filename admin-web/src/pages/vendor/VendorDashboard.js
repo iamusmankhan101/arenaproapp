@@ -27,6 +27,7 @@ import {
     WhatsApp,
     Inventory2,
     ArrowForward,
+    Campaign,
 } from '@mui/icons-material';
 import {
     XAxis,
@@ -403,7 +404,7 @@ export default function VendorDashboard() {
                 </MuiIconButton>
 
                 <Box sx={{
-                    background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)',
+                    background: 'linear-gradient(135deg, #00332d 0%, #004d43 100%)',
                     p: 4,
                     pt: 6,
                     textAlign: 'center',
@@ -413,13 +414,13 @@ export default function VendorDashboard() {
                 }}>
                     <Box sx={{
                         position: 'absolute',
-                        top: -20,
-                        right: -20,
-                        width: 120,
-                        height: 120,
-                        bgcolor: 'rgba(232, 238, 38, 0.2)',
+                        top: -30,
+                        right: -30,
+                        width: 150,
+                        height: 150,
+                        bgcolor: 'rgba(232, 238, 38, 0.15)',
                         borderRadius: '50%',
-                        filter: 'blur(30px)'
+                        filter: 'blur(40px)'
                     }} />
 
                     <Avatar
@@ -429,55 +430,75 @@ export default function VendorDashboard() {
                             bgcolor: '#e8ee26',
                             mx: 'auto',
                             mb: 3,
-                            boxShadow: '0 10px 20px rgba(0,0,0,0.2)'
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                            border: '4px solid rgba(255,255,255,0.1)'
                         }}
                     >
                         <WorkspacePremium sx={{ fontSize: 48, color: '#004d43' }} />
                     </Avatar>
 
-                    <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: -0.5 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 900, mb: 1.5, letterSpacing: -1, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
                         Scale Your Venue with <br />
                         <Box component="span" sx={{ color: '#e8ee26' }}>Arena Pro</Box> 🚀
                     </Typography>
-                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', maxWidth: '80%', mx: 'auto' }}>
-                        Join top-tier venues using advanced tools to grow their business and simplify operations.
+                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', maxWidth: '90%', mx: 'auto', fontWeight: 500, lineHeight: 1.6 }}>
+                        Unlock high-performance tools designed to grow your business, automate operations, and maximize revenue.
                     </Typography>
                 </Box>
 
-                <DialogContent sx={{ p: 4, bgcolor: '#fbfcfc' }}>
-                    <Grid container spacing={3}>
+                <DialogContent sx={{ p: 4, bgcolor: '#fff' }}>
+                    <Grid container spacing={2.5}>
                         {[
                             {
                                 title: 'Daily Reporting',
-                                desc: 'Financial ledgers & PDF shift handovers.',
+                                desc: 'One-click financial ledgers and shift reports.',
                                 icon: <Assessment sx={{ color: '#004d43' }} />
                             },
                             {
                                 title: 'WhatsApp API',
-                                desc: 'Automatic booking confirmations & reminders.',
+                                desc: 'Automated confirmations and instant delay alerts.',
                                 icon: <WhatsApp sx={{ color: '#004d43' }} />
                             },
                             {
                                 title: 'Live Inventory',
-                                desc: 'Track rackets & equipment in real-time.',
+                                desc: 'Track premium rackets and equipment in real-time.',
                                 icon: <Inventory2 sx={{ color: '#004d43' }} />
+                            },
+                            {
+                                title: 'Marketing Pro',
+                                desc: 'Get 3x more visibility with priority search placement.',
+                                icon: <Campaign sx={{ color: '#004d43' }} />
                             }
                         ].map((item, i) => (
-                            <Grid item xs={12} key={i}>
-                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                            <Grid item xs={12} sm={6} key={i}>
+                                <Box sx={{
+                                    p: 2,
+                                    borderRadius: 3,
+                                    bgcolor: '#f8faf9',
+                                    border: '1px solid #edf2f0',
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 1.5,
+                                    transition: 'all 0.2s',
+                                    '&:hover': { bgcolor: '#f0f5f3', borderColor: '#d1e0da' }
+                                }}>
                                     <Box sx={{
-                                        p: 1,
+                                        width: 40,
+                                        height: 40,
                                         borderRadius: 2,
-                                        bgcolor: 'rgba(0,77,67,0.05)',
-                                        display: 'flex'
+                                        bgcolor: 'rgba(0,77,67,0.08)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
                                     }}>
                                         {item.icon}
                                     </Box>
                                     <Box>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#004d43' }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#004d43', mb: 0.5 }}>
                                             {item.title}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4, display: 'block' }}>
                                             {item.desc}
                                         </Typography>
                                     </Box>
@@ -486,9 +507,7 @@ export default function VendorDashboard() {
                         ))}
                     </Grid>
 
-                    <Divider sx={{ my: 4 }} />
-
-                    <Box sx={{ textAlign: 'center' }}>
+                    <Box sx={{ mt: 5, textAlign: 'center' }}>
                         <Button
                             variant="contained"
                             fullWidth
@@ -496,15 +515,7 @@ export default function VendorDashboard() {
                             endIcon={<ArrowForward />}
                             onClick={() => {
                                 setPromoOpen(false);
-                                // The layout handles the Pro dialog, but we want to show the Pro page.
-                                // Since layout uses a dialog for VendorProFeaturesPage, we'll just navigate to dashboard 
-                                // and the user can click "Pro" chip or we can try to trigger it.
-                                // Actually, I'll just navigate to a page that forces the Pro UI or similar.
-                                // For now, let's keep it simple and assume the user will navigate.
-                                // WAIT: I can just redirect to the settings page where Pro activation might be visible?
-                                // Or better yet, just show the Pro activation details.
-                                navigate('/vendor/dashboard'); // Keep them on dashboard
-                                // In a real app, I'd ideally trigger the 'proDialogOpen' in Layout.
+                                navigate('/vendor/dashboard');
                             }}
                             sx={{
                                 bgcolor: '#004d43',
@@ -512,20 +523,19 @@ export default function VendorDashboard() {
                                 py: 2,
                                 borderRadius: 3,
                                 fontWeight: 800,
-                                fontSize: '1.1rem',
+                                fontSize: '1.05rem',
                                 textTransform: 'none',
-                                boxShadow: '0 10px 20px rgba(0,77,67,0.2)',
-                                '&:hover': { bgcolor: '#00695c', transform: 'translateY(-2px)' },
-                                transition: 'all 0.2s'
+                                boxShadow: '0 8px 20px rgba(0,77,67,0.25)',
+                                '&:hover': { bgcolor: '#00695c' },
                             }}
                         >
                             Explore Pro Features
                         </Button>
                         <Button
                             onClick={() => setPromoOpen(false)}
-                            sx={{ mt: 2, color: 'text.secondary', textTransform: 'none', fontWeight: 600 }}
+                            sx={{ mt: 1.5, color: '#666', textTransform: 'none', fontWeight: 600, '&:hover': { color: '#004d43', bgcolor: 'transparent' } }}
                         >
-                            Maybe Later
+                            I'll decide later
                         </Button>
                     </Box>
                 </DialogContent>

@@ -205,7 +205,7 @@ export default function ProManagementPage() {
                                 Pro Management
                             </Typography>
                             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
-                                Activate or deactivate Pro features for vendors • PKR 2,000/month
+                                Activate or deactivate Pro features for vendors • PKR 2,250/month (25% OFF)
                             </Typography>
                         </Box>
                     </Box>
@@ -341,7 +341,7 @@ export default function ProManagementPage() {
                         sx={{ mb: 2 }}
                     />
                     <Alert severity="info" sx={{ mt: 1 }}>
-                        Pro will be activated immediately at PKR 2,000/month. The vendor will get access to Daily Reporting, Inventory Tracking, and WhatsApp Integration.
+                        Pro will be activated immediately at PKR 2,250/month (25% Discount Applied). The vendor will get access to Daily Reporting, Inventory Tracking, WhatsApp Integration, and Marketing.
                     </Alert>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
