@@ -48,7 +48,7 @@ const PRO_FEATURES = [
         description:
             'Go beyond simple upsells. Track premium padel rackets, cricket tape balls, and other equipment in real-time. Prevents double-booking items across simultaneous court reservations.',
         icon: <Inventory2 sx={{ fontSize: 40 }} />,
-        color: '#00796b',
+        color: '#004d43',
         tag: 'Operations',
     },
     {
@@ -56,14 +56,14 @@ const PRO_FEATURES = [
         description:
             'Email notifications often get ignored. Connect a business WhatsApp integration so booking confirmations, payment reminders, or sudden rain delay alerts go directly to the player\'s phone.',
         icon: <WhatsApp sx={{ fontSize: 40 }} />,
-        color: '#25D366',
+        color: '#004d43',
         tag: 'Communication',
     },
     {
         title: 'Promo & In-App Marketing',
         description: 'Boost your venue visibility by 3x. Get priority placement in search results and run exclusive "Dead Hour" or "Weekend" promos directly on the user home screen.',
         icon: <Campaign sx={{ fontSize: 40 }} />,
-        color: '#e65100',
+        color: '#004d43',
         tag: 'Marketing',
     },
 ];
@@ -164,7 +164,7 @@ export default function VendorProFeaturesPage() {
                         </Typography>
                         <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
                         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
-                            All 3 premium features included
+                            All 4 premium features included
                         </Typography>
                     </Box>
                 </CardContent>
@@ -189,21 +189,23 @@ export default function VendorProFeaturesPage() {
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                                     <Avatar
                                         sx={{
-                                            bgcolor: `${feature.color}15`,
+                                            bgcolor: '#e8ee26',
                                             width: 56,
                                             height: 56,
+                                            boxShadow: '0 4px 10px rgba(0,77,67,0.1)'
                                         }}
                                     >
-                                        {React.cloneElement(feature.icon, { sx: { fontSize: 28, color: feature.color } })}
+                                        {React.cloneElement(feature.icon, { sx: { fontSize: 28, color: '#004d43' } })}
                                     </Avatar>
                                     <Chip
                                         label={feature.tag}
                                         size="small"
                                         sx={{
-                                            bgcolor: `${feature.color}15`,
-                                            color: feature.color,
-                                            fontWeight: 600,
+                                            bgcolor: 'rgba(0,77,67,0.08)',
+                                            color: '#004d43',
+                                            fontWeight: 700,
                                             fontSize: '0.7rem',
+                                            border: '1px solid rgba(0,77,67,0.1)'
                                         }}
                                     />
                                 </Box>
@@ -233,8 +235,8 @@ export default function VendorProFeaturesPage() {
                                             variant="outlined"
                                             size="small"
                                             sx={{
-                                                color: feature.color,
-                                                borderColor: feature.color,
+                                                color: '#004d43',
+                                                borderColor: '#004d43',
                                                 borderRadius: 2,
                                                 textTransform: 'none',
                                                 fontWeight: 600,
@@ -325,7 +327,7 @@ export default function VendorProFeaturesPage() {
                     >
                         <Close />
                     </IconButton>
-                    <Typography variant="h5" fontWeight={800} sx={{ mb: 0.5 }}>
+                    <Typography variant="h5" color="white" fontWeight={800} sx={{ mb: 0.5 }}>
                         Activate Arena Pro
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
@@ -365,7 +367,7 @@ export default function VendorProFeaturesPage() {
                                         Arena Pro Plan
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                                        Monthly Billing • Includes all 6 features
+                                        Monthly Billing • Includes all 4 features
                                     </Typography>
                                 </Box>
                                 <Box sx={{ textAlign: 'right' }}>
@@ -502,13 +504,13 @@ export default function VendorProFeaturesPage() {
                         Close & Pay Later
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
 
             <Snackbar open={copied} autoHideDuration={3000} onClose={() => setCopied(false)}>
                 <MuiAlert onClose={() => setCopied(false)} severity="success" sx={{ width: '100%', borderRadius: 2 }}>
                     Account number copied to clipboard!
                 </MuiAlert>
             </Snackbar>
-        </Box>
+        </Box >
     );
 }
