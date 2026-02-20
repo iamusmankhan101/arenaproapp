@@ -395,8 +395,20 @@ export default function VendorProFeaturesPage() {
                     }}>
                         <CardContent sx={{ p: 0 }}>
                             <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#f0f4f4' }}>
-                                <Avatar sx={{ bgcolor: '#004d43', width: 48, height: 48 }}>
-                                    <Smartphone sx={{ color: '#e8ee26' }} />
+                                <Avatar
+                                    sx={{
+                                        bgcolor: 'transparent',
+                                        width: 56,
+                                        height: 56,
+                                        border: '1px solid rgba(0,77,67,0.1)',
+                                        overflow: 'hidden'
+                                    }}
+                                >
+                                    <img
+                                        src="/easypaisa-logo.png"
+                                        alt="Easypaisa"
+                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                    />
                                 </Avatar>
                                 <Box>
                                     <Typography variant="subtitle1" fontWeight={800} sx={{ color: '#004d43' }}>
