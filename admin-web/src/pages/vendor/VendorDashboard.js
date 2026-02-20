@@ -168,12 +168,12 @@ export default function VendorDashboard() {
             const isPro = admin?.proActive === true;
             const promoShown = sessionStorage.getItem('pro_promo_shown');
 
-            if (!isPro && !promoShown) {
-                promoTriggered.current = true;
+            if (!isPro && !promoShown && !promoTriggered.current) {
                 const timer = setTimeout(() => {
                     setPromoOpen(true);
                     sessionStorage.setItem('pro_promo_shown', 'true');
-                }, 1500); // 1.5s delay feels more premium and reliable
+                    promoTriggered.current = true;
+                }, 1500);
                 return () => clearTimeout(timer);
             }
         }
