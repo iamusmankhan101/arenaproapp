@@ -112,13 +112,6 @@ export default function RegisterPage({ onSwitchToLogin }) {
             py: 1.8,
             fontSize: '0.95rem',
         },
-        '& .MuiInputLabel-root': {
-            ml: 1,
-            color: '#666',
-            '&.Mui-focused': {
-                color: '#004d43',
-            }
-        }
     };
 
     return (
