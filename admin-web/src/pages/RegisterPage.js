@@ -86,6 +86,12 @@ export default function RegisterPage({ onSwitchToLogin }) {
 
     const textFieldStyle = {
         mb: 2.5,
+        '& .MuiInputLabel-root': {
+            color: 'rgba(255,255,255,0.85)',
+            '&.Mui-focused': {
+                color: '#e8ee26',
+            }
+        },
         '& .MuiOutlinedInput-root': {
             borderRadius: '25px',
             backgroundColor: 'rgba(255,255,255,0.85)',
@@ -357,7 +363,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
                         </Box>
 
                         <Box sx={{ textAlign: 'center', mt: 3 }}>
-                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                            <Typography variant="body2" sx={{ color: '#ffffff' }}>
                                 Already have an account?{' '}
                                 <Box
                                     component="span"

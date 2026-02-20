@@ -114,8 +114,9 @@ export default function LoginPage({ onSwitchToRegister }) {
             sx={{
               fontWeight: 600,
               fontSize: '0.85rem',
-              color: '#1a1a1a',
+              color: '#ffffff',
               mb: 1,
+              textShadow: '0 1px 4px rgba(0,0,0,0.2)'
             }}
           >
             Your email address
@@ -160,8 +161,9 @@ export default function LoginPage({ onSwitchToRegister }) {
             sx={{
               fontWeight: 600,
               fontSize: '0.85rem',
-              color: '#1a1a1a',
+              color: '#ffffff',
               mb: 1,
+              textShadow: '0 1px 4px rgba(0,0,0,0.2)'
             }}
           >
             Password
@@ -225,21 +227,21 @@ export default function LoginPage({ onSwitchToRegister }) {
               fontSize: '1rem',
               fontWeight: 600,
               textTransform: 'none',
-              background: 'linear-gradient(135deg, #004d43 0%, #006b5a 50%, #004d43 100%)',
-              backgroundSize: '200% 100%',
-              boxShadow: '0 6px 25px rgba(0,77,67,0.4)',
+              background: 'linear-gradient(135deg, #e8ee26 0%, #d4db1c 100%)',
+              color: '#004d43',
+              boxShadow: '0 6px 20px rgba(232, 238, 38, 0.3)',
               transition: 'all 0.3s ease',
               '&:hover': {
-                backgroundPosition: '100% 0',
-                boxShadow: '0 8px 30px rgba(0,77,67,0.5)',
+                background: 'linear-gradient(135deg, #d4db1c 0%, #c1c712 100%)',
+                boxShadow: '0 8px 25px rgba(232, 238, 38, 0.4)',
                 transform: 'translateY(-1px)',
               },
               '&:active': {
                 transform: 'translateY(0)',
               },
               '&.Mui-disabled': {
-                background: 'rgba(0,77,67,0.5)',
-                color: 'rgba(255,255,255,0.7)',
+                background: 'rgba(232, 238, 38, 0.5)',
+                color: 'rgba(0, 77, 67, 0.5)',
               },
             }}
           >
@@ -254,14 +256,14 @@ export default function LoginPage({ onSwitchToRegister }) {
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography
               variant="body2"
-              sx={{ color: '#555' }}
+              sx={{ color: '#ffffff' }}
             >
               Don't have an account?{' '}
               <Box
                 component="span"
                 onClick={onSwitchToRegister}
                 sx={{
-                  color: '#004d43',
+                  color: '#e8ee26',
                   fontWeight: 700,
                   cursor: 'pointer',
                   textDecoration: 'underline',
