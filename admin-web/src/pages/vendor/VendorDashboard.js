@@ -435,33 +435,18 @@ export default function VendorDashboard() {
                         component="img"
                         src="/logo.png"
                         sx={{
-                            height: 40,
+                            height: 70,
                             mb: 2,
                             filter: 'brightness(0) invert(1)' // Make logo white if it's dark
                         }}
                     />
 
-                    <Avatar
-                        sx={{
-                            width: 60,
-                            height: 60,
-                            bgcolor: '#e8ee26',
-                            mx: 'auto',
-                            mb: 2,
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                            border: '4px solid rgba(255,255,255,0.1)'
-                        }}
-                    >
-                        <WorkspacePremium sx={{ fontSize: 36, color: '#004d43' }} />
-                    </Avatar>
 
-                    <Typography variant="h4" sx={{ fontWeight: 900, mb: 1, letterSpacing: -1, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.3)', fontSize: '1.75rem' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: -1, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.3)', fontSize: '1.75rem' }}>
                         Scale Your Venue with <br />
-                        <Box component="span" sx={{ color: '#e8ee26' }}>Arena Pro</Box> 🚀
+                        <Box component="span" sx={{ color: '#e8ee26' }}>Arena Pro</Box>
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', maxWidth: '90%', mx: 'auto', fontWeight: 500, lineHeight: 1.5 }}>
-                        Unlock high-performance tools designed to grow your business, automate operations, and maximize revenue.
-                    </Typography>
+
                 </Box>
 
                 <DialogContent sx={{ p: 4, bgcolor: '#fff' }}>
