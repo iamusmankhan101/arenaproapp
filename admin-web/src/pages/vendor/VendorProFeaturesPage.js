@@ -410,6 +410,12 @@ export default function VendorProFeaturesPage() {
                                 <Grid container spacing={3}>
                                     <Grid item xs={12}>
                                         <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5 }}>
+                                            ACCOUNT NAME
+                                        </Typography>
+                                        <Typography variant="h6" fontWeight={800} sx={{ color: '#004d43', mb: 2 }}>
+                                            Muhammad Usman Khan
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5 }}>
                                             SEND TO ACCOUNT
                                         </Typography>
                                         <Box sx={{
