@@ -66,6 +66,7 @@ const PRO_FEATURES = [
 ];
 
 export default function VendorProFeaturesPage() {
+    const { admin } = useSelector((state) => state.auth);
     const isProActive = admin?.proActive === true;
     const [paymentOpen, setPaymentOpen] = useState(false);
     const [copied, setCopied] = useState(false);
