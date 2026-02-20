@@ -18,7 +18,6 @@ import {
     VisibilityOff,
     AdminPanelSettings,
     Store,
-    PersonAddOutlined
 } from '@mui/icons-material';
 import { registerAdmin, clearError } from '../store/slices/authSlice';
 
