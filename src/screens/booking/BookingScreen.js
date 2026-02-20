@@ -27,7 +27,7 @@ import { safeDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import { useFocusEffect } from '@react-navigation/native';
 
-export default function BookingScreen() {
+export default function BookingScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [selectedTab, setSelectedTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -353,7 +353,7 @@ export default function BookingScreen() {
                   style={[styles.bookNowButton, { backgroundColor: theme.colors.primary }]}
                   contentStyle={styles.bookNowButtonContent}
                   labelStyle={{ color: theme.colors.secondary, fontFamily: 'Montserrat_700Bold' }}
-                  onPress={() => {/* Navigate to venue list */ }}
+                  onPress={() => navigation.navigate('VenueList')}
                 >
                   Book a Ground
                 </Button>

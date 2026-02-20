@@ -2,13 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PermissionsAndroid, Platform } from 'react-native';
 
 // Dynamically import messaging only if it exists (for native builds)
-// In Expo Go, this will fail or return a mock if not linked correctly
-let messaging;
+// NOTE: Commented out to prevent Metro resolver errors in Expo Go
+let messaging = null;
+/*
 try {
     messaging = require('@react-native-firebase/messaging').default;
 } catch (e) {
     console.log('Firebase Messaging native module not available');
 }
+*/
 
 export const notificationService = {
     // Request permission

@@ -112,7 +112,10 @@ export default function ProfileScreen({ navigation }) {
                 labelStyle={styles.avatarLabel}
               />
             )}
-            <TouchableOpacity style={styles.editAvatarButton}>
+            <TouchableOpacity
+              style={styles.editAvatarButton}
+              onPress={() => navigation.navigate('ManageProfile')}
+            >
               <Edit size={16} color="#004d43" />
             </TouchableOpacity>
           </View>

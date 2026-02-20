@@ -629,6 +629,11 @@ export const firebaseAuthAPI = {
         await updateProfile(user, { displayName: userData.displayName });
       }
 
+      if (userData.photoURL && userData.photoURL !== user.photoURL) {
+        await updateProfile(user, { photoURL: userData.photoURL });
+        console.log('✅ Updated Firebase Auth photoURL');
+      }
+
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
 

@@ -79,14 +79,16 @@ export default function App() {
 
         // 3. Foreground Message Listener
         // Only attempt if messaging is available (checked inside notificationService)
-        // This is a safety check for App.js as well
-        let messagingModule;
+        // NOTE: Commented out to prevent Metro resolver errors in Expo Go
+        let messagingModule = null;
+        /*
         try {
           messagingModule = require('@react-native-firebase/messaging').default;
         } catch (e) {
           // Module not found, skip listener
-          return () => { };
+          return () => {};
         }
+        */
 
         if (messagingModule) {
           const unsubscribe = messagingModule().onMessage(async remoteMessage => {

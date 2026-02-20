@@ -6,6 +6,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import * as ImagePicker from 'expo-image-picker';
 import { updateProfile } from '../../store/slices/authSlice';
+import { uploadImageToCloudinary } from '../../services/cloudinaryService';
+import { ActivityIndicator } from 'react-native-paper';
 
 // Brand colors
 const COLORS = {
@@ -89,6 +91,7 @@ export default function ManageProfileScreen({ navigation }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Date Picker State
   const [datePickerMode, setDatePickerMode] = useState('calendar'); // 'calendar' or 'year'
@@ -114,6 +117,22 @@ export default function ManageProfileScreen({ navigation }) {
 
   const handleSave = async () => {
     try {
+      setIsUploading(true);
+      let finalPhotoURL = formData.profileImage;
+
+      // If the image is a local URI (starts with file://), upload it first
+      if (finalPhotoURL && finalPhotoURL.startsWith('file://')) {
+        console.log('🔄 Uploading new profile picture to Cloudinary...');
+        try {
+          finalPhotoURL = await uploadImageToCloudinary(finalPhotoURL);
+        } catch (uploadError) {
+          console.error('Failed to upload image:', uploadError);
+          Alert.alert('Upload Failed', 'Failed to upload image. Please try again.');
+          setIsUploading(false);
+          return;
+        }
+      }
+
       // Map form data to user object structure
       // Note: profileImage is local state, mapping to photoURL for auth slice
       const userData = {
@@ -125,7 +144,7 @@ export default function ManageProfileScreen({ navigation }) {
         gender: formData.gender,
         location: formData.location,
         city: formData.location, // Map location to city for consistency
-        photoURL: formData.profileImage
+        photoURL: finalPhotoURL
       };
 
       await dispatch(updateProfile(userData)).unwrap();
@@ -137,6 +156,8 @@ export default function ManageProfileScreen({ navigation }) {
       );
     } catch (error) {
       Alert.alert('Update Failed', error.message || 'Could not update profile');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -352,12 +373,19 @@ export default function ManageProfileScreen({ navigation }) {
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.saveButton}
+              style={[styles.saveButton, (isUploading || !formData.fullName) && styles.saveButtonDisabled]}
               onPress={handleSave}
+              disabled={isUploading || !formData.fullName}
               activeOpacity={0.8}
             >
-              <MaterialIcons name="check" size={20} color={COLORS.secondary} />
-              <Text style={styles.saveButtonText}>Save Changes</Text>
+              {isUploading ? (
+                <ActivityIndicator color={COLORS.secondary} size="small" />
+              ) : (
+                <MaterialIcons name="check" size={20} color={COLORS.secondary} />
+              )}
+              <Text style={styles.saveButtonText}>
+                {isUploading ? 'Saving...' : 'Save Changes'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -739,6 +767,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: COLORS.secondary,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+    backgroundColor: COLORS.gray,
   },
   bottomSpacing: {
     height: 100,
