@@ -143,9 +143,9 @@ export default function ReportsPage() {
         const imgWidth = logoImg.width;
         const imgHeight = logoImg.height;
         const ratio = imgWidth / imgHeight;
-        const targetHeight = 22; // High prominence
+        const targetHeight = 32; // Significantly larger
         const targetWidth = targetHeight * ratio;
-        doc.addImage(logoImg, 'PNG', 14, 8, targetWidth, targetHeight);
+        doc.addImage(logoImg, 'PNG', 14, 5, targetWidth, targetHeight);
       } else {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
@@ -157,7 +157,7 @@ export default function ReportsPage() {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const dateStr = format(new Date(), 'dd MMM yyyy HH:mm');
-      doc.text(`Generated on: ${dateStr}`, 14, 34); // Shifted down a bit
+      doc.text(`Generated on: ${dateStr}`, 14, 37); // Shifted down for large logo
 
       doc.setFontSize(14);
       doc.text('SALES STATEMENT', 196, 25, { align: 'right' });

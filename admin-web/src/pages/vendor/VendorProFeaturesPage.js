@@ -24,7 +24,12 @@ import {
     CheckCircle,
     Payment,
     Campaign,
+    Close,
+    ContentCopy,
+    Info,
+    Smartphone,
 } from '@mui/icons-material';
+import { IconButton, Tooltip, Snackbar, Alert as MuiAlert } from '@mui/material';
 
 const PRO_FEATURES = [
     {
@@ -61,9 +66,15 @@ const PRO_FEATURES = [
 ];
 
 export default function VendorProFeaturesPage() {
-    const { admin } = useSelector((state) => state.auth);
     const isProActive = admin?.proActive === true;
     const [paymentOpen, setPaymentOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyAccount = () => {
+        navigator.clipboard.writeText('03058562523');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
         <Box>
@@ -289,83 +300,205 @@ export default function VendorProFeaturesPage() {
                 onClose={() => setPaymentOpen(false)}
                 maxWidth="sm"
                 fullWidth
-                PaperProps={{ sx: { borderRadius: 3 } }}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        overflow: 'hidden',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+                    }
+                }}
             >
-                <DialogTitle sx={{ fontWeight: 700, color: '#004d43', pb: 0 }}>
-                    Activate Arena Pro
-                </DialogTitle>
-                <DialogContent>
-                    <Box sx={{ mt: 2 }}>
-                        <Card sx={{ bgcolor: '#f5f5f5', borderRadius: 2, mb: 3 }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                    <Typography variant="body1" fontWeight={600}>
-                                        Arena Pro Subscription
+                {/* Branded Header */}
+                <Box sx={{
+                    background: 'linear-gradient(135deg, #004d43 0%, #00796b 100%)',
+                    p: 3,
+                    position: 'relative',
+                    color: '#fff'
+                }}>
+                    <IconButton
+                        onClick={() => setPaymentOpen(false)}
+                        sx={{ position: 'absolute', right: 12, top: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#fff' } }}
+                    >
+                        <Close />
+                    </IconButton>
+                    <Typography variant="h5" fontWeight={800} sx={{ mb: 0.5 }}>
+                        Activate Arena Pro
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                        Complete your subscription to unlock all premium features
+                    </Typography>
+                </Box>
+
+                <DialogContent sx={{ p: 4, bgcolor: '#fbfcfc' }}>
+                    {/* Subscription Summary Card */}
+                    <Card sx={{
+                        borderRadius: 3,
+                        mb: 4,
+                        border: '1px solid rgba(0,77,67,0.1)',
+                        boxShadow: '0 4px 12px rgba(0,77,67,0.05)',
+                        overflow: 'visible',
+                        position: 'relative'
+                    }}>
+                        <Box sx={{
+                            position: 'absolute',
+                            top: -12,
+                            left: 20,
+                            bgcolor: '#e8ee26',
+                            color: '#004d43',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                        }}>
+                            RECOMMENDED
+                        </Box>
+                        <CardContent sx={{ p: 3, pt: 4 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <Box>
+                                    <Typography variant="h6" fontWeight={800} color="#00463f">
+                                        Arena Pro Plan
                                     </Typography>
-                                    <Typography variant="h6" fontWeight={800} sx={{ color: '#004d43' }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                        Monthly Billing • Includes all 6 features
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ textAlign: 'right' }}>
+                                    <Typography variant="h4" fontWeight={900} sx={{ color: '#004d43' }}>
                                         PKR 2,000
                                     </Typography>
+                                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                                        per month
+                                    </Typography>
                                 </Box>
-                                <Typography variant="body2" color="text.secondary">
-                                    Monthly subscription • Includes all 3 premium features
-                                </Typography>
-                            </CardContent>
-                        </Card>
+                            </Box>
+                        </CardContent>
+                    </Card>
 
-                        <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#004d43', mb: 2 }}>
-                            Payment Method
+                    <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#004d43', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Payment fontSize="small" /> PAYMENT INSTRUCTIONS
+                    </Typography>
+
+                    {/* Payment Details Card */}
+                    <Card sx={{
+                        borderRadius: 3,
+                        bgcolor: '#fff',
+                        border: '1px solid #e0e0e0',
+                        boxShadow: 'none'
+                    }}>
+                        <CardContent sx={{ p: 0 }}>
+                            <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#f0f4f4' }}>
+                                <Avatar sx={{ bgcolor: '#004d43', width: 48, height: 48 }}>
+                                    <Smartphone sx={{ color: '#e8ee26' }} />
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="subtitle1" fontWeight={800} sx={{ color: '#004d43' }}>
+                                        Easypaisa
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                                        DIRECT MOBILE TRANSFER
+                                    </Typography>
+                                </Box>
+                            </Box>
+
+                            <Box sx={{ p: 3 }}>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12}>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5 }}>
+                                            SEND TO ACCOUNT
+                                        </Typography>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            p: 2,
+                                            bgcolor: '#f8f9fa',
+                                            borderRadius: 2,
+                                            border: '2px dashed #004d43'
+                                        }}>
+                                            <Typography variant="h5" fontWeight={800} sx={{ color: '#004d43', letterSpacing: 2 }}>
+                                                0305-8562523
+                                            </Typography>
+                                            <Tooltip title={copied ? "Copied!" : "Copy Account #"}>
+                                                <Button
+                                                    onClick={handleCopyAccount}
+                                                    variant="contained"
+                                                    size="small"
+                                                    startIcon={copied ? <CheckCircle /> : <ContentCopy />}
+                                                    sx={{
+                                                        bgcolor: copied ? '#4caf50' : '#004d43',
+                                                        borderRadius: 2,
+                                                        textTransform: 'none',
+                                                        fontWeight: 700,
+                                                        px: 2,
+                                                        minWidth: 100,
+                                                        '&:hover': { bgcolor: copied ? '#43a047' : '#00695c' }
+                                                    }}
+                                                >
+                                                    {copied ? 'Copied' : 'Copy'}
+                                                </Button>
+                                            </Tooltip>
+                                        </Box>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                                Total Due Today
+                                            </Typography>
+                                            <Typography variant="h6" fontWeight={800} color="#1a1a1a">
+                                                PKR 2,000
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </Box>
+                        </CardContent>
+                    </Card>
+
+                    {/* Help Alert */}
+                    <Box sx={{
+                        mt: 4,
+                        p: 2.5,
+                        bgcolor: 'rgba(232, 238, 38, 0.1)',
+                        borderRadius: 3,
+                        border: '1px solid rgba(232, 238, 38, 0.3)',
+                        display: 'flex',
+                        gap: 2
+                    }}>
+                        <Info sx={{ color: '#004d43', mt: 0.3 }} />
+                        <Typography variant="body2" sx={{ color: '#004d43', lineHeight: 1.6, fontWeight: 500 }}>
+                            <Box component="span" sx={{ fontWeight: 800, display: 'block', mb: 0.5 }}>Verification Required</Box>
+                            After sending the payment, please share the screenshot with our support team to activate your Pro features. Your account will be upgraded within <Box component="span" sx={{ fontWeight: 800 }}>24 hours</Box>.
                         </Typography>
-
-                        <Card sx={{ border: '2px solid #004d43', borderRadius: 2, bgcolor: '#e0f2f1' }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                                    <Avatar sx={{ bgcolor: '#004d43', width: 44, height: 44 }}>
-                                        <Payment sx={{ color: '#fff' }} />
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#004d43' }}>
-                                            Easypaisa
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Mobile Payment
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                                <Divider sx={{ my: 1.5 }} />
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Account Number
-                                        </Typography>
-                                        <Typography variant="body1" fontWeight={700} sx={{ color: '#004d43', letterSpacing: 1 }}>
-                                            0305-8562523
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Amount
-                                        </Typography>
-                                        <Typography variant="body1" fontWeight={700}>
-                                            PKR 2,000
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                        </Card>
-
-                        <Box sx={{ mt: 3, p: 2, bgcolor: '#fff8e1', borderRadius: 2, border: '1px solid #ffe082' }}>
-                            <Typography variant="body2" sx={{ color: '#e65100', fontWeight: 600 }}>
-                                📌 After sending the payment, please contact admin to activate your Pro features. Your account will be upgraded within 24 hours.
-                            </Typography>
-                        </Box>
                     </Box>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={() => setPaymentOpen(false)} sx={{ textTransform: 'none' }}>
-                        Close
+
+                <DialogActions sx={{ p: 3, pt: 0, bgcolor: '#fbfcfc' }}>
+                    <Button
+                        fullWidth
+                        size="large"
+                        onClick={() => setPaymentOpen(false)}
+                        sx={{
+                            textTransform: 'none',
+                            color: '#004d43',
+                            fontWeight: 700,
+                            borderRadius: 3,
+                            py: 1.5,
+                            border: '2px solid #004d43',
+                            '&:hover': { border: '2px solid #004d43', bgcolor: 'rgba(0,77,67,0.05)' }
+                        }}
+                    >
+                        Close & Pay Later
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <Snackbar open={copied} autoHideDuration={3000} onClose={() => setCopied(false)}>
+                <MuiAlert onClose={() => setCopied(false)} severity="success" sx={{ width: '100%', borderRadius: 2 }}>
+                    Account number copied to clipboard!
+                </MuiAlert>
+            </Snackbar>
         </Box>
     );
 }
