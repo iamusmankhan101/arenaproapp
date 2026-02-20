@@ -156,8 +156,9 @@ export default function VendorDashboard() {
     const { admin } = useSelector(state => state.auth);
     const [promoOpen, setPromoOpen] = React.useState(false);
 
+    const promoTriggered = React.useRef(false);
     useEffect(() => {
-        if (admin?.uid) {
+        if (admin?.uid && !promoTriggered.current) {
             const vendorId = admin.vendorId || admin.uid;
             dispatch(fetchDashboardStats({ vendorId }));
 
@@ -166,10 +167,11 @@ export default function VendorDashboard() {
             const promoShown = sessionStorage.getItem('pro_promo_shown');
 
             if (!isPro && !promoShown) {
+                promoTriggered.current = true;
                 const timer = setTimeout(() => {
                     setPromoOpen(true);
                     sessionStorage.setItem('pro_promo_shown', 'true');
-                }, 2000); // Show after 2 seconds for better impact
+                }, 800); // reduced delay for better reliability
                 return () => clearTimeout(timer);
             }
         }
@@ -511,7 +513,7 @@ export default function VendorDashboard() {
                             endIcon={<ArrowForward />}
                             onClick={() => {
                                 setPromoOpen(false);
-                                navigate('/vendor/dashboard');
+                                navigate('/vendor/pro-features');
                             }}
                             sx={{
                                 bgcolor: '#004d43',

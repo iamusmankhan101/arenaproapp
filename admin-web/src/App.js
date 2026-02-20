@@ -19,6 +19,7 @@ import VendorDailyReportingPage from './pages/vendor/VendorDailyReportingPage';
 import VendorInventoryPage from './pages/vendor/VendorInventoryPage';
 import VendorWhatsAppPage from './pages/vendor/VendorWhatsAppPage';
 import VendorMarketingPage from './pages/vendor/VendorMarketingPage';
+import VendorProFeaturesPage from './pages/vendor/VendorProFeaturesPage';
 import ProManagementPage from './pages/ProManagementPage';
 import { loadStoredAuth, setInitialized } from './store/slices/authSlice';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
@@ -90,6 +91,7 @@ function App() {
         <Route path="/vendor/inventory" element={<ProtectedRoute allowedRoles={['vendor']}><VendorInventoryPage /></ProtectedRoute>} />
         <Route path="/vendor/whatsapp" element={<ProtectedRoute allowedRoles={['vendor']}><VendorWhatsAppPage /></ProtectedRoute>} />
         <Route path="/vendor/marketing" element={<ProtectedRoute allowedRoles={['vendor']}><VendorMarketingPage /></ProtectedRoute>} />
+        <Route path="/vendor/pro-features" element={<ProtectedRoute allowedRoles={['vendor']}><VendorProFeaturesPage /></ProtectedRoute>} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
