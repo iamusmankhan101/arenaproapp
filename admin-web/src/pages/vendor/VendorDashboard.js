@@ -12,6 +12,7 @@ import {
     Dialog,
     DialogContent,
     Button,
+    Chip,
 } from '@mui/material';
 import {
     Event,
