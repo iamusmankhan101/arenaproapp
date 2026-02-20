@@ -212,6 +212,7 @@ const ProBanner = ({ onNavigate }) => (
                             { icon: <WhatsApp fontSize="small" />, text: 'WhatsApp API' },
                             { icon: <Assessment fontSize="small" />, text: 'Daily Reports' },
                             { icon: <Inventory2 fontSize="small" />, text: 'Live Inventory' },
+                            { icon: <Campaign fontSize="small" />, text: 'Marketing Pro' },
                         ].map((item, i) => (
                             <Grid item key={i}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255,255,255,0.7)' }}>

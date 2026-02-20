@@ -52,20 +52,19 @@ export default function LoginPage({ onSwitchToRegister }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'url(/login-bg.jpg) center/cover no-repeat',
+        background: 'linear-gradient(135deg, #004d43 0%, #00332d 100%)',
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Decorative gradient overlay removed - using image directly */}
 
       <Box sx={{ mb: 1, textAlign: 'center', zIndex: 1 }}>
         <img
           src="/logo.png"
           alt="Arena Pro"
           style={{
-            width: 180,
-            height: 180,
+            width: 240,
+            height: 240,
             objectFit: 'contain',
             marginBottom: 8,
           }}
@@ -134,7 +133,7 @@ export default function LoginPage({ onSwitchToRegister }) {
             sx={{
               mb: 3,
               '& .MuiOutlinedInput-root': {
-                borderRadius: '50px',
+                borderRadius: '25px',
                 backgroundColor: 'rgba(255,255,255,0.85)',
                 backdropFilter: 'blur(10px)',
                 '& fieldset': {
@@ -192,7 +191,7 @@ export default function LoginPage({ onSwitchToRegister }) {
             sx={{
               mb: 4,
               '& .MuiOutlinedInput-root': {
-                borderRadius: '50px',
+                borderRadius: '25px',
                 backgroundColor: 'rgba(255,255,255,0.85)',
                 backdropFilter: 'blur(10px)',
                 '& fieldset': {
@@ -221,7 +220,7 @@ export default function LoginPage({ onSwitchToRegister }) {
             variant="contained"
             disabled={loading}
             sx={{
-              borderRadius: '50px',
+              borderRadius: '25px',
               py: 1.8,
               fontSize: '1rem',
               fontWeight: 600,

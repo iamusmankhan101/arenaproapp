@@ -87,7 +87,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
     const textFieldStyle = {
         mb: 2.5,
         '& .MuiOutlinedInput-root': {
-            borderRadius: '50px',
+            borderRadius: '25px',
             backgroundColor: 'rgba(255,255,255,0.85)',
             backdropFilter: 'blur(10px)',
             '& fieldset': {
@@ -122,17 +122,11 @@ export default function RegisterPage({ onSwitchToLogin }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'url(/login-bg.jpg) center/cover no-repeat',
+                background: 'linear-gradient(135deg, #004d43 0%, #00332d 100%)',
                 position: 'relative',
                 py: 4,
                 px: 2,
                 overflow: 'hidden',
-                '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    bgcolor: 'rgba(0, 51, 45, 0.4)', // Dark overlay to make text pop
-                }
             }}
         >
             <Fade in={true} timeout={1000}>
@@ -152,8 +146,8 @@ export default function RegisterPage({ onSwitchToLogin }) {
                             src="/logo.png"
                             alt="Arena Pro"
                             style={{
-                                width: 140,
-                                height: 140,
+                                width: 200,
+                                height: 200,
                                 objectFit: 'contain',
                             }}
                         />
@@ -230,7 +224,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
                                             fontWeight: 700,
                                             color: 'rgba(255,255,255,0.6)',
                                             borderColor: 'rgba(255,255,255,0.2)',
-                                            borderRadius: '50px !important',
+                                            borderRadius: '25px !important',
                                             mx: 0.5,
                                             border: '1px solid !important',
                                             '&:hover': {
@@ -334,7 +328,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
                                 sx={{
                                     mt: 2,
                                     mb: 2,
-                                    borderRadius: '50px',
+                                    borderRadius: '25px',
                                     py: 1.8,
                                     fontSize: '1rem',
                                     fontWeight: 800,
