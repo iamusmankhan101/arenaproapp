@@ -412,8 +412,9 @@ export default function VendorDashboard() {
 
                 <Box sx={{
                     background: 'linear-gradient(135deg, #00332d 0%, #004d43 100%)',
-                    p: 4,
-                    pt: 6,
+                    px: 4,
+                    pt: 3,
+                    pb: '20px',
                     textAlign: 'center',
                     color: 'white',
                     position: 'relative',
@@ -430,25 +431,35 @@ export default function VendorDashboard() {
                         filter: 'blur(40px)'
                     }} />
 
+                    <Box
+                        component="img"
+                        src="/logo.png"
+                        sx={{
+                            height: 40,
+                            mb: 2,
+                            filter: 'brightness(0) invert(1)' // Make logo white if it's dark
+                        }}
+                    />
+
                     <Avatar
                         sx={{
-                            width: 80,
-                            height: 80,
+                            width: 60,
+                            height: 60,
                             bgcolor: '#e8ee26',
                             mx: 'auto',
-                            mb: 3,
+                            mb: 2,
                             boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
                             border: '4px solid rgba(255,255,255,0.1)'
                         }}
                     >
-                        <WorkspacePremium sx={{ fontSize: 48, color: '#004d43' }} />
+                        <WorkspacePremium sx={{ fontSize: 36, color: '#004d43' }} />
                     </Avatar>
 
-                    <Typography variant="h4" sx={{ fontWeight: 900, mb: 1.5, letterSpacing: -1, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 900, mb: 1, letterSpacing: -1, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.3)', fontSize: '1.75rem' }}>
                         Scale Your Venue with <br />
                         <Box component="span" sx={{ color: '#e8ee26' }}>Arena Pro</Box> 🚀
                     </Typography>
-                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', maxWidth: '90%', mx: 'auto', fontWeight: 500, lineHeight: 1.6 }}>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', maxWidth: '90%', mx: 'auto', fontWeight: 500, lineHeight: 1.5 }}>
                         Unlock high-performance tools designed to grow your business, automate operations, and maximize revenue.
                     </Typography>
                 </Box>
