@@ -34,18 +34,18 @@ export default function TurfCard({ turf, onPress }) {
       <View style={styles.cardContent}>
         {/* Venue Image */}
         <View style={styles.imageContainer}>
-          <Image 
+          <Image
             source={
-              turf.images && turf.images.length > 0 
+              turf.images && turf.images.length > 0
                 ? { uri: turf.images[0] }
-                : turf.image 
-                ? { uri: turf.image }
-                : require('../images/indoor-football-court-turf.jpeg') // Default image
+                : turf.image
+                  ? { uri: turf.image }
+                  : require('../images/football.jpg') // Default image
             }
-            style={styles.venueImage} 
-            defaultSource={require('../images/indoor-football-court-turf.jpeg')}
+            style={styles.venueImage}
+            defaultSource={require('../images/football.jpg')}
           />
-          
+
           {/* Status Badge */}
           <View style={[styles.statusBadge, { backgroundColor: availability.color }]}>
             <Text style={styles.statusBadgeText}>
@@ -64,16 +64,16 @@ export default function TurfCard({ turf, onPress }) {
           <View style={styles.sportsOverlay}>
             {turf.sports?.slice(0, 3).map((sport, index) => (
               <View key={sport} style={styles.sportIconOverlay}>
-                <MaterialIcons 
+                <MaterialIcons
                   name={
                     sport.toLowerCase() === 'football' ? 'sports-soccer' :
-                    sport.toLowerCase() === 'cricket' ? 'sports-cricket' :
-                    sport.toLowerCase() === 'padel' ? 'sports-tennis' :
-                    sport.toLowerCase() === 'tennis' ? 'sports-tennis' :
-                    'sports'
-                  } 
-                  size={14} 
-                  color="white" 
+                      sport.toLowerCase() === 'cricket' ? 'sports-cricket' :
+                        sport.toLowerCase() === 'padel' ? 'sports-tennis' :
+                          sport.toLowerCase() === 'tennis' ? 'sports-tennis' :
+                            'sports'
+                  }
+                  size={14}
+                  color="white"
                 />
               </View>
             ))}
@@ -87,7 +87,7 @@ export default function TurfCard({ turf, onPress }) {
               <Text variant="titleMedium" style={styles.name} numberOfLines={1}>
                 {turf.name}
               </Text>
-              
+
               <View style={styles.ratingContainer}>
                 <MaterialIcons name="star" size={16} color="#FFD700" />
                 <Text style={styles.ratingText}>
@@ -104,7 +104,7 @@ export default function TurfCard({ turf, onPress }) {
                 {turf.area} • {turf.size || 'Standard Size'}
               </Text>
             </View>
-            
+
             <View style={styles.detailRow}>
               <MaterialIcons name="sports" size={16} color="#666" />
               <Text style={styles.detailText} numberOfLines={1}>
@@ -126,19 +126,19 @@ export default function TurfCard({ turf, onPress }) {
           {/* Availability Status */}
           <View style={styles.availabilityRow}>
             <View style={[styles.availabilityChip, { backgroundColor: `${availability.color}20` }]}>
-              <MaterialIcons 
-                name={turf.openNow && turf.availableSlots > 0 ? 'schedule' : 'schedule'} 
-                size={14} 
-                color={availability.color} 
+              <MaterialIcons
+                name={turf.openNow && turf.availableSlots > 0 ? 'schedule' : 'schedule'}
+                size={14}
+                color={availability.color}
               />
               <Text style={[styles.availabilityText, { color: availability.color }]}>
                 {availability.text}
               </Text>
             </View>
-            
-            <Chip 
-              style={[styles.timeChip, { 
-                backgroundColor: getCurrentTimeSlot() === 'Prime Time' ? '#FFE0B2' : '#E8F5E8' 
+
+            <Chip
+              style={[styles.timeChip, {
+                backgroundColor: getCurrentTimeSlot() === 'Prime Time' ? '#FFE0B2' : '#E8F5E8'
               }]}
               compact
             >
@@ -177,7 +177,7 @@ export default function TurfCard({ turf, onPress }) {
           )}
 
           {/* Action Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.bookButton}
             onPress={onPress}
             activeOpacity={0.8}

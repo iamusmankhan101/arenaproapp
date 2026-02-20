@@ -62,7 +62,11 @@ export default function FavoritesScreen({ navigation }) {
         {/* Venue Image */}
         <View style={styles.imageContainer}>
           <Image
-            source={getVenueImage(item.imageType)}
+            source={
+              (item.images && item.images.length > 0)
+                ? (typeof item.images[0] === 'string' ? { uri: item.images[0] } : item.images[0])
+                : (typeof item.image === 'string' ? { uri: item.image } : (item.image || getVenueImage(item.imageType)))
+            }
             style={styles.venueImage}
             resizeMode="cover"
           />

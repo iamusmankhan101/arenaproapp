@@ -1,63 +1,47 @@
 import React from 'react';
-import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { Text, Button, Chip, Surface } from 'react-native-paper';
+import { View, StyleSheet, Alert, TouchableOpacity, Image } from 'react-native';
+import { Text, Button, Surface } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
-
 import { useDispatch } from 'react-redux';
 import { cancelUserBooking } from '../store/slices/bookingSlice';
+import { theme } from '../theme/theme';
 
 export default function BookingCard({ booking }) {
   const dispatch = useDispatch();
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmed': return '#004d43'; // Brand Primary
-      case 'pending': return '#FF9800';
-      case 'cancelled': return '#F44336';
-      case 'completed': return '#006b5a'; // Tertiary
-      default: return '#9E9E9E';
+      case 'confirmed': return '#004d43';
+      case 'pending': return '#F57C00';
+      case 'cancelled': return '#D32F2F';
+      case 'completed': return '#006b5a';
+      default: return '#757575';
     }
   };
 
   const getStatusBgColor = (status) => {
     switch (status) {
       case 'confirmed': return 'rgba(0, 77, 67, 0.1)';
-      case 'pending': return 'rgba(255, 152, 0, 0.1)';
-      case 'cancelled': return 'rgba(244, 67, 54, 0.1)';
+      case 'pending': return 'rgba(245, 124, 0, 0.1)';
+      case 'cancelled': return 'rgba(211, 47, 47, 0.1)';
       case 'completed': return 'rgba(0, 107, 90, 0.1)';
-      default: return 'rgba(158, 158, 158, 0.1)';
+      default: return 'rgba(117, 117, 117, 0.1)';
     }
   };
 
   const getSportIcon = (sport) => {
     switch (sport?.toLowerCase()) {
       case 'cricket': return 'sports-cricket';
-      case 'football': return 'sports-soccer';
+      case 'football': case 'futsal': return 'sports-soccer';
       case 'padel': return 'sports-tennis';
       default: return 'sports';
     }
   };
 
-  const getSportColor = (sport) => {
-    switch (sport?.toLowerCase()) {
-      case 'cricket': return '#004d43';
-      case 'football': return '#004d43';
-      case 'padel': return '#004d43';
-      default: return '#004d43';
-    }
-  };
-
   const formatDateTime = (dateTime) => {
-    if (!dateTime) {
-      return { date: 'Unknown', time: 'Unknown' };
-    }
-
+    if (!dateTime) return { date: 'Unknown', time: 'Unknown', isToday: false };
     const date = new Date(dateTime);
-
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      console.warn('Invalid dateTime in booking:', dateTime);
-      return { date: 'Invalid Date', time: 'Invalid Time' };
-    }
+    if (isNaN(date.getTime())) return { date: 'Invalid', time: 'Invalid', isToday: false };
 
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
@@ -66,36 +50,21 @@ export default function BookingCard({ booking }) {
     const isTomorrow = date.toDateString() === tomorrow.toDateString();
 
     let dateStr;
-    if (isToday) {
-      dateStr = 'Today';
-    } else if (isTomorrow) {
-      dateStr = 'Tomorrow';
-    } else {
-      dateStr = date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
-    }
+    if (isToday) dateStr = 'Today';
+    else if (isTomorrow) dateStr = 'Tomorrow';
+    else dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-    const timeStr = date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    return { date: dateStr, time: timeStr };
+    return { date: dateStr, time: timeStr, isToday };
   };
 
   const canCancel = () => {
     if (!booking.dateTime) return false;
-
     const bookingTime = new Date(booking.dateTime);
     if (isNaN(bookingTime.getTime())) return false;
-
     const now = new Date();
     const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
-
     return booking.status === 'confirmed' && hoursUntilBooking > 2;
   };
 
@@ -109,161 +78,117 @@ export default function BookingCard({ booking }) {
           text: 'Yes, Cancel',
           style: 'destructive',
           onPress: () => {
-            console.log('Cancelling booking:', booking.id);
             dispatch(cancelUserBooking(booking.id))
               .unwrap()
-              .then(() => {
-                Alert.alert('Success', 'Booking cancelled successfully');
-              })
-              .catch((err) => {
-                Alert.alert('Error', err || 'Failed to cancel booking');
-              });
+              .then(() => Alert.alert('Success', 'Booking cancelled successfully'))
+              .catch((err) => Alert.alert('Error', err || 'Failed to cancel booking'));
           }
         }
       ]
     );
   };
 
-  const { date, time } = formatDateTime(booking.dateTime);
+  const { date, time, isToday } = formatDateTime(booking.dateTime);
+  const statusColor = getStatusColor(booking.status);
+  const statusBg = getStatusBgColor(booking.status);
 
   return (
-    <Surface style={styles.card} elevation={1}>
-      <View style={styles.cardContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.venueInfo}>
-            <View style={styles.sportIconContainer}>
-              <MaterialIcons
-                name={getSportIcon(booking.sport)}
-                size={20}
-                color={getSportColor(booking.sport)}
-              />
-            </View>
-            <View style={styles.venueDetails}>
-              <Text style={styles.venueName}>{booking.turfName || 'Unknown Venue'}</Text>
-              <Text style={styles.venueLocation}>{booking.turfArea || 'Unknown Area'}</Text>
-            </View>
-          </View>
-
-          <View style={[
-            styles.statusChip,
-            { backgroundColor: getStatusBgColor(booking.status || 'pending') }
-          ]}>
-            <Text style={[
-              styles.statusText,
-              { color: getStatusColor(booking.status || 'pending') }
-            ]}>
-              {(booking.status || 'pending').toUpperCase()}
+    <Surface style={styles.card} elevation={2}>
+      {/* Header with Venue Image & Status */}
+      <View style={styles.header}>
+        <Image
+          source={booking.turfImage ? { uri: booking.turfImage } : require('../../images/football.jpg')}
+          style={styles.turfImage}
+          resizeMode="cover"
+        />
+        <View style={styles.headerOverlay}>
+          <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <Text style={[styles.statusText, { color: statusColor }]}>
+              {booking.status?.toUpperCase() || 'PENDING'}
             </Text>
           </View>
+          {isToday && booking.status !== 'cancelled' && (
+            <View style={styles.todayBadge}>
+              <MaterialIcons name="notifications-active" size={12} color="#004d43" />
+              <Text style={styles.todayText}>Happening Today</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.cardBody}>
+        {/* Venue Info Section */}
+        <View style={styles.venueSection}>
+          <View style={styles.venueInfo}>
+            <Text style={styles.venueName} numberOfLines={1}>{booking.turfName || 'Unknown Venue'}</Text>
+            <View style={styles.locationContainer}>
+              <MaterialIcons name="location-on" size={12} color="#666" />
+              <Text style={styles.locationText} numberOfLines={1}>{booking.turfArea || 'Unknown Area'}</Text>
+            </View>
+          </View>
+          <View style={styles.sportBadge}>
+            <MaterialIcons name={getSportIcon(booking.sport)} size={16} color="#004d43" />
+          </View>
         </View>
 
-        {/* Booking Details */}
-        <View style={styles.detailsContainer}>
-          <View style={styles.detailRow}>
+        {/* Ticket Separator */}
+        <View style={styles.separatorContainer}>
+          <View style={styles.cutoutLeft} />
+          <View style={styles.dashedLine} />
+          <View style={styles.cutoutRight} />
+        </View>
+
+        {/* Booking Details Section */}
+        <View style={styles.detailsSection}>
+          <View style={styles.detailGrid}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="event" size={16} color="#666" />
-              <Text style={styles.detailText}>{date}</Text>
+              <Text style={styles.detailLabel}>DATE</Text>
+              <Text style={styles.detailValue}>{date}</Text>
             </View>
             <View style={styles.detailItem}>
-              <MaterialIcons name="schedule" size={16} color="#666" />
-              <Text style={styles.detailText}>{time}</Text>
+              <Text style={styles.detailLabel}>TIME</Text>
+              <Text style={styles.detailValue}>{time}</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>DURATION</Text>
+              <Text style={styles.detailValue}>{booking.duration || '1 Hour'}</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>TOTAL PRICE</Text>
+              <Text style={[styles.detailValue, { color: '#004d43', fontFamily: 'Montserrat_700Bold' }]}>
+                PKR {(booking.totalAmount || 0).toLocaleString()}
+              </Text>
             </View>
           </View>
 
-          <View style={styles.detailRow}>
-            <View style={styles.detailItem}>
-              <MaterialIcons name="timer" size={16} color="#666" />
-              <Text style={styles.detailText}>{booking.duration || '1h'} • {booking.slotType || 'Standard'}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <MaterialIcons name="payments" size={16} color="#666" />
-              <Text style={styles.detailText}>PKR {(booking.totalAmount || 0).toLocaleString()}</Text>
-            </View>
-          </View>
-
-          {booking.bookingId && (
-            <View style={styles.bookingIdRow}>
-              <MaterialIcons name="confirmation-number" size={16} color="#666" />
-              <Text style={styles.bookingIdText}>ID: {booking.bookingId}</Text>
+          {booking.bookingReference && (
+            <View style={styles.refRow}>
+              <Text style={styles.refLabel}>REF: {booking.bookingReference}</Text>
             </View>
           )}
         </View>
 
-
-
-        {/* Payment Status */}
-        {booking.paymentStatus === 'pending' && (
-          <View style={styles.paymentWarning}>
-            <MaterialIcons name="warning" size={16} color="#FF9800" />
-            <Text style={styles.paymentWarningText}>Payment Pending</Text>
+        {/* Payment Warning */}
+        {booking.paymentStatus === 'pending' && booking.status !== 'cancelled' && (
+          <View style={styles.alertBox}>
+            <MaterialIcons name="info-outline" size={14} color="#F57C00" />
+            <Text style={styles.alertText}>Payment pending at venue</Text>
           </View>
         )}
 
-        {booking.paymentStatus === 'refunded' && (
-          <View style={styles.refundInfo}>
-            <MaterialIcons name="check-circle" size={16} color="#4CAF50" />
-            <Text style={styles.refundText}>Payment Refunded</Text>
-          </View>
-        )}
-
-        {/* Cancellation Reason */}
-        {booking.cancellationReason && (
-          <View style={styles.cancellationContainer}>
-            <Text style={styles.cancellationTitle}>Cancellation Reason:</Text>
-            <Text style={styles.cancellationReason}>{booking.cancellationReason}</Text>
-          </View>
-        )}
-
-        {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
-          {booking.paymentStatus === 'pending' && (
-            <Button
-              mode="contained"
-              style={styles.payButton}
-              buttonColor="#004d43"
-              textColor="#FFFFFF"
-              compact
-              onPress={() => console.log('Pay now:', booking.id)}
-            >
-              Pay Now
-            </Button>
-          )}
-
-          {canCancel() && (
-            <Button
-              mode="outlined"
-              style={styles.cancelButton}
-              textColor="#F44336"
-              compact
+        {/* Action Section */}
+        {canCancel() && (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.cancelLink}
               onPress={handleCancelBooking}
             >
-              Cancel
-            </Button>
-          )}
-
-          {booking.status === 'completed' && !booking.rated && (
-            <Button
-              mode="contained"
-              style={styles.rateButton}
-              buttonColor="#e8ee26"
-              textColor="#004d43"
-              labelStyle={{ fontWeight: 'bold' }}
-              icon={() => <MaterialIcons name="star" size={16} color="#004d43" />}
-              compact
-              onPress={() => console.log('Rate turf:', booking.turfId)}
-            >
-              Rate
-            </Button>
-          )}
-
-          {booking.rated && (
-            <View style={styles.ratedContainer}>
-              <MaterialIcons name="star" size={16} color="#FFD700" />
-              <Text style={styles.ratedText}>Rated</Text>
-            </View>
-          )}
-        </View>
+              <MaterialIcons name="close" size={14} color="#D32F2F" />
+              <Text style={styles.cancelLinkText}>Cancel Booking</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </Surface>
   );
@@ -271,166 +196,204 @@ export default function BookingCard({ booking }) {
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginBottom: 20,
     borderRadius: 16,
-    backgroundColor: 'white',
-  },
-  cardContent: {
-    padding: 16,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
   },
   header: {
+    height: 100,
+    width: '100%',
+    position: 'relative',
+  },
+  turfImage: {
+    width: '100%',
+    height: '100%',
+  },
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    padding: 12,
     alignItems: 'flex-start',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_700Bold',
+    letterSpacing: 0.5,
+  },
+  todayBadge: {
+    backgroundColor: '#e8ee26',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  todayText: {
+    fontSize: 10,
+    color: '#004d43',
+    marginLeft: 4,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  cardBody: {
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+  venueSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
     marginBottom: 16,
   },
   venueInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  sportIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#e8ee26', // Brand Secondary
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 77, 67, 0.1)',
-  },
-  venueDetails: {
     flex: 1,
   },
   venueName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 18,
     fontFamily: 'Montserrat_700Bold',
+    color: '#1a1a1a',
+    marginBottom: 2,
   },
-  venueLocation: {
-    fontSize: 13,
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationText: {
+    fontSize: 12,
     color: '#666',
-    marginTop: 2,
+    marginLeft: 4,
     fontFamily: 'Montserrat_400Regular',
   },
-  statusChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+  sportBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#e8ee26',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
   },
-  statusText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  detailsContainer: {
-    marginBottom: 16,
-  },
-  detailRow: {
+  separatorContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginVertical: 4,
+    position: 'relative',
+  },
+  cutoutLeft: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
+    marginLeft: -10,
+    zIndex: 2,
+  },
+  cutoutRight: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
+    marginRight: -10,
+    zIndex: 2,
+  },
+  dashedLine: {
+    flex: 1,
+    height: 1,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+    borderRadius: 1,
+    marginHorizontal: 4,
+  },
+  detailsSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  detailGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   detailItem: {
+    width: '48%',
+    marginBottom: 12,
+  },
+  detailLabel: {
+    fontSize: 9,
+    fontFamily: 'Montserrat_600SemiBold',
+    color: '#999',
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 13,
+    fontFamily: 'Montserrat_600SemiBold',
+    color: '#333',
+  },
+  refRow: {
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 8,
+  },
+  refLabel: {
+    fontSize: 10,
+    color: '#bbb',
+    fontFamily: 'Montserrat_400Regular',
+    textAlign: 'right',
+  },
+  alertBox: {
+    backgroundColor: 'rgba(245, 124, 0, 0.05)',
+    marginHorizontal: 16,
+    padding: 8,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    marginBottom: 8,
   },
-  detailText: {
-    fontSize: 13,
-    color: '#666',
-    marginLeft: 8,
+  alertText: {
+    fontSize: 11,
+    color: '#F57C00',
+    marginLeft: 6,
     fontFamily: 'Montserrat_500Medium',
   },
-  bookingIdRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  actions: {
+    paddingHorizontal: 16,
     marginTop: 4,
+    alignItems: 'flex-start',
   },
-  bookingIdText: {
-    fontSize: 12,
-    color: '#999',
-    marginLeft: 8,
-    fontFamily: 'Montserrat_400Regular',
-  },
-
-  paymentWarning: {
+  cancelLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 152, 0, 0.1)',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 12,
+    paddingVertical: 4,
   },
-  paymentWarningText: {
+  cancelLinkText: {
     fontSize: 12,
-    color: '#FF9800',
-    marginLeft: 8,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  refundInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  refundText: {
-    fontSize: 12,
-    color: '#4CAF50',
-    marginLeft: 8,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  cancellationContainer: {
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  cancellationTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#F44336',
-    marginBottom: 4,
-    fontFamily: 'Montserrat_700Bold',
-  },
-  cancellationReason: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'Montserrat_400Regular',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  payButton: {
-    borderRadius: 8,
-  },
-  cancelButton: {
-    borderColor: '#F44336',
-    borderRadius: 8,
-  },
-  rateButton: {
-    borderRadius: 8,
-  },
-  ratedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e8ee26', // Secondary brand color
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  ratedText: {
-    fontSize: 12,
-    color: '#004d43', // Primary brand color for better contrast
+    color: '#D32F2F',
     marginLeft: 4,
     fontFamily: 'Montserrat_600SemiBold',
+    textDecorationLine: 'underline',
   },
 });

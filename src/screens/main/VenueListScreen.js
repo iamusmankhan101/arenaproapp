@@ -91,7 +91,7 @@ export default function VenueListScreen({ navigation, route }) {
       'Cricket': require('../../images/cricket.jpg'),
       'Football': require('../../images/football.jpg'),
       'Padel': require('../../images/padel.jpg'),
-      'Futsal': require('../../images/indoor-football-court-turf.jpeg')
+      'Futsal': require('../../images/football.jpg')
     };
     return images[sport] || require('../../images/football.jpg');
   };
@@ -136,7 +136,11 @@ export default function VenueListScreen({ navigation, route }) {
     >
       <View style={styles.venueImageContainer}>
         <Image
-          source={item.image || getDefaultImage(item.sport)}
+          source={
+            (item.images && item.images.length > 0)
+              ? (typeof item.images[0] === 'string' ? { uri: item.images[0] } : item.images[0])
+              : (typeof item.image === 'string' ? { uri: item.image } : (item.image || getDefaultImage(item.sport)))
+          }
           style={styles.venueImage}
           resizeMode="cover"
         />

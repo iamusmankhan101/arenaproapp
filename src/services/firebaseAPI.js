@@ -105,7 +105,7 @@ export const turfAPI = {
     try {
       console.log('🏟️ Mobile app: Fetching all active venues (no location filtering)...');
       const turfsRef = collection(db, 'venues');
-      const q = query(turfsRef, where('isActive', '==', true));
+      const q = query(turfsRef, where('status', '==', 'active'));
       const snapshot = await getDocs(q);
 
       console.log(`📊 Mobile app: Found ${snapshot.size} total active venues in database`);
@@ -230,10 +230,13 @@ export const turfAPI = {
       for (const turfId of favoriteIds) {
         const turfDoc = await getDoc(doc(turfsRef, turfId));
         if (turfDoc.exists()) {
-          favorites.push({
-            id: turfDoc.id,
-            ...turfDoc.data()
-          });
+          const venueData = turfDoc.data();
+          if (venueData.status === 'active') {
+            favorites.push({
+              id: turfDoc.id,
+              ...venueData
+            });
+          }
         }
       }
 
@@ -262,6 +265,93 @@ export const turfAPI = {
       return downloadURL;
     } catch (error) {
       console.error('❌ Error uploading image:', error);
+      throw error;
+    }
+  },
+
+  // Search venues by name, area, or city
+  async searchTurfs(queryText, sports = null) {
+    const fetchAndFilterLocally = async () => {
+      console.log('🔄 Mobile app: Falling back to local filtering for search...');
+      const turfsRef = collection(db, 'venues');
+      const q = query(turfsRef, where('status', '==', 'active'));
+      const snapshot = await getDocs(q);
+      const turfs = [];
+      const searchStr = queryText?.toLowerCase() || '';
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const venueName = data.name?.toLowerCase() || '';
+        const venueArea = data.area?.toLowerCase() || '';
+        const venueCity = data.city?.toLowerCase() || '';
+
+        // Match name, area, city or sports
+        const matchesQuery = !searchStr ||
+          venueName.includes(searchStr) ||
+          venueArea.includes(searchStr) ||
+          venueCity.includes(searchStr);
+
+        const matchesSport = !sports || sports === 'All' ||
+          (Array.isArray(data.sports) && data.sports.includes(sports));
+
+        if (matchesQuery && matchesSport) {
+          turfs.push(serializeFirestoreData({
+            id: doc.id,
+            ...data,
+            distance: 0,
+            sport: Array.isArray(data.sports) ? data.sports[0] : (typeof data.sports === 'string' ? data.sports.split(',')[0].trim() : 'Unknown'),
+            pricePerHour: data.pricing?.basePrice || 0,
+            time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
+          }));
+        }
+      });
+      return { data: turfs };
+    };
+
+    try {
+      console.log(`🏟️ Mobile app: Searching venues with query: "${queryText}"`);
+      const turfsRef = collection(db, 'venues');
+
+      let q;
+      if (queryText && queryText.length > 0) {
+        const searchStr = queryText.charAt(0).toUpperCase() + queryText.slice(1);
+        // This query requires a composite index (status + name)
+        q = query(
+          turfsRef,
+          where('status', '==', 'active'),
+          where('name', '>=', searchStr),
+          where('name', '<=', searchStr + '\uf8ff')
+        );
+      } else if (sports && sports !== 'All') {
+        q = query(turfsRef, where('status', '==', 'active'), where('sports', 'array-contains', sports));
+      } else {
+        q = query(turfsRef, where('status', '==', 'active'));
+      }
+
+      const snapshot = await getDocs(q);
+      const turfs = [];
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        turfs.push(serializeFirestoreData({
+          id: doc.id,
+          ...data,
+          distance: 0,
+          sport: Array.isArray(data.sports) ? data.sports[0] : (typeof data.sports === 'string' ? data.sports.split(',')[0].trim() : 'Unknown'),
+          pricePerHour: data.pricing?.basePrice || 0,
+          time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
+        }));
+      });
+
+      console.log(`✅ Mobile app: Found ${turfs.length} venues in search`);
+      return { data: turfs };
+    } catch (error) {
+      const errorMessage = error.message || String(error);
+      if (errorMessage.toLowerCase().includes('index') || error.code === 'failed-precondition') {
+        console.warn('⚠️ Mobile app: Firestore index missing or error. Using fallback filtering.');
+        return fetchAndFilterLocally();
+      }
+      console.error('❌ Mobile app: Error searching venues:', error);
       throw error;
     }
   }
@@ -509,7 +599,8 @@ export const bookingAPI = {
             turfName: venueData.name || 'Sports Venue',
             turfArea: venueData.area || venueData.address || 'Unknown Area',
             sport: venueData.sport || (Array.isArray(venueData.sports) ? venueData.sports[0] : 'Football'),
-            address: venueData.address || 'N/A'
+            address: venueData.address || 'N/A',
+            turfImage: (venueData.images && venueData.images.length > 0) ? venueData.images[0] : (venueData.image || null)
           };
 
           // Only add phoneNumber if it exists and is not empty

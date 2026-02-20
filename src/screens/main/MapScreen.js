@@ -27,7 +27,7 @@ import MapView, { Marker, PROVIDER_GOOGLE, Circle } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchNearbyTurfs, toggleFavorite } from '../../store/slices/turfSlice';
+import { fetchNearbyTurfs, toggleFavorite, searchTurfs } from '../../store/slices/turfSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import SkeletonLoader from '../../components/SkeletonLoader';
@@ -586,26 +586,54 @@ export default function MapScreen({ navigation }) {
     }
   };
 
+  // Create a ref to store the search timer for debouncing
+  const searchTimerRef = useRef(null);
+
   const handleSearchChange = (query) => {
     setSearchQuery(query);
 
-    // If the query looks like a location (contains common location words), 
-    // try to search by location after a delay
-    if (query.trim() && (
-      query.toLowerCase().includes('area') ||
-      query.toLowerCase().includes('sector') ||
-      query.toLowerCase().includes('town') ||
-      query.toLowerCase().includes('city') ||
-      query.length > 10 // Longer queries might be addresses
-    )) {
-      // Debounce location search
-      setTimeout(() => {
-        searchByLocation(query);
-      }, 1000);
+    // Immediate local filtering for better UX
+    filterVenues();
+
+    // Clear previous timer
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
     }
 
-    // Always do immediate local filtering
-    filterVenues();
+    // AJAX Search (Server Side) - Debounced
+    if (query.trim()) {
+      searchTimerRef.current = setTimeout(() => {
+        // If it looks like a location, search by location
+        if (
+          query.toLowerCase().includes('area') ||
+          query.toLowerCase().includes('sector') ||
+          query.toLowerCase().includes('town') ||
+          query.toLowerCase().includes('city') ||
+          query.length > 10
+        ) {
+          searchByLocation(query);
+        } else {
+          // Otherwise do a name/sport search
+          console.log('🔍 MapScreen: Dispatching searchTurfs thunk for:', query);
+          try {
+            if (typeof searchTurfs === 'undefined') {
+              console.error('❌ searchTurfs is UNDEFINED in MapScreen scope!');
+            } else {
+              dispatch(searchTurfs({ query, sports: selectedSport }));
+            }
+          } catch (e) {
+            console.error('❌ Error during searchTurfs dispatch:', e);
+          }
+        }
+      }, 800);
+    } else {
+      // If cleared, fetch all nearby turfs again
+      dispatch(fetchNearbyTurfs({
+        latitude: region.latitude,
+        longitude: region.longitude,
+        radius: 50000
+      }));
+    }
   };
 
   const searchByLocation = async (locationQuery) => {
@@ -1170,10 +1198,10 @@ export default function MapScreen({ navigation }) {
               <Image
                 source={
                   selectedVenue.images && selectedVenue.images.length > 0
-                    ? { uri: selectedVenue.images[0] }
+                    ? (typeof selectedVenue.images[0] === 'string' ? { uri: selectedVenue.images[0] } : selectedVenue.images[0])
                     : selectedVenue.image
-                      ? { uri: selectedVenue.image }
-                      : require('../../images/indoor-football-court-turf.jpeg')
+                      ? (typeof selectedVenue.image === 'string' ? { uri: selectedVenue.image } : selectedVenue.image)
+                      : require('../../images/football.jpg')
                 }
                 style={styles.cleanVenueImage}
                 resizeMode="cover"
@@ -1242,7 +1270,12 @@ export default function MapScreen({ navigation }) {
           )}
           style={[
             styles.locationFab,
-            { backgroundColor: themeColors.colors.primary }
+            {
+              backgroundColor: themeColors.colors.primary,
+              bottom: selectedVenue
+                ? (Platform.OS === 'android' ? 260 : 250)
+                : (Platform.OS === 'android' ? 180 : 160)
+            }
           ]}
           color={themeColors.colors.secondary}
           onPress={centerOnUserLocation}
@@ -1362,6 +1395,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     paddingVertical: 2,
+    paddingRight: 52,
   },
   cleanHeaderRow: {
     flexDirection: 'row',
@@ -1557,39 +1591,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontFamily: 'Montserrat_400Regular',
   },
-  venueCardContainer: {
-    position: 'absolute',
-    bottom: 100, // Move up to clear floating nav bar
-    left: 20,
-    right: 20,
-    zIndex: 999,
-  },
-  venueCard: {
-    borderRadius: 16,
-    backgroundColor: 'white',
-    overflow: 'hidden',
-  },
-  cardTouchable: {
-    flexDirection: 'row',
-    padding: 12,
-  },
-  cleanVenueImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
-    marginRight: 16,
-    backgroundColor: '#f5f5f5',
-  },
-  cleanVenueInfo: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingVertical: 2,
-  },
-  cleanHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
   cleanVenueName: {
     fontSize: 16,
     fontWeight: '700',
@@ -1695,7 +1696,6 @@ const styles = StyleSheet.create({
   locationFab: {
     position: 'absolute',
     right: 20,
-    bottom: Platform.OS === 'android' ? 180 : 160,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

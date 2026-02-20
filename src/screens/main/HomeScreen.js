@@ -290,7 +290,11 @@ export default function HomeScreen({ navigation }) {
     >
       <View style={styles.venueImageContainer}>
         <Image
-          source={venue.image || getVenueImageBySport(venue)}
+          source={
+            (venue.images && venue.images.length > 0)
+              ? (typeof venue.images[0] === 'string' ? { uri: venue.images[0] } : venue.images[0])
+              : (typeof venue.image === 'string' ? { uri: venue.image } : (venue.image || getVenueImageBySport(venue)))
+          }
           style={styles.venueImage}
           resizeMode="cover"
         />

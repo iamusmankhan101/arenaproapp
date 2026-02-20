@@ -683,6 +683,7 @@ export const workingAdminAPI = {
       const venueRef = doc(firestore, 'venues', venueId);
       await updateDoc(venueRef, {
         status: status,
+        isActive: status === 'active',
         updatedAt: new Date()
       });
 
@@ -761,9 +762,7 @@ export const workingAdminAPI = {
         ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
         // Vendor Link
         vendorId: venueData.vendorId || null,
-        // Status and timestamps
-        isActive: true,
-        status: 'active',
+        // Timestamps (preserve status)
         updatedAt: new Date()
       };
 

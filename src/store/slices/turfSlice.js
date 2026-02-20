@@ -13,6 +13,22 @@ const getAPI = async () => {
   }
 };
 
+export const searchTurfs = createAsyncThunk(
+  'turf/search',
+  async ({ query, sports }, { rejectWithValue }) => {
+    try {
+      console.log('🔍 turfSlice: Executing searchTurfs thunk with query:', query);
+      const turfAPI = await getAPI();
+      const response = await turfAPI.searchTurfs(query, sports);
+      console.log(`✅ turfSlice: searchTurfs response received, ${response.data.length} venues found`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ turfSlice: searchTurfs thunk error:', error.message);
+      return [];
+    }
+  }
+);
+
 export const fetchNearbyTurfs = createAsyncThunk(
   'turf/fetchAll',
   async ({ latitude, longitude, radius = 5 }, { rejectWithValue }) => {
@@ -124,6 +140,13 @@ const turfSlice = createSlice({
       .addCase(fetchNearbyTurfs.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Failed to fetch turfs';
+      })
+      .addCase(searchTurfs.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(searchTurfs.fulfilled, (state, action) => {
+        state.loading = false;
+        state.nearbyTurfs = action.payload;
       })
       .addCase(fetchTurfDetails.fulfilled, (state, action) => {
         state.selectedTurf = action.payload;

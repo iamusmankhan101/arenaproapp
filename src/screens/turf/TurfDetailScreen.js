@@ -63,6 +63,7 @@ export default function TurfDetailScreen({ route, navigation }) {
   const [reviewText, setReviewText] = useState('');
   const [reviews, setReviews] = useState([]);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [activeTab, setActiveTab] = useState('About'); // New Tab state
 
 
   const dispatch = useDispatch();
@@ -242,10 +243,11 @@ export default function TurfDetailScreen({ route, navigation }) {
       return facility;
     }),
 
-    // Handle images
-    images: rawVenue.images && rawVenue.images.length > 0
+    // Handle images - transform string URLs to { uri: url } objects
+    images: (rawVenue.images && rawVenue.images.length > 0
       ? rawVenue.images
       : [getDefaultImage(rawVenue.sports?.[0] || 'Football')]
+    ).map(img => typeof img === 'string' ? { uri: img } : img)
   };
 
   // Helper functions
@@ -636,254 +638,246 @@ export default function TurfDetailScreen({ route, navigation }) {
           <TurfCardSkeleton />
         </ScrollView>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Header Image */}
-          <View style={styles.imageContainer}>
-            <TouchableOpacity
-              onPress={() => {
-                const nextIndex = (currentImageIndex + 1) % venue.images.length;
-                setCurrentImageIndex(nextIndex);
-              }}
-            >
+        <>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Modern Header Image */}
+            <View style={styles.imageContainer}>
               <Image
                 source={venue.images[currentImageIndex]}
                 style={styles.headerImage}
                 resizeMode="cover"
               />
-            </TouchableOpacity>
-            <View style={styles.imageOverlay}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => {
-                  if (navigation.canGoBack()) {
-                    navigation.goBack();
-                  } else {
-                    // Navigate to Home tab within MainTabs
-                    navigation.navigate('Home');
-                  }
-                }}
-              >
-                <MaterialIcons name="arrow-back" size={24} color="black" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.favoriteButton}
-                onPress={handleFavoriteToggle}
-              >
-                <MaterialIcons
-                  name={isFavorite ? "favorite" : "favorite-border"}
-                  size={20}
-                  color={isFavorite ? "#F44336" : "black"}
-                />
-              </TouchableOpacity>
-            </View>
-            {renderImageDots()}
-          </View>
 
-          {/* Content Container */}
-          <View style={styles.contentContainer}>
-            {/* Venue Info */}
-            <View style={styles.venueInfo}>
-              <Text style={styles.venueName}>{venue.name}</Text>
-
-              <View style={styles.locationRow}>
-                <MaterialIcons name="location-on" size={16} color="#666" />
-                <Text style={styles.locationText}>{typeof venue.location === 'string' ? venue.location : `${venue.location?.city || 'Unknown City'} `}</Text>
+              {/* Top Navigation Buttons */}
+              <View style={styles.topNav}>
                 <TouchableOpacity
-                  style={styles.directionsButton}
-                  onPress={() => {
-                    // Start with explicit coordinates object
-                    let lat = venue.coordinates?.latitude || rawVenue.coordinates?.latitude || selectedTurf?.coordinates?.latitude;
-                    let lng = venue.coordinates?.longitude || rawVenue.coordinates?.longitude || selectedTurf?.coordinates?.longitude;
-
-                    // Fallback 1: Check if latitude/longitude exist directly on the object
-                    if (!lat || !lng) {
-                      lat = venue.latitude || rawVenue.latitude || selectedTurf?.latitude;
-                      lng = venue.longitude || rawVenue.longitude || selectedTurf?.longitude;
-                    }
-
-                    // Fallback 2: Check inside location object
-                    if (!lat || !lng) {
-                      const loc = venue.location || rawVenue.location || selectedTurf?.location;
-                      if (typeof loc === 'object') {
-                        lat = loc?.latitude;
-                        lng = loc?.longitude;
-                      }
-                    }
-
-                    console.log('🗺️ Directions button pressed:', {
-                      venueCoords: venue.coordinates,
-                      directCoords: { lat: venue.latitude, lng: venue.longitude },
-                      locationCoords: venue.location,
-                      resolved: { lat, lng }
-                    });
-
-                    if (lat && lng) {
-                      const url = Platform.select({
-                        ios: `maps:0,0?q=${lat},${lng}`,
-                        android: `geo:0,0?q=${lat},${lng}(${venue.name})`
-                      });
-                      console.log('🗺️ Opening maps with URL:', url);
-                      Linking.openURL(url).catch(err => {
-                        console.error('❌ Failed to open maps:', err);
-                        Alert.alert('Error', 'Unable to open maps');
-                      });
-                    } else {
-                      console.error('❌ No valid coordinates found', { venue });
-                      Alert.alert('Error', 'Location coordinates not available');
-                    }
-                  }}
+                  style={styles.circularButton}
+                  onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')}
                 >
-                  <MaterialIcons name="directions" size={18} color={theme.colors.primary} />
-                  <Text style={[styles.directionsText, { color: theme.colors.primary }]}>Directions</Text>
+                  <MaterialIcons name="arrow-back" size={22} color="#000" />
                 </TouchableOpacity>
-              </View>
 
-
-
-              <View style={styles.ratingRow}>
-                <View style={[styles.starsContainer, {
-                  backgroundColor: theme.colors.primary,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 12
-                }]}>
-                  {renderStars(parseFloat(calculateAverageRating()))}
-                </View>
-                <Text style={[styles.ratingNumeric, { color: theme.colors.primary }]}>
-                  {calculateAverageRating()}
-                </Text>
-                <Text style={styles.ratingText}>• {reviews.length} reviews</Text>
-              </View>
-
-              <Text style={styles.priceText}>
-                Start From PKR {venue.priceFrom.toLocaleString()}
-              </Text>
-            </View>
-
-            {/* Description */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Description</Text>
-              <Text style={styles.descriptionText}>{venue.description}</Text>
-            </View>
-
-            {/* Available Sports */}
-            {venue.availableSports && venue.availableSports.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Available Sports</Text>
-                <View style={styles.sportsContainer}>
-                  {venue.availableSports.map((sport, index) => (
-                    <View key={index} style={styles.sportItem}>
-                      <View style={[styles.sportIcon, { backgroundColor: theme.colors.secondary }]}>
-                        <Image
-                          source={sport.image}
-                          style={[styles.sportImage, { tintColor: theme.colors.primary }]}
-                          resizeMode="contain"
-                        />
-                      </View>
-                      <Text style={styles.sportName}>{sport.name}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Facilities */}
-            {venue.facilities && venue.facilities.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Facilities</Text>
-                <View style={styles.facilitiesContainer}>
-                  {venue.facilities.map((facility, index) => (
-                    <View key={index} style={styles.facilityItem}>
-                      <View style={styles.facilityIconContainer}>
-                        <MaterialIcons name={facility.icon} size={20} color={theme.colors.primary} />
-                      </View>
-                      <Text style={styles.facilityName}>{facility.name}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Reviews Section */}
-            <View style={styles.section}>
-              <View style={styles.reviewsHeader}>
-                <Text style={styles.sectionTitle}>Reviews</Text>
-                <TouchableOpacity
-                  style={[styles.writeReviewButton, { backgroundColor: theme.colors.primary }]}
-                  onPress={() => setShowReviewModal(true)}
-                >
-                  <MaterialIcons name="rate-review" size={18} color={theme.colors.secondary} />
-                  <Text style={[styles.writeReviewText, { color: theme.colors.secondary }]}>
-                    Write Review
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Review Statistics */}
-              <View style={styles.reviewStats}>
-                <View style={styles.averageRatingContainer}>
-                  <Text style={[styles.averageRating, { color: theme.colors.primary }]}>
-                    {calculateAverageRating()}
-                  </Text>
-                  <View style={styles.averageStars}>
-                    {renderReviewStars(parseFloat(calculateAverageRating()), 16)}
-                  </View>
-                  <Text style={styles.totalReviews}>{reviews.length} reviews</Text>
+                <View style={styles.headerRightActions}>
+                  <TouchableOpacity style={styles.circularButton}>
+                    <MaterialIcons name="share" size={20} color="#000" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.circularButton, { marginLeft: 12 }]}
+                    onPress={handleFavoriteToggle}
+                  >
+                    <MaterialIcons
+                      name={isFavorite ? "favorite" : "favorite-border"}
+                      size={20}
+                      color={isFavorite ? "#F44336" : "#000"}
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
 
-              {/* Reviews List */}
-              <View style={styles.reviewsList}>
-                {reviews.slice(0, 3).map((review) => (
-                  <View key={review.id} style={styles.reviewCard}>
-                    <View style={styles.reviewHeader}>
-                      <View style={styles.reviewerInfo}>
-                        <View style={[styles.reviewerAvatar, { backgroundColor: theme.colors.primary }]}>
-                          <Text style={[styles.reviewerInitial, { color: theme.colors.secondary }]}>
-                            {review.userName.charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                        <View style={styles.reviewerMeta}>
-                          <Text style={styles.reviewerName}>{review.userName}</Text>
-                          <View style={styles.verifiedBadge}>
-                            <MaterialIcons name="verified" size={12} color={theme.colors.primary} />
-                            <Text style={[styles.verifiedText, { color: theme.colors.primary }]}>Verified</Text>
-                          </View>
-                        </View>
-                      </View>
-                      <View style={styles.reviewRatingContainer}>
-                        {renderReviewStars(review.rating, 14)}
-                        <Text style={styles.reviewDate}>{formatReviewDate(review.date)}</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.reviewComment}>{review.comment}</Text>
-                  </View>
+              {/* Gallery Glimpse Over Image */}
+              <View style={styles.galleryGlimpse}>
+                {venue.images.slice(0, 5).map((img, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => setCurrentImageIndex(index)}
+                    style={[
+                      styles.glimpseThumbContainer,
+                      currentImageIndex === index && styles.activeGlimpse
+                    ]}
+                  >
+                    <Image source={img} style={styles.glimpseThumb} />
+                  </TouchableOpacity>
                 ))}
-                {reviews.length > 3 && (
-                  <TouchableOpacity style={styles.seeAllReviews}>
-                    <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
-                      See all {reviews.length} reviews
-                    </Text>
+                {venue.images.length > 5 && (
+                  <TouchableOpacity
+                    style={styles.glimpseMore}
+                    onPress={() => setActiveTab('Gallery')}
+                  >
+                    <Text style={styles.glimpseMoreText}>+{venue.images.length - 5}</Text>
                   </TouchableOpacity>
                 )}
               </View>
             </View>
-          </View>
-        </ScrollView>
-      )
-      }
 
-      {/* Bottom Book Button */}
-      <View style={[styles.bottomContainer, { paddingBottom: Platform.OS === 'android' ? 20 + insets.bottom : 20 }]}>
-        <Button
-          mode="contained"
-          onPress={handleBooking}
-          style={[styles.bookButton, { backgroundColor: theme.colors.primary }]}
-          contentStyle={styles.bookButtonContent}
-        >
-          Book Now
-        </Button>
-      </View>
+            {/* Content Container */}
+            <View style={styles.contentContainer}>
+              {/* Discount Badge & Rating */}
+              <View style={styles.venueHeaderSection}>
+                <View style={styles.badgeRow}>
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountText}>20% Off</Text>
+                  </View>
+                  <View style={styles.ratingBadge}>
+                    <MaterialIcons name="star" size={14} color="#FFD700" />
+                    <Text style={styles.ratingValue}>{calculateAverageRating()}</Text>
+                    <Text style={styles.reviewCount}>({reviews.length} reviews)</Text>
+                  </View>
+                </View>
+
+                <View style={styles.titleRow}>
+                  <View style={styles.titleContent}>
+                    <Text style={styles.venueName}>{venue.name}</Text>
+                    <Text style={styles.addressText}>{typeof venue.location === 'string' ? venue.location : venue.location?.address}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.floatingDirectionBtn}
+                    onPress={() => {
+                      let lat = venue.coordinates?.latitude || rawVenue.coordinates?.latitude || selectedTurf?.coordinates?.latitude;
+                      let lng = venue.coordinates?.longitude || rawVenue.coordinates?.longitude || selectedTurf?.longitude;
+                      if (lat && lng) {
+                        const url = Platform.select({
+                          ios: `maps:0,0?q=${lat},${lng}`,
+                          android: `geo:0,0?q=${lat},${lng}(${venue.name})`
+                        });
+                        Linking.openURL(url);
+                      }
+                    }}
+                  >
+                    <MaterialIcons name="near-me" size={24} color="#FFF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Tabs Navigation */}
+              <View style={styles.tabsContainer}>
+                {['About', 'Gallery', 'Review'].map((tab) => (
+                  <TouchableOpacity
+                    key={tab}
+                    style={[styles.tabItem, activeTab === tab && styles.activeTabItem]}
+                    onPress={() => setActiveTab(tab)}
+                  >
+                    <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Tab Content Rendering */}
+              {activeTab === 'About' && (
+                <View style={styles.tabContent}>
+                  {/* Description */}
+                  <View style={styles.infoSection}>
+                    <Text style={styles.infoTitle}>About Venue</Text>
+                    <Text style={styles.descriptionText}>{venue.description}</Text>
+                  </View>
+
+                  {/* Available Sports */}
+                  {venue.availableSports && venue.availableSports.length > 0 && (
+                    <View style={styles.infoSection}>
+                      <Text style={styles.infoTitle}>Sports Available</Text>
+                      <View style={styles.sportsGrid}>
+                        {venue.availableSports.map((sport, index) => (
+                          <View key={index} style={styles.sportCard}>
+                            <View style={styles.sportIconCircle}>
+                              <Image source={sport.image} style={styles.sportIconImg} />
+                            </View>
+                            <Text style={styles.sportLabel}>{sport.name}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Facilities */}
+                  {venue.facilities && venue.facilities.length > 0 && (
+                    <View style={styles.infoSection}>
+                      <Text style={styles.infoTitle}>Facilities</Text>
+                      <View style={styles.facilitiesGrid}>
+                        {venue.facilities.map((facility, index) => (
+                          <View key={index} style={styles.facilityCard}>
+                            <View style={styles.facilityIconCircle}>
+                              <MaterialIcons name={facility.icon} size={18} color="#004d43" />
+                            </View>
+                            <Text style={styles.facilityLabel}>{facility.name}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {activeTab === 'Gallery' && (
+                <View style={styles.tabContent}>
+                  <View style={styles.galleryHeader}>
+                    <Text style={styles.galleryTitle}>Gallery ({venue.images.length})</Text>
+                    <TouchableOpacity style={styles.addPhotoBtn}>
+                      <MaterialIcons name="add-a-photo" size={16} color="#666" />
+                      <Text style={styles.addPhotoText}>add photo</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.galleryGrid}>
+                    {venue.images.map((img, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.galleryImageContainer}
+                        onPress={() => setCurrentImageIndex(index)}
+                      >
+                        <Image source={img} style={styles.galleryImage} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {activeTab === 'Review' && (
+                <View style={styles.tabContent}>
+                  <View style={styles.reviewHeaderRow}>
+                    <Text style={styles.reviewTitle}>Guest Reviews ({reviews.length})</Text>
+                    <TouchableOpacity
+                      style={styles.writeFab}
+                      onPress={() => setShowReviewModal(true)}
+                    >
+                      <MaterialIcons name="edit" size={16} color="#004d43" />
+                      <Text style={styles.writeFabText}>Write</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {reviews.length === 0 ? (
+                    <View style={styles.emptyReviews}>
+                      <Text style={styles.emptyText}>No reviews yet. Be the first!</Text>
+                    </View>
+                  ) : (
+                    reviews.map((review) => (
+                      <View key={review.id} style={styles.reviewItem}>
+                        <View style={styles.reviewTop}>
+                          <View style={styles.reviewerAvatar}>
+                            <Text style={styles.avatarChar}>{review.userName.charAt(0)}</Text>
+                          </View>
+                          <View style={styles.reviewMeta}>
+                            <Text style={styles.reviewerName}>{review.userName}</Text>
+                            <View style={styles.starsRow}>
+                              {renderReviewStars(review.rating, 12)}
+                              <Text style={styles.reviewDate}>{formatReviewDate(review.date)}</Text>
+                            </View>
+                          </View>
+                        </View>
+                        <Text style={styles.reviewComment}>{review.comment}</Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+              )}
+            </View>
+          </ScrollView>
+
+          {/* Sticky Bottom Container */}
+          <View style={[styles.stickyBottom, { paddingBottom: insets.bottom || 20 }]}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.bottomPriceLabel}>Total Price</Text>
+              <View style={styles.priceRow}>
+                <Text style={styles.bottomPriceAmount}>PKR {venue.priceFrom.toLocaleString()}</Text>
+                <Text style={styles.bottomPriceUnit}> /night</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.bookNowBtn}
+              onPress={handleBooking}
+            >
+              <Text style={styles.bookNowText}>Book Now</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
       {/* Time Slot Selection Modal */}
       <Portal>
@@ -916,16 +910,9 @@ export default function TurfDetailScreen({ route, navigation }) {
                       key={index}
                       style={[
                         styles.dateOption,
-                        selectedDate.toDateString() === date.toDateString() && { backgroundColor: theme.colors.primary }
+                        selectedDate.toDateString() === date.toDateString() && styles.selectedDateOption
                       ]}
-                      onPress={() => {
-                        // Validate date before setting it using safe utilities
-                        if (isValidDate(date)) {
-                          setSelectedDate(date);
-                        } else {
-                          console.error('❌ TurfDetailScreen: Invalid date selected:', date);
-                        }
-                      }}
+                      onPress={() => setSelectedDate(date)}
                     >
                       <Text style={[
                         styles.dateOptionText,
@@ -949,121 +936,46 @@ export default function TurfDetailScreen({ route, navigation }) {
                   <View style={styles.loadingContainer}>
                     <Text style={styles.loadingText}>Loading time slots...</Text>
                   </View>
-                ) : slotsError ? (
-                  <View style={styles.noSlotsContainer}>
-                    <Text style={styles.noSlotsText}>Error loading time slots</Text>
-                    <Text style={styles.noSlotsSubtext}>{slotsError}</Text>
-                  </View>
                 ) : (
-                  <View style={styles.timeSlotsWrapper}>
-                    <View style={styles.timeSlotsGrid}>
-                      {(() => {
-                        // Only use admin-configured date-specific slots from Redux - no fallback
-                        const slotsToShow = availableSlots || [];
-                        console.log(`🕐 TurfDetailScreen: Displaying ${slotsToShow.length} admin - configured time slots`);
-                        console.log(`   - Redux availableSlots: ${availableSlots?.length || 0} `);
-                        console.log(`   - Using: Admin - configured date - specific slots only`);
-
-                        if (slotsToShow.length === 0) {
-                          console.log('⚠️ TurfDetailScreen: No admin-configured slots for this date');
-                        }
-
-                        return slotsToShow.map((slot) => {
-                          const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
-                          return (
-                            <TouchableOpacity
-                              key={slot.id}
-                              style={[
-                                styles.timeSlotCard,
-                                !slot.available && styles.unavailableSlot,
-                                isSelected && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
-                              ]}
-                              onPress={() => handleTimeSlotSelect(slot)}
-                              disabled={!slot.available}
-                            >
-                              <Text style={[
-                                styles.timeSlotTime,
-                                !slot.available && styles.unavailableSlotText,
-                                isSelected && styles.selectedSlotText
-                              ]}>
-                                {slot.time || slot.startTime} - {slot.endTime}
-                              </Text>
-                              <Text style={[
-                                styles.timeSlotPrice,
-                                !slot.available && styles.unavailableSlotPrice,
-                                isSelected && styles.selectedSlotPrice
-                              ]}>
-                                PKR {slot.price.toLocaleString()}
-                              </Text>
-                              {!slot.available && (
-                                <Text style={styles.bookedText}>Booked</Text>
-                              )}
-                            </TouchableOpacity>
-                          );
-                        });
-                      })()}
-                    </View>
-                    {(!availableSlots || availableSlots.length === 0) && (
-                      <View style={styles.noSlotsContainer}>
-                        <Text style={styles.noSlotsText}>No time slots configured for this date</Text>
-                        <Text style={styles.noSlotsSubtext}>Admin needs to configure slots for this date in the admin panel</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {/* Selected Slot Summary */}
-                {selectedTimeSlots.length > 0 && (
-                  <View style={[styles.selectedSlotSummary, { backgroundColor: `${theme.colors.secondary} 20` }]}>
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Selected Slot(s):</Text>
-                      <Text style={styles.summaryValue}>
-                        {selectedTimeSlots[0].time || selectedTimeSlots[0].startTime} - {selectedTimeSlots[selectedTimeSlots.length - 1].endTime}
-                      </Text>
-                    </View>
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Duration:</Text>
-                      <Text style={styles.summaryValue}>
-                        {selectedTimeSlots.length} hour{selectedTimeSlots.length > 1 ? 's' : ''}
-                      </Text>
-                    </View>
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Total Price:</Text>
-                      <Text style={[styles.summaryPrice, { color: theme.colors.primary }]}>
-                        PKR {selectedTimeSlots.reduce((sum, s) => sum + s.price, 0).toLocaleString()}
-                      </Text>
-                    </View>
+                  <View style={styles.timeSlotsGrid}>
+                    {(availableSlots || []).map((slot) => {
+                      const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
+                      return (
+                        <TouchableOpacity
+                          key={slot.id}
+                          style={[
+                            styles.timeSlotCard,
+                            !slot.available && styles.unavailableSlot,
+                            isSelected && styles.selectedSlot
+                          ]}
+                          onPress={() => handleTimeSlotSelect(slot)}
+                          disabled={!slot.available}
+                        >
+                          <Text style={[
+                            styles.timeSlotTime,
+                            isSelected && styles.selectedSlotText
+                          ]}>
+                            {slot.time || slot.startTime} - {slot.endTime}
+                          </Text>
+                          <Text style={[
+                            styles.timeSlotPrice,
+                            isSelected && styles.selectedSlotPrice
+                          ]}>
+                            PKR {slot.price.toLocaleString()}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 )}
               </ScrollView>
             </View>
 
-            {/* Action Buttons - Fixed at bottom of card */}
             <View style={styles.modalActions}>
               <Button
                 mode="contained"
-                onPress={() => setShowTimeSlots(false)}
-                style={[styles.cancelButton, { backgroundColor: theme.colors.secondary }]}
-                textColor={theme.colors.primary}
-                contentStyle={styles.buttonContent}
-                labelStyle={{ color: theme.colors.primary }}
-              >
-                Cancel
-              </Button>
-              <Button
-                mode="contained"
                 onPress={handleConfirmBooking}
-                style={[
-                  styles.confirmButton,
-                  {
-                    backgroundColor: selectedTimeSlots.length === 0
-                      ? `${theme.colors.primary} 80` // 50% opacity when disabled
-                      : theme.colors.primary
-                  }
-                ]}
-                textColor={theme.colors.secondary}
-                contentStyle={styles.buttonContent}
-                labelStyle={{ color: theme.colors.secondary }}
+                style={[styles.confirmButton, { backgroundColor: selectedTimeSlots.length === 0 ? '#ccc' : '#004d43' }]}
                 disabled={selectedTimeSlots.length === 0}
               >
                 Confirm Booking
@@ -1072,118 +984,37 @@ export default function TurfDetailScreen({ route, navigation }) {
           </View>
         </Modal>
 
-        {/* Enhanced Review Submission Modal */}
+        {/* Review Modal */}
         <Modal
           visible={showReviewModal}
-          onDismiss={() => {
-            setShowReviewModal(false);
-            setUserRating(0);
-            setReviewText('');
-          }}
+          onDismiss={() => setShowReviewModal(false)}
           contentContainerStyle={styles.modalContainer}
         >
           <Card style={styles.reviewModalCard}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-            >
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                <Card.Content>
-                  {/* Header with close button */}
-                  <View style={styles.modalHeader}>
-                    <View>
-                      <Text style={styles.modalTitle}>Write a Review</Text>
-                      <Text style={styles.modalSubtitle}>{venue.name}</Text>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setShowReviewModal(false);
-                        setUserRating(0);
-                        setReviewText('');
-                      }}
-                      style={styles.closeButton}
-                    >
-                      <MaterialIcons name="close" size={24} color="#666" />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Enhanced Star Rating Selector */}
-                  <View style={styles.ratingSection}>
-                    <Text style={styles.ratingLabel}>How would you rate this venue?</Text>
-                    <View style={styles.starsWrapper}>
-                      {renderReviewStars(userRating, 40, true, setUserRating)}
-                    </View>
-                    {userRating > 0 && (
-                      <View style={[styles.ratingFeedback, { backgroundColor: `${theme.colors.secondary}20` }]}>
-                        <MaterialIcons name="check-circle" size={20} color={theme.colors.primary} />
-                        <Text style={[styles.ratingFeedbackText, { color: theme.colors.primary }]}>
-                          {userRating === 5 && 'Excellent!'}
-                          {userRating === 4 && 'Very Good!'}
-                          {userRating === 3 && 'Good'}
-                          {userRating === 2 && 'Fair'}
-                          {userRating === 1 && 'Poor'}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  {/* Enhanced Review Text Input */}
-                  <View style={styles.reviewTextSection}>
-                    <Text style={styles.reviewTextLabel}>Share your experience</Text>
-                    <Text style={styles.reviewTextHint}>
-                      Tell others about the facilities, staff, and overall experience
-                    </Text>
-                    <TextInput
-                      style={styles.reviewTextInput}
-                      placeholder="Write your review here..."
-                      placeholderTextColor="#999"
-                      multiline
-                      numberOfLines={4}
-                      value={reviewText}
-                      onChangeText={setReviewText}
-                      textAlignVertical="top"
-                    />
-                    <Text style={styles.characterCount}>
-                      {reviewText.length} characters
-                    </Text>
-                  </View>
-
-                  {/* Enhanced Action Buttons */}
-                  <View style={styles.reviewModalActions}>
-                    <Button
-                      mode="outlined"
-                      onPress={() => {
-                        setShowReviewModal(false);
-                        setUserRating(0);
-                        setReviewText('');
-                      }}
-                      style={[styles.reviewCancelButton, { borderColor: theme.colors.primary }]}
-                      textColor={theme.colors.primary}
-                      contentStyle={styles.buttonContent}
-                      labelStyle={{ fontFamily: 'Montserrat_600SemiBold' }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      mode="contained"
-                      onPress={handleSubmitReview}
-                      style={[styles.reviewSubmitButton, { backgroundColor: theme.colors.primary }]}
-                      textColor={theme.colors.secondary}
-                      contentStyle={styles.buttonContent}
-                      labelStyle={{ fontFamily: 'Montserrat_700Bold' }}
-                      icon="send"
-                      loading={isSubmittingReview}
-                      disabled={isSubmittingReview}
-                    >
-                      Submit Review
-                    </Button>
-                  </View>
-                </Card.Content>
-              </ScrollView>
-            </KeyboardAvoidingView>
+            <Card.Content>
+              <Text style={styles.modalTitle}>Write a Review</Text>
+              <View style={styles.ratingSection}>
+                {renderReviewStars(userRating, 40, true, setUserRating)}
+              </View>
+              <TextInput
+                style={styles.reviewTextInput}
+                placeholder="Share your experience..."
+                multiline
+                numberOfLines={4}
+                value={reviewText}
+                onChangeText={setReviewText}
+              />
+              <View style={styles.reviewModalActions}>
+                <Button onPress={() => setShowReviewModal(false)}>Cancel</Button>
+                <Button
+                  mode="contained"
+                  onPress={handleSubmitReview}
+                  loading={isSubmittingReview}
+                >
+                  Submit
+                </Button>
+              </View>
+            </Card.Content>
           </Card>
         </Modal>
       </Portal>
@@ -1194,709 +1025,580 @@ export default function TurfDetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
   },
   imageContainer: {
-    height: height * 0.4,
+    height: height * 0.45,
     position: 'relative',
-    backgroundColor: '#f0f0f0', // Fallback color
+    backgroundColor: '#f0f0f0',
   },
   headerImage: {
     width: '100%',
     height: '100%',
   },
-  imageOverlay: {
+  topNav: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'space-between',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
+    top: Platform.OS === 'ios' ? 60 : 40,
     left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageActions: {
-    position: 'absolute',
-    top: 50,
     right: 20,
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
   },
-  favoriteButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
+  circularButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  dotsContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
+  headerRightActions: {
     flexDirection: 'row',
+  },
+  galleryGlimpse: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  glimpseThumbContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    overflow: 'hidden',
+    marginRight: 10,
+    backgroundColor: '#fff',
+  },
+  activeGlimpse: {
+    borderColor: '#e8ee26',
+  },
+  glimpseThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  glimpseMore: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    backgroundColor: 'white',
-  },
-  inactiveDot: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  glimpseMoreText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   contentContainer: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    marginTop: -20,
-    paddingTop: 20,
     flex: 1,
+    marginTop: -20,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 24,
   },
-  venueInfo: {
+  venueHeaderSection: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    marginBottom: 20,
   },
-  venueName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-    fontFamily: 'Montserrat_700Bold',
-  },
-  locationRow: {
+  badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    gap: 12,
   },
-  locationText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-    fontFamily: 'Montserrat_400Regular',
+  discountBadge: {
+    backgroundColor: '#e8ee26',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  directionsButton: {
+  discountText: {
+    color: '#004d43',
+    fontSize: 12,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: 'rgba(94, 53, 177, 0.1)',
-    marginLeft: 'auto',
   },
-  directionsText: {
-    fontSize: 13,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  hoursRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  hoursText: {
+  ratingValue: {
     fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingNumeric: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginLeft: 8,
     fontFamily: 'Montserrat_700Bold',
-  },
-  ratingText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  priceText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#004d43',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  section: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
     color: '#333',
-    marginBottom: 15,
-    fontFamily: 'Montserrat_600SemiBold',
   },
-  descriptionText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  sportsContainer: {
-    flexDirection: 'row',
-  },
-  sportItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 30,
-  },
-  sportIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  sportImage: {
-    width: 24,
-    height: 24,
-    // tintColor will be set dynamically using theme.colors.primary
-  },
-  sportEmoji: {
-    fontSize: 20,
-  },
-  sportName: {
-    fontSize: 14,
-    color: '#333',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  facilitiesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  facilityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '50%',
-    marginBottom: 15,
-  },
-  facilityIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 77, 67, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  facilityName: {
-    fontSize: 14,
-    color: '#333',
-    flex: 1,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  bottomContainer: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  bookButton: {
-    borderRadius: 12,
-  },
-  bookButtonContent: {
-    paddingVertical: 8,
-  },
-  modalContainer: {
-    margin: 20,
-    maxHeight: height * 0.8,
-    borderRadius: 16,
-  },
-  timeSlotsCard: {
-    borderRadius: 16,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 4,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  sectionLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
-    marginTop: 8,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  dateScroll: {
-    marginBottom: 20,
-  },
-  dateOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginRight: 12,
-    borderRadius: 12,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    minWidth: 80,
-  },
-  selectedDateOption: {
-    backgroundColor: '#004d43',
-  },
-  dateOptionText: {
+  reviewCount: {
     fontSize: 12,
     color: '#666',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  selectedDateOptionText: {
-    color: 'white',
-  },
-  dateOptionDay: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 4,
-    fontFamily: 'Montserrat_700Bold',
-  },
-  selectedDateOptionDay: {
-    color: 'white',
-  },
-  timeSlotsScroll: {
-    maxHeight: 300,
-    marginBottom: 20,
-  },
-  timeSlotsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  timeSlotCard: {
-    width: (width - 80) / 2,
-    backgroundColor: '#F8F9FA',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  selectedSlot: {
-    backgroundColor: '#004d43',
-    borderColor: '#004d43',
-  },
-  unavailableSlot: {
-    backgroundColor: '#F0F0F0',
-    borderColor: '#E0E0E0',
-    opacity: 0.6,
-  },
-  timeSlotTime: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  selectedSlotText: {
-    color: 'white',
-  },
-  unavailableSlotText: {
-    color: '#999',
-  },
-  timeSlotPrice: {
-    fontSize: 12,
-    color: '#229a60',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  selectedSlotPrice: {
-    color: 'rgba(255,255,255,0.9)',
-  },
-  unavailableSlotPrice: {
-    color: '#999',
-  },
-  bookedText: {
-    fontSize: 10,
-    color: '#F44336',
-    marginTop: 2,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  selectedSlotSummary: {
-    backgroundColor: 'rgba(232, 238, 38, 0.2)',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  summaryValue: {
-    fontSize: 14,
-    color: '#333',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  summaryPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#004d43',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    padding: 20,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  cancelButton: {
-    flex: 1,
-  },
-  confirmButton: {
-    flex: 1,
-  },
-  buttonContent: {
-    paddingVertical: 4,
-  },
-  loadingContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#666',
     fontFamily: 'Montserrat_400Regular',
   },
-  noSlotsContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  noSlotsText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  noSlotsSubtext: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginTop: 8,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  // Review styles
-  reviewsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  writeReviewButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-    elevation: 2,
-  },
-  writeReviewText: {
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  reviewStats: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    alignItems: 'center',
-  },
-  averageRatingContainer: {
-    alignItems: 'center',
-  },
-  averageRating: {
-    fontSize: 48,
-    fontWeight: '700',
-    fontFamily: 'Montserrat_700Bold',
-    marginBottom: 8,
-  },
-  averageStars: {
-    marginBottom: 4,
-  },
-  totalReviews: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'Montserrat_400Regular',
-  },
-  reviewsList: {
-    paddingBottom: 16,
-  },
-  reviewCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    // Shadow for iOS
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3.84,
-    // Elevation for Android
-    elevation: 2,
-  },
-  reviewHeader: {
+  titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
   },
-  reviewerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  titleContent: {
     flex: 1,
+    marginRight: 10,
   },
-  reviewerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  reviewerInitial: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  venueName: {
+    fontSize: 24,
     fontFamily: 'Montserrat_700Bold',
+    color: '#1a1a1a',
+    marginBottom: 4,
   },
-  reviewerMeta: {
-    justifyContent: 'center',
-  },
-  reviewerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    fontFamily: 'Montserrat_600SemiBold',
-    marginBottom: 2,
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  verifiedText: {
-    fontSize: 10,
-    fontWeight: '500',
-    fontFamily: 'Montserrat_500Medium',
-  },
-  reviewRatingContainer: {
-    alignItems: 'flex-end',
-  },
-  reviewDate: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
+  addressText: {
+    fontSize: 14,
+    color: '#666',
     fontFamily: 'Montserrat_400Regular',
   },
-  reviewComment: {
+  floatingDirectionBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#004d43',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    marginBottom: 20,
+  },
+  tabItem: {
+    paddingVertical: 12,
+    marginRight: 24,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTabItem: {
+    borderBottomColor: '#004d43',
+  },
+  tabText: {
+    fontSize: 15,
+    fontFamily: 'Montserrat_600SemiBold',
+    color: '#999',
+  },
+  activeTabText: {
+    color: '#004d43',
+  },
+  tabContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  infoSection: {
+    marginBottom: 24,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#1a1a1a',
+    marginBottom: 12,
+  },
+  descriptionText: {
     fontSize: 14,
     color: '#444',
     lineHeight: 22,
     fontFamily: 'Montserrat_400Regular',
   },
-  seeAllReviews: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 12,
+  sportsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: '600',
+  sportCard: {
+    width: (width - 64) / 3,
+    backgroundColor: '#f9f9f9',
+    padding: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  sportIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sportIconImg: {
+    width: 24,
+    height: 24,
+  },
+  sportLabel: {
+    fontSize: 12,
     fontFamily: 'Montserrat_600SemiBold',
+    color: '#333',
+  },
+  facilitiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  facilityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    gap: 8,
+  },
+  facilityIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 77, 67, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  facilityLabel: {
+    fontSize: 13,
+    fontFamily: 'Montserrat_500Medium',
+    color: '#444',
+  },
+  galleryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  galleryTitle: {
+    fontSize: 18,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#1a1a1a',
+  },
+  addPhotoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  addPhotoText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  galleryImageContainer: {
+    width: (width - 50) / 2,
+    height: 120,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  reviewHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  reviewTitle: {
+    fontSize: 18,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#1a1a1a',
+  },
+  writeFab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e8ee26',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 4,
+  },
+  writeFabText: {
+    fontSize: 12,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#004d43',
+  },
+  emptyReviews: {
+    alignItems: 'center',
+    paddingTop: 40,
+  },
+  emptyText: {
+    color: '#999',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  reviewItem: {
+    marginBottom: 24,
+    backgroundColor: '#f9f9f9',
+    padding: 16,
+    borderRadius: 16,
+  },
+  reviewTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  reviewerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#004d43',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarChar: {
+    color: '#e8ee26',
+    fontSize: 18,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  reviewMeta: {
+    flex: 1,
+  },
+  reviewerName: {
+    fontSize: 15,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#333',
   },
   starsRow: {
     flexDirection: 'row',
-    gap: 4,
+    alignItems: 'center',
+    marginTop: 2,
   },
-  // Review modal styles
-  reviewModalCard: {
-    borderRadius: 24,
-    maxHeight: '90%',
-    elevation: 8,
+  reviewDate: {
+    fontSize: 12,
+    color: '#999',
+    marginLeft: 8,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#555',
+    lineHeight: 20,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  stickyBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 20,
   },
-  modalSubtitle: {
+  priceContainer: {
+    flex: 1,
+  },
+  bottomPriceLabel: {
+    fontSize: 12,
+    color: '#999',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  bottomPriceAmount: {
+    fontSize: 20,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#1a1a1a',
+  },
+  bottomPriceUnit: {
     fontSize: 14,
     color: '#666',
-    marginTop: 4,
     fontFamily: 'Montserrat_400Regular',
+  },
+  bookNowBtn: {
+    backgroundColor: '#004d43',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 16,
+    elevation: 4,
+  },
+  bookNowText: {
+    color: '#e8ee26',
+    fontSize: 16,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  modalContainer: {
+    margin: 0,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#333',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionLabel: {
+    fontSize: 16,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#333',
+    marginBottom: 16,
+    marginTop: 10,
+  },
+  dateScroll: {
+    marginBottom: 24,
+    marginLeft: -4,
+  },
+  dateOption: {
+    minWidth: 70,
+    height: 90,
+    borderRadius: 20,
+    backgroundColor: '#f8f8f8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  selectedDateOption: {
+    backgroundColor: '#004d43',
+    borderColor: '#004d43',
+  },
+  dateOptionText: {
+    fontSize: 12,
+    fontFamily: 'Montserrat_500Medium',
+    color: '#666',
+    marginBottom: 4,
+  },
+  selectedDateOptionText: {
+    color: 'rgba(232, 230, 38, 0.8)',
+  },
+  dateOptionDay: {
+    fontSize: 20,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#333',
+  },
+  selectedDateOptionDay: {
+    color: '#e8ee26',
+  },
+  timeSlotsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 20,
+  },
+  timeSlotCard: {
+    width: (width - 52) / 2,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#f0f0f0',
+  },
+  selectedSlot: {
+    backgroundColor: 'rgba(0, 77, 67, 0.05)',
+    borderColor: '#004d43',
+  },
+  unavailableSlot: {
+    backgroundColor: '#f5f5f5',
+    borderColor: '#eee',
+    opacity: 0.6,
+  },
+  timeSlotTime: {
+    fontSize: 14,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  selectedSlotText: {
+    color: '#004d43',
+  },
+  timeSlotPrice: {
+    fontSize: 13,
+    fontFamily: 'Montserrat_600SemiBold',
+    color: '#004d43',
+  },
+  selectedSlotPrice: {
+    color: '#004d43',
+  },
+  modalActions: {
+    padding: 24,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  confirmButton: {
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+  },
+  reviewModalCard: {
+    margin: 20,
+    borderRadius: 24,
+    backgroundColor: '#fff',
   },
   ratingSection: {
     alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    marginBottom: 4,
-  },
-  ratingLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 18,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  starsWrapper: {
-    marginVertical: 10,
-    paddingHorizontal: 10,
-  },
-  ratingFeedback: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 24,
-    marginTop: 14,
-  },
-  ratingFeedbackText: {
-    fontSize: 15,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  ratingValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 8,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  reviewTextSection: {
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-  },
-  reviewTextLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 6,
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  reviewTextHint: {
-    fontSize: 13,
-    color: '#999',
-    marginBottom: 14,
-    fontFamily: 'Montserrat_400Regular',
-    lineHeight: 19,
+    marginVertical: 20,
   },
   reviewTextInput: {
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 14,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 16,
     padding: 16,
+    minHeight: 120,
+    fontFamily: 'Montserrat_400Regular',
     fontSize: 15,
-    minHeight: 110,
-    maxHeight: 150,
-    fontFamily: 'Montserrat_400Regular',
     color: '#333',
-    backgroundColor: '#fafafa',
-  },
-  characterCount: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 8,
-    textAlign: 'right',
-    fontFamily: 'Montserrat_400Regular',
+    textAlignVertical: 'top',
+    marginBottom: 20,
   },
   reviewModalActions: {
     flexDirection: 'row',
-    gap: 14,
-    marginTop: 24,
-    marginBottom: 16,
-    paddingHorizontal: 20,
-  },
-  reviewCancelButton: {
-    flex: 1,
-    borderWidth: 2,
-    borderRadius: 14,
-  },
-  reviewSubmitButton: {
-    flex: 1,
-    borderRadius: 14,
+    justifyContent: 'flex-end',
+    gap: 12,
   },
 });
