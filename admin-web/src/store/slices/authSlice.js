@@ -130,6 +130,7 @@ export const logoutAdmin = createAsyncThunk(
       await signOut(auth);
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminData');
+      sessionStorage.removeItem('pro_promo_shown');
       console.log('✅ Logout successful');
       return null;
     } catch (error) {
@@ -137,6 +138,7 @@ export const logoutAdmin = createAsyncThunk(
       // Force local cleanup anyway
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminData');
+      sessionStorage.removeItem('pro_promo_shown');
       return null;
     }
   }

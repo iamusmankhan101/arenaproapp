@@ -158,9 +158,11 @@ export default function VendorDashboard() {
 
     const promoTriggered = React.useRef(false);
     useEffect(() => {
-        if (admin?.uid && !promoTriggered.current) {
+        if (admin?.uid) {
             const vendorId = admin.vendorId || admin.uid;
             dispatch(fetchDashboardStats({ vendorId }));
+
+            if (promoTriggered.current) return;
 
             // Show promo popup if not pro and not shown in this session
             const isPro = admin?.proActive === true;
@@ -171,11 +173,11 @@ export default function VendorDashboard() {
                 const timer = setTimeout(() => {
                     setPromoOpen(true);
                     sessionStorage.setItem('pro_promo_shown', 'true');
-                }, 800); // reduced delay for better reliability
+                }, 1500); // 1.5s delay feels more premium and reliable
                 return () => clearTimeout(timer);
             }
         }
-    }, [dispatch, admin]);
+    }, [dispatch, admin?.uid, admin?.vendorId, admin?.proActive]);
 
     const handleRefresh = () => {
         const vendorId = admin.vendorId || admin.uid;
