@@ -43,7 +43,7 @@ const statusColors = {
 
 const StatusChip = ({ status }) => (
   <Chip
-    label={status.toUpperCase()}
+    label={status ? status.toUpperCase() : 'UNKNOWN'}
     size="small"
     sx={{
       backgroundColor: `${statusColors[status]}20`,

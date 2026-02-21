@@ -34,7 +34,7 @@ import AddVenueModal from '../components/AddVenueModal';
 
 const StatusChip = ({ status }) => (
   <Chip
-    label={status.toUpperCase()}
+    label={status ? status.toUpperCase() : 'UNKNOWN'}
     size="small"
     color={status === 'active' ? 'success' : 'default'}
     sx={{
