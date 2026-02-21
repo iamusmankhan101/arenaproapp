@@ -199,7 +199,7 @@ export default function BookingScreen({ navigation }) {
   const stats = getBookingStats();
 
   const renderBooking = ({ item }) => (
-    <BookingCard booking={item} />
+    <BookingCard booking={item} navigation={navigation} />
   );
 
   const getEmptyMessage = () => {

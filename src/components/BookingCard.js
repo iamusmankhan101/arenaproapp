@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { cancelUserBooking } from '../store/slices/bookingSlice';
 import { theme } from '../theme/theme';
 
-export default function BookingCard({ booking }) {
+export default function BookingCard({ booking, navigation }) {
   const dispatch = useDispatch();
 
   const getStatusColor = (status) => {
@@ -188,7 +188,7 @@ export default function BookingCard({ booking }) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.receiptButton}
-            onPress={() => Alert.alert('Coming Soon', 'Receipt feature will be available shortly.')}
+            onPress={() => navigation?.navigate('EReceipt', { booking })}
           >
             <Text style={styles.receiptButtonText}>E-Receipt</Text>
           </TouchableOpacity>

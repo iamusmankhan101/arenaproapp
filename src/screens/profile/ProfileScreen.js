@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   Image,
   Platform,
-  StatusBar
+  StatusBar,
+  Modal,
+  Linking
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Avatar } from 'react-native-paper';
@@ -20,6 +22,7 @@ export default function ProfileScreen({ navigation }) {
   const dispatch = useDispatch();
   const { user, loading } = useSelector(state => state.auth);
   const insets = useSafeAreaInsets();
+  const [supportModalVisible, setSupportModalVisible] = useState(false);
 
   if (loading) {
     return (
@@ -49,6 +52,24 @@ export default function ProfileScreen({ navigation }) {
         }
       ]
     );
+  };
+
+  const handleContactSupport = (method) => {
+    setSupportModalVisible(false);
+    
+    switch (method) {
+      case 'email':
+        Linking.openURL('mailto:support@arenapro.pk');
+        break;
+      case 'phone':
+        Linking.openURL('tel:+923390078965');
+        break;
+      case 'whatsapp':
+        Linking.openURL('whatsapp://send?phone=923390078965');
+        break;
+      default:
+        break;
+    }
   };
 
   const MenuItem = ({ icon, title, onPress, showChevron = true, isLogout = false }) => (
@@ -198,6 +219,14 @@ export default function ProfileScreen({ navigation }) {
               title="Password & Security"
               onPress={() => navigation.navigate('PasswordSecurity')}
             />
+
+            <View style={styles.divider} />
+
+            <MenuItem
+              icon="support-agent"
+              title="Contact Support"
+              onPress={() => setSupportModalVisible(true)}
+            />
           </View>
         </View>
 
@@ -214,6 +243,85 @@ export default function ProfileScreen({ navigation }) {
           </View>
         </View>
       </ScrollView>
+
+      {/* Contact Support Modal */}
+      <Modal
+        visible={supportModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSupportModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <MaterialIcons name="support-agent" size={48} color={theme.colors.primary} />
+              <Text style={styles.modalTitle}>Contact Support</Text>
+              <Text style={styles.modalSubtitle}>
+                How would you like to reach us?
+              </Text>
+            </View>
+
+            <View style={styles.contactOptions}>
+              <TouchableOpacity
+                style={styles.contactOption}
+                onPress={() => handleContactSupport('email')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.contactIconContainer}>
+                  <MaterialIcons name="email" size={24} color={theme.colors.primary} />
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactLabel}>Email</Text>
+                  <Text style={styles.contactValue}>support@arenapro.pk</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color="#C7C7CC" />
+              </TouchableOpacity>
+
+              <View style={styles.contactDivider} />
+
+              <TouchableOpacity
+                style={styles.contactOption}
+                onPress={() => handleContactSupport('phone')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.contactIconContainer}>
+                  <MaterialIcons name="phone" size={24} color={theme.colors.primary} />
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactLabel}>Phone</Text>
+                  <Text style={styles.contactValue}>+92 339 0078965</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color="#C7C7CC" />
+              </TouchableOpacity>
+
+              <View style={styles.contactDivider} />
+
+              <TouchableOpacity
+                style={styles.contactOption}
+                onPress={() => handleContactSupport('whatsapp')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.contactIconContainer}>
+                  <MaterialIcons name="chat" size={24} color={theme.colors.primary} />
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactLabel}>WhatsApp</Text>
+                  <Text style={styles.contactValue}>+92 339 0078965</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color="#C7C7CC" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setSupportModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCloseText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -381,5 +489,97 @@ const styles = StyleSheet.create({
   },
   logoutTitle: {
     color: '#FF3B30',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+    fontFamily: 'ClashDisplay-Medium',
+  },
+  modalSubtitle: {
+    fontSize: 15,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  contactOptions: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
+    padding: 8,
+    marginBottom: 20,
+  },
+  contactOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
+  contactIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: `${theme.colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 4,
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  contactValue: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  contactDivider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: 12,
+  },
+  modalCloseButton: {
+    paddingVertical: 16,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  modalCloseText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.secondary,
+    fontFamily: 'ClashDisplay-Medium',
   },
 });

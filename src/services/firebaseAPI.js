@@ -116,14 +116,14 @@ export const turfAPI = {
 
         console.log(`📍 Mobile app: Adding venue ${data.name} to results`);
 
-        // Ensure sports is always an array
-        let sports = data.sports;
-        if (!sports) {
-          sports = [];
-        } else if (typeof sports === 'string') {
-          sports = sports.split(',').map(s => s.trim()).filter(Boolean);
-        } else if (!Array.isArray(sports)) {
-          sports = [];
+        // Ensure sports is always an array with safe checks
+        let sports = [];
+        if (data && data.sports) {
+          if (typeof data.sports === 'string' && data.sports.trim()) {
+            sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
+          } else if (Array.isArray(data.sports)) {
+            sports = data.sports;
+          }
         }
 
         const serializedData = serializeFirestoreData({
@@ -163,14 +163,14 @@ export const turfAPI = {
 
       const data = turfSnap.data();
       
-      // Ensure sports is always an array
-      let sports = data.sports;
-      if (!sports) {
-        sports = [];
-      } else if (typeof sports === 'string') {
-        sports = sports.split(',').map(s => s.trim()).filter(Boolean);
-      } else if (!Array.isArray(sports)) {
-        sports = [];
+      // Ensure sports is always an array with safe checks
+      let sports = [];
+      if (data && data.sports) {
+        if (typeof data.sports === 'string' && data.sports.trim()) {
+          sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (Array.isArray(data.sports)) {
+          sports = data.sports;
+        }
       }
       
       const serializedData = serializeFirestoreData({
@@ -255,14 +255,14 @@ export const turfAPI = {
         if (turfDoc.exists()) {
           const venueData = turfDoc.data();
           if (venueData.status === 'active') {
-            // Normalize sports data
-            let sports = venueData.sports;
-            if (!sports) {
-              sports = [];
-            } else if (typeof sports === 'string') {
-              sports = sports.split(',').map(s => s.trim()).filter(Boolean);
-            } else if (!Array.isArray(sports)) {
-              sports = [];
+            // Normalize sports data with safe checks
+            let sports = [];
+            if (venueData && venueData.sports) {
+              if (typeof venueData.sports === 'string' && venueData.sports.trim()) {
+                sports = venueData.sports.split(',').map(s => s.trim()).filter(Boolean);
+              } else if (Array.isArray(venueData.sports)) {
+                sports = venueData.sports;
+              }
             }
             
             favorites.push(serializeFirestoreData({
@@ -319,14 +319,14 @@ export const turfAPI = {
         const venueArea = data.area?.toLowerCase() || '';
         const venueCity = data.city?.toLowerCase() || '';
 
-        // Normalize sports data
-        let sports = data.sports;
-        if (!sports) {
-          sports = [];
-        } else if (typeof sports === 'string') {
-          sports = sports.split(',').map(s => s.trim()).filter(Boolean);
-        } else if (!Array.isArray(sports)) {
-          sports = [];
+        // Normalize sports data with safe checks
+        let sports = [];
+        if (data && data.sports) {
+          if (typeof data.sports === 'string' && data.sports.trim()) {
+            sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
+          } else if (Array.isArray(data.sports)) {
+            sports = data.sports;
+          }
         }
 
         // Match name, area, city or sports
@@ -379,14 +379,14 @@ export const turfAPI = {
       snapshot.forEach((doc) => {
         const data = doc.data();
         
-        // Normalize sports data
-        let sports = data.sports;
-        if (!sports) {
-          sports = [];
-        } else if (typeof sports === 'string') {
-          sports = sports.split(',').map(s => s.trim()).filter(Boolean);
-        } else if (!Array.isArray(sports)) {
-          sports = [];
+        // Normalize sports data with safe checks
+        let sports = [];
+        if (data && data.sports) {
+          if (typeof data.sports === 'string' && data.sports.trim()) {
+            sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
+          } else if (Array.isArray(data.sports)) {
+            sports = data.sports;
+          }
         }
         
         turfs.push(serializeFirestoreData({

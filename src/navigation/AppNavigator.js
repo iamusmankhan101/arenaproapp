@@ -44,6 +44,7 @@ import TurfDetailScreen from '../screens/turf/TurfDetailScreen';
 import ChallengeDetailScreen from '../screens/team/ChallengeDetailScreen';
 import BookingConfirmScreen from '../screens/booking/BookingConfirmScreen';
 import BookingSuccessScreen from '../screens/booking/BookingSuccessScreen';
+import EReceiptScreen from '../screens/booking/EReceiptScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -313,6 +314,14 @@ export default function AppNavigator() {
             options={{
               title: 'Booking Success',
               gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen
+            name="EReceipt"
+            component={EReceiptScreen}
+            options={{
+              title: 'E-Receipt',
+              gestureEnabled: true,
             }}
           />
           <Stack.Screen

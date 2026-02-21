@@ -22,7 +22,6 @@ import {
   where,
   getDocs,
   serverTimestamp,
-  increment,
   Timestamp
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
