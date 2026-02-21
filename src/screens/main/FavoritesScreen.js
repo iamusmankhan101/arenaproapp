@@ -38,6 +38,7 @@ export default function FavoritesScreen({ navigation }) {
   const [venueToRemove, setVenueToRemove] = useState(null);
 
   useEffect(() => {
+    // Fetch favorites immediately on mount
     dispatch(fetchFavorites());
   }, [dispatch]);
 

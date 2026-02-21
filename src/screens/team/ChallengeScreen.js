@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
-import { fetchChallenges, createChallenge, acceptChallenge, setUserTeam } from '../../store/slices/teamSlice';
+import { fetchChallenges, createChallenge, acceptChallenge, deleteChallenge, setUserTeam } from '../../store/slices/teamSlice';
 import ChallengeCard from '../../components/ChallengeCard';
 import CreateChallengeModal from '../../components/CreateChallengeModal';
 
@@ -96,9 +96,15 @@ export default function ChallengeScreen({ navigation }) {
       }
     };
 
-    dispatch(createChallenge(enhancedData));
-    setShowCreateModal(false);
-    Alert.alert('Success', 'Challenge created successfully!');
+    try {
+      await dispatch(createChallenge(enhancedData)).unwrap();
+      setShowCreateModal(false);
+      // Refetch challenges to get the complete data from Firestore
+      await dispatch(fetchChallenges());
+      Alert.alert('Success', 'Challenge created successfully!');
+    } catch (error) {
+      Alert.alert('Error', error || 'Failed to create challenge');
+    }
   };
 
   const handleAcceptChallenge = (challengeId) => {
@@ -141,6 +147,28 @@ export default function ChallengeScreen({ navigation }) {
               );
             } catch (error) {
               Alert.alert('Error', error || 'Failed to accept challenge');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteChallenge = (challengeId) => {
+    Alert.alert(
+      'Delete Challenge',
+      'Are you sure you want to delete this challenge?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await dispatch(deleteChallenge(challengeId)).unwrap();
+              Alert.alert('Success', 'Challenge deleted successfully');
+            } catch (error) {
+              Alert.alert('Error', error || 'Failed to delete challenge');
             }
           }
         }
@@ -210,29 +238,31 @@ export default function ChallengeScreen({ navigation }) {
       </View>
 
       {/* Sport Filters */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersContainer}
-      >
-        {sportFilters.map((sport) => (
-          <TouchableOpacity
-            key={sport}
-            style={[
-              styles.filterChip,
-              selectedSport === sport && styles.filterChipActive
-            ]}
-            onPress={() => setSelectedSport(sport)}
-          >
-            <Text style={[
-              styles.filterChipText,
-              selectedSport === sport && styles.filterChipTextActive
-            ]}>
-              {sport}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={styles.filtersWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersContainer}
+        >
+          {sportFilters.map((sport) => (
+            <TouchableOpacity
+              key={sport}
+              style={[
+                styles.filterChip,
+                selectedSport === sport && styles.filterChipActive
+              ]}
+              onPress={() => setSelectedSport(sport)}
+            >
+              <Text style={[
+                styles.filterChipText,
+                selectedSport === sport && styles.filterChipTextActive
+              ]}>
+                {sport}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
       {/* Challenges List */}
       <ScrollView
@@ -277,8 +307,10 @@ export default function ChallengeScreen({ navigation }) {
               key={challenge.id}
               challenge={challenge}
               onAccept={() => handleAcceptChallenge(challenge.id)}
-              onPress={() => navigation.navigate('ChallengeDetail', { challengeId: challenge.id })}
-              isOwner={challenge.challengerId === userTeam?.id}
+              onViewDetails={() => navigation.navigate('ChallengeDetail', { challengeId: challenge.id })}
+              onDelete={() => handleDeleteChallenge(challenge.id)}
+              currentUserId={user?.uid}
+              userTeam={userTeam}
             />
           ))
         )}
@@ -364,10 +396,16 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: theme.colors.secondary,
   },
+  filtersWrapper: {
+    height: 60,
+    marginBottom: 8,
+  },
   filtersContainer: {
     paddingHorizontal: 20,
+    paddingTop: 8,
     paddingBottom: 16,
     gap: 8,
+    alignItems: 'center',
   },
   filterChip: {
     paddingHorizontal: 16,

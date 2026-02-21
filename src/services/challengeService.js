@@ -27,12 +27,11 @@ export const challengeService = {
         try {
             let q = query(
                 challengesRef,
-                where('status', '==', 'open'),
                 orderBy('createdAt', 'desc')
             );
 
             if (sport) {
-                q = query(q, where('sport', '==', sport));
+                q = query(challengesRef, where('sport', '==', sport), orderBy('createdAt', 'desc'));
             }
 
             const snapshot = await getDocs(q);

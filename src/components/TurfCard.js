@@ -4,8 +4,9 @@ import { Card, Text, Chip, Button, Surface, Badge } from 'react-native-paper';
 import { Rating } from 'react-native-ratings';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SportsIconList } from './SportsIcons';
+import { getDiscountValue, hasDiscount, calculateDiscountedPrice, getOriginalPrice } from '../utils/discountUtils';
 
-export default function TurfCard({ turf, onPress }) {
+export default function TurfCard({ turf, onPress, onFavoritePress, isFavorite }) {
   const getPriceColor = (pricePerHour) => {
     if (pricePerHour < 2000) return '#388E3C'; // Green for cheap
     if (pricePerHour < 3500) return '#F57C00'; // Orange for medium
@@ -53,11 +54,47 @@ export default function TurfCard({ turf, onPress }) {
             </Text>
           </View>
 
+          {/* Discount Badge */}
+          {hasDiscount(turf) && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountBadgeText}>{getDiscountValue(turf)}% Off</Text>
+            </View>
+          )}
+
+          {/* Favorite Button */}
+          {onFavoritePress && (
+            <TouchableOpacity
+              style={styles.favoriteButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                onFavoritePress(turf);
+              }}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons 
+                name={isFavorite ? "favorite" : "favorite-border"} 
+                size={20} 
+                color={isFavorite ? "#F44336" : "#FFF"} 
+              />
+            </TouchableOpacity>
+          )}
+
           {/* Price Badge */}
           <View style={styles.priceBadge}>
-            <Text style={styles.priceBadgeText}>
-              Rs. {turf.pricePerHour}/hr
-            </Text>
+            {hasDiscount(turf) ? (
+              <View style={styles.priceWithDiscount}>
+                <Text style={styles.originalPriceText}>
+                  Rs. {turf.pricePerHour || getOriginalPrice(turf)}
+                </Text>
+                <Text style={styles.priceBadgeText}>
+                  Rs. {calculateDiscountedPrice(turf.pricePerHour || getOriginalPrice(turf), getDiscountValue(turf))}/hr
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.priceBadgeText}>
+                Rs. {turf.pricePerHour || getOriginalPrice(turf)}/hr
+              </Text>
+            )}
           </View>
 
           {/* Sports Icons Overlay */}
@@ -121,6 +158,23 @@ export default function TurfCard({ turf, onPress }) {
                 </Text>
               </View>
             )}
+          </View>
+
+          {/* Price Display */}
+          <View style={styles.priceDisplaySection}>
+            <View style={styles.priceDisplayRow}>
+              {hasDiscount(turf) && (
+                <Text style={styles.originalPriceDisplay}>
+                  Rs. {turf.pricePerHour || getOriginalPrice(turf)}
+                </Text>
+              )}
+              <Text style={styles.currentPriceDisplay}>
+                Rs. {hasDiscount(turf) 
+                  ? calculateDiscountedPrice(turf.pricePerHour || getOriginalPrice(turf), getDiscountValue(turf))
+                  : (turf.pricePerHour || getOriginalPrice(turf))}
+              </Text>
+              <Text style={styles.priceUnit}>/hour</Text>
+            </View>
           </View>
 
           {/* Availability Status */}
@@ -230,6 +284,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Montserrat_700Bold',
   },
+  discountBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: '#004d43',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 36,
+  },
+  discountBadgeText: {
+    color: '#e8ee26',
+    fontSize: 11,
+    fontWeight: 'bold',
+    fontFamily: 'ClashDisplay-Medium',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 0,
+  },
   priceBadge: {
     position: 'absolute',
     top: 12,
@@ -238,6 +320,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
+  },
+  priceWithDiscount: {
+    alignItems: 'flex-end',
+  },
+  originalPriceText: {
+    color: '#999',
+    fontSize: 10,
+    textDecorationLine: 'line-through',
+    fontFamily: 'Montserrat_400Regular',
   },
   priceBadgeText: {
     color: 'white',
@@ -307,6 +398,35 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 13,
     flex: 1,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  priceDisplaySection: {
+    marginTop: 12,
+    marginBottom: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  priceDisplayRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  originalPriceDisplay: {
+    fontSize: 14,
+    color: '#999',
+    textDecorationLine: 'line-through',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  currentPriceDisplay: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#004d43',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  priceUnit: {
+    fontSize: 13,
+    color: '#666',
     fontFamily: 'Montserrat_400Regular',
   },
   availabilityRow: {

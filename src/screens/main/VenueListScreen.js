@@ -14,7 +14,7 @@ import { Text, Searchbar, Chip } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Icon } from '../../components/Icons';
-import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
+import { fetchNearbyTurfs, toggleFavorite } from '../../store/slices/turfSlice';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import FilterModal from '../../components/FilterModal';
 
@@ -29,8 +29,26 @@ export default function VenueListScreen({ navigation, route }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredVenues, setFilteredVenues] = useState([]);
 
-  const { nearbyTurfs, loading, filters: reduxFilters } = useSelector(state => state.turf);
+  const { nearbyTurfs, loading, filters: reduxFilters, favorites } = useSelector(state => state.turf);
   const [showFilters, setShowFilters] = useState(false);
+
+  const handleFavoriteToggle = async (venue, e) => {
+    if (e) e.stopPropagation();
+    try {
+      await dispatch(toggleFavorite({
+        id: venue.id,
+        name: venue.name,
+        location: venue.area && venue.city ? `${venue.area}, ${venue.city}` : venue.location,
+        pricePerHour: venue.pricePerHour || venue.price,
+        rating: venue.rating,
+        imageType: venue.sport?.toLowerCase() || 'football',
+        images: venue.images,
+        image: venue.image
+      })).unwrap();
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
 
   // Load venues on component mount
   useEffect(() => {
@@ -170,6 +188,17 @@ export default function VenueListScreen({ navigation, route }) {
           style={styles.venueImage}
           resizeMode="cover"
         />
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={(e) => handleFavoriteToggle(item, e)}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons 
+            name={favorites.some(fav => fav.id === item.id) ? "favorite" : "favorite-border"} 
+            size={20} 
+            color={favorites.some(fav => fav.id === item.id) ? "#F44336" : "#FFF"} 
+          />
+        </TouchableOpacity>
         <View style={styles.ratingBadge}>
           <Icon name="star" size={16} color="#004d43" />
           <Text style={styles.ratingText}>{item.rating || 0}</Text>
@@ -434,6 +463,17 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'white',
     fontFamily: 'Montserrat_600SemiBold',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   venueInfo: {
     padding: 12,

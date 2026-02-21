@@ -10,7 +10,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Linking
+  Linking,
+  Share
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -36,6 +37,7 @@ import { toggleFavorite, fetchFavorites, fetchTurfDetails } from '../../store/sl
 import { fetchAvailableSlots, clearAvailableSlots } from '../../store/slices/bookingSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { safeDateString, isValidDate } from '../../utils/dateUtils';
+import { getDiscountValue, hasDiscount, calculateDiscountedPrice, getOriginalPrice } from '../../utils/discountUtils';
 import { theme } from '../../theme/theme';
 import { TurfCardSkeleton } from '../../components/SkeletonLoader';
 
@@ -367,6 +369,34 @@ export default function TurfDetailScreen({ route, navigation }) {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      const message = `Check out ${venue.name}!\n\n` +
+        `📍 Location: ${venue.location}\n` +
+        `⭐ Rating: ${venue.rating || 'N/A'}\n` +
+        `💰 Price: PKR ${venue.priceFrom}/hour\n\n` +
+        `Book now on ArenaPro!`;
+
+      const result = await Share.share({
+        message: message,
+        title: `${venue.name} - ArenaPro`,
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('✅ Shared with activity type:', result.activityType);
+        } else {
+          console.log('✅ Venue shared successfully');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('ℹ️ Share dismissed');
+      }
+    } catch (error) {
+      console.error('❌ Share error:', error);
+      Alert.alert('Error', 'Failed to share venue details');
+    }
+  };
+
   const handleBooking = () => {
     console.log('🎯 TurfDetailScreen: Opening booking modal, clearing cache');
     // Clear any cached slots and force fresh fetch
@@ -690,7 +720,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                 </TouchableOpacity>
 
                 <View style={styles.headerRightActions}>
-                  <TouchableOpacity style={styles.circularButton}>
+                  <TouchableOpacity style={styles.circularButton} onPress={handleShare}>
                     <MaterialIcons name="share" size={20} color="#000" />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -736,9 +766,11 @@ export default function TurfDetailScreen({ route, navigation }) {
               {/* Discount Badge & Rating */}
               <View style={styles.venueHeaderSection}>
                 <View style={styles.badgeRow}>
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountText}>20% Off</Text>
-                  </View>
+                  {hasDiscount(venue) && (
+                    <View style={styles.discountBadge}>
+                      <Text style={styles.discountText}>{getDiscountValue(venue)}% Off</Text>
+                    </View>
+                  )}
                   <View style={styles.ratingBadge}>
                     <MaterialIcons name="star" size={14} color="#FFD700" />
                     <Text style={styles.ratingValue}>{calculateAverageRating()}</Text>
@@ -896,7 +928,16 @@ export default function TurfDetailScreen({ route, navigation }) {
             <View style={styles.priceContainer}>
               <Text style={styles.bottomPriceLabel}>Total Price</Text>
               <View style={styles.priceRow}>
-                <Text style={styles.bottomPriceAmount}>PKR {venue.priceFrom.toLocaleString()}</Text>
+                {hasDiscount(venue) && (
+                  <Text style={styles.originalPrice}>
+                    PKR {(venue.pricePerHour || venue.priceFrom || getOriginalPrice(venue)).toLocaleString()}
+                  </Text>
+                )}
+                <Text style={styles.bottomPriceAmount}>
+                  PKR {hasDiscount(venue) 
+                    ? calculateDiscountedPrice(venue.pricePerHour || venue.priceFrom || getOriginalPrice(venue), getDiscountValue(venue)).toLocaleString()
+                    : (venue.pricePerHour || venue.priceFrom || getOriginalPrice(venue)).toLocaleString()}
+                </Text>
                 <Text style={styles.bottomPriceUnit}> /hour</Text>
               </View>
             </View>
@@ -1460,11 +1501,18 @@ const styles = StyleSheet.create({
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    gap: 8,
+  },
+  originalPrice: {
+    fontSize: 16,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#999',
+    textDecorationLine: 'line-through',
   },
   bottomPriceAmount: {
     fontSize: 20,
     fontFamily: 'Montserrat_700Bold',
-    color: '#1a1a1a',
+    color: '#004d43',
   },
   bottomPriceUnit: {
     fontSize: 14,

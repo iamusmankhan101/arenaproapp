@@ -77,7 +77,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleVenuePress = (venue) => {
-    navigation.navigate('TurfDetail', { turf: venue });
+    navigation.navigate('TurfDetail', { turfId: venue.id });
   };
 
   return (
