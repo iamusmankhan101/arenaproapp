@@ -382,9 +382,9 @@ export default function HomeScreen({ navigation }) {
                       <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
                     </TouchableOpacity>
                     
-                    {venue.discount && (
+                    {(venue.discount || venue.discountPercentage) && (
                       <View style={styles.discountBadge}>
-                        <Text style={styles.discountText}>{venue.discount}% Off</Text>
+                        <Text style={styles.discountText}>{venue.discount || venue.discountPercentage}% Off</Text>
                       </View>
                     )}
                 </TouchableOpacity>
@@ -430,9 +430,9 @@ export default function HomeScreen({ navigation }) {
                   />
                   
                   <View style={styles.nearbyVenueInfo}>
-                  {venue.discount && (
+                  {(venue.discount || venue.discountPercentage) && (
                     <View style={styles.nearbyDiscountBadge}>
-                      <Text style={styles.nearbyDiscountText}>{venue.discount}% Off</Text>
+                      <Text style={styles.nearbyDiscountText}>{venue.discount || venue.discountPercentage}% Off</Text>
                     </View>
                   )}
                   
