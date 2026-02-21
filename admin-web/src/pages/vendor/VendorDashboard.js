@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Grid,
@@ -257,10 +257,13 @@ export default function VendorDashboard() {
     const navigate = useNavigate();
     const { dashboardStats, loading } = useSelector(state => state.admin);
     const { admin } = useSelector(state => state.auth);
-    if (admin?.uid) {
-        const vendorId = admin.vendorId || admin.uid;
-        dispatch(fetchDashboardStats({ vendorId }));
-    }
+    
+    useEffect(() => {
+        if (admin?.uid) {
+            const vendorId = admin.vendorId || admin.uid;
+            dispatch(fetchDashboardStats({ vendorId }));
+        }
+    }, [dispatch, admin?.uid, admin?.vendorId]);
 
     const handleRefresh = () => {
         const vendorId = admin.vendorId || admin.uid;
