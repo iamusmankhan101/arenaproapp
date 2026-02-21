@@ -198,9 +198,12 @@ export default function TurfDetailScreen({ route, navigation }) {
   // Normalize sports data before transforming venue
   let normalizedSports = rawVenue.sports || rawVenue.availableSports || [];
   if (typeof normalizedSports === 'string') {
-    normalizedSports = normalizedSports.split(',').map(s => s.trim()).filter(Boolean);
+    normalizedSports = normalizedSports.split(',').map(s => s?.trim()).filter(Boolean);
   } else if (!Array.isArray(normalizedSports)) {
     normalizedSports = [];
+  } else {
+    // Ensure array items are valid strings
+    normalizedSports = normalizedSports.filter(s => s && typeof s === 'string' || (s && s.name));
   }
 
   // Transform the venue data to match component expectations
@@ -227,6 +230,7 @@ export default function TurfDetailScreen({ route, navigation }) {
 
     // Transform sports array to expected format
     availableSports: normalizedSports.map(sport => {
+      if (!sport) return null; // Skip null/undefined
       if (typeof sport === 'string') {
         return {
           name: sport,
@@ -238,7 +242,7 @@ export default function TurfDetailScreen({ route, navigation }) {
         ...sport,
         image: getSportImage(sport.name || sport)
       };
-    }),
+    }).filter(Boolean), // Remove null values
 
     // Transform facilities array to expected format
     facilities: (rawVenue.facilities || []).map(facility => {
