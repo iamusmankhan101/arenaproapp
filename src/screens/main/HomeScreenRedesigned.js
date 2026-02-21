@@ -55,7 +55,7 @@ export default function HomeScreen({ navigation }) {
     return nearbyTurfs.filter(venue => {
       const venueSports = Array.isArray(venue.sports) 
         ? venue.sports 
-        : typeof venue.sports === 'string' 
+        : typeof venue.sports === 'string' && venue.sports.trim()
           ? venue.sports.split(',').map(s => s.trim())
           : [];
       return venueSports.includes(selectedSport);

@@ -195,18 +195,25 @@ export default function TurfDetailScreen({ route, navigation }) {
   // Use selectedTurf from Redux or fallback to default, with proper data transformation
   const rawVenue = selectedTurf || defaultVenue;
 
-  // Normalize sports data before transforming venue with safe checks
+  // Normalize sports data before transforming venue with safe checks and error handling
   let normalizedSports = [];
-  const sportsData = rawVenue.sports || rawVenue.availableSports;
-  
-  if (sportsData) {
-    if (typeof sportsData === 'string' && sportsData.trim()) {
-      // Only split if it's a non-empty string
-      normalizedSports = sportsData.split(',').map(s => s?.trim()).filter(Boolean);
-    } else if (Array.isArray(sportsData)) {
-      // Ensure array items are valid strings
-      normalizedSports = sportsData.filter(s => s && (typeof s === 'string' || (s && s.name)));
+  try {
+    const sportsData = rawVenue.sports || rawVenue.availableSports;
+    
+    if (sportsData) {
+      if (typeof sportsData === 'string' && sportsData.trim()) {
+        // Only split if it's a non-empty string
+        normalizedSports = sportsData.split(',').map(s => s?.trim()).filter(Boolean);
+      } else if (Array.isArray(sportsData)) {
+        // Ensure array items are valid strings
+        normalizedSports = sportsData.filter(s => s && (typeof s === 'string' || (s && s.name)));
+      }
     }
+  } catch (error) {
+    console.error('❌ Error normalizing sports data:', error);
+    console.log('Raw venue data:', JSON.stringify(rawVenue, null, 2));
+    // Fallback to empty array on error
+    normalizedSports = [];
   }
 
   // Transform the venue data to match component expectations

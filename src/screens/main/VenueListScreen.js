@@ -177,7 +177,7 @@ export default function VenueListScreen({ navigation, route }) {
         <View style={styles.sportBadge}>
           <Text style={styles.sportBadgeText}>
             {Array.isArray(item.sports) ? item.sports[0] :
-              typeof item.sports === 'string' ? item.sports.split(',')[0].trim() :
+              typeof item.sports === 'string' && item.sports.trim() ? item.sports.split(',')[0].trim() :
                 item.sport || 'Sport'}
           </Text>
         </View>

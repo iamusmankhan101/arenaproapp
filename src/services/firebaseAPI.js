@@ -154,6 +154,7 @@ export const turfAPI = {
   // Get turf details
   async getTurfDetails(turfId) {
     try {
+      console.log(`🔍 Fetching turf details for ID: ${turfId}`);
       const turfRef = doc(db, 'venues', turfId);
       const turfSnap = await getDoc(turfRef);
 
@@ -162,15 +163,28 @@ export const turfAPI = {
       }
 
       const data = turfSnap.data();
+      console.log(`📊 Raw venue data:`, JSON.stringify(data, null, 2));
       
-      // Ensure sports is always an array with safe checks
+      // Ensure sports is always an array with safe checks and error handling
       let sports = [];
-      if (data && data.sports) {
-        if (typeof data.sports === 'string' && data.sports.trim()) {
-          sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
-        } else if (Array.isArray(data.sports)) {
-          sports = data.sports;
+      try {
+        if (data && data.sports) {
+          console.log(`🏀 Processing sports data: ${JSON.stringify(data.sports)} (type: ${typeof data.sports})`);
+          if (typeof data.sports === 'string' && data.sports.trim()) {
+            sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
+            console.log(`✅ Normalized sports from string:`, sports);
+          } else if (Array.isArray(data.sports)) {
+            sports = data.sports;
+            console.log(`✅ Sports already array:`, sports);
+          }
+        } else {
+          console.log(`⚠️ No sports data found for venue ${turfId}`);
         }
+      } catch (sportsError) {
+        console.error(`❌ Error processing sports data:`, sportsError);
+        console.log(`Raw sports value:`, data.sports);
+        // Fallback to empty array on error
+        sports = [];
       }
       
       const serializedData = serializeFirestoreData({
@@ -179,9 +193,10 @@ export const turfAPI = {
         sports // Override with normalized sports array
       });
 
+      console.log(`✅ Returning serialized data for ${turfId}`);
       return { data: serializedData };
     } catch (error) {
-      console.error('Error fetching turf details:', error);
+      console.error('❌ Error fetching turf details:', error);
       throw error;
     }
   },

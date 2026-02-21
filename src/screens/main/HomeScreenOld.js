@@ -39,7 +39,7 @@ const getVenueImageBySport = (venue) => {
 
   if (Array.isArray(venue.sports) && venue.sports.length > 0) {
     primarySport = venue.sports[0];
-  } else if (typeof venue.sports === 'string') {
+  } else if (typeof venue.sports === 'string' && venue.sports.trim()) {
     primarySport = venue.sports.split(',')[0].trim();
   } else if (venue.sport) {
     primarySport = venue.sport;
@@ -336,7 +336,7 @@ export default function HomeScreen({ navigation }) {
             )}
             <Text style={[styles.venueIconText, { marginLeft: 5, fontSize: 12, color: '#666' }]}>
               {Array.isArray(venue.sports) && venue.sports.length > 0 ? venue.sports[0] :
-                typeof venue.sports === 'string' ? venue.sports.split(',')[0] :
+                typeof venue.sports === 'string' && venue.sports.trim() ? venue.sports.split(',')[0] :
                   venue.sport || 'Sport'}
             </Text>
           </View>

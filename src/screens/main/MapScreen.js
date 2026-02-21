@@ -572,7 +572,7 @@ export default function MapScreen({ navigation }) {
       // Sport filter
       if (!reduxFilters.sports.includes('All') && reduxFilters.sports.length > 0) {
         const venueSports = Array.isArray(venue.sports) ? venue.sports : 
-                           typeof venue.sports === 'string' ? venue.sports.split(',').map(s => s.trim()) : [];
+                           typeof venue.sports === 'string' && venue.sports.trim() ? venue.sports.split(',').map(s => s.trim()) : [];
         matches = matches && venueSports.some(s => reduxFilters.sports.includes(s));
       }
 

@@ -28,7 +28,7 @@ const getVenueImageBySport = (venue) => {
 
   if (Array.isArray(venue.sports) && venue.sports.length > 0) {
     primarySport = venue.sports[0];
-  } else if (typeof venue.sports === 'string') {
+  } else if (typeof venue.sports === 'string' && venue.sports.trim()) {
     primarySport = venue.sports.split(',')[0].trim();
   } else if (venue.sport) {
     primarySport = venue.sport;
@@ -130,7 +130,7 @@ export default function HomeScreen({ navigation }) {
       filtered = filtered.filter(venue => {
         const venueSports = Array.isArray(venue.sports) 
           ? venue.sports 
-          : typeof venue.sports === 'string' 
+          : typeof venue.sports === 'string' && venue.sports.trim()
             ? venue.sports.split(',').map(s => s.trim())
             : [];
         return venueSports.includes(selectedSport);

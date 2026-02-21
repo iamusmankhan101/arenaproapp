@@ -168,7 +168,7 @@ export default function TurfCard({ turf, onPress }) {
           {/* Sports Tags */}
           {turf.sports && (
             <View style={styles.sportsContainer}>
-              {(Array.isArray(turf.sports) ? turf.sports : turf.sports.split(', ')).slice(0, 3).map((sport, index) => (
+              {(Array.isArray(turf.sports) ? turf.sports : typeof turf.sports === 'string' && turf.sports.trim() ? turf.sports.split(', ') : []).slice(0, 3).map((sport, index) => (
                 <View key={sport} style={styles.sportTag}>
                   <Text style={styles.sportTagText}>{sport.trim()}</Text>
                 </View>
