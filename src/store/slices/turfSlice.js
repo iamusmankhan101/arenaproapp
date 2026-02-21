@@ -99,7 +99,10 @@ const turfSlice = createSlice({
       hasFloodlights: false,
       surfaceType: 'all', // 'astroturf', 'cement', 'all'
       hasGenerator: false,
-      priceRange: [0, 5000],
+      priceRange: [0, 10000],
+      sortBy: 'All', // 'All', 'Popular', 'Near by', 'Price Low to High'
+      minRating: 0,
+      sports: ['All'], // 'All', 'Cricket', 'Futsal', 'Padel'
     },
   },
   reducers: {

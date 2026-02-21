@@ -195,6 +195,14 @@ export default function TurfDetailScreen({ route, navigation }) {
   // Use selectedTurf from Redux or fallback to default, with proper data transformation
   const rawVenue = selectedTurf || defaultVenue;
 
+  // Normalize sports data before transforming venue
+  let normalizedSports = rawVenue.sports || rawVenue.availableSports || [];
+  if (typeof normalizedSports === 'string') {
+    normalizedSports = normalizedSports.split(',').map(s => s.trim()).filter(Boolean);
+  } else if (!Array.isArray(normalizedSports)) {
+    normalizedSports = [];
+  }
+
   // Transform the venue data to match component expectations
   const venue = {
     ...rawVenue,
@@ -218,7 +226,7 @@ export default function TurfDetailScreen({ route, navigation }) {
     description: rawVenue.description || 'A great venue for sports activities.',
 
     // Transform sports array to expected format
-    availableSports: (rawVenue.sports || rawVenue.availableSports || []).map(sport => {
+    availableSports: normalizedSports.map(sport => {
       if (typeof sport === 'string') {
         return {
           name: sport,
@@ -312,7 +320,7 @@ export default function TurfDetailScreen({ route, navigation }) {
 
     const sports = venue.availableSports.map(sport =>
       typeof sport === 'string' ? sport.toLowerCase() : sport.name?.toLowerCase()
-    );
+    ).filter(Boolean); // Remove undefined/null values
 
     if (sports.includes('padel')) return 'padel';
     if (sports.includes('cricket')) return 'cricket';
@@ -722,14 +730,17 @@ export default function TurfDetailScreen({ route, navigation }) {
                   <TouchableOpacity
                     style={styles.floatingDirectionBtn}
                     onPress={() => {
-                      let lat = venue.coordinates?.latitude || rawVenue.coordinates?.latitude || selectedTurf?.coordinates?.latitude;
-                      let lng = venue.coordinates?.longitude || rawVenue.coordinates?.longitude || selectedTurf?.longitude;
+                      let lat = venue.coordinates?.latitude || venue.location?.latitude || rawVenue.coordinates?.latitude || rawVenue.location?.latitude || selectedTurf?.coordinates?.latitude || selectedTurf?.location?.latitude;
+                      let lng = venue.coordinates?.longitude || venue.location?.longitude || rawVenue.coordinates?.longitude || rawVenue.location?.longitude || selectedTurf?.coordinates?.longitude || selectedTurf?.location?.longitude || selectedTurf?.longitude;
+
                       if (lat && lng) {
                         const url = Platform.select({
                           ios: `maps:0,0?q=${lat},${lng}`,
                           android: `geo:0,0?q=${lat},${lng}(${venue.name})`
                         });
                         Linking.openURL(url);
+                      } else {
+                        Alert.alert('Location Error', 'Venue coordinates are not available.');
                       }
                     }}
                   >
@@ -800,10 +811,6 @@ export default function TurfDetailScreen({ route, navigation }) {
                 <View style={styles.tabContent}>
                   <View style={styles.galleryHeader}>
                     <Text style={styles.galleryTitle}>Gallery ({venue.images.length})</Text>
-                    <TouchableOpacity style={styles.addPhotoBtn}>
-                      <MaterialIcons name="add-a-photo" size={16} color="#666" />
-                      <Text style={styles.addPhotoText}>add photo</Text>
-                    </TouchableOpacity>
                   </View>
                   <View style={styles.galleryGrid}>
                     {venue.images.map((img, index) => (
@@ -866,7 +873,7 @@ export default function TurfDetailScreen({ route, navigation }) {
               <Text style={styles.bottomPriceLabel}>Total Price</Text>
               <View style={styles.priceRow}>
                 <Text style={styles.bottomPriceAmount}>PKR {venue.priceFrom.toLocaleString()}</Text>
-                <Text style={styles.bottomPriceUnit}> /night</Text>
+                <Text style={styles.bottomPriceUnit}> /hour</Text>
               </View>
             </View>
             <TouchableOpacity
@@ -961,7 +968,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                             styles.timeSlotPrice,
                             isSelected && styles.selectedSlotPrice
                           ]}>
-                            PKR {slot.price.toLocaleString()}
+                            PKR {slot.price.toLocaleString()} /hour
                           </Text>
                         </TouchableOpacity>
                       );

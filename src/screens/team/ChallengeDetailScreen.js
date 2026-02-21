@@ -476,13 +476,13 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         <View style={styles.infoSection}>
           <Text style={styles.sectionHeader}>SPECIFICATIONS</Text>
           <View style={styles.specsRow}>
-            {challenge.format && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.format}</Chip>}
-            {challenge.overs && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.overs} Overs</Chip>}
-            {challenge.ballType && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.ballType} Ball</Chip>}
+            {!!challenge.format && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.format}</Chip>}
+            {!!challenge.overs && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.overs} Overs</Chip>}
+            {!!challenge.ballType && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.ballType} Ball</Chip>}
             <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.type === 'private' ? 'Private' : 'Public'}</Chip>
           </View>
 
-          {challenge.description && (
+          {!!challenge.description && (
             <View style={styles.noteBox}>
               <Text style={styles.noteText}>{challenge.description}</Text>
             </View>
@@ -506,7 +506,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                 )}
                 <View>
                   <Text style={styles.participantName}>{participant.name}</Text>
-                  {participant.joinedAt && (
+                  {!!participant.joinedAt && (
                     <Text style={styles.participantJoined}>Joined {safeFormatDate(participant.joinedAt)}</Text>
                   )}
                 </View>

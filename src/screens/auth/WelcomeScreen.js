@@ -1,116 +1,79 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ImageBackground, Image, Alert } from 'react-native';
-import { Text, Button } from 'react-native-paper';
-import { useDispatch, useSelector } from 'react-redux';
-import { googleSignIn } from '../../store/slices/authSlice';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import * as AuthSession from 'expo-auth-session';
+import { View, StyleSheet, TouchableOpacity, Image, Dimensions, StatusBar } from 'react-native';
+import { Text } from 'react-native-paper';
+import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 
-WebBrowser.maybeCompleteAuthSession();
+const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen({ navigation }) {
-  const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.auth);
-
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    // Web client ID - used for Expo Go and web
-    clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    // Android client ID - used in standalone Android builds
-    androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
-    // iOS client ID - used in standalone iOS builds
-    iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    // Required for Expo Go to work with Google Auth
-    redirectUri: AuthSession.makeRedirectUri({
-      scheme: 'arenapropk.online',
-      useProxy: true,
-    }),
-  });
-
-  React.useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      dispatch(googleSignIn(id_token));
-    } else if (response?.type === 'error') {
-      Alert.alert('Sign In Error', 'Google sign-in failed. Please try again.');
-    }
-  }, [response]);
-
   return (
     <View style={styles.container}>
-      <ImageBackground
-        source={require('../../images/download.png')}
-        style={styles.backgroundImage}
-        imageStyle={styles.backgroundImageStyle}
-      >
-        <View style={styles.overlay} />
-
-        {/* Content */}
-        <View style={styles.content}>
-          {/* Logo */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../../images/pitch_it_logo_wide_2.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.tagline}>Book. Play. Compete.</Text>
-          </View>
-
-          {/* Welcome Text */}
-          <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeTitle}>Welcome to Arena Pro</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Discover and book the best sports venues in your area.
-              Join challenges, meet players, and elevate your game.
-            </Text>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
-            <Button
-              mode="contained"
-              onPress={() => navigation.navigate('SignUp')}
-              style={styles.primaryButton}
-              contentStyle={styles.buttonContent}
-              textColor="#004d43"
-              buttonColor="#e8ee26"
-            >
-              Get Started
-            </Button>
-
-            <Button
-              mode="outlined"
-              onPress={() => navigation.navigate('SignIn')}
-              style={styles.secondaryButton}
-              contentStyle={styles.buttonContent}
-              textColor="#004d43"
-              buttonColor="#ffffff"
-            >
-              I already have an account
-            </Button>
-          </View>
-
-          {/* Social Login */}
-          <View style={styles.socialContainer}>
-            <Text style={styles.socialText}>Or continue with</Text>
-            <View style={styles.socialButtons}>
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => promptAsync()}
-                disabled={!request || loading}
-              >
-                <Image
-                  source={require('../../images/google_cover_image.png')}
-                  style={styles.googleIcon}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      
+      {/* Decorative circles in background */}
+      <View style={styles.decorativeCircle1} />
+      <View style={styles.decorativeCircle2} />
+      
+      {/* Image circles */}
+      <View style={styles.imagesContainer}>
+        {/* Main center image */}
+        <View style={styles.mainImageContainer}>
+          <Image
+            source={require('../../images/indoor-football-court-turf.jpeg')}
+            style={styles.mainImage}
+            resizeMode="cover"
+          />
+          <TouchableOpacity style={styles.arrowButton}>
+            <MaterialIcons name="arrow-forward" size={24} color={theme.colors.background} />
+          </TouchableOpacity>
         </View>
-      </ImageBackground>
+        
+        {/* Small top right image */}
+        <View style={styles.smallImageTop}>
+          <Image
+            source={require('../../images/football.jpg')}
+            style={styles.smallImage}
+            resizeMode="cover"
+          />
+        </View>
+        
+        {/* Small bottom left image */}
+        <View style={styles.smallImageBottom}>
+          <Image
+            source={require('../../images/padel.jpg')}
+            style={styles.smallImage}
+            resizeMode="cover"
+          />
+        </View>
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        <Text style={styles.title}>
+          Redefining Your <Text style={styles.titleHighlight}>Sports Venue Booking</Text>
+          {'\n'}
+          <Text style={styles.titleHighlight}></Text> Experience
+        </Text>
+        
+        <Text style={styles.subtitle}>
+          Discover and book the best sports venues in your area. Join challenges, meet players, and elevate your game.
+        </Text>
+        
+        <TouchableOpacity
+          style={styles.getStartedButton}
+          onPress={() => navigation.navigate('SignUp')}
+        >
+          <Text style={styles.getStartedText}>Let's Get Started</Text>
+        </TouchableOpacity>
+        
+        <View style={styles.signInContainer}>
+          <Text style={styles.signInText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+            <Text style={styles.signInLink}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -118,94 +81,148 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
-  backgroundImage: {
-    flex: 1,
-    justifyContent: 'center',
+  decorativeCircle1: {
+    position: 'absolute',
+    top: -100,
+    left: -100,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: `${theme.colors.primary}10`,
   },
-  backgroundImageStyle: {
-    opacity: 0.8,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-    justifyContent: 'space-between',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  logoImage: {
+  decorativeCircle2: {
+    position: 'absolute',
+    bottom: -80,
+    right: -80,
     width: 200,
-    height: 80,
-    marginBottom: 16,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: `${theme.colors.secondary}10`,
   },
-  tagline: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500',
-  },
-  welcomeContainer: {
+  imagesContainer: {
+    height: height * 0.5,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingTop: 60,
   },
-  welcomeTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-    marginBottom: 16,
+  mainImageContainer: {
+    width: width * 0.65,
+    height: width * 0.85,
+    borderRadius: (width * 0.65) / 2,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: theme.colors.primary,
+    position: 'relative',
   },
-  welcomeSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    lineHeight: 24,
+  mainImage: {
+    width: '100%',
+    height: '100%',
   },
-  buttonContainer: {
-    gap: 16,
-  },
-  primaryButton: {
-    borderRadius: 12,
-  },
-  secondaryButton: {
-    borderRadius: 12,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    borderWidth: 1,
-  },
-  buttonContent: {
-    height: 56,
-  },
-  socialContainer: {
-    alignItems: 'center',
-  },
-  socialText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 16,
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  socialButton: {
+  arrowButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  googleIcon: {
-    width: 50,
-    height: 50,
+  smallImageTop: {
+    position: 'absolute',
+    top: 80,
+    right: 30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: theme.colors.primary,
+  },
+  smallImageBottom: {
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: theme.colors.primary,
+  },
+  smallImage: {
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 32,
+    paddingTop: 20,
+    paddingBottom: 40,
+    justifyContent: 'flex-end',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.text,
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: 'ClashDisplay-Medium',
+    lineHeight: 36,
+  },
+  titleHighlight: {
+    color: theme.colors.primary,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 32,
+    fontFamily: 'Montserrat_400Regular',
+    lineHeight: 22,
+    paddingHorizontal: 10,
+  },
+  getStartedButton: {
+    backgroundColor: theme.colors.primary,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  getStartedText: {
+    color: theme.colors.secondary,
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'ClashDisplay-Medium',
+  },
+  signInContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  signInText: {
+    fontSize: 14,
+    color: theme.colors.text,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  signInLink: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
   },
 });

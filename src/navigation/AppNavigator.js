@@ -22,6 +22,11 @@ import SignUpScreen from '../screens/auth/SignUpScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import OTPScreen from '../screens/auth/OTPScreen';
 
+// Location Screens
+import LocationPermissionScreen from '../screens/location/LocationPermissionScreen';
+import ManualLocationScreen from '../screens/location/ManualLocationScreen';
+import * as Location from 'expo-location';
+
 // Main Screens
 import HomeScreen from '../screens/main/HomeScreen';
 import VenueListScreen from '../screens/main/VenueListScreen';
@@ -32,11 +37,13 @@ import ChallengeScreen from '../screens/team/ChallengeScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import ManageProfileScreen from '../screens/profile/ManageProfileScreen';
 import PasswordSecurityScreen from '../screens/profile/PasswordSecurityScreen';
+import NotificationScreen from '../screens/profile/NotificationScreen';
 
 // Detail Screens
 import TurfDetailScreen from '../screens/turf/TurfDetailScreen';
 import ChallengeDetailScreen from '../screens/team/ChallengeDetailScreen';
 import BookingConfirmScreen from '../screens/booking/BookingConfirmScreen';
+import BookingSuccessScreen from '../screens/booking/BookingSuccessScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -104,6 +111,23 @@ export default function AppNavigator() {
     dispatch(loadStoredAuth());
   }, [dispatch]);
 
+  const [hasLocationPermission, setHasLocationPermission] = useState(null);
+
+  useEffect(() => {
+    async function checkPermission() {
+      if (isAuthenticated) {
+        try {
+          const { status } = await Location.getForegroundPermissionsAsync();
+          setHasLocationPermission(status === 'granted');
+        } catch (error) {
+          console.log('📍 Error checking location permission:', error);
+          setHasLocationPermission(false);
+        }
+      }
+    }
+    checkPermission();
+  }, [isAuthenticated]);
+
   // Handle splash screen
   useEffect(() => {
     if (!initializing) {
@@ -111,8 +135,8 @@ export default function AppNavigator() {
     }
   }, [initializing]);
 
-  if (initializing) {
-    return null; // Render nothing while splash screen is visible
+  if (initializing || (isAuthenticated && hasLocationPermission === null)) {
+    return null; // Wait for both auth and initial location permission check
   }
 
   // Debug what screen should be shown
@@ -198,6 +222,21 @@ export default function AppNavigator() {
       ) : (
         <>
           <Stack.Screen
+            name="LocationPermission"
+            component={LocationPermissionScreen}
+            options={{
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen
+            name="ManualLocation"
+            component={ManualLocationScreen}
+            options={{
+              title: 'Enter Location',
+              gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
             name="MainTabs"
             component={MainTabs}
             options={{
@@ -237,6 +276,14 @@ export default function AppNavigator() {
             }}
           />
           <Stack.Screen
+            name="Notification"
+            component={NotificationScreen}
+            options={{
+              title: 'Notifications',
+              gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
             name="TurfDetail"
             component={TurfDetailScreen}
             options={{
@@ -257,6 +304,14 @@ export default function AppNavigator() {
             component={BookingConfirmScreen}
             options={{
               title: 'Confirm Booking',
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen
+            name="BookingSuccess"
+            component={BookingSuccessScreen}
+            options={{
+              title: 'Booking Success',
               gestureEnabled: false,
             }}
           />

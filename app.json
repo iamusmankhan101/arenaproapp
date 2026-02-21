@@ -19,7 +19,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "arenapropk.online",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIViewControllerBasedStatusBarAppearance": true,
+        "UIStatusBarStyle": "UIStatusBarStyleDarkContent"
       },
       "runtimeVersion": {
         "policy": "appVersion"

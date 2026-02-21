@@ -283,7 +283,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
           </View>
 
           {/* Description Snippet (optional) */}
-          {challenge.description && (
+          {!!challenge.description && (
             <Text numberOfLines={2} style={styles.description}>
               "{challenge.description}"
             </Text>
@@ -342,7 +342,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
             </View>
 
             {/* Row 4: Tournament Participants */}
-            {challenge.type === 'tournament' && challenge.maxParticipants && (
+            {challenge.type === 'tournament' && !!challenge.maxParticipants && (
               <View style={[styles.detailRow, { marginTop: 4 }]}>
                 <MaterialIcons name="groups" size={16} color="#004d43" style={styles.detailIcon} />
                 <Text style={styles.detailText}>{challenge.maxParticipants} Teams Participating</Text>
@@ -351,12 +351,12 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
           </View>
 
           {/* Tags */}
-          {(challenge.format || challenge.overs || challenge.ballType || challenge.tournamentFormat) && (
+          {(!!challenge.format || !!challenge.overs || !!challenge.ballType || !!challenge.tournamentFormat) && (
             <View style={styles.chipContainer}>
-              {challenge.format && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.format}</Chip>}
-              {challenge.tournamentFormat && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.tournamentFormat}</Chip>}
-              {challenge.overs && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.overs} Overs</Chip>}
-              {challenge.ballType && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.ballType}</Chip>}
+              {!!challenge.format && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.format}</Chip>}
+              {!!challenge.tournamentFormat && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.tournamentFormat}</Chip>}
+              {!!challenge.overs && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.overs} Overs</Chip>}
+              {!!challenge.ballType && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.ballType}</Chip>}
             </View>
           )}
 

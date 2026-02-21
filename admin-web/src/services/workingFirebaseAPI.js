@@ -648,6 +648,8 @@ export const workingAdminAPI = {
         timeSlots: processedTimeSlots,
         // Include date-specific slots if provided
         ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
+        // Include discount percentage
+        discountPercentage: Number(venueData.discountPercentage) || 0,
         // Vendor Link
         vendorId: venueData.vendorId || null,
         // Status and timestamps
@@ -760,6 +762,8 @@ export const workingAdminAPI = {
         timeSlots: processedTimeSlots,
         // Include date-specific slots if provided
         ...(venueData.dateSpecificSlots && { dateSpecificSlots: venueData.dateSpecificSlots }),
+        // Include discount percentage
+        discountPercentage: Number(venueData.discountPercentage) || 0,
         // Vendor Link
         vendorId: venueData.vendorId || null,
         // Timestamps (preserve status)

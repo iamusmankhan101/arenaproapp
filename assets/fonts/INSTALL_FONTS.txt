@@ -1,0 +1,38 @@
+⚠️ IMPORTANT: ClashDisplay Font Files Required ⚠️
+
+The app is configured to use ClashDisplay fonts, but the font files are not included in the repository.
+
+📥 DOWNLOAD CLASHDISPLAY FONTS:
+Visit: https://www.fontshare.com/fonts/clash-display
+
+📋 REQUIRED FILES (place in this directory):
+✓ ClashDisplay-Regular.otf
+✓ ClashDisplay-Medium.otf
+✓ ClashDisplay-Semibold.otf
+✓ ClashDisplay-Bold.otf
+
+🔧 TEMPORARY WORKAROUND:
+If you don't have ClashDisplay fonts yet, you can temporarily modify App.js to use Montserrat for all fonts:
+
+In App.js, comment out the ClashDisplay font loading:
+```javascript
+let [fontsLoaded, fontError] = useFonts({
+  Montserrat_400Regular,
+  Montserrat_500Medium,
+  Montserrat_600SemiBold,
+  Montserrat_700Bold,
+  // Comment these out temporarily:
+  // 'ClashDisplay-Regular': require('./assets/fonts/ClashDisplay-Regular.otf'),
+  // 'ClashDisplay-Medium': require('./assets/fonts/ClashDisplay-Medium.otf'),
+  // 'ClashDisplay-Semibold': require('./assets/fonts/ClashDisplay-Semibold.otf'),
+  // 'ClashDisplay-Bold': require('./assets/fonts/ClashDisplay-Bold.otf'),
+});
+```
+
+And in src/theme/theme.js, replace ClashDisplay with Montserrat:
+- Replace 'ClashDisplay-Bold' with 'Montserrat_700Bold'
+- Replace 'ClashDisplay-Semibold' with 'Montserrat_600SemiBold'
+- Replace 'ClashDisplay-Medium' with 'Montserrat_500Medium'
+- Replace 'ClashDisplay-Regular' with 'Montserrat_400Regular'
+
+📖 For more details, see FONT_SYSTEM_GUIDE.md

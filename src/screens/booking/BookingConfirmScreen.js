@@ -331,7 +331,15 @@ Please confirm my booking.`;
     dispatch(fetchUserBookings());
     // Refresh user profile to update booking count and unlock referral code
     dispatch(fetchUserProfile());
-    navigation.navigate('Bookings');
+    
+    // Navigate to success screen
+    navigation.navigate('BookingSuccess', {
+      bookingDetails: {
+        venueName: turf?.name || 'Venue',
+        date: date,
+        slot: slot,
+      }
+    });
   };
 
   const formatDateTime = () => {
@@ -762,7 +770,7 @@ Please confirm my booking.`;
                 <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>{paymentDetails[paymentMethod]?.accountName}</Text>
               </View>
 
-              {paymentDetails[paymentMethod]?.bankName && (
+              {!!paymentDetails[paymentMethod]?.bankName && (
                 <View style={{ marginBottom: 8 }}>
                   <Text style={{ fontSize: 12, color: '#666' }}>Bank Name</Text>
                   <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>{paymentDetails[paymentMethod]?.bankName}</Text>

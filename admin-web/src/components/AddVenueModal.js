@@ -68,7 +68,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
     // Date-related fields
     selectedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     dateSpecificSlots: {}, // Object to store slots for different dates
-    contactPhone: '' // Owner/Contact phone number
+    contactPhone: '', // Owner/Contact phone number
+    discountPercentage: '0' // Venue-wide discount percentage
   });
 
   // Load edit venue data when editVenue prop changes
@@ -119,7 +120,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         })) : [],
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: editVenue.dateSpecificSlots || {},
-        contactPhone: editVenue.contactPhone || editVenue.contact?.phoneNumber || ''
+        contactPhone: editVenue.contactPhone || editVenue.contact?.phoneNumber || '',
+        discountPercentage: (editVenue.discountPercentage || 0).toString()
       });
 
       // Set uploaded images for editing
@@ -154,7 +156,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         availableSlots: [],
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: {},
-        contactPhone: ''
+        contactPhone: '',
+        discountPercentage: '0'
       });
       setUploadedImages([]);
     }
@@ -392,6 +395,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         images: imageUrls,
         // Remove basic time slots - only use date-specific slots
         dateSpecificSlots: dateSpecificAvailability,
+        // Include discount percentage
+        discountPercentage: parseFloat(formData.discountPercentage) || 0,
         // Include vendorId if creating new provided via props, or preserve existing if editing
         vendorId: isEditing ? editVenue.vendorId : (vendorId || null)
       };
@@ -434,7 +439,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         // Reset date-related fields
         selectedDate: new Date().toISOString().split('T')[0],
         dateSpecificSlots: {},
-        contactPhone: ''
+        contactPhone: '',
+        discountPercentage: '0'
       });
 
       setUploadedImages([]);
@@ -631,7 +637,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                 Pricing & Hours
               </Typography>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 label="Base Price (PKR) *"
@@ -642,7 +648,19 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                 helperText="Price per slot"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
+                label="Discount (%)"
+                type="number"
+                value={formData.discountPercentage}
+                onChange={handleInputChange('discountPercentage')}
+                disabled={loading}
+                helperText="Percentage off"
+                inputProps={{ min: 0, max: 100 }}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 label="Opening Time"
@@ -653,7 +671,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 label="Closing Time"

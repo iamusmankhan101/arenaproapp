@@ -116,12 +116,23 @@ export const turfAPI = {
 
         console.log(`📍 Mobile app: Adding venue ${data.name} to results`);
 
+        // Ensure sports is always an array
+        let sports = data.sports;
+        if (!sports) {
+          sports = [];
+        } else if (typeof sports === 'string') {
+          sports = sports.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (!Array.isArray(sports)) {
+          sports = [];
+        }
+
         const serializedData = serializeFirestoreData({
           id: doc.id,
           ...data,
+          sports, // Override with normalized sports array
           distance: 0, // Set distance to 0 since we're not filtering by location
           // Add compatibility fields for existing components
-          sport: Array.isArray(data.sports) ? data.sports[0] : (typeof data.sports === 'string' ? data.sports.split(',')[0].trim() : 'Unknown'),
+          sport: sports.length > 0 ? sports[0] : 'Unknown',
           pricePerHour: data.pricing?.basePrice || 0,
           time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
         });
@@ -151,9 +162,21 @@ export const turfAPI = {
       }
 
       const data = turfSnap.data();
+      
+      // Ensure sports is always an array
+      let sports = data.sports;
+      if (!sports) {
+        sports = [];
+      } else if (typeof sports === 'string') {
+        sports = sports.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (!Array.isArray(sports)) {
+        sports = [];
+      }
+      
       const serializedData = serializeFirestoreData({
         id: turfSnap.id,
-        ...data
+        ...data,
+        sports // Override with normalized sports array
       });
 
       return { data: serializedData };
@@ -232,10 +255,21 @@ export const turfAPI = {
         if (turfDoc.exists()) {
           const venueData = turfDoc.data();
           if (venueData.status === 'active') {
-            favorites.push({
+            // Normalize sports data
+            let sports = venueData.sports;
+            if (!sports) {
+              sports = [];
+            } else if (typeof sports === 'string') {
+              sports = sports.split(',').map(s => s.trim()).filter(Boolean);
+            } else if (!Array.isArray(sports)) {
+              sports = [];
+            }
+            
+            favorites.push(serializeFirestoreData({
               id: turfDoc.id,
-              ...venueData
-            });
+              ...venueData,
+              sports // Override with normalized sports array
+            }));
           }
         }
       }
@@ -270,7 +304,7 @@ export const turfAPI = {
   },
 
   // Search venues by name, area, or city
-  async searchTurfs(queryText, sports = null) {
+  async searchTurfs(queryText, sportFilter = null) {
     const fetchAndFilterLocally = async () => {
       console.log('🔄 Mobile app: Falling back to local filtering for search...');
       const turfsRef = collection(db, 'venues');
@@ -285,21 +319,32 @@ export const turfAPI = {
         const venueArea = data.area?.toLowerCase() || '';
         const venueCity = data.city?.toLowerCase() || '';
 
+        // Normalize sports data
+        let sports = data.sports;
+        if (!sports) {
+          sports = [];
+        } else if (typeof sports === 'string') {
+          sports = sports.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (!Array.isArray(sports)) {
+          sports = [];
+        }
+
         // Match name, area, city or sports
         const matchesQuery = !searchStr ||
           venueName.includes(searchStr) ||
           venueArea.includes(searchStr) ||
           venueCity.includes(searchStr);
 
-        const matchesSport = !sports || sports === 'All' ||
-          (Array.isArray(data.sports) && data.sports.includes(sports));
+        const matchesSport = !sportFilter || sportFilter === 'All' ||
+          (Array.isArray(sports) && sports.includes(sportFilter));
 
         if (matchesQuery && matchesSport) {
           turfs.push(serializeFirestoreData({
             id: doc.id,
             ...data,
+            sports, // Override with normalized sports array
             distance: 0,
-            sport: Array.isArray(data.sports) ? data.sports[0] : (typeof data.sports === 'string' ? data.sports.split(',')[0].trim() : 'Unknown'),
+            sport: sports.length > 0 ? sports[0] : 'Unknown',
             pricePerHour: data.pricing?.basePrice || 0,
             time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
           }));
@@ -322,8 +367,8 @@ export const turfAPI = {
           where('name', '>=', searchStr),
           where('name', '<=', searchStr + '\uf8ff')
         );
-      } else if (sports && sports !== 'All') {
-        q = query(turfsRef, where('status', '==', 'active'), where('sports', 'array-contains', sports));
+      } else if (sportFilter && sportFilter !== 'All') {
+        q = query(turfsRef, where('status', '==', 'active'), where('sports', 'array-contains', sportFilter));
       } else {
         q = query(turfsRef, where('status', '==', 'active'));
       }
@@ -333,11 +378,23 @@ export const turfAPI = {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
+        
+        // Normalize sports data
+        let sports = data.sports;
+        if (!sports) {
+          sports = [];
+        } else if (typeof sports === 'string') {
+          sports = sports.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (!Array.isArray(sports)) {
+          sports = [];
+        }
+        
         turfs.push(serializeFirestoreData({
           id: doc.id,
           ...data,
+          sports, // Override with normalized sports array
           distance: 0,
-          sport: Array.isArray(data.sports) ? data.sports[0] : (typeof data.sports === 'string' ? data.sports.split(',')[0].trim() : 'Unknown'),
+          sport: sports.length > 0 ? sports[0] : 'Unknown',
           pricePerHour: data.pricing?.basePrice || 0,
           time: `${data.operatingHours?.open || '6:00'} to ${data.operatingHours?.close || '23:00'} (All Days)`
         }));

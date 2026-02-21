@@ -11,7 +11,8 @@ import {
   SafeAreaView,
   Platform,
   ScrollView,
-  Linking
+  Linking,
+  Modal
 } from 'react-native';
 import {
   Text,
@@ -31,6 +32,7 @@ import { fetchNearbyTurfs, toggleFavorite, searchTurfs } from '../../store/slice
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import SkeletonLoader from '../../components/SkeletonLoader';
+import FilterModal from '../../components/FilterModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -142,18 +144,19 @@ export default function MapScreen({ navigation }) {
   });
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSport, setSelectedSport] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
   const [filteredVenues, setFilteredVenues] = useState([]);
+  const { filters: reduxFilters } = useSelector(state => state.turf);
   const [isLoading, setIsLoading] = useState(false);
   const [mapType, setMapType] = useState('standard');
-  const [showRadius, setShowRadius] = useState(false);
+  const [showRadius, setShowRadius] = useState(true);
   const [geocodedCoordinates, setGeocodedCoordinates] = useState(new Map());
   const [isMapReady, setIsMapReady] = useState(false);
   const [venuesWithValidCoords, setVenuesWithValidCoords] = useState([]);
   const insets = useSafeAreaInsets();
 
   const mapRef = useRef(null);
+  const flatListRef = useRef(null);
   const dispatch = useDispatch();
   const { nearbyTurfs, loading } = useSelector(state => state.turf);
   const themeColors = theme;
@@ -165,7 +168,6 @@ export default function MapScreen({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const cardSlideAnim = useRef(new Animated.Value(300)).current;
 
-  const sportFilters = ['All', 'Football', 'Cricket', 'Padel', 'Tennis', 'Basketball'];
   const mapTypes = [
     { key: 'standard', label: 'Standard', icon: 'map' },
     { key: 'satellite', label: 'Satellite', icon: 'satellite' },
@@ -252,26 +254,6 @@ export default function MapScreen({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    // Update filtered venues when nearbyTurfs changes
-    console.log('🔄 MapScreen: nearbyTurfs updated, count:', nearbyTurfs.length);
-    if (nearbyTurfs.length > 0) {
-      console.log('📊 MapScreen: Sample venues:', nearbyTurfs.slice(0, 2).map(v => ({ name: v.name, id: v.id })));
-
-      // Auto-zoom to fit venues after a short delay
-      setTimeout(() => {
-        if (mapRef.current && isMapReady) {
-          console.log('🔍 MapScreen: Auto-zooming to fit venues');
-          zoomToFitMarkers(nearbyTurfs);
-        }
-      }, 1000);
-    }
-    setFilteredVenues(nearbyTurfs);
-  }, [nearbyTurfs]);
-
-  useEffect(() => {
-    filterVenues();
-  }, [searchQuery, selectedSport, venuesWithValidCoords]);
 
   useEffect(() => {
     // Animate venue card
@@ -549,10 +531,27 @@ export default function MapScreen({ navigation }) {
     updateVenuesWithCoordsAndDistances();
   }, [nearbyTurfs, location]);
   const filterVenues = () => {
-    if (!searchQuery.trim() && selectedSport === 'All') {
+    // If no filters applied, show all venues
+    const hasNoFilters = !searchQuery.trim() && 
+                        (reduxFilters.sports.includes('All') || reduxFilters.sports.length === 0) && 
+                        reduxFilters.sortBy === 'All' && 
+                        reduxFilters.minRating === 0 &&
+                        reduxFilters.priceRange[0] === 0 &&
+                        reduxFilters.priceRange[1] === 10000;
+    
+    if (hasNoFilters) {
+      console.log('📊 MapScreen: No filters applied, showing all venues');
       setFilteredVenues(venuesWithValidCoords);
       return;
     }
+
+    console.log('🔍 MapScreen: Applying filters:', {
+      searchQuery,
+      sports: reduxFilters.sports,
+      sortBy: reduxFilters.sortBy,
+      minRating: reduxFilters.minRating,
+      priceRange: reduxFilters.priceRange
+    });
 
     let filtered = venuesWithValidCoords.filter(venue => {
       let matches = true;
@@ -571,20 +570,55 @@ export default function MapScreen({ navigation }) {
       }
 
       // Sport filter
-      if (selectedSport !== 'All') {
-        matches = matches && venue.sports && venue.sports.includes(selectedSport);
+      if (!reduxFilters.sports.includes('All') && reduxFilters.sports.length > 0) {
+        const venueSports = Array.isArray(venue.sports) ? venue.sports : 
+                           typeof venue.sports === 'string' ? venue.sports.split(',').map(s => s.trim()) : [];
+        matches = matches && venueSports.some(s => reduxFilters.sports.includes(s));
       }
+
+      // Price range filter
+      const venuePrice = venue.pricePerHour || venue.pricing?.basePrice || venue.basePrice || 0;
+      matches = matches && venuePrice >= reduxFilters.priceRange[0] && venuePrice <= reduxFilters.priceRange[1];
+
+      // Rating filter
+      const venueRating = venue.rating || 5;
+      matches = matches && venueRating >= reduxFilters.minRating;
 
       return matches;
     });
 
-    setFilteredVenues(filtered);
+    console.log(`✅ MapScreen: Filtered ${filtered.length} venues from ${venuesWithValidCoords.length} total`);
 
-    // Zoom to fit filtered venues if they're different from all venues
-    if (filtered.length > 0 && filtered.length < venuesWithValidCoords.length) {
-      setTimeout(() => zoomToFitMarkers(filtered), 500);
+    // Sorting logic
+    if (reduxFilters.sortBy === 'Popular') {
+      filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      console.log('📊 MapScreen: Sorted by popularity (rating)');
+    } else if (reduxFilters.sortBy === 'Near by' && location) {
+      filtered.sort((a, b) => {
+        if (a.distanceKm === null) return 1;
+        if (b.distanceKm === null) return -1;
+        return a.distanceKm - b.distanceKm;
+      });
+      console.log('📊 MapScreen: Sorted by distance');
+    } else if (reduxFilters.sortBy === 'Price Low to High') {
+      filtered.sort((a, b) => {
+        const priceA = a.pricePerHour || a.pricing?.basePrice || a.basePrice || 0;
+        const priceB = b.pricePerHour || b.pricing?.basePrice || b.basePrice || 0;
+        return priceA - priceB;
+      });
+      console.log('📊 MapScreen: Sorted by price (low to high)');
     }
+
+    setFilteredVenues(filtered);
   };
+
+  useEffect(() => {
+    filterVenues();
+    // Zoom to fit filtered venues if they're different from all venues
+    if (filteredVenues.length > 0 && filteredVenues.length < venuesWithValidCoords.length) {
+      setTimeout(() => zoomToFitMarkers(filteredVenues), 500);
+    }
+  }, [searchQuery, reduxFilters, venuesWithValidCoords]);
 
   // Create a ref to store the search timer for debouncing
   const searchTimerRef = useRef(null);
@@ -619,7 +653,7 @@ export default function MapScreen({ navigation }) {
             if (typeof searchTurfs === 'undefined') {
               console.error('❌ searchTurfs is UNDEFINED in MapScreen scope!');
             } else {
-              dispatch(searchTurfs({ query, sports: selectedSport }));
+              dispatch(searchTurfs({ query, sports: reduxFilters.sports }));
             }
           } catch (e) {
             console.error('❌ Error during searchTurfs dispatch:', e);
@@ -806,6 +840,13 @@ export default function MapScreen({ navigation }) {
 
   const handleMarkerPress = (venue) => {
     setSelectedVenue(venue);
+
+    // Sync with FlatList - find index and scroll
+    const index = filteredVenues.findIndex(v => v.id === venue.id);
+    if (index !== -1 && flatListRef.current) {
+      flatListRef.current.scrollToIndex({ index, animated: true });
+    }
+
     // Center map on selected venue with smooth animation
     if (mapRef.current && isMapReady) {
       const coordinates = venue.coordinates || getVenueCoordinatesSync(venue);
@@ -911,136 +952,38 @@ export default function MapScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar backgroundColor={themeColors.colors.primary} barStyle="light-content" />
 
-      {/* Floating Sports Categories */}
-      <View style={styles.floatingSportsContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.sportsScrollContent}
-        >
-          {sportFilters.map((sport) => (
-            <Chip
-              key={sport}
-              selected={selectedSport === sport}
-              onPress={() => setSelectedSport(sport)}
-              style={[
-                styles.floatingSportChip,
-                selectedSport === sport && {
-                  backgroundColor: themeColors.colors.primary,
-                }
-              ]}
-              textStyle={[
-                styles.floatingSportChipText,
-                selectedSport === sport && { color: themeColors.colors.secondary }
-              ]}
-              mode={selectedSport === sport ? 'flat' : 'outlined'}
-            >
-              {sport}
-            </Chip>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.floatingSearchContainer}>
-        <Surface style={styles.searchSurface} elevation={4}>
-          <TouchableOpacity style={styles.searchIconContainer} activeOpacity={0.7}>
-            <MaterialIcons name="search" size={24} color="#757575" />
-          </TouchableOpacity>
-
-          <Searchbar
-            placeholder="Search venues & areas"
-            onChangeText={handleSearchChange}
-            value={searchQuery}
-            style={styles.cleanSearchBar}
-            inputStyle={styles.cleanSearchInput}
-            iconColor="transparent"
-            placeholderTextColor="#9e9e9e"
-            elevation={0}
-          />
-
-
-        </Surface>
-      </View>
-
-      {/* Enhanced Sport Filters */}
-      {showFilters && (
-        <Animated.View
-          style={[
-            styles.filtersContainer,
-            {
-              opacity: fadeAnim,
-            }
-          ]}
-        >
-          <Surface style={styles.filtersSurface} elevation={2}>
-            <Text style={styles.filterTitle}>Filter by Sport</Text>
-            <View style={styles.chipContainer}>
-              {sportFilters.map((sport) => (
-                <Chip
-                  key={sport}
-                  selected={selectedSport === sport}
-                  onPress={() => setSelectedSport(sport)}
-                  style={[
-                    styles.sportChip,
-                    selectedSport === sport && {
-                      backgroundColor: themeColors.colors.primary,
-                      borderColor: themeColors.colors.primary,
-                    }
-                  ]}
-                  textStyle={[
-                    styles.chipText,
-                    selectedSport === sport && styles.selectedChipText
-                  ]}
-                  mode={selectedSport === sport ? 'flat' : 'outlined'}
-                >
-                  {sport}
-                </Chip>
-              ))}
-            </View>
-
-            <View style={styles.filterActions}>
-              <TouchableOpacity
-                style={styles.toggleRadiusButton}
-                onPress={() => setShowRadius(!showRadius)}
-              >
-                <MaterialIcons
-                  name={showRadius ? 'visibility-off' : 'visibility'}
-                  size={18}
-                  color={themeColors.colors.primary}
-                />
-                <Text style={styles.toggleRadiusText}>
-                  {showRadius ? 'Hide' : 'Show'} Search Radius
-                </Text>
-              </TouchableOpacity>
-
-              {location && (
-                <TouchableOpacity
-                  style={styles.sortByDistanceButton}
-                  onPress={() => {
-                    const sorted = [...filteredVenues].sort((a, b) => {
-                      if (a.distanceKm === null) return 1;
-                      if (b.distanceKm === null) return -1;
-                      return a.distanceKm - b.distanceKm;
-                    });
-                    setFilteredVenues(sorted);
-                    console.log('📊 Venues sorted by distance');
-                  }}
-                >
-                  <MaterialIcons
-                    name="sort"
-                    size={18}
-                    color={themeColors.colors.primary}
-                  />
-                  <Text style={styles.sortByDistanceText}>
-                    Sort by Distance
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+      {/* New Header: Search Bar & Filter */}
+      <View style={[styles.newHeaderContainer, { paddingTop: insets.top + 10 }]}>
+        <View style={styles.searchRow}>
+          <Surface style={styles.newSearchSurface} elevation={2}>
+            <MaterialIcons name="search" size={24} color="#7D7D7D" style={styles.newSearchIcon} />
+            <Searchbar
+              placeholder="Search venues & areas"
+              onChangeText={handleSearchChange}
+              value={searchQuery}
+              style={styles.newSearchInputStyle}
+              inputStyle={styles.newTextInput}
+              iconColor="transparent" // Hidden as we use custom icon
+              placeholderTextColor="#9e9e9e"
+              elevation={0}
+              clearIcon={() => searchQuery ? <MaterialIcons name="close" size={20} color="#7D7D7D" onPress={() => handleSearchChange('')} /> : null}
+            />
           </Surface>
-        </Animated.View>
-      )}
+
+          <TouchableOpacity
+            style={[styles.filterSquareButton, { backgroundColor: themeColors.colors.primary }]}
+            onPress={toggleFilters}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="tune" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <FilterModal
+        visible={showFilters}
+        onDismiss={toggleFilters}
+      />
 
       {/* Enhanced Map */}
       <MapView
@@ -1050,7 +993,7 @@ export default function MapScreen({ navigation }) {
         initialRegion={initialRegion}
         onRegionChangeComplete={handleRegionChangeComplete}
         onMapReady={handleMapReady}
-        showsUserLocation={true}
+        showsUserLocation={false}
         showsMyLocationButton={false}
         mapType={mapType}
         showsCompass={true}
@@ -1068,11 +1011,27 @@ export default function MapScreen({ navigation }) {
               latitude: location.latitude,
               longitude: location.longitude,
             }}
-            radius={10000} // 10km
-            strokeColor={themeColors.colors.primary}
+            radius={2000} // Adjusted radius for better visual match
+            strokeColor="#e8ee26"
             strokeWidth={2}
-            fillColor={`${themeColors.colors.primary}20`}
+            fillColor="rgba(232, 238, 38, 0.15)"
           />
+        )}
+
+        {/* Custom User Location Marker with Primary Brand Color */}
+        {location && (
+          <Marker
+            coordinate={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
+          >
+            <View style={styles.userLocationMarker}>
+              <View style={styles.userLocationDot} />
+            </View>
+          </Marker>
         )}
 
         {/* Enhanced Markers - STABLE VERSION */}
@@ -1105,29 +1064,22 @@ export default function MapScreen({ navigation }) {
                   longitude: lng
                 }}
                 onPress={() => handleMarkerPress(venue)}
-                title={venue.name}
-                description={`${venue.sports?.join(', ') || 'Sports'} - PKR ${venue.pricePerHour || venue.basePrice || 'N/A'}/hr`}
+                tracksViewChanges={false} // Optimization
               >
-                {/* Custom Pin Marker */}
-                <View style={styles.markerContainer}>
-                  <View style={[
-                    styles.markerPin,
-                    {
-                      backgroundColor: selectedVenue?.id === venue.id ? themeColors.colors.primary : themeColors.colors.secondary,
-                      borderColor: selectedVenue?.id === venue.id ? themeColors.colors.secondary : themeColors.colors.primary,
-                      transform: [{ scale: selectedVenue?.id === venue.id ? 1.2 : 1 }],
-                    }
-                  ]}>
-                    <MaterialIcons
-                      name="location-on"
-                      size={selectedVenue?.id === venue.id ? 22 : 18}
-                      color={selectedVenue?.id === venue.id ? themeColors.colors.secondary : themeColors.colors.primary}
-                    />
-                  </View>
-                  <View style={[
-                    styles.markerShadow,
-                    { opacity: selectedVenue?.id === venue.id ? 0.4 : 0.3 }
-                  ]} />
+                {/* Reference-style Dot Marker */}
+                <View style={[
+                  styles.dotMarker,
+                  selectedVenue?.id === venue.id && styles.selectedMarkerContainer
+                ]}>
+                  {selectedVenue?.id === venue.id ? (
+                    <View style={styles.selectedMarkerOuter}>
+                      <View style={styles.selectedMarkerInner}>
+                        <MaterialIcons name="navigation" size={16} color="white" style={{ transform: [{ rotate: '45deg' }] }} />
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.markerDot} />
+                  )}
                 </View>
               </Marker>
             );
@@ -1139,128 +1091,135 @@ export default function MapScreen({ navigation }) {
       </MapView>
 
       {/* Enhanced Selected Venue Card with Image */}
-      {loading && !selectedVenue && (
-        <Animated.View
-          style={[
-            styles.venueCardContainer,
-            {
-              transform: [{ translateY: cardSlideAnim }],
-              bottom: Platform.OS === 'android' ? 100 + insets.bottom : 100
-            }
-          ]}
-        >
-          <Surface style={styles.venueCard} elevation={8}>
-            <View style={styles.venueImageContainer}>
-              <SkeletonLoader width="100%" height={120} borderRadius={0} />
-            </View>
-            <View style={styles.venueContent}>
-              <View style={styles.venueHeader}>
-                <SkeletonLoader width="70%" height={18} borderRadius={4} />
-                <SkeletonLoader width={50} height={16} borderRadius={8} />
+      {/* Loading Skeleton for Carousel */}
+      {loading && (
+        <View style={styles.carouselContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselPadding}>
+            {[1, 2].map((i) => (
+              <View key={i} style={styles.newCarouselCard}>
+                <SkeletonLoader width="100%" height="52%" borderRadius={0} />
+                <View style={styles.newCardContent}>
+                  <View style={styles.newTitleRow}>
+                    <SkeletonLoader width="60%" height={22} borderRadius={4} />
+                    <SkeletonLoader width="25%" height={20} borderRadius={4} />
+                  </View>
+                  <SkeletonLoader width="80%" height={16} borderRadius={4} style={{ marginTop: 8 }} />
+                  <View style={[styles.newStatsRow, { marginTop: 12 }]}>
+                    <SkeletonLoader width="40%" height={18} borderRadius={4} />
+                  </View>
+                  <View style={styles.newFooterRow}>
+                    <SkeletonLoader width="50%" height={16} borderRadius={4} />
+                  </View>
+                </View>
               </View>
-              <SkeletonLoader width="90%" height={14} borderRadius={4} style={{ marginVertical: 8 }} />
-              <View style={styles.venueDetails}>
-                <SkeletonLoader width="40%" height={12} borderRadius={4} />
-                <SkeletonLoader width="30%" height={12} borderRadius={4} />
-              </View>
-              <View style={styles.venueAvailabilityContainer}>
-                <SkeletonLoader width="50%" height={14} borderRadius={4} />
-                <SkeletonLoader width="60%" height={12} borderRadius={4} />
-              </View>
-              <View style={styles.sportsContainer}>
-                <SkeletonLoader width={60} height={20} borderRadius={10} style={{ marginRight: 8 }} />
-                <SkeletonLoader width={50} height={20} borderRadius={10} style={{ marginRight: 8 }} />
-                <SkeletonLoader width={40} height={20} borderRadius={10} />
-              </View>
-            </View>
-            <SkeletonLoader width="100%" height={40} borderRadius={20} style={{ margin: 16 }} />
-          </Surface>
-        </Animated.View>
+            ))}
+          </ScrollView>
+        </View>
       )}
-      {/* Clean Modern Venue Card */}
-      {selectedVenue && (
-        <Animated.View
-          style={[
-            styles.venueCardContainer,
-            {
-              transform: [{ translateY: cardSlideAnim }],
-              bottom: Platform.OS === 'android' ? 100 + insets.bottom : 100
+      {/* New Horizontal Carousel */}
+      <View style={styles.carouselContainer}>
+        <Animated.FlatList
+          ref={flatListRef}
+          data={filteredVenues}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={width * 0.88} // card width + margin
+          decelerationRate="fast"
+          keyExtractor={(item) => item.id}
+          onMomentumScrollEnd={(event) => {
+            const index = Math.round(event.nativeEvent.contentOffset.x / (width * 0.88));
+            if (filteredVenues[index]) {
+              const venue = filteredVenues[index];
+              setSelectedVenue(venue);
+              // Center map on the venue from carousel swipe
+              const coordinates = venue.coordinates || getVenueCoordinatesSync(venue);
+              if (coordinates.isValid && mapRef.current) {
+                mapRef.current.animateToRegion({
+                  latitude: coordinates.latitude,
+                  longitude: coordinates.longitude,
+                  latitudeDelta: 0.008,
+                  longitudeDelta: 0.008,
+                }, 1000);
+              }
             }
-          ]}
-        >
-          <Surface style={styles.venueCard} elevation={6}>
-            {/* Venue Image */}
-            <TouchableOpacity
-              onPress={() => handleVenueSelect(selectedVenue)}
-              activeOpacity={0.9}
-              style={styles.cardTouchable}
-            >
-              <Image
-                source={
-                  selectedVenue.images && selectedVenue.images.length > 0
-                    ? (typeof selectedVenue.images[0] === 'string' ? { uri: selectedVenue.images[0] } : selectedVenue.images[0])
-                    : selectedVenue.image
-                      ? (typeof selectedVenue.image === 'string' ? { uri: selectedVenue.image } : selectedVenue.image)
-                      : require('../../images/football.jpg')
-                }
-                style={styles.cleanVenueImage}
-                resizeMode="cover"
-              />
+          }}
+          renderItem={({ item: venue }) => (
+            <Surface style={styles.newCarouselCard} elevation={4}>
+              <TouchableOpacity
+                onPress={() => handleVenueSelect(venue)}
+                activeOpacity={0.9}
+                style={styles.newCardInner}
+              >
+                {/* Image Section */}
+                <View style={styles.newImageWrapper}>
+                  <Image
+                    source={
+                      venue.images && venue.images.length > 0
+                        ? (typeof venue.images[0] === 'string' ? { uri: venue.images[0] } : venue.images[0])
+                        : venue.image
+                          ? (typeof venue.image === 'string' ? { uri: venue.image } : venue.image)
+                          : require('../../images/football.jpg')
+                    }
+                    style={styles.newCardImage}
+                    resizeMode="cover"
+                  />
 
-              {/* Venue Details */}
-              <View style={styles.cleanVenueInfo}>
-                <View style={styles.cleanHeaderRow}>
-                  <Text style={styles.cleanVenueName} numberOfLines={1}>
-                    {selectedVenue.name}
-                  </Text>
+                  {/* Favorite Button */}
+                  <TouchableOpacity
+                    style={styles.newFavoriteIcon}
+                    onPress={() => dispatch(toggleFavorite(venue))}
+                  >
+                    <MaterialIcons
+                      name={venue.isFavorite ? "favorite" : "favorite-border"}
+                      size={22}
+                      color={venue.isFavorite ? "#FF6B6B" : "#7D7D7D"}
+                    />
+                  </TouchableOpacity>
                 </View>
 
-                <Text style={styles.cleanAddress} numberOfLines={1}>
-                  {selectedVenue.area ? `${selectedVenue.area}, ${selectedVenue.city}` : selectedVenue.city || 'Unknown Location'}
-                </Text>
-
-                <View style={styles.cleanRatingRow}>
-                  <MaterialIcons name="star" size={14} color="#FFD700" />
-                  <Text style={styles.cleanRatingText}>
-                    {selectedVenue.rating ? selectedVenue.rating.toFixed(1) : 'New'}
-                    {selectedVenue.reviewCount ? ` (${selectedVenue.reviewCount} reviews)` : ''}
-                  </Text>
-                </View>
-
-                {/* Footer Info Row */}
-                <View style={styles.cleanFooterRow}>
-                  <View style={styles.infoItem}>
-                    <MaterialIcons name="directions-run" size={14} color="#5E35B1" />
-                    <Text style={styles.infoText}>01 hour</Text>
+                {/* Content Section */}
+                <View style={styles.newCardContent}>
+                  <View style={styles.newTitleRow}>
+                    <Text style={styles.newVenueName} numberOfLines={1}>{venue.name}</Text>
+                    <Text style={styles.newPrice}>
+                      PKR {venue.pricePerHour || venue.basePrice || 'N/A'}<Text style={styles.perHour}>/hr</Text>
+                    </Text>
                   </View>
 
-                  <View style={styles.infoItem}>
-                    <MaterialIcons name="location-on" size={14} color="#5E35B1" />
-                    <Text style={styles.infoText}>{selectedVenue.distance || '1.2 km'}</Text>
+                  <View style={styles.newAddressRow}>
+                    <MaterialIcons name="location-on" size={14} color="#7D7D7D" />
+                    <Text style={styles.newAddressText} numberOfLines={1}>
+                      {venue.address || venue.area || 'Lahore'}
+                    </Text>
                   </View>
 
+                  <View style={styles.newStatsRow}>
+                    <Text style={styles.ratingLabel}>{venue.rating?.toFixed(1) || '5.0'}</Text>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <MaterialIcons
+                        key={star}
+                        name="star"
+                        size={16}
+                        color={star <= (venue.rating || 5) ? "#FFD700" : "#E0E0E0"}
+                      />
+                    ))}
+                    <Text style={styles.reviewsLabel}>({venue.reviewCount || 0} Reviews)</Text>
+                  </View>
 
+                  <View style={styles.newFooterRow}>
+                    <View style={styles.newTag}>
+                      <MaterialIcons name="directions-run" size={14} color="#7D7D7D" />
+                      <Text style={styles.newTagText}>{venue.distance || '3.5 km'}/50min</Text>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Favorite Button - Positioned Absolutely */}
-            <TouchableOpacity
-              style={styles.absoluteHeartButton}
-              onPress={() => {
-                console.log('❤️ Favorite button pressed for:', selectedVenue.name);
-                dispatch(toggleFavorite(selectedVenue));
-              }}
-            >
-              <MaterialIcons
-                name={selectedVenue.isFavorite ? "favorite" : "favorite-border"}
-                size={24}
-                color={selectedVenue.isFavorite ? "#FF6B6B" : "#757575"}
-              />
-            </TouchableOpacity>
-          </Surface>
-        </Animated.View>
-      )}
+              </TouchableOpacity>
+            </Surface>
+          )}
+          contentContainerStyle={styles.carouselPadding}
+        />
+      </View>
 
       {/* Location FAB - Center on User Location */}
       {hasLocationPermission && location && (
@@ -1272,9 +1231,7 @@ export default function MapScreen({ navigation }) {
             styles.locationFab,
             {
               backgroundColor: themeColors.colors.primary,
-              bottom: selectedVenue
-                ? (Platform.OS === 'android' ? 260 : 250)
-                : (Platform.OS === 'android' ? 180 : 160)
+              bottom: Platform.OS === 'android' ? 380 : 370
             }
           ]}
           color={themeColors.colors.secondary}
@@ -1296,31 +1253,106 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  markerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 50,
-    height: 50,
+  dotMarker: {
+    padding: 5,
   },
-  markerPin: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 3,
+  markerDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#7D7D7D',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  userLocationMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 77, 67, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  userLocationDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#004d43',
+    borderWidth: 3,
+    borderColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 5,
   },
-  markerShadow: {
-    width: 20,
-    height: 8,
-    borderRadius: 10,
-    backgroundColor: '#000',
-    marginTop: -4,
+  selectedMarkerContainer: {
+    zIndex: 100,
+  },
+  selectedMarkerOuter: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(125, 125, 125, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedMarkerInner: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#7D7D7D',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  newHeaderContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    paddingHorizontal: 20,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  newSearchSurface: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    height: 56,
+    paddingHorizontal: 12,
+  },
+  newSearchIcon: {
+    marginRight: 4,
+  },
+  newSearchInputStyle: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    height: 56,
+  },
+  newTextInput: {
+    fontSize: 16,
+    fontFamily: 'Montserrat_400Regular',
+    marginLeft: -10,
+  },
+  filterSquareButton: {
+    width: 56,
+    height: 56,
+    backgroundColor: '#7D7D7D',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   floatingSearchContainer: {
     position: 'absolute',
@@ -1696,10 +1728,299 @@ const styles = StyleSheet.create({
   locationFab: {
     position: 'absolute',
     right: 20,
+    bottom: 350, // Positioned above the carousel
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    height: height * 0.85,
+    paddingTop: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  closeModalButton: {
+    padding: 8,
+  },
+  modalHeaderTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#212121',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  filterScrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  filterSection: {
+    marginBottom: 32,
+  },
+  filterSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#212121',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 16,
+  },
+  filterChipsRow: {
+    flexDirection: 'row',
+    marginHorizontal: -5,
+  },
+  filterChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    backgroundColor: '#F5F5F5',
+    marginHorizontal: 5,
+    marginBottom: 10,
+  },
+  activeFilterChip: {
+    backgroundColor: '#3D79F2', // Blue as in the reference
+  },
+  filterChipText: {
+    fontSize: 14,
+    color: '#7D7D7D',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  activeFilterChipText: {
+    color: 'white',
+  },
+  priceLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  priceRangeLabel: {
+    fontSize: 12,
+    color: '#7D7D7D',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  priceSimpleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -5,
+  },
+  priceChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    marginHorizontal: 5,
+    marginBottom: 10,
+  },
+  ratingFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  ratingFilterText: {
+    fontSize: 16,
+    color: '#212121',
+    fontFamily: 'Montserrat_500Medium',
+    marginRight: 12,
+  },
+  radioButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#3D79F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioButtonInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#3D79F2',
+  },
+  sportsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -5,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    gap: 15,
+  },
+  resetFilterButton: {
+    flex: 1,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  resetFilterText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3D79F2',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  applyFilterButton: {
+    flex: 1,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#3D79F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  applyFilterText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  carouselContainer: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 40 : 30,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+  },
+  carouselPadding: {
+    paddingHorizontal: 16,
+  },
+  newCarouselCard: {
+    width: width * 0.84,
+    height: 310,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    marginHorizontal: width * 0.02,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  newCardInner: {
+    flex: 1,
+  },
+  newImageWrapper: {
+    width: '100%',
+    height: '52%',
+    position: 'relative',
+  },
+  newCardImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F5F5F5',
+  },
+  newFavoriteIcon: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'white',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  newCardContent: {
+    padding: 16,
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  newTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  newVenueName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#212121',
+    fontFamily: 'Montserrat_700Bold',
+    flex: 1,
+    marginRight: 10,
+  },
+  newPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#424242',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  perHour: {
+    fontSize: 12,
+    color: '#7D7D7D',
+    fontWeight: '400',
+  },
+  newAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 4,
+  },
+  newAddressText: {
+    fontSize: 14,
+    color: '#7D7D7D',
+    fontFamily: 'Montserrat_400Regular',
+    flex: 1,
+  },
+  newStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 4,
+  },
+  ratingLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#212121',
+    fontFamily: 'Montserrat_700Bold',
+    marginRight: 2,
+  },
+  reviewsLabel: {
+    fontSize: 12,
+    color: '#7D7D7D',
+    fontFamily: 'Montserrat_400Regular',
+    marginLeft: 4,
+  },
+  newFooterRow: {
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  newTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  newTagText: {
+    fontSize: 13,
+    color: '#424242',
+    fontFamily: 'Montserrat_500Medium',
   },
 });

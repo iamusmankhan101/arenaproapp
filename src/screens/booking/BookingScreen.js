@@ -29,7 +29,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 export default function BookingScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [selectedTab, setSelectedTab] = useState('all');
+  const [selectedTab, setSelectedTab] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
@@ -108,6 +108,7 @@ export default function BookingScreen({ navigation }) {
         });
         break;
       case 'past':
+      case 'completed':
         filtered = bookings.filter(booking => {
           // Handle both dateTime and separate date/time fields
           let bookingDate;
@@ -116,32 +117,15 @@ export default function BookingScreen({ navigation }) {
           } else if (booking.date && booking.startTime) {
             bookingDate = safeDate(`${booking.date}T${booking.startTime}:00`);
           } else {
-            console.warn('📱 BOOKING_SCREEN: Booking missing date/time info:', booking);
-            return true; // Show in past if we can't determine time
+            return true;
           }
 
           const isPast = bookingDate <= now || booking.status === 'completed';
-          console.log('📱 BOOKING_SCREEN: Checking past booking:', {
-            id: booking.id,
-            dateTime: booking.dateTime,
-            calculatedDate: bookingDate.toISOString(),
-            status: booking.status,
-            isPast,
-            timeDiff: (bookingDate - now) / (1000 * 60 * 60) // hours
-          });
-          return isPast;
+          return isPast && booking.status !== 'cancelled';
         });
         break;
       case 'cancelled':
-        filtered = bookings.filter(booking => {
-          const isCancelled = booking.status === 'cancelled';
-          console.log('📱 BOOKING_SCREEN: Checking cancelled booking:', {
-            id: booking.id,
-            status: booking.status,
-            isCancelled
-          });
-          return isCancelled;
-        });
+        filtered = bookings.filter(booking => booking.status === 'cancelled');
         break;
       default:
         filtered = bookings;
@@ -238,77 +222,60 @@ export default function BookingScreen({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: Platform.OS === 'android' ? insets.bottom + 60 : 0 }]}>
-      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar backgroundColor="transparent" barStyle="dark-content" translucent />
 
-      {/* Enhanced Header with Gradient */}
-      <SafeAreaView style={[styles.header, { backgroundColor: theme.colors.primary }]}>
-        <View style={styles.headerContent}>
-          <Text style={styles.title}>My Bookings</Text>
-          <Text style={styles.subtitle}>Manage your ground reservations</Text>
-        </View>
-
-        {/* Simplified Quick Stats */}
-        <View style={styles.quickStats}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{stats.upcoming}</Text>
-            <Text style={styles.statLabel}>Upcoming</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{stats.total}</Text>
-            <Text style={styles.statLabel}>Total</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>₨{stats.totalSpent.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Spent</Text>
-          </View>
-        </View>
-      </SafeAreaView>
+      {/* New Clean White Header */}
+      <View style={[styles.whiteHeader, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity
+          style={styles.circularBackButton}
+          onPress={() => navigation.goBack()}
+        >
+          <MaterialIcons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.centeredTitle}>My Bookings</Text>
+        <View style={{ width: 44 }} /> {/* Balance the flex row */}
+      </View>
 
       <View style={styles.content}>
+        {/* Horizontal Custom Tab Bar */}
+        <View style={styles.customTabBar}>
+          {[
+            { id: 'upcoming', label: 'Upcoming' },
+            { id: 'completed', label: 'Completed' },
+            { id: 'cancelled', label: 'Cancelled' }
+          ].map((tab) => (
+            <TouchableOpacity
+              key={tab.id}
+              style={[
+                styles.tabItem,
+                selectedTab === tab.id && styles.activeTabItem
+              ]}
+              onPress={() => setSelectedTab(tab.id)}
+            >
+              <Text style={[
+                styles.tabLabel,
+                selectedTab === tab.id && styles.activeTabLabel
+              ]}>
+                {tab.label}
+              </Text>
+              {selectedTab === tab.id && <View style={styles.activeTabIndicator} />}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Separator line like in reference */}
+        <View style={styles.tabSeparator} />
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Searchbar
-            placeholder="Search bookings..."
+            placeholder="Search venues..."
             onChangeText={setSearchQuery}
             value={searchQuery}
             style={styles.searchbar}
-            iconColor={theme.colors.primary}
+            iconColor="#999"
             inputStyle={styles.searchInput}
             elevation={0}
-          />
-        </View>
-
-        {/* Tab Navigation */}
-        <View style={styles.tabContainer}>
-          <SegmentedButtons
-            value={selectedTab}
-            onValueChange={setSelectedTab}
-            buttons={[
-              {
-                value: 'all',
-                label: 'All',
-                icon: () => <MaterialIcons name="list" size={18} color={selectedTab === 'all' ? theme.colors.primary : '#666'} />
-              },
-              {
-                value: 'upcoming',
-                label: 'Upcoming',
-                icon: () => <MaterialIcons name="schedule" size={18} color={selectedTab === 'upcoming' ? theme.colors.primary : '#666'} />
-              },
-              {
-                value: 'past',
-                label: 'Past',
-                icon: () => <MaterialIcons name="history" size={18} color={selectedTab === 'past' ? theme.colors.primary : '#666'} />
-              },
-              {
-                value: 'cancelled',
-                label: 'Cancelled',
-                icon: () => <MaterialIcons name="cancel" size={18} color={selectedTab === 'cancelled' ? theme.colors.primary : '#666'} />
-              },
-            ]}
-            style={styles.segmentedButtons}
           />
         </View>
 
@@ -371,59 +338,69 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
-  header: {
-    paddingBottom: 24,
-    paddingHorizontal: 20,
-    paddingLeft: 32,
-  },
-  headerContent: {
-    marginBottom: 20,
-    paddingLeft: 20,
-    paddingTop: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-    marginTop: 4,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  quickStats: {
+  whiteHeader: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
-    padding: 20,
-    marginHorizontal: 20,
-    marginBottom: 16,
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    backgroundColor: 'white',
+    paddingBottom: 16,
   },
-  statItem: {
+  circularBackButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'white',
+    justifyContent: 'center',
     alignItems: 'center',
-    flex: 1,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
-  statNumber: {
+  centeredTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: '700',
+    color: '#333',
+    fontFamily: 'Montserrat_700Bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  customTabBar: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    paddingHorizontal: 10,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    position: 'relative',
+  },
+  tabLabel: {
+    fontSize: 16,
+    color: '#757575',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  activeTabLabel: {
+    color: '#004d43',
     fontFamily: 'Montserrat_700Bold',
   },
-  statLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.9)',
-    marginTop: 4,
-    fontFamily: 'Montserrat_500Medium',
+  activeTabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: '20%',
+    right: '20%',
+    height: 3,
+    backgroundColor: '#004d43',
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    marginHorizontal: 8,
+  tabSeparator: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    width: '100%',
   },
   content: {
     flex: 1,
@@ -431,33 +408,15 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingVertical: 16,
   },
   searchbar: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
   },
   searchInput: {
     fontFamily: 'Montserrat_400Regular',
-  },
-  tabContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  segmentedButtons: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    fontSize: 14,
   },
   resultsContainer: {
     paddingHorizontal: 20,

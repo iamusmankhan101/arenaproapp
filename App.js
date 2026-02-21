@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'react-native';
 import { useFonts, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -27,13 +28,22 @@ try {
 
 export default function App() {
   let [fontsLoaded, fontError] = useFonts({
+    // Montserrat - Secondary font for body text
     Montserrat_400Regular,
     Montserrat_500Medium,
     Montserrat_600SemiBold,
     Montserrat_700Bold,
+    // ClashDisplay - Primary font for headings/titles
+    'ClashDisplay-Regular': require('./assets/fonts/ClashDisplay-Regular.otf'),
+    'ClashDisplay-Medium': require('./assets/fonts/ClashDisplay-Medium.otf'),
+    'ClashDisplay-Semibold': require('./assets/fonts/ClashDisplay-Semibold.otf'),
+    'ClashDisplay-Bold': require('./assets/fonts/ClashDisplay-Bold.otf'),
   });
 
   useEffect(() => {
+    // Set default status bar style
+    StatusBar.setBarStyle('dark-content', true);
+    
     async function prepare() {
       try {
         // Keep the splash screen visible while we fetch resources

@@ -1,14 +1,29 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Modal, Portal, Text, Button, Card, Switch, Chip } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Platform } from 'react-native';
+import { Modal, Portal, Text, Surface, Divider } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { setFilters } from '../store/slices/turfSlice';
-import { SportsIcon } from './SportsIcons';
+import { MaterialIcons } from '@expo/vector-icons';
+import { theme } from '../theme/theme';
+import RangeSlider from './RangeSlider';
+
+const { width, height } = Dimensions.get('window');
+
+const availableSports = ['All', 'Cricket', 'Futsal', 'Padel'];
+const sortOptions = ['All', 'Popular', 'Near by', 'Price Low to High'];
+const ratingOptions = [4.5, 4.0, 3.5, 3.0, 2.5];
 
 export default function FilterModal({ visible, onDismiss }) {
   const dispatch = useDispatch();
   const { filters } = useSelector(state => state.turf);
   const [localFilters, setLocalFilters] = useState(filters);
+
+  // Sync with redux filters when modal opens
+  useEffect(() => {
+    if (visible) {
+      setLocalFilters(filters);
+    }
+  }, [visible, filters]);
 
   const handleApplyFilters = () => {
     dispatch(setFilters(localFilters));
@@ -20,99 +35,173 @@ export default function FilterModal({ visible, onDismiss }) {
       hasFloodlights: false,
       surfaceType: 'all',
       hasGenerator: false,
-      priceRange: [0, 5000],
-      sports: [],
+      priceRange: [0, 10000],
+      sortBy: 'All',
+      minRating: 0,
+      sports: ['All'],
     };
     setLocalFilters(resetFilters);
-    dispatch(setFilters(resetFilters));
   };
 
   const handleSportToggle = (sport) => {
-    const currentSports = localFilters.sports || [];
-    const updatedSports = currentSports.includes(sport)
-      ? currentSports.filter(s => s !== sport)
-      : [...currentSports, sport];
+    let updatedSports = [...localFilters.sports];
+
+    if (sport === 'All') {
+      updatedSports = ['All'];
+    } else {
+      // Remove 'All' if selecting a specific sport
+      updatedSports = updatedSports.filter(s => s !== 'All');
+
+      if (updatedSports.includes(sport)) {
+        updatedSports = updatedSports.filter(s => s !== sport);
+        // If nothing selected, default back to 'All'
+        if (updatedSports.length === 0) updatedSports = ['All'];
+      } else {
+        updatedSports.push(sport);
+      }
+    }
 
     setLocalFilters({ ...localFilters, sports: updatedSports });
   };
 
-  const availableSports = ['Cricket', 'Football', 'Futsal', 'Padel'];
-
   return (
     <Portal>
       <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modal}>
-        <Card>
-          <Card.Content>
-            <Text variant="headlineSmall" style={styles.title}>
-              Filter Turfs
-            </Text>
+        <Surface style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onDismiss} style={styles.closeButton}>
+              <MaterialIcons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Filters</Text>
+            <TouchableOpacity onPress={handleResetFilters}>
+              <Text style={styles.resetText}>Reset</Text>
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.filterSection}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                Facilities
-              </Text>
-
-              <View style={styles.switchRow}>
-                <Text>Floodlights Available</Text>
-                <Switch
-                  value={localFilters.hasFloodlights}
-                  onValueChange={(value) =>
-                    setLocalFilters({ ...localFilters, hasFloodlights: value })
-                  }
-                />
-              </View>
-
-              <View style={styles.switchRow}>
-                <Text>Generator Backup</Text>
-                <Switch
-                  value={localFilters.hasGenerator}
-                  onValueChange={(value) =>
-                    setLocalFilters({ ...localFilters, hasGenerator: value })
-                  }
-                />
-              </View>
-            </View>
-
-            <View style={styles.filterSection}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                Surface Type
-              </Text>
-
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
+            {/* Sort By */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Sort by</Text>
               <View style={styles.chipRow}>
-                <Chip
-                  selected={localFilters.surfaceType === 'all'}
-                  onPress={() => setLocalFilters({ ...localFilters, surfaceType: 'all' })}
-                  style={styles.chip}
-                >
-                  All
-                </Chip>
-                <Chip
-                  selected={localFilters.surfaceType === 'astroturf'}
-                  onPress={() => setLocalFilters({ ...localFilters, surfaceType: 'astroturf' })}
-                  style={styles.chip}
-                >
-                  AstroTurf
-                </Chip>
-                <Chip
-                  selected={localFilters.surfaceType === 'cement'}
-                  onPress={() => setLocalFilters({ ...localFilters, surfaceType: 'cement' })}
-                  style={styles.chip}
-                >
-                  Cement
-                </Chip>
+                {sortOptions.map(option => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.chip,
+                      localFilters.sortBy === option && styles.activeChip
+                    ]}
+                    onPress={() => setLocalFilters({ ...localFilters, sortBy: option })}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      localFilters.sortBy === option && styles.activeChipText
+                    ]}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
-            <View style={styles.buttons}>
-              <Button mode="outlined" onPress={handleResetFilters} style={styles.button}>
-                Reset
-              </Button>
-              <Button mode="contained" onPress={handleApplyFilters} style={styles.button}>
-                Apply Filters
-              </Button>
+            {/* Price Range */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Price Range (PKR)</Text>
+              <RangeSlider
+                min={0}
+                max={10000}
+                step={500}
+                initialRange={localFilters.priceRange}
+                onRangeChange={(range) => setLocalFilters({ ...localFilters, priceRange: range })}
+              />
             </View>
-          </Card.Content>
-        </Card>
+
+            {/* Sports */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Sports</Text>
+              <View style={styles.chipRow}>
+                {availableSports.map(sport => (
+                  <TouchableOpacity
+                    key={sport}
+                    style={[
+                      styles.chip,
+                      localFilters.sports.includes(sport) && styles.activeChip
+                    ]}
+                    onPress={() => handleSportToggle(sport)}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      localFilters.sports.includes(sport) && styles.activeChipText
+                    ]}>
+                      {sport}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Minimum Rating */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Minimum Rating</Text>
+              {ratingOptions.map(rating => (
+                <TouchableOpacity
+                  key={rating}
+                  style={styles.ratingRow}
+                  onPress={() => setLocalFilters({ ...localFilters, minRating: rating })}
+                >
+                  <View style={styles.starsContainer}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <MaterialIcons
+                        key={s}
+                        name="star"
+                        size={20}
+                        color={s <= Math.floor(rating) ? "#FFD700" : "#E0E0E0"}
+                      />
+                    ))}
+                    <Text style={styles.ratingLabel}>{rating} & up</Text>
+                  </View>
+                  <View style={[
+                    styles.radio,
+                    localFilters.minRating === rating && styles.radioActive
+                  ]}>
+                    {localFilters.minRating === rating && <View style={styles.radioInner} />}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Amenities / Facilities */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Facilities</Text>
+              <View style={styles.chipRow}>
+                <TouchableOpacity
+                  style={[styles.chip, localFilters.hasFloodlights && styles.activeChip]}
+                  onPress={() => setLocalFilters({ ...localFilters, hasFloodlights: !localFilters.hasFloodlights })}
+                >
+                  <Text style={[styles.chipText, localFilters.hasFloodlights && styles.activeChipText]}>Floodlights</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.chip, localFilters.hasGenerator && styles.activeChip]}
+                  onPress={() => setLocalFilters({ ...localFilters, hasGenerator: !localFilters.hasGenerator })}
+                >
+                  <Text style={[styles.chipText, localFilters.hasGenerator && styles.activeChipText]}>Generator</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={{ height: 100 }} />
+          </ScrollView>
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={handleApplyFilters}
+            >
+              <Text style={styles.applyButtonText}>Apply Filters</Text>
+            </TouchableOpacity>
+          </View>
+        </Surface>
       </Modal>
     </Portal>
   );
@@ -120,49 +209,155 @@ export default function FilterModal({ visible, onDismiss }) {
 
 const styles = StyleSheet.create({
   modal: {
-    margin: 20,
-    maxHeight: '80%',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    margin: 0,
   },
-  title: {
-    textAlign: 'center',
-    marginBottom: 20,
+  container: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: height * 0.85,
+    paddingTop: 8,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#004d43',
-    fontWeight: 'bold',
     fontFamily: 'Montserrat_700Bold',
   },
-  filterSection: {
-    marginBottom: 20,
+  closeButton: {
+    padding: 4,
+  },
+  resetText: {
+    color: '#004d43',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  content: {
+    padding: 20,
+  },
+  section: {
+    marginBottom: 25,
   },
   sectionTitle: {
-    marginBottom: 12,
-    fontWeight: 'bold',
-    fontFamily: 'Montserrat_600SemiBold',
     fontSize: 16,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingVertical: 4,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 15,
+    fontFamily: 'Montserrat_700Bold',
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    marginHorizontal: -5,
   },
   chip: {
-    marginRight: 8,
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    marginHorizontal: 5,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  buttons: {
+  activeChip: {
+    backgroundColor: '#004d43',
+    borderColor: '#004d43',
+  },
+  chipText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  activeChipText: {
+    color: '#e8ee26', // Brand lime
+  },
+  priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 24,
-    gap: 12,
+    marginBottom: 12,
   },
-  button: {
-    flex: 1,
+  priceValue: {
+    fontSize: 14,
+    color: '#004d43',
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F8F8',
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingLabel: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioActive: {
+    borderColor: '#004d43',
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#004d43',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  applyButton: {
+    backgroundColor: '#004d43',
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  applyButtonText: {
+    color: '#e8ee26', // Brand lime
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
   },
 });

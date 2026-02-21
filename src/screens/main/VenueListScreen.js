@@ -16,10 +16,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Icon } from '../../components/Icons';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
 import SkeletonLoader from '../../components/SkeletonLoader';
+import FilterModal from '../../components/FilterModal';
 
 const { width } = Dimensions.get('window');
 
-const sportCategories = ['All', 'Cricket', 'Football', 'Padel', 'Futsal'];
+const sportCategories = ['All', 'Cricket', 'Futsal', 'Padel'];
 
 export default function VenueListScreen({ navigation, route }) {
   const dispatch = useDispatch();
@@ -28,8 +29,8 @@ export default function VenueListScreen({ navigation, route }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredVenues, setFilteredVenues] = useState([]);
 
-  const { user } = useSelector(state => state.auth);
-  const { nearbyTurfs, loading } = useSelector(state => state.turf);
+  const { nearbyTurfs, loading, filters: reduxFilters } = useSelector(state => state.turf);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Load venues on component mount
   useEffect(() => {
@@ -51,14 +52,13 @@ export default function VenueListScreen({ navigation, route }) {
     }
   }, [route.params]);
 
-  // Filter venues based on search and category
+  // Filter venues based on search, category, and Redux filters
   useEffect(() => {
     let filtered = nearbyTurfs;
 
-    // Filter by category
+    // Filter by category (horizontal chips)
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(venue => {
-        // Handle different sports data structures
         if (Array.isArray(venue.sports)) {
           return venue.sports.some(sport => sport.toLowerCase() === selectedCategory.toLowerCase());
         } else if (typeof venue.sports === 'string') {
@@ -69,6 +69,25 @@ export default function VenueListScreen({ navigation, route }) {
         return false;
       });
     }
+
+    // Filter by additional Redux filters (from modal)
+    if (!reduxFilters.sports.includes('All')) {
+      filtered = filtered.filter(venue =>
+        venue.sports && venue.sports.some(s => reduxFilters.sports.includes(s))
+      );
+    }
+
+    // Price range filter
+    filtered = filtered.filter(venue => {
+      const venuePrice = venue.pricePerHour || venue.basePrice || 0;
+      return venuePrice >= reduxFilters.priceRange[0] && venuePrice <= reduxFilters.priceRange[1];
+    });
+
+    // Rating filter
+    filtered = filtered.filter(venue => {
+      const venueRating = venue.rating || 5;
+      return venueRating >= reduxFilters.minRating;
+    });
 
     // Filter by search query
     if (searchQuery.trim() !== '') {
@@ -82,8 +101,15 @@ export default function VenueListScreen({ navigation, route }) {
       );
     }
 
+    // Sorting logic
+    if (reduxFilters.sortBy === 'Popular') {
+      filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (reduxFilters.sortBy === 'Price Low to High') {
+      filtered.sort((a, b) => (a.pricePerHour || 0) - (b.pricePerHour || 0));
+    }
+
     setFilteredVenues(filtered);
-  }, [searchQuery, selectedCategory, nearbyTurfs]);
+  }, [searchQuery, selectedCategory, nearbyTurfs, reduxFilters]);
 
   // Helper function to get default image based on sport
   const getDefaultImage = (sport) => {
@@ -185,12 +211,15 @@ export default function VenueListScreen({ navigation, route }) {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')}
         >
           <Icon name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>All Venues</Text>
-        <TouchableOpacity style={styles.filterButton}>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowFilters(true)}
+        >
           <Icon name="tune" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -237,6 +266,11 @@ export default function VenueListScreen({ navigation, route }) {
           {loading ? 'Loading venues...' : `${filteredVenues.length} venues found`}
         </Text>
       </View>
+
+      <FilterModal
+        visible={showFilters}
+        onDismiss={() => setShowFilters(false)}
+      />
 
       {/* Venues List */}
       {loading ? (

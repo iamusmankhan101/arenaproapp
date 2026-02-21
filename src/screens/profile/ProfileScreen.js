@@ -1,28 +1,24 @@
 import React, { useState } from 'react';
-
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Modal, Image, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  Image,
+  Platform,
+  StatusBar
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Avatar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
-import {
-  User,
-  Mail,
-  Phone,
-  Home,
-  Edit,
-  Settings,
-  Lock,
-  Heart,
-  LogOut,
-  ChevronRight
-} from '../../components/LucideIcons';
+import { MaterialIcons } from '@expo/vector-icons';
+import { theme } from '../../theme/theme';
 
 export default function ProfileScreen({ navigation }) {
   const dispatch = useDispatch();
   const { user, loading } = useSelector(state => state.auth);
-
-  const [contactModalVisible, setContactModalVisible] = useState(false);
   const insets = useSafeAreaInsets();
 
   if (loading) {
@@ -36,18 +32,18 @@ export default function ProfileScreen({ navigation }) {
   const userData = user || {
     fullName: 'Guest User',
     email: 'guest@example.com',
-    phone: '+1 234 567 890',
-    address: '123 Main St, City, Country'
+    phoneNumber: '+92 300 1234567',
+    city: 'Lahore'
   };
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      'Log Out',
+      'Are you sure you want to log out?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Logout',
+          text: 'Log Out',
           style: 'destructive',
           onPress: () => dispatch(logout())
         }
@@ -55,32 +51,32 @@ export default function ProfileScreen({ navigation }) {
     );
   };
 
-  const InfoRow = ({ icon: IconComponent, label, value }) => (
-    <View style={styles.infoRow}>
-      <View style={styles.iconContainer}>
-        <IconComponent size={24} color="#004d43" />
-      </View>
-      <View style={styles.infoTextContainer}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{value || 'Not set'}</Text>
-      </View>
-    </View>
-  );
-
-  const MenuRow = ({ icon: IconComponent, title, onPress, showChevron = true, color = "#333" }) => (
-    <TouchableOpacity style={styles.menuRow} onPress={onPress} activeOpacity={0.7}>
+  const MenuItem = ({ icon, title, onPress, showChevron = true, isLogout = false }) => (
+    <TouchableOpacity
+      style={[styles.menuItem, isLogout && styles.logoutItem]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.menuLeft}>
-        <View style={styles.menuIconContainer}>
-          <IconComponent size={22} color={color === "#333" ? "#004d43" : color} />
+        <View style={[styles.menuIconContainer, isLogout && styles.logoutIconContainer]}>
+          <MaterialIcons
+            name={icon}
+            size={22}
+            color={isLogout ? '#FF3B30' : theme.colors.primary}
+          />
         </View>
-        <Text style={[styles.menuTitle, { color }]}>{title}</Text>
+        <Text style={[styles.menuTitle, isLogout && styles.logoutTitle]}>{title}</Text>
       </View>
-      {showChevron && <ChevronRight size={20} color="#ccc" />}
+      {showChevron && (
+        <MaterialIcons name="chevron-right" size={24} color="#C7C7CC" />
+      )}
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -88,156 +84,135 @@ export default function ProfileScreen({ navigation }) {
         ]}
         showsVerticalScrollIndicator={false}
       >
-
         {/* Header */}
         <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <MaterialIcons name="arrow-back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
+          <View style={styles.headerRight} />
         </View>
 
-        {/* Avatar Section */}
-        <View style={styles.avatarSection}>
+        {/* Profile Avatar & Name */}
+        <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
             {userData?.photoURL ? (
-              <View style={[styles.avatar, { overflow: 'hidden', borderRadius: 50, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }]}>
-                <Image
-                  source={{ uri: userData.photoURL }}
-                  style={{ width: 100, height: 100 }}
-                />
-              </View>
+              <Image
+                source={{ uri: userData.photoURL }}
+                style={styles.avatarImage}
+              />
             ) : (
               <Avatar.Text
-                size={100}
+                size={120}
                 label={userData?.fullName?.charAt(0) || 'U'}
                 style={styles.avatar}
                 labelStyle={styles.avatarLabel}
+                color={theme.colors.secondary}
               />
             )}
             <TouchableOpacity
               style={styles.editAvatarButton}
               onPress={() => navigation.navigate('ManageProfile')}
             >
-              <Edit size={16} color="#004d43" />
+              <MaterialIcons name="edit" size={18} color="#FFFFFF" />
             </TouchableOpacity>
+          </View>
+          <Text style={styles.userName}>{userData.fullName}</Text>
+        </View>
+
+        {/* Personal Info Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Personal Info</Text>
+          <View style={styles.card}>
+            <View style={styles.infoRow}>
+              <View style={styles.infoLeft}>
+                <MaterialIcons name="person" size={20} color={theme.colors.textSecondary} />
+                <Text style={styles.infoLabel}>Name</Text>
+              </View>
+              <Text style={styles.infoValue}>{userData.fullName}</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <View style={styles.infoLeft}>
+                <MaterialIcons name="email" size={20} color={theme.colors.textSecondary} />
+                <Text style={styles.infoLabel}>Email</Text>
+              </View>
+              <Text style={styles.infoValue} numberOfLines={1}>
+                {userData.email}
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <View style={styles.infoLeft}>
+                <MaterialIcons name="phone" size={20} color={theme.colors.textSecondary} />
+                <Text style={styles.infoLabel}>Phone</Text>
+              </View>
+              <Text style={styles.infoValue}>
+                {userData.phoneNumber || 'Not set'}
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <View style={styles.infoLeft}>
+                <MaterialIcons name="location-city" size={20} color={theme.colors.textSecondary} />
+                <Text style={styles.infoLabel}>City</Text>
+              </View>
+              <Text style={styles.infoValue}>
+                {userData.city || 'Not set'}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Personal Info Card */}
-        <View style={styles.sectionCard}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Personal info</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('ManageProfile')}>
-              <Text style={styles.editButtonText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
+        {/* Account Info Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account Info</Text>
+          <View style={styles.card}>
+            <MenuItem
+              icon="person"
+              title="Edit Profile"
+              onPress={() => navigation.navigate('ManageProfile')}
+            />
 
-          <View style={styles.cardContent}>
-            <InfoRow
-              icon={User}
-              label="Name"
-              value={userData.fullName}
-            />
-            <InfoRow
-              icon={Mail}
-              label="E-mail"
-              value={userData.email}
-            />
-            <InfoRow
-              icon={Phone}
-              label="Phone number"
-              value={userData.phone || user?.phoneNumber}
-            />
-            <InfoRow
-              icon={Home}
-              label="Home address"
-              value={userData.address}
-            />
-          </View>
-        </View>
+            <View style={styles.divider} />
 
-        {/* Account Info Card */}
-        <View style={styles.sectionCard}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Account info</Text>
-          </View>
-
-          <View style={styles.cardContent}>
-            <MenuRow
-              icon={Heart}
-              title="My Favourites"
+            <MenuItem
+              icon="favorite"
+              title="My Favorites"
               onPress={() => navigation.navigate('Favorites')}
             />
-            <MenuRow
-              icon={Lock}
+
+            <View style={styles.divider} />
+
+            <MenuItem
+              icon="lock"
               title="Password & Security"
               onPress={() => navigation.navigate('PasswordSecurity')}
             />
-            {/* 
-              // Removed "Contact Us" to make it cleaner or keep it if needed. 
-              // Re-adding it as it was in original.
-            */}
-            <MenuRow
-              icon={Phone}
-              title="Contact Us"
-              onPress={() => setContactModalVisible(true)}
-            />
-            <MenuRow
-              icon={LogOut}
-              title="Logout"
-              color="#ff4444"
-              showChevron={false}
-              onPress={handleLogout}
-            />
           </View>
         </View>
 
-        <View style={styles.bottomSpacing} />
-
-        {/* Contact Us Modal */}
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={contactModalVisible}
-          onRequestClose={() => setContactModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Contact Support</Text>
-                <TouchableOpacity onPress={() => setContactModalVisible(false)} style={styles.closeButton}>
-                  <Text style={styles.closeButtonText}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.contactItem}>
-                <View style={styles.contactIconCircle}>
-                  <Phone size={20} color="#004d43" />
-                </View>
-                <View>
-                  <Text style={styles.contactLabel}>Phone</Text>
-                  <Text style={styles.contactValue}>03390078965</Text>
-                </View>
-              </View>
-
-              <View style={styles.contactItem}>
-                <View style={styles.contactIconCircle}>
-                  <Mail size={20} color="#004d43" />
-                </View>
-                <View>
-                  <Text style={styles.contactLabel}>Email</Text>
-                  <Text style={styles.contactValue}>support@arenapro.pk</Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={styles.modalCloseBtn}
-                onPress={() => setContactModalVisible(false)}
-              >
-                <Text style={styles.modalCloseBtnText}>Close</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Log Out */}
+        <View style={styles.section}>
+          <View style={styles.card}>
+            <MenuItem
+              icon="logout"
+              title="Log Out"
+              onPress={handleLogout}
+              showChevron={false}
+              isLogout={true}
+            />
           </View>
-        </Modal>
-
+        </View>
       </ScrollView>
     </View>
   );
@@ -246,7 +221,7 @@ export default function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA', // Light grey background
+    backgroundColor: theme.colors.background,
   },
   centered: {
     justifyContent: 'center',
@@ -256,194 +231,155 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: theme.colors.text,
+    fontFamily: 'ClashDisplay-Medium',
   },
-  avatarSection: {
+  headerRight: {
+    width: 40,
+  },
+  profileSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
+    paddingHorizontal: 20,
   },
   avatarContainer: {
     position: 'relative',
+    marginBottom: 16,
   },
   avatar: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: theme.colors.primary,
+  },
+  avatarImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   avatarLabel: {
-    fontSize: 40,
-    fontWeight: '600',
-    color: '#555',
+    fontSize: 48,
+    fontWeight: '700',
+    fontFamily: 'ClashDisplay-Medium',
   },
   editAvatarButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: 'white',
-    padding: 8,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionCard: {
-    backgroundColor: 'white',
-    borderRadius: 24,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    backgroundColor: theme.colors.primary,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    borderWidth: 3,
+    borderColor: theme.colors.background,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  cardTitle: {
-    fontSize: 18,
+  userName: {
+    fontSize: 24,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: theme.colors.text,
+    fontFamily: 'ClashDisplay-Medium',
   },
-  editButtonText: {
-    fontSize: 14,
+  section: {
+    marginBottom: 24,
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: theme.colors.text,
+    marginBottom: 12,
+    fontFamily: 'ClashDisplay-Medium',
   },
-  cardContent: {
-    gap: 20,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
   },
-  iconContainer: {
-    width: 40,
-    alignItems: 'flex-start',
-  },
-  infoTextContainer: {
+  infoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
   infoLabel: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 2,
-    fontWeight: '500',
+    fontSize: 15,
+    color: theme.colors.textSecondary,
+    marginLeft: 12,
+    fontFamily: 'Montserrat_500Medium',
   },
   infoValue: {
     fontSize: 15,
-    color: '#1A1A1A',
-    fontWeight: '500',
+    color: theme.colors.text,
+    fontFamily: 'Montserrat_500Medium',
+    textAlign: 'right',
+    flex: 1,
   },
-  menuRow: {
+  divider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 4, // Add a little vertical padding for touch target
+    paddingVertical: 12,
   },
   menuLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   menuIconContainer: {
-    width: 40,
-    alignItems: 'flex-start',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: `${theme.colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   menuTitle: {
     fontSize: 15,
-    fontWeight: '500',
+    color: theme.colors.text,
+    fontFamily: 'Montserrat_500Medium',
   },
-  bottomSpacing: {
-    height: 80,
+  logoutItem: {
+    paddingVertical: 12,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  logoutIconContainer: {
+    backgroundColor: '#FF3B3015',
   },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 24,
-    padding: 24,
-    width: '100%',
-    maxWidth: 340,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#004d43',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  closeButtonText: {
-    fontSize: 20,
-    color: '#004d43',
-    fontWeight: '600',
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    backgroundColor: '#F5F5F5',
-    padding: 16,
-    borderRadius: 16,
-  },
-  contactIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 77, 67, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  contactLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-    fontWeight: '500',
-  },
-  contactValue: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '600',
-  },
-  modalCloseBtn: {
-    backgroundColor: '#004d43',
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  modalCloseBtnText: {
-    color: '#e8ee26',
-    fontSize: 16,
-    fontWeight: '600',
+  logoutTitle: {
+    color: '#FF3B30',
   },
 });

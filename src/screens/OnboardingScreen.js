@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
-    fontFamily: 'Montserrat_700Bold',
+    fontFamily: 'ClashDisplay-Medium',
     fontSize: 28,
   },
   description: {

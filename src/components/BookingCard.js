@@ -162,7 +162,7 @@ export default function BookingCard({ booking }) {
             </View>
           </View>
 
-          {booking.bookingReference && (
+          {!!booking.bookingReference && (
             <View style={styles.refRow}>
               <Text style={styles.refLabel}>REF: {booking.bookingReference}</Text>
             </View>
@@ -177,18 +177,22 @@ export default function BookingCard({ booking }) {
           </View>
         )}
 
-        {/* Action Section */}
-        {canCancel() && (
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.cancelLink}
-              onPress={handleCancelBooking}
-            >
-              <MaterialIcons name="close" size={14} color="#D32F2F" />
-              <Text style={styles.cancelLinkText}>Cancel Booking</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Action Section - Dual Buttons like in reference */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={handleCancelBooking}
+            disabled={!canCancel()}
+          >
+            <Text style={[styles.buttonText, { color: canCancel() ? '#757575' : '#ccc' }]}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.receiptButton}
+            onPress={() => Alert.alert('Coming Soon', 'Receipt feature will be available shortly.')}
+          >
+            <Text style={styles.receiptButtonText}>E-Receipt</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Surface>
   );
@@ -380,20 +384,39 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_500Medium',
   },
   actions: {
-    paddingHorizontal: 16,
-    marginTop: 4,
-    alignItems: 'flex-start',
-  },
-  cancelLink: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    gap: 12,
   },
-  cancelLinkText: {
-    fontSize: 12,
-    color: '#D32F2F',
-    marginLeft: 4,
+  cancelButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  receiptButton: {
+    flex: 1.5,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#004d43', // Brand Teal
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  buttonText: {
+    fontSize: 14,
     fontFamily: 'Montserrat_600SemiBold',
-    textDecorationLine: 'underline',
+  },
+  receiptButtonText: {
+    fontSize: 14,
+    color: 'white',
+    fontFamily: 'Montserrat_700Bold',
   },
 });
