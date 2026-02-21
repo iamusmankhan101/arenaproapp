@@ -344,6 +344,15 @@ export default function TurfDetailScreen({ route, navigation }) {
 
   const handleFavoriteToggle = async () => {
     try {
+      // Validate venue.id before calling toggleFavorite
+      if (!venue || !venue.id) {
+        console.error('❌ handleFavoriteToggle: Invalid venue or venue.id:', venue);
+        Alert.alert('Error', 'Cannot add to favorites: Invalid venue data');
+        return;
+      }
+
+      console.log(`🔄 handleFavoriteToggle: Toggling favorite for venue ${venue.id}`);
+
       await dispatch(toggleFavorite({
         id: venue.id,
         name: venue.name,
@@ -353,6 +362,7 @@ export default function TurfDetailScreen({ route, navigation }) {
         imageType: getVenueImageType()
       })).unwrap();
     } catch (error) {
+      console.error('❌ handleFavoriteToggle error:', error);
       Alert.alert('Error', 'Failed to update favorites');
     }
   };

@@ -118,7 +118,7 @@ export const turfAPI = {
 
         // Ensure sports is always an array with safe checks
         let sports = [];
-        if (data && data.sports) {
+        if (data && data.sports !== null && data.sports !== undefined) {
           if (typeof data.sports === 'string' && data.sports.trim()) {
             sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
           } else if (Array.isArray(data.sports)) {
@@ -168,7 +168,7 @@ export const turfAPI = {
       // Ensure sports is always an array with safe checks and error handling
       let sports = [];
       try {
-        if (data && data.sports) {
+        if (data && data.sports !== null && data.sports !== undefined) {
           console.log(`🏀 Processing sports data: ${JSON.stringify(data.sports)} (type: ${typeof data.sports})`);
           if (typeof data.sports === 'string' && data.sports.trim()) {
             sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
@@ -178,7 +178,7 @@ export const turfAPI = {
             console.log(`✅ Sports already array:`, sports);
           }
         } else {
-          console.log(`⚠️ No sports data found for venue ${turfId}`);
+          console.log(`⚠️ No sports data found for venue ${turfId} (value: ${data.sports})`);
         }
       } catch (sportsError) {
         console.error(`❌ Error processing sports data:`, sportsError);
@@ -204,12 +204,20 @@ export const turfAPI = {
   // Toggle favorite
   async toggleFavorite(turfId) {
     try {
+      // Validate turfId before proceeding
+      if (!turfId || turfId === undefined || turfId === null) {
+        console.error('❌ toggleFavorite: Invalid turfId:', turfId);
+        return { data: { isFavorite: false, error: 'Invalid venue ID' } };
+      }
+
       const user = auth.currentUser;
       if (!user) {
         // Return false if user is not authenticated instead of throwing error
         console.log('⚠️ User not authenticated, cannot toggle favorite');
         return { data: { isFavorite: false, message: 'Please sign in to add favorites' } };
       }
+
+      console.log(`🔄 toggleFavorite: userId=${user.uid}, turfId=${turfId}`);
 
       const favoritesRef = collection(db, 'favorites');
       const q = query(favoritesRef,
@@ -272,7 +280,7 @@ export const turfAPI = {
           if (venueData.status === 'active') {
             // Normalize sports data with safe checks
             let sports = [];
-            if (venueData && venueData.sports) {
+            if (venueData && venueData.sports !== null && venueData.sports !== undefined) {
               if (typeof venueData.sports === 'string' && venueData.sports.trim()) {
                 sports = venueData.sports.split(',').map(s => s.trim()).filter(Boolean);
               } else if (Array.isArray(venueData.sports)) {
@@ -336,7 +344,7 @@ export const turfAPI = {
 
         // Normalize sports data with safe checks
         let sports = [];
-        if (data && data.sports) {
+        if (data && data.sports !== null && data.sports !== undefined) {
           if (typeof data.sports === 'string' && data.sports.trim()) {
             sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
           } else if (Array.isArray(data.sports)) {
@@ -396,7 +404,7 @@ export const turfAPI = {
         
         // Normalize sports data with safe checks
         let sports = [];
-        if (data && data.sports) {
+        if (data && data.sports !== null && data.sports !== undefined) {
           if (typeof data.sports === 'string' && data.sports.trim()) {
             sports = data.sports.split(',').map(s => s.trim()).filter(Boolean);
           } else if (Array.isArray(data.sports)) {

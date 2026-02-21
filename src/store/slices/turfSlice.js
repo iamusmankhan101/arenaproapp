@@ -63,10 +63,19 @@ export const toggleFavorite = createAsyncThunk(
   'turf/toggleFavorite',
   async (turfData, { rejectWithValue }) => {
     try {
+      // Validate turfData.id before proceeding
+      if (!turfData || !turfData.id) {
+        console.error('❌ toggleFavorite thunk: Invalid turfData or turfData.id:', turfData);
+        return rejectWithValue('Invalid venue data: missing ID');
+      }
+
+      console.log(`🔄 toggleFavorite thunk: Calling API for venue ${turfData.id}`);
+
       const turfAPI = await getAPI();
       const response = await turfAPI.toggleFavorite(turfData.id);
       return { turfData, isFavorite: response.data.isFavorite };
     } catch (error) {
+      console.error('❌ toggleFavorite thunk error:', error);
       return rejectWithValue(error.response?.data || error.message);
     }
   }
