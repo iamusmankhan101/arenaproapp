@@ -41,10 +41,6 @@ export default function SignInScreen({ navigation }) {
     clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
     androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    redirectUri: AuthSession.makeRedirectUri({
-      scheme: 'arenapropk.online',
-      useProxy: true,
-    }),
   });
 
   useEffect(() => {

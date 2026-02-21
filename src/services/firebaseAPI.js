@@ -966,16 +966,19 @@ export const bookingAPI = {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(adminEmailParams)
                   });
-                  if (adminRes.ok) console.log('✅ Mobile: Admin EmailJS success!');
-                  else console.error('⚠️ Mobile: Admin EmailJS failed:', await adminRes.text());
+                  if (adminRes.ok) {
+                    console.log('✅ Mobile: Admin EmailJS success!');
+                  } else {
+                    const errorText = await adminRes.text();
+                    console.error('⚠️ Mobile: Admin EmailJS failed:', errorText);
+                  }
                 } catch (e) {
                   console.error('⚠️ Mobile: Admin EmailJS error:', e);
                 }
               }
             } else {
-              return response.text().then(text => {
-                console.error('⚠️ Mobile: EmailJS failed:', text);
-              });
+              const errorText = await response.text();
+              console.error('⚠️ Mobile: EmailJS failed:', errorText);
             }
           })
           .catch((error) => {
