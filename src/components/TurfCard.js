@@ -345,6 +345,7 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 10,
     textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
     fontFamily: 'Montserrat_400Regular',
   },
   priceBadgeText: {
@@ -433,6 +434,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
     fontFamily: 'Montserrat_400Regular',
   },
   currentPriceDisplay: {

@@ -70,7 +70,7 @@ export default function TurfDetailScreen({ route, navigation }) {
 
 
   const dispatch = useDispatch();
-  const { favorites, selectedTurf } = useSelector(state => state.turf);
+  const { favorites, selectedTurf, loading } = useSelector(state => state.turf);
   const { availableSlots, loading: slotsLoading, error: slotsError } = useSelector(state => state.booking);
   const { user } = useSelector(state => state.auth);
 
@@ -705,7 +705,7 @@ export default function TurfDetailScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      {!venue ? (
+      {loading || !selectedTurf ? (
         <ScrollView showsVerticalScrollIndicator={false}>
           <TurfCardSkeleton />
           <TurfCardSkeleton />
@@ -938,12 +938,12 @@ export default function TurfDetailScreen({ route, navigation }) {
           <View style={[styles.stickyBottom, { paddingBottom: insets.bottom || 20 }]}>
             <View style={styles.priceContainer}>
               <Text style={styles.bottomPriceLabel}>Total Price</Text>
+              {hasDiscount(venue) && (
+                <Text style={styles.originalPrice}>
+                  PKR {(venue.pricePerHour || venue.priceFrom || getOriginalPrice(venue)).toLocaleString()}
+                </Text>
+              )}
               <View style={styles.priceRow}>
-                {hasDiscount(venue) && (
-                  <Text style={styles.originalPrice}>
-                    PKR {(venue.pricePerHour || venue.priceFrom || getOriginalPrice(venue)).toLocaleString()}
-                  </Text>
-                )}
                 <Text style={styles.bottomPriceAmount}>
                   PKR {hasDiscount(venue) 
                     ? calculateDiscountedPrice(venue.pricePerHour || venue.priceFrom || getOriginalPrice(venue), getDiscountValue(venue)).toLocaleString()
@@ -1336,7 +1336,7 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 140,
   },
   infoSection: {
     marginBottom: 24,
@@ -1561,6 +1561,7 @@ const styles = StyleSheet.create({
   },
   priceContainer: {
     flex: 1,
+    marginRight: 16,
   },
   bottomPriceLabel: {
     fontSize: 12,
@@ -1573,10 +1574,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   originalPrice: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Montserrat_400Regular',
     color: '#999',
     textDecorationLine: 'line-through',
+    marginBottom: 2,
   },
   bottomPriceAmount: {
     fontSize: 20,
@@ -1590,9 +1592,10 @@ const styles = StyleSheet.create({
   },
   bookNowBtn: {
     backgroundColor: '#004d43',
-    paddingHorizontal: 32,
+    paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 16,
+    flexShrink: 0,
     ...Platform.select({
       ios: {
         shadowColor: '#000',

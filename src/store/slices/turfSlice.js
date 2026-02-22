@@ -160,8 +160,18 @@ const turfSlice = createSlice({
         state.loading = false;
         state.nearbyTurfs = action.payload;
       })
+      .addCase(fetchTurfDetails.pending, (state) => {
+        state.loading = true;
+        state.selectedTurf = null; // Clear previous venue data
+        state.error = null;
+      })
       .addCase(fetchTurfDetails.fulfilled, (state, action) => {
+        state.loading = false;
         state.selectedTurf = action.payload;
+      })
+      .addCase(fetchTurfDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch venue details';
       })
       .addCase(toggleFavorite.fulfilled, (state, action) => {
         const { turfData, isFavorite } = action.payload;

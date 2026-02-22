@@ -205,20 +205,23 @@ export default function HomeScreen({ navigation }) {
         {/* Header with Location */}
         <View style={styles.header}>
           <View style={styles.locationContainer}>
-            <Text style={styles.locationLabel}>Location</Text>
+            <Text style={styles.greetingText}>
+              Hi, {user?.name || user?.displayName || 'Guest'}
+            </Text>
+            <Text style={styles.welcomeBackText}>Welcome back to Arena Pro</Text>
             <TouchableOpacity 
               style={styles.locationButton}
               onPress={() => navigation.navigate('ManualLocation')}
             >
               <MaterialIcons 
                 name="location-on" 
-                size={20} 
+                size={16} 
                 color={theme.colors.primary} 
               />
               <Text style={styles.locationText}>{userLocation}</Text>
               <MaterialIcons 
                 name="keyboard-arrow-down" 
-                size={20} 
+                size={16} 
                 color={theme.colors.text} 
               />
             </TouchableOpacity>
@@ -371,10 +374,19 @@ export default function HomeScreen({ navigation }) {
                           )}
                         </View>
                         
-                        <Text style={styles.venuePrice}>
-                          PKR {venue.pricePerHour || venue.pricing?.basePrice || 1500}
-                          <Text style={styles.priceUnit}> /hour</Text>
-                        </Text>
+                        <View style={styles.venuePriceContainer}>
+                          {(venue.discount || venue.discountPercentage) && (
+                            <Text style={styles.venueOriginalPrice}>
+                              PKR {venue.pricePerHour || venue.pricing?.basePrice || 1500}
+                            </Text>
+                          )}
+                          <Text style={styles.venuePrice}>
+                            PKR {(venue.discount || venue.discountPercentage) 
+                              ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
+                              : (venue.pricePerHour || venue.pricing?.basePrice || 1500)}
+                            <Text style={styles.priceUnit}> /hour</Text>
+                          </Text>
+                        </View>
                       </View>
                     </View>
 
@@ -456,10 +468,19 @@ export default function HomeScreen({ navigation }) {
                     )}
                   </View>
                   
-                  <Text style={styles.nearbyVenuePrice}>
-                    PKR {venue.pricePerHour || venue.pricing?.basePrice || 1500}
-                    <Text style={styles.priceUnit}> /hour</Text>
-                  </Text>
+                  <View style={styles.nearbyVenuePriceContainer}>
+                    {(venue.discount || venue.discountPercentage) && (
+                      <Text style={styles.nearbyVenueOriginalPrice}>
+                        PKR {venue.pricePerHour || venue.pricing?.basePrice || 1500}
+                      </Text>
+                    )}
+                    <Text style={styles.nearbyVenuePrice}>
+                      PKR {(venue.discount || venue.discountPercentage) 
+                        ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
+                        : (venue.pricePerHour || venue.pricing?.basePrice || 1500)}
+                      <Text style={styles.priceUnit}> /hour</Text>
+                    </Text>
+                  </View>
                 </View>
 
                 <View style={styles.nearbyVenueRating}>
@@ -514,11 +535,18 @@ const styles = StyleSheet.create({
   locationContainer: {
     flex: 1,
   },
-  locationLabel: {
+  greetingText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.text,
+    fontFamily: 'ClashDisplay-Medium',
+    marginBottom: 4,
+  },
+  welcomeBackText: {
     fontSize: 14,
     color: theme.colors.textSecondary,
     fontFamily: 'Montserrat_400Regular',
-    marginBottom: 4,
+    marginBottom: 12,
   },
   locationButton: {
     flexDirection: 'row',
@@ -526,10 +554,10 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   locationText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
     color: theme.colors.text,
-    fontFamily: 'Montserrat_600SemiBold',
+    fontFamily: 'Montserrat_500Medium',
   },
   notificationButton: {
     padding: 8,
@@ -770,8 +798,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_600SemiBold',
     marginLeft: 4,
   },
+  venuePriceContainer: {
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  venueOriginalPrice: {
+    fontSize: 12,
+    color: '#999',
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+    fontFamily: 'Montserrat_400Regular',
+    marginBottom: 2,
+  },
   venuePrice: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: theme.colors.primary,
     fontFamily: 'ClashDisplay-Medium',
@@ -847,8 +891,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_600SemiBold',
     marginLeft: 4,
   },
+  nearbyVenuePriceContainer: {
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  nearbyVenueOriginalPrice: {
+    fontSize: 11,
+    color: '#999',
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+    fontFamily: 'Montserrat_400Regular',
+    marginBottom: 2,
+  },
   nearbyVenuePrice: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: theme.colors.primary,
     fontFamily: 'ClashDisplay-Medium',
