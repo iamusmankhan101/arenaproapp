@@ -90,6 +90,11 @@
     ],
     "newArchEnabled": false,
     "extra": {
+      "emailjs": {
+        "serviceId": "service_fbv2xpl",
+        "templateId": "template_rvzdkla",
+        "userId": "DeOJhRm2vDyqLXLIN"
+      },
       "eas": {
         "projectId": "3e7192c7-524e-4146-801c-3960363da458"
       }

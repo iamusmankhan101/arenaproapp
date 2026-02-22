@@ -1,15 +1,24 @@
+import Constants from 'expo-constants';
 
 const EMAILJS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 
 // Helper to send email via EmailJS REST API
 const sendEmailJS = async (templateParams, specificTemplateId = null) => {
-    const serviceId = process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID;
-    // Use specific template if provided, otherwise fallback to default env var
-    const templateId = specificTemplateId || process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID;
-    const userId = process.env.EXPO_PUBLIC_EMAILJS_USER_ID;
+    // Get credentials from expo-constants (bundled in APK)
+    const serviceId = Constants.expoConfig?.extra?.emailjs?.serviceId;
+    const templateId = specificTemplateId || Constants.expoConfig?.extra?.emailjs?.templateId;
+    const userId = Constants.expoConfig?.extra?.emailjs?.userId;
+
+    // Debug logging
+    console.log('📧 EmailJS Config Check:', {
+        serviceId: serviceId ? '✅ SET' : '❌ MISSING',
+        templateId: templateId ? '✅ SET' : '❌ MISSING',
+        userId: userId ? '✅ SET' : '❌ MISSING'
+    });
 
     if (!serviceId || !templateId || !userId) {
         console.warn('⚠️ EmailJS: Missing configuration. Emails will not be sent.');
+        console.warn('⚠️ Check app.json extra.emailjs configuration');
         return { success: false, error: 'Missing configuration' };
     }
 
@@ -21,6 +30,8 @@ const sendEmailJS = async (templateParams, specificTemplateId = null) => {
     };
 
     try {
+        console.log('📤 EmailJS: Sending request to:', EMAILJS_API_URL);
+        
         const response = await fetch(EMAILJS_API_URL, {
             method: 'POST',
             headers: {
