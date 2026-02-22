@@ -170,7 +170,12 @@ Select "Android" > "Keystore" > "Generate new keystore"
 2. **Transfer** to your Android device
 3. **Enable** "Install from Unknown Sources" in Settings
 4. **Install** the APK
-5. **Test** all features including Google Sign-In!
+5. **Test** all features including:
+   - Google Sign-In (works in APK builds!)
+   - Password reset deep linking (email link opens app)
+   - Location permissions
+   - Booking flow
+   - All other features
 
 ### Sharing the APK
 
@@ -268,6 +273,8 @@ eas project:info
 - **Keystore** is stored securely by Expo
 - **APK size** will be larger than AAB
 - **Google Sign-In** will work in the APK build!
+- **Deep linking** (password reset) works in APK builds
+- **Domain verification** needed for production deep links (see PASSWORD_RESET_DEEP_LINKING_COMPLETE.md)
 
 ## Support
 
