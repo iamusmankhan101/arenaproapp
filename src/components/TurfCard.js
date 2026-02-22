@@ -31,7 +31,7 @@ export default function TurfCard({ turf, onPress, onFavoritePress, isFavorite })
   const availability = getAvailabilityStatus();
 
   return (
-    <Card style={styles.card} onPress={onPress}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.95}>
       <View style={styles.cardContent}>
         {/* Venue Image */}
         <View style={styles.imageContainer}>
@@ -118,7 +118,7 @@ export default function TurfCard({ turf, onPress, onFavoritePress, isFavorite })
         </View>
 
         {/* Content */}
-        <Card.Content style={styles.contentArea}>
+        <View style={styles.contentArea}>
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <Text variant="titleMedium" style={styles.name} numberOfLines={1}>
@@ -239,9 +239,9 @@ export default function TurfCard({ turf, onPress, onFavoritePress, isFavorite })
             <Text style={styles.bookButtonText}>View Details & Book</Text>
             <MaterialIcons name="arrow-forward" size={16} color="white" />
           </TouchableOpacity>
-        </Card.Content>
+        </View>
       </View>
-    </Card>
+    </TouchableOpacity>
   );
 }
 
