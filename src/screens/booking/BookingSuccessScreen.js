@@ -18,11 +18,11 @@ export default function BookingSuccessScreen({ navigation, route }) {
   }, []);
 
   const handleGoHome = () => {
-    // Reset navigation to Home screen
+    // Reset navigation to MainTabs screen
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'Main' }],
+        routes: [{ name: 'MainTabs' }],
       })
     );
   };

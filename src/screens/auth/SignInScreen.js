@@ -36,10 +36,14 @@ export default function SignInScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
 
+  const redirectUri = 'https://auth.expo.io/@imusmankhan10/arena-pro';
+
   const [, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
     androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+    // Explicitly use Expo's auth proxy to avoid exp:// protocol issues
+    redirectUri: redirectUri,
   });
 
   useEffect(() => {

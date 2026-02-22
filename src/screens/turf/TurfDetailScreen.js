@@ -469,7 +469,16 @@ export default function TurfDetailScreen({ route, navigation }) {
     // Merge slots for the next screen
     const firstSlot = selectedTimeSlots[0];
     const lastSlot = selectedTimeSlots[selectedTimeSlots.length - 1];
-    const totalPrice = selectedTimeSlots.reduce((sum, s) => sum + s.price, 0);
+    
+    // Calculate total price with discount if applicable
+    const venueHasDiscount = hasDiscount(venue);
+    const discountValue = getDiscountValue(venue);
+    const totalPrice = selectedTimeSlots.reduce((sum, s) => {
+      const slotPrice = venueHasDiscount 
+        ? calculateDiscountedPrice(s.price, discountValue)
+        : s.price;
+      return sum + slotPrice;
+    }, 0);
 
     // Determine mixed price type if applicable
     const uniquePriceTypes = [...new Set(selectedTimeSlots.map(s => getPriceType(s.time || s.startTime)))];
@@ -1014,6 +1023,28 @@ export default function TurfDetailScreen({ route, navigation }) {
                   <View style={styles.timeSlotsGrid}>
                     {(availableSlots || []).map((slot) => {
                       const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
+                      const venueHasDiscount = hasDiscount(venue);
+                      const discountValue = getDiscountValue(venue);
+                      const originalPrice = slot.price;
+                      const discountedPrice = venueHasDiscount 
+                        ? calculateDiscountedPrice(originalPrice, discountValue)
+                        : originalPrice;
+                      
+                      // Debug logging
+                      if (slot.id === (availableSlots[0]?.id)) {
+                        console.log('🎯 TurfDetail - Time Slot Discount Debug:', {
+                          venueId: venue?.id,
+                          venueName: venue?.name,
+                          venueHasDiscount,
+                          discountValue,
+                          venueDiscount: venue?.discount,
+                          venueDiscountPercentage: venue?.discountPercentage,
+                          originalPrice,
+                          discountedPrice,
+                          slotTime: slot.time || slot.startTime
+                        });
+                      }
+                      
                       return (
                         <TouchableOpacity
                           key={slot.id}
@@ -1031,12 +1062,29 @@ export default function TurfDetailScreen({ route, navigation }) {
                           ]}>
                             {slot.time || slot.startTime} - {slot.endTime}
                           </Text>
-                          <Text style={[
-                            styles.timeSlotPrice,
-                            isSelected && styles.selectedSlotPrice
-                          ]}>
-                            PKR {slot.price.toLocaleString()} /hour
-                          </Text>
+                          {venueHasDiscount ? (
+                            <View style={styles.slotPriceContainer}>
+                              <Text style={[
+                                styles.timeSlotOriginalPrice,
+                                isSelected && styles.selectedSlotOriginalPrice
+                              ]}>
+                                PKR {originalPrice.toLocaleString()}
+                              </Text>
+                              <Text style={[
+                                styles.timeSlotPrice,
+                                isSelected && styles.selectedSlotPrice
+                              ]}>
+                                PKR {discountedPrice.toLocaleString()} /hr
+                              </Text>
+                            </View>
+                          ) : (
+                            <Text style={[
+                              styles.timeSlotPrice,
+                              isSelected && styles.selectedSlotPrice
+                            ]}>
+                              PKR {originalPrice.toLocaleString()} /hr
+                            </Text>
+                          )}
                         </TouchableOpacity>
                       );
                     })}
@@ -1645,6 +1693,20 @@ const styles = StyleSheet.create({
   },
   selectedSlotPrice: {
     color: '#004d43',
+  },
+  slotPriceContainer: {
+    alignItems: 'flex-start',
+  },
+  timeSlotOriginalPrice: {
+    fontSize: 11,
+    fontFamily: 'Montserrat_500Medium',
+    color: '#999',
+    textDecorationLine: 'line-through',
+    marginBottom: 2,
+  },
+  selectedSlotOriginalPrice: {
+    color: '#004d43',
+    opacity: 0.6,
   },
   modalActions: {
     padding: 24,

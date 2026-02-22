@@ -25,6 +25,10 @@
       },
       "runtimeVersion": {
         "policy": "appVersion"
+      },
+      "statusBar": {
+        "barStyle": "dark-content",
+        "hidden": false
       }
     },
     "android": {
@@ -39,7 +43,16 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.RECORD_AUDIO"
       ],
-      "runtimeVersion": "1.0.0"
+      "runtimeVersion": "1.0.0",
+      "statusBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#FFFFFF",
+        "translucent": true
+      },
+      "navigationBar": {
+        "backgroundColor": "#FFFFFF",
+        "barStyle": "dark-content"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

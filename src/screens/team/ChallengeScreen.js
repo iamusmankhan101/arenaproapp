@@ -107,10 +107,33 @@ export default function ChallengeScreen({ navigation }) {
     }
   };
 
-  const handleAcceptChallenge = (challengeId) => {
-    if (!userTeam) {
-      Alert.alert('Error', 'You must have a team to accept challenges.');
-      return;
+  const handleAcceptChallenge = async (challengeId) => {
+    // Auto-create team if user doesn't have one
+    let currentTeam = userTeam;
+
+    if (!currentTeam) {
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to accept challenges');
+        return;
+      }
+
+      // Create a default team for the user
+      const newTeam = {
+        id: user.uid,
+        name: `${user.displayName || user.fullName || 'Player'}'s Team`,
+        captain: user.displayName || user.fullName || 'Captain',
+        avatar: user.photoURL || null,
+        founded: new Date().getFullYear().toString(),
+        homeGround: user.city || 'Home Ground',
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        eloRating: 1200,
+        fairPlayScore: 5.0,
+      };
+
+      dispatch(setUserTeam(newTeam));
+      currentTeam = newTeam;
     }
 
     const challenge = challenges.find(c => c.id === challengeId);
@@ -127,8 +150,8 @@ export default function ChallengeScreen({ navigation }) {
             try {
               await dispatch(acceptChallenge({
                 challengeId,
-                opponentId: userTeam.id,
-                opponentTeamName: userTeam.name
+                opponentId: currentTeam.id,
+                opponentTeamName: currentTeam.name
               })).unwrap();
 
               Alert.alert(

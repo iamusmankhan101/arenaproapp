@@ -32,7 +32,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { safeDate, safeFormatDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import * as ImagePicker from 'expo-image-picker';
-import { turfAPI } from '../../services/firebaseAPI'; // Import API directly for upload
+import { uploadToCloudinary } from '../../services/cloudinaryService';
 import { emailService } from '../../services/emailService';
 import { REFERRAL_CONSTANTS, calculateDiscountedTotal } from '../../utils/referralUtils';
 
@@ -188,17 +188,26 @@ export default function BookingConfirmScreen({ route, navigation }) {
     if (paymentMode === 'advance') {
       setUploading(true);
     }
-    // don't close modal yet, wait for upload
 
     try {
       let screenshotUrl = null;
       if (paymentMode === 'advance' && screenshot) {
-        const filename = screenshot.substring(screenshot.lastIndexOf('/') + 1);
-        const uploadPath = `payment_proofs/${Date.now()}_${filename}`;
-        screenshotUrl = await turfAPI.uploadImage(screenshot, uploadPath);
+        try {
+          console.log('📤 Uploading payment screenshot to Cloudinary...');
+          screenshotUrl = await uploadToCloudinary(screenshot, 'payment_proofs');
+          console.log('✅ Payment screenshot uploaded successfully:', screenshotUrl);
+        } catch (uploadError) {
+          console.error('⚠️ Failed to upload payment screenshot:', uploadError);
+          // Continue with booking even if screenshot upload fails
+          Alert.alert(
+            'Upload Warning',
+            'Payment screenshot could not be uploaded, but your booking will still be created. You can contact the venue directly with proof of payment.',
+            [{ text: 'Continue', onPress: () => {} }]
+          );
+        }
       }
 
-      setShowPaymentInstructions(false); // Close modal after upload success
+      setShowPaymentInstructions(false);
       setIsBooking(true);
 
       const bookingData = {
@@ -393,34 +402,32 @@ Please confirm my booking.`;
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
+      <StatusBar backgroundColor="transparent" barStyle="dark-content" translucent />
 
-      {/* Custom Header */}
-      <SafeAreaView style={[styles.header, { backgroundColor: theme.colors.primary }]}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                navigation.navigate('MainTabs');
-              }
-            }}
-          >
-            <MaterialIcons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Confirm Booking</Text>
-          <View style={styles.headerRight} />
-        </View>
-      </SafeAreaView>
+      {/* Modern Clean Header */}
+      <View style={[styles.whiteHeader, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity
+          style={styles.circularBackButton}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('MainTabs');
+            }
+          }}
+        >
+          <MaterialIcons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.centeredTitle}>Confirm Booking</Text>
+        <View style={{ width: 44 }} />
+      </View>
 
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Venue Summary Card */}
+        {/* Venue Summary Card - Enhanced */}
         <Animated.View
           style={[
             styles.animatedCard,
@@ -430,97 +437,121 @@ Please confirm my booking.`;
             }
           ]}
         >
-          <Surface style={styles.summaryCard} elevation={2}>
+          <View style={styles.summaryCard}>
             <View style={styles.summaryHeader}>
-              <View style={[styles.venueIcon, { backgroundColor: `${theme.colors.secondary}30` }]}>
-                <MaterialIcons name="sports-soccer" size={24} color={theme.colors.primary} />
+              <View style={[styles.venueIconCircle, { backgroundColor: theme.colors.primary }]}>
+                <MaterialIcons name="sports-soccer" size={28} color={theme.colors.secondary} />
               </View>
               <View style={styles.venueInfo}>
                 <Text style={styles.venueName}>{turf.name}</Text>
-                <Text style={styles.venueAddress}>{turf.address}</Text>
+                <View style={styles.addressRow}>
+                  <MaterialIcons name="location-on" size={14} color="#999" />
+                  <Text style={styles.venueAddress}>{turf.address}</Text>
+                </View>
               </View>
-              <Chip
-                mode="outlined"
-                style={[styles.priceChip, { backgroundColor: `${theme.colors.secondary}30`, borderColor: theme.colors.primary }]}
-                textStyle={[styles.priceChipText, { color: theme.colors.primary }]}
-              >
-                PKR {pricing.total.toLocaleString()}
-              </Chip>
             </View>
 
-            <View style={[styles.bookingDetails, { flexDirection: 'column', alignItems: 'flex-start', gap: 12 }]}>
-              <View style={[styles.detailItem, { flex: 0, width: '100%' }]}>
-                <MaterialIcons name="event" size={18} color="#666" />
-                <Text style={[styles.detailText, { fontSize: 14 }]}>{formattedDate}</Text>
+            <View style={styles.bookingDetailsGrid}>
+              <View style={styles.detailBox}>
+                <View style={[styles.detailIconCircle, { backgroundColor: '#E8F5E9' }]}>
+                  <MaterialIcons name="event" size={20} color="#4CAF50" />
+                </View>
+                <Text style={styles.detailLabel}>Date</Text>
+                <Text style={styles.detailValue}>{formattedDate}</Text>
               </View>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
-                <View style={[styles.detailItem, { justifyContent: 'flex-start' }]}>
-                  <MaterialIcons name="schedule" size={18} color="#666" />
-                  <Text style={styles.detailText}>{time}</Text>
+
+              <View style={styles.detailBox}>
+                <View style={[styles.detailIconCircle, { backgroundColor: '#E3F2FD' }]}>
+                  <MaterialIcons name="schedule" size={20} color="#2196F3" />
                 </View>
-                <View style={[styles.detailItem, { justifyContent: 'flex-end' }]}>
-                  <MaterialIcons name="wb-sunny" size={18} color="#666" />
-                  <Text style={styles.detailText}>{slot.priceType}</Text>
+                <Text style={styles.detailLabel}>Time</Text>
+                <Text style={styles.detailValue}>{time}</Text>
+              </View>
+
+              <View style={styles.detailBox}>
+                <View style={[styles.detailIconCircle, { backgroundColor: '#FFF3E0' }]}>
+                  <MaterialIcons name="wb-sunny" size={20} color="#FF9800" />
                 </View>
+                <Text style={styles.detailLabel}>Slot Type</Text>
+                <Text style={styles.detailValue}>{slot.priceType}</Text>
               </View>
             </View>
-          </Surface>
+
+            <View style={styles.totalPriceRow}>
+              <Text style={styles.totalPriceLabel}>Total Amount</Text>
+              <Text style={[styles.totalPriceValue, { color: theme.colors.primary }]}>
+                PKR {pricing.total.toLocaleString()}
+              </Text>
+            </View>
+          </View>
         </Animated.View>
 
-        {/* Payment Options Selection */}
-        <View
-          style={[
-            styles.animatedCard,
-            {
-              // Temporary debug style/removal of animation
-
-
-            }
-          ]}
-        >
-          <Surface style={styles.paymentCard} elevation={1}>
+        {/* Payment Options Selection - Enhanced */}
+        <View style={styles.animatedCard}>
+          <View style={styles.paymentCard}>
             <Text style={styles.sectionTitle}>Choose Payment Option</Text>
 
             <TouchableOpacity
               style={[
-                styles.paymentOption,
-                paymentMode === 'advance' && [styles.selectedPaymentOption, { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.secondary}20` }]
+                styles.modernPaymentOption,
+                paymentMode === 'advance' && [styles.selectedModernPaymentOption, { borderColor: theme.colors.primary }]
               ]}
               onPress={() => setPaymentMode('advance')}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <MaterialIcons name="local-offer" size={24} color={theme.colors.primary} style={{ marginRight: 12 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.paymentName, { color: theme.colors.primary }]}>Pay Advance & Save 10%</Text>
-                  <Text style={styles.paymentDesc}>Pay PKR 500 now, get discounted total</Text>
-                </View>
-                <Chip textStyle={{ fontSize: 10, height: 12, lineHeight: 12 }} style={{ backgroundColor: '#E8F5E9' }}>Save 10%</Chip>
+              <View style={[styles.paymentIconBox, { backgroundColor: `${theme.colors.primary}15` }]}>
+                <MaterialIcons name="local-offer" size={28} color={theme.colors.primary} />
               </View>
-              <RadioButton value="advance" status={paymentMode === 'advance' ? 'checked' : 'unchecked'} color={theme.colors.primary} onPress={() => setPaymentMode('advance')} />
+              <View style={styles.paymentContent}>
+                <View style={styles.paymentTitleRow}>
+                  <Text style={[styles.modernPaymentName, { color: theme.colors.primary }]}>Pay Advance & Save 10%</Text>
+                  <View style={[styles.saveBadge, { backgroundColor: '#E8F5E9' }]}>
+                    <Text style={[styles.saveBadgeText, { color: '#4CAF50' }]}>Save 10%</Text>
+                  </View>
+                </View>
+                <Text style={styles.modernPaymentDesc}>Pay PKR 500 now, get discounted total</Text>
+              </View>
+              <View style={[
+                styles.radioCircle,
+                paymentMode === 'advance' && [styles.radioCircleSelected, { borderColor: theme.colors.primary }]
+              ]}>
+                {paymentMode === 'advance' && (
+                  <View style={[styles.radioInner, { backgroundColor: theme.colors.primary }]} />
+                )}
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
-                styles.paymentOption,
-                paymentMode === 'venue' && [styles.selectedPaymentOption, { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.secondary}20` }]
+                styles.modernPaymentOption,
+                paymentMode === 'venue' && [styles.selectedModernPaymentOption, { borderColor: theme.colors.primary }]
               ]}
               onPress={() => setPaymentMode('venue')}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <MaterialIcons name="storefront" size={24} color="#666" style={{ marginRight: 12 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.paymentName}>Pay Full at Venue</Text>
-                  <Text style={styles.paymentDesc}>No advance payment required</Text>
-                </View>
-                <Chip textStyle={{ fontSize: 10, height: 12, lineHeight: 12 }} style={{ backgroundColor: '#E8F5E9', marginLeft: 8 }}>Save 5%</Chip>
-
+              <View style={[styles.paymentIconBox, { backgroundColor: '#F5F5F5' }]}>
+                <MaterialIcons name="storefront" size={28} color="#666" />
               </View>
-              <RadioButton value="venue" status={paymentMode === 'venue' ? 'checked' : 'unchecked'} color={theme.colors.primary} onPress={() => setPaymentMode('venue')} />
+              <View style={styles.paymentContent}>
+                <View style={styles.paymentTitleRow}>
+                  <Text style={styles.modernPaymentName}>Pay Full at Venue</Text>
+                  <View style={[styles.saveBadge, { backgroundColor: '#E8F5E9' }]}>
+                    <Text style={[styles.saveBadgeText, { color: '#4CAF50' }]}>Save 5%</Text>
+                  </View>
+                </View>
+                <Text style={styles.modernPaymentDesc}>No advance payment required</Text>
+              </View>
+              <View style={[
+                styles.radioCircle,
+                paymentMode === 'venue' && [styles.radioCircleSelected, { borderColor: theme.colors.primary }]
+              ]}>
+                {paymentMode === 'venue' && (
+                  <View style={[styles.radioInner, { backgroundColor: theme.colors.primary }]} />
+                )}
+              </View>
             </TouchableOpacity>
-          </Surface>
+          </View>
         </View>
 
-        {/* Pricing Breakdown */}
+        {/* Pricing Breakdown - Enhanced */}
         <Animated.View
           style={[
             styles.animatedCard,
@@ -530,7 +561,7 @@ Please confirm my booking.`;
             }
           ]}
         >
-          <Surface style={styles.pricingCard} elevation={1}>
+          <View style={styles.pricingCard}>
             <Text style={styles.sectionTitle}>Pricing Details</Text>
 
             <View style={styles.priceBreakdown}>
@@ -548,18 +579,30 @@ Please confirm my booking.`;
                 <Text style={[styles.priceValue, { color: '#4CAF50' }]}>- PKR {pricing.discount.toLocaleString()}</Text>
               </View>
 
-              <View style={[styles.priceRow, { marginTop: 4 }]}>
-                <Text style={[styles.priceLabel, { fontWeight: 'bold', color: '#333' }]}>Total Amount</Text>
-                <Text style={[styles.priceValue, { fontWeight: 'bold', color: '#333' }]}>PKR {pricing.total.toLocaleString()}</Text>
-              </View>
+              {pricing.referralDiscount > 0 && (
+                <View style={styles.priceRow}>
+                  <Text style={[styles.priceLabel, { color: '#2E7D32' }]}>
+                    Referral Reward
+                  </Text>
+                  <Text style={[styles.priceValue, { color: '#2E7D32' }]}>
+                    - PKR {pricing.referralDiscount}
+                  </Text>
+                </View>
+              )}
 
-              <Divider style={styles.priceDivider} />
+              <View style={styles.priceDivider} />
+
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceLabel, { fontWeight: '700', fontSize: 16, color: '#333', fontFamily: 'Montserrat_700Bold' }]}>Total Amount</Text>
+                <Text style={[styles.priceValue, { fontWeight: '700', fontSize: 18, color: theme.colors.primary, fontFamily: 'Montserrat_700Bold' }]}>PKR {pricing.total.toLocaleString()}</Text>
+              </View>
 
               {paymentMode === 'advance' ? (
                 <>
-                  <View style={[styles.priceRow, { marginTop: 4 }]}>
-                    <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600' }]}>Advance Payment</Text>
-                    <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700' }]}>PKR {pricing.advance.toLocaleString()}</Text>
+                  <View style={styles.priceDivider} />
+                  <View style={[styles.priceRow, { backgroundColor: `${theme.colors.primary}08`, padding: 12, borderRadius: 8, marginTop: 8 }]}>
+                    <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600', fontFamily: 'Montserrat_600SemiBold' }]}>Advance Payment</Text>
+                    <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700', fontSize: 16, fontFamily: 'Montserrat_700Bold' }]}>PKR {pricing.advance.toLocaleString()}</Text>
                   </View>
 
                   <View style={styles.priceRow}>
@@ -568,28 +611,19 @@ Please confirm my booking.`;
                   </View>
                 </>
               ) : (
-                <View style={[styles.priceRow, { marginTop: 4 }]}>
-                  <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600' }]}>Payable at Venue</Text>
-                  <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700' }]}>PKR {pricing.total.toLocaleString()}</Text>
-                </View>
+                <>
+                  <View style={styles.priceDivider} />
+                  <View style={[styles.priceRow, { backgroundColor: `${theme.colors.primary}08`, padding: 12, borderRadius: 8, marginTop: 8 }]}>
+                    <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600', fontFamily: 'Montserrat_600SemiBold' }]}>Payable at Venue</Text>
+                    <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700', fontSize: 16, fontFamily: 'Montserrat_700Bold' }]}>PKR {pricing.total.toLocaleString()}</Text>
+                  </View>
+                </>
               )}
-
-              {pricing.referralDiscount > 0 && (
-                <View style={[styles.priceRow, { marginTop: 4, backgroundColor: '#E8F5E9', padding: 4, borderRadius: 4 }]}>
-                  <Text style={[styles.priceLabel, { color: '#2E7D32', fontWeight: 'bold' }]}>
-                    Referral Reward Applies!
-                  </Text>
-                  <Text style={[styles.priceValue, { color: '#2E7D32', fontWeight: 'bold' }]}>
-                    - PKR {pricing.referralDiscount}
-                  </Text>
-                </View>
-              )}
-
             </View>
-          </Surface>
+          </View>
         </Animated.View>
 
-        {/* Payment Methods - Only show if Advance Mode */}
+        {/* Payment Methods - Only show if Advance Mode - Enhanced */}
         {paymentMode === 'advance' && (
           <Animated.View
             style={[
@@ -600,9 +634,9 @@ Please confirm my booking.`;
               }
             ]}
           >
-            <Surface style={styles.paymentCard} elevation={1}>
+            <View style={styles.paymentCard}>
               <Text style={styles.sectionTitle}>Pay Advance With</Text>
-              <Text style={{ fontSize: 12, color: '#666', marginBottom: 10, fontStyle: 'italic' }}>Select a payment method to view account details</Text>
+              <Text style={styles.sectionSubtitle}>Select a payment method to view account details</Text>
 
               <RadioButton.Group
                 onValueChange={setPaymentMethod}
@@ -616,51 +650,57 @@ Please confirm my booking.`;
                   <TouchableOpacity
                     key={method.value}
                     style={[
-                      styles.paymentOption,
-                      paymentMethod === method.value && [styles.selectedPaymentOption, {
-                        borderColor: theme.colors.primary,
-                        backgroundColor: `${theme.colors.secondary}20`
+                      styles.modernPaymentMethodOption,
+                      paymentMethod === method.value && [styles.selectedModernPaymentOption, {
+                        borderColor: theme.colors.primary
                       }]
                     ]}
                     onPress={() => setPaymentMethod(method.value)}
                   >
-                    <View style={styles.paymentLeft}>
+                    <View style={styles.paymentMethodLeft}>
                       <View style={[
-                        styles.paymentIconContainer,
+                        styles.paymentMethodIconContainer,
                         { backgroundColor: getPaymentColor(method.value) + '15' }
                       ]}>
                         {method.value === 'jazzcash' ? (
                           <Image
                             source={require('../../images/lg-691c164eec616-JazzCash.webp')}
-                            style={{ width: 24, height: 24, resizeMode: 'contain' }}
+                            style={{ width: 28, height: 28, resizeMode: 'contain' }}
                           />
                         ) : method.value === 'easypaisa' ? (
                           <Image
                             source={require('../../images/easypaisa-pay-logo-11685340011w1ndm8dzgj.png')}
-                            style={{ width: 24, height: 24, resizeMode: 'contain' }}
+                            style={{ width: 28, height: 28, resizeMode: 'contain' }}
                           />
                         ) : (
                           <MaterialIcons
                             name={getPaymentIcon(method.value)}
-                            size={20}
+                            size={24}
                             color={getPaymentColor(method.value)}
                           />
                         )}
                       </View>
-                      <View style={styles.paymentInfo}>
-                        <Text style={styles.paymentName}>{method.name}</Text>
-                        <Text style={styles.paymentDesc}>{method.desc}</Text>
+                      <View style={styles.paymentMethodInfo}>
+                        <Text style={styles.modernPaymentName}>{method.name}</Text>
+                        <Text style={styles.modernPaymentDesc}>{method.desc}</Text>
                       </View>
                     </View>
-                    <RadioButton value={method.value} color={theme.colors.primary} />
+                    <View style={[
+                      styles.radioCircle,
+                      paymentMethod === method.value && [styles.radioCircleSelected, { borderColor: theme.colors.primary }]
+                    ]}>
+                      {paymentMethod === method.value && (
+                        <View style={[styles.radioInner, { backgroundColor: theme.colors.primary }]} />
+                      )}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </RadioButton.Group>
-            </Surface>
+            </View>
           </Animated.View>
         )}
 
-        {/* Important Information */}
+        {/* Important Information - Enhanced */}
         <Animated.View
           style={[
             styles.animatedCard,
@@ -670,19 +710,23 @@ Please confirm my booking.`;
             }
           ]}
         >
-          <Surface style={styles.infoCard} elevation={1}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>Important Information</Text>
 
             <View style={styles.infoList}>
               {paymentMode === 'advance' && (
-                <View style={styles.infoItem}>
-                  <MaterialIcons name="info" size={16} color={theme.colors.primary} />
+                <View style={styles.modernInfoItem}>
+                  <View style={[styles.infoIconCircle, { backgroundColor: `${theme.colors.primary}15` }]}>
+                    <MaterialIcons name="info" size={18} color={theme.colors.primary} />
+                  </View>
                   <Text style={styles.infoText}>Advance payment of PKR {pricing.advance} is non-refundable if cancelled within 2 hours of slot.</Text>
                 </View>
               )}
 
-              <View style={styles.infoItem}>
-                <MaterialIcons name="check-circle" size={16} color="#4CAF50" />
+              <View style={styles.modernInfoItem}>
+                <View style={[styles.infoIconCircle, { backgroundColor: '#E8F5E9' }]}>
+                  <MaterialIcons name="check-circle" size={18} color="#4CAF50" />
+                </View>
                 <Text style={styles.infoText}>
                   {paymentMode === 'advance'
                     ? `Remaining PKR ${pricing.remaining} to be paid at the venue.`
@@ -690,17 +734,21 @@ Please confirm my booking.`;
                 </Text>
               </View>
 
-              <View style={styles.infoItem}>
-                <MaterialIcons name="access-time" size={16} color="#FF9800" />
+              <View style={styles.modernInfoItem}>
+                <View style={[styles.infoIconCircle, { backgroundColor: '#FFF3E0' }]}>
+                  <MaterialIcons name="access-time" size={18} color="#FF9800" />
+                </View>
                 <Text style={styles.infoText}>Arrive 10 minutes before your slot</Text>
               </View>
 
-              <View style={styles.infoItem}>
-                <MaterialIcons name="phone" size={16} color={theme.colors.primary} />
+              <View style={styles.modernInfoItem}>
+                <View style={[styles.infoIconCircle, { backgroundColor: '#E3F2FD' }]}>
+                  <MaterialIcons name="phone" size={18} color="#2196F3" />
+                </View>
                 <Text style={styles.infoText}>Contact: {turf.phoneNumber}</Text>
               </View>
             </View>
-          </Surface>
+          </View>
         </Animated.View>
       </ScrollView>
 
@@ -790,7 +838,8 @@ Please confirm my booking.`;
 
             {/* Screenshot Upload Section */}
             <View style={{ width: '100%', marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 }}>Upload Payment Proof (Optional)</Text>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 4 }}>Upload Payment Proof (Optional)</Text>
+              <Text style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>You can share the screenshot with the venue via WhatsApp after booking</Text>
               <TouchableOpacity
                 onPress={pickImage}
                 style={{
@@ -810,7 +859,8 @@ Please confirm my booking.`;
                 ) : (
                   <View style={{ alignItems: 'center' }}>
                     <MaterialIcons name="cloud-upload" size={32} color="#999" />
-                    <Text style={{ color: '#666', marginTop: 8 }}>Tap to upload screenshot</Text>
+                    <Text style={{ color: '#666', marginTop: 8 }}>Tap to select screenshot</Text>
+                    <Text style={{ color: '#999', fontSize: 11, marginTop: 4 }}>(Optional)</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -820,11 +870,13 @@ Please confirm my booking.`;
               <Button
                 mode="contained"
                 onPress={handleFinalConfirm}
+                loading={isBooking}
+                disabled={isBooking}
                 style={[styles.successButton, { backgroundColor: theme.colors.primary, width: '100%' }]}
                 contentStyle={{ paddingVertical: 8 }}
                 labelStyle={{ color: theme.colors.secondary, fontSize: 16, fontWeight: 'bold' }}
               >
-                I have sent the payment
+                {isBooking ? 'Creating Booking...' : 'Confirm Booking'}
               </Button>
 
               <Button
@@ -877,36 +929,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
-  header: {
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  headerContent: {
+  whiteHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    backgroundColor: 'white',
+    paddingBottom: 16,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  circularBackButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
-  headerTitle: {
+  centeredTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: '700',
+    color: '#333',
     fontFamily: 'Montserrat_700Bold',
-  },
-  headerRight: {
-    width: 40,
+    flex: 1,
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
@@ -922,71 +972,118 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     backgroundColor: 'white',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   summaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  venueIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  venueIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   venueInfo: {
     flex: 1,
   },
   venueName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#333',
     fontFamily: 'Montserrat_700Bold',
+    marginBottom: 4,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   venueAddress: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    marginTop: 2,
+    marginLeft: 4,
     fontFamily: 'Montserrat_400Regular',
+    flex: 1,
   },
-  priceChip: {
-    // backgroundColor and borderColor set dynamically
-  },
-  priceChipText: {
-    fontWeight: 'bold',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  bookingDetails: {
+  bookingDetailsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 20,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
   },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  detailBox: {
     flex: 1,
+    alignItems: 'center',
   },
-  detailText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 6,
+  detailIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  detailLabel: {
+    fontSize: 11,
+    color: '#999',
     fontFamily: 'Montserrat_500Medium',
+    marginBottom: 4,
+  },
+  detailValue: {
+    fontSize: 12,
+    color: '#333',
+    fontFamily: 'Montserrat_600SemiBold',
+    textAlign: 'center',
+  },
+  totalPriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  totalPriceLabel: {
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  totalPriceValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
   },
   pricingCard: {
     borderRadius: 16,
     padding: 20,
     backgroundColor: 'white',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#333',
     marginBottom: 16,
     fontFamily: 'Montserrat_700Bold',
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: '#999',
+    marginBottom: 16,
+    fontFamily: 'Montserrat_400Regular',
   },
   priceBreakdown: {
     gap: 12,
@@ -999,101 +1096,159 @@ const styles = StyleSheet.create({
   priceLabel: {
     fontSize: 14,
     color: '#666',
-    fontFamily: 'Montserrat_400Regular',
+    fontFamily: 'Montserrat_500Medium',
   },
   priceValue: {
     fontSize: 14,
     color: '#333',
-    fontWeight: '500',
-    fontFamily: 'Montserrat_500Medium',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   priceDivider: {
-    marginVertical: 8,
+    height: 1,
     backgroundColor: '#E0E0E0',
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 8,
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  totalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    fontFamily: 'Montserrat_700Bold',
+    marginVertical: 8,
   },
   paymentCard: {
     borderRadius: 16,
     padding: 20,
     backgroundColor: 'white',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
-  paymentOption: {
+  modernPaymentOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 12,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#E0E0E0',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: 'white',
   },
-  selectedPaymentOption: {
-    // borderColor and backgroundColor set dynamically
+  selectedModernPaymentOption: {
+    backgroundColor: '#F8FFF8',
   },
-  paymentLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  paymentIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  paymentIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
-  paymentInfo: {
+  paymentContent: {
     flex: 1,
   },
-  paymentName: {
+  paymentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  modernPaymentName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     fontFamily: 'Montserrat_600SemiBold',
+    flex: 1,
   },
-  paymentDesc: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+  modernPaymentDesc: {
+    fontSize: 13,
+    color: '#999',
     fontFamily: 'Montserrat_400Regular',
+  },
+  saveBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  saveBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  radioCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioCircleSelected: {
+    borderWidth: 2,
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  modernPaymentMethodOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    backgroundColor: 'white',
+  },
+  paymentMethodLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  paymentMethodIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  paymentMethodInfo: {
+    flex: 1,
   },
   infoCard: {
     borderRadius: 16,
     padding: 20,
     backgroundColor: 'white',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   infoList: {
-    gap: 12,
+    gap: 16,
   },
-  infoItem: {
+  modernInfoItem: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  infoIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
   infoText: {
     fontSize: 14,
     color: '#666',
-    marginLeft: 12,
     flex: 1,
     fontFamily: 'Montserrat_400Regular',
+    lineHeight: 20,
+    paddingTop: 8,
   },
   bottomAction: {
     backgroundColor: 'white',
@@ -1116,11 +1271,11 @@ const styles = StyleSheet.create({
   totalSummaryLabel: {
     fontSize: 16,
     color: '#666',
-    fontFamily: 'Montserrat_500Medium',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   totalSummaryValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     fontFamily: 'Montserrat_700Bold',
   },
   confirmButton: {
@@ -1132,7 +1287,7 @@ const styles = StyleSheet.create({
   },
   confirmButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontFamily: 'Montserrat_700Bold',
   },
   modalContainer: {
@@ -1150,7 +1305,7 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#333',
     marginBottom: 12,
     textAlign: 'center',

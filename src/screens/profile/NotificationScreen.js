@@ -5,192 +5,213 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from 'react-redux';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 import { theme } from '../../theme/theme';
 
 const NOTIFICATIONS_STORAGE_KEY = '@notifications_state';
 
-// Initial notifications data
-const initialNotifications = [
-    {
-      id: 1,
-      type: 'booking',
-      icon: 'event-available',
-      title: 'Booking Confirmed',
-      message: 'Your booking at Arena Sports Complex has been confirmed for tomorrow at 6:00 PM.',
-      time: '30m',
-      isRead: false,
-      section: 'today'
-    },
-    {
-      id: 2,
-      type: 'challenge',
-      icon: 'emoji-events',
-      title: 'Challenge Accepted',
-      message: 'Team Warriors accepted your challenge! Match scheduled for Saturday at 5:00 PM.',
-      time: '1h',
-      isRead: false,
-      section: 'today'
-    },
-    {
-      id: 3,
-      type: 'challenge',
-      icon: 'sports-soccer',
-      title: 'New Challenge Created',
-      message: 'You created a challenge for Football at Green Field Arena. Waiting for opponents.',
-      time: '2h',
-      isRead: false,
-      section: 'today'
-    },
-    {
-      id: 4,
-      type: 'challenge',
-      icon: 'group-add',
-      title: 'Challenge Request',
-      message: 'Team Thunder challenged you to a Cricket match. Accept or decline the challenge.',
-      time: '3h',
-      isRead: false,
-      section: 'today'
-    },
-    {
-      id: 5,
-      type: 'booking',
-      icon: 'schedule',
-      title: 'Booking Reminder',
-      message: 'Your booking at City Sports Complex starts in 2 hours. Don\'t forget!',
-      time: '4h',
-      isRead: false,
-      section: 'today'
-    },
-    {
-      id: 6,
-      type: 'offer',
-      icon: 'local-offer',
-      title: 'Exclusive Offers Inside',
-      message: 'Get 20% off on your next booking at selected venues. Limited time offer!',
-      time: '5h',
-      isRead: false,
-      section: 'today'
-    },
-    {
-      id: 7,
-      type: 'review',
-      icon: 'star',
-      title: 'Review Request',
-      message: 'How was your experience at Green Field Arena? Share your feedback and help others.',
-      time: '6h',
-      isRead: false,
-      section: 'today'
-    },
-    {
-      id: 8,
-      type: 'booking',
-      icon: 'check-circle',
-      title: 'Booking Completed',
-      message: 'Thank you for using Arena Pro. Your booking at City Sports Complex is complete.',
-      time: '1d',
-      isRead: true,
-      section: 'yesterday'
-    },
-    {
-      id: 9,
-      type: 'payment',
-      icon: 'payment',
-      title: 'Payment Successful',
-      message: 'Your payment of PKR 2,500 has been processed successfully for Arena Sports Complex.',
-      time: '1d',
-      isRead: true,
-      section: 'yesterday'
-    },
-    {
-      id: 10,
-      type: 'challenge',
-      icon: 'emoji-events',
-      title: 'Challenge Won!',
-      message: 'Congratulations! Your team won the challenge against Team Strikers. Great game!',
-      time: '1d',
-      isRead: true,
-      section: 'yesterday'
-    },
-    {
-      id: 11,
-      type: 'booking',
-      icon: 'cancel',
-      title: 'Booking Cancelled',
-      message: 'Your booking at Paradise Arena has been cancelled. Refund will be processed in 3-5 days.',
-      time: '1d',
-      isRead: true,
-      section: 'yesterday'
-    },
-    {
-      id: 12,
-      type: 'challenge',
-      icon: 'sports-cricket',
-      title: 'Challenge Declined',
-      message: 'Team Eagles declined your challenge request. Try challenging another team.',
-      time: '2d',
-      isRead: true,
-      section: 'yesterday'
-    },
-    {
-      id: 13,
-      type: 'system',
-      icon: 'notifications-active',
-      title: 'Welcome to Arena Pro',
-      message: 'Start booking your favorite sports venues and join challenges with other teams!',
-      time: '2d',
-      isRead: true,
-      section: 'yesterday'
-    }
-  ];
-
 export default function NotificationScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { user } = useSelector(state => state.auth);
+  const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load notifications state from AsyncStorage on mount
+  // Fetch real-time notifications from Firestore
   useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  // Save notifications state to AsyncStorage whenever it changes
-  useEffect(() => {
-    if (!isLoading) {
-      saveNotifications();
+    if (!user?.uid) {
+      setIsLoading(false);
+      return;
     }
-  }, [notifications, isLoading]);
 
-  const loadNotifications = async () => {
+    console.log('📬 NotificationScreen: Setting up real-time listener for user:', user.uid);
+
+    // Subscribe to user's bookings for booking notifications
+    const bookingsRef = collection(db, 'bookings');
+    const bookingsQuery = query(
+      bookingsRef,
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(bookingsQuery, (snapshot) => {
+      const bookingNotifications = [];
+      
+      snapshot.forEach((doc) => {
+        const booking = { id: doc.id, ...doc.data() };
+        
+        // Create notification based on booking status
+        const notification = createBookingNotification(booking);
+        if (notification) {
+          bookingNotifications.push(notification);
+        }
+      });
+
+      console.log('📬 Loaded booking notifications:', bookingNotifications.length);
+      setNotifications(bookingNotifications);
+      setIsLoading(false);
+    }, (error) => {
+      console.error('❌ Error fetching notifications:', error);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Create notification object from booking data
+  const createBookingNotification = (booking) => {
+    if (!booking.createdAt) return null;
+
+    const createdAt = booking.createdAt.toDate();
+    const timeAgo = getTimeAgo(createdAt);
+    const section = getSection(createdAt);
+
+    // Determine notification type and content based on booking status
+    let type, icon, title, message;
+
+    switch (booking.status) {
+      case 'confirmed':
+        type = 'booking';
+        icon = 'event-available';
+        title = 'Booking Confirmed';
+        message = `Your booking at ${booking.venueName || 'venue'} has been confirmed for ${formatBookingDate(booking.date)} at ${booking.startTime}.`;
+        break;
+      
+      case 'pending':
+        type = 'booking';
+        icon = 'schedule';
+        title = 'Booking Pending';
+        message = `Your booking at ${booking.venueName || 'venue'} is pending confirmation. We'll notify you once confirmed.`;
+        break;
+      
+      case 'cancelled':
+        type = 'booking';
+        icon = 'cancel';
+        title = 'Booking Cancelled';
+        message = `Your booking at ${booking.venueName || 'venue'} has been cancelled. ${booking.refundStatus ? 'Refund will be processed in 3-5 days.' : ''}`;
+        break;
+      
+      case 'completed':
+        type = 'booking';
+        icon = 'check-circle';
+        title = 'Booking Completed';
+        message = `Thank you for using Arena Pro. Your booking at ${booking.venueName || 'venue'} is complete.`;
+        break;
+      
+      default:
+        // New booking notification
+        type = 'booking';
+        icon = 'event-available';
+        title = 'New Booking Created';
+        message = `Your booking at ${booking.venueName || 'venue'} for ${formatBookingDate(booking.date)} at ${booking.startTime} has been created.`;
+    }
+
+    // Add payment notification if payment was made
+    if (booking.paymentStatus === 'paid' || booking.paymentStatus === 'partial') {
+      // This could be a separate notification, but for now we'll just update the message
+      if (booking.advancePaid > 0) {
+        message += ` Advance payment of PKR ${booking.advancePaid} received.`;
+      }
+    }
+
+    return {
+      id: booking.id,
+      type,
+      icon,
+      title,
+      message,
+      time: timeAgo,
+      isRead: booking.notificationRead || false,
+      section,
+      createdAt,
+      bookingId: booking.id
+    };
+  };
+
+  // Format booking date for display
+  const formatBookingDate = (dateString) => {
+    if (!dateString) return 'upcoming date';
+    
     try {
-      const stored = await AsyncStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-      if (stored) {
-        const parsedNotifications = JSON.parse(stored);
-        setNotifications(parsedNotifications);
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      
+      if (date.toDateString() === today.toDateString()) {
+        return 'today';
+      } else if (date.toDateString() === tomorrow.toDateString()) {
+        return 'tomorrow';
+      } else {
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'short', 
+          month: 'short', 
+          day: 'numeric' 
+        });
       }
     } catch (error) {
-      console.log('Error loading notifications:', error);
-    } finally {
-      setIsLoading(false);
+      return dateString;
     }
   };
 
-  const saveNotifications = async () => {
-    try {
-      await AsyncStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
-    } catch (error) {
-      console.log('Error saving notifications:', error);
-    }
+  // Calculate time ago from timestamp
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays < 7) return `${diffDays}d`;
+    return `${Math.floor(diffDays / 7)}w`;
+  };
+
+  // Determine section (today, yesterday, older)
+  const getSection = (date) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const notifDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    if (notifDate.getTime() === today.getTime()) return 'today';
+    if (notifDate.getTime() === yesterday.getTime()) return 'yesterday';
+    return 'older';
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const markAllAsRead = (section) => {
+  const markAllAsRead = async (section) => {
+    const notificationsToUpdate = notifications.filter(
+      n => n.section === section && !n.isRead
+    );
+
+    // Update in Firestore
+    for (const notif of notificationsToUpdate) {
+      try {
+        const bookingRef = doc(db, 'bookings', notif.bookingId);
+        await updateDoc(bookingRef, {
+          notificationRead: true
+        });
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+
+    // Update local state
     setNotifications(prev =>
       prev.map(notif =>
         notif.section === section ? { ...notif, isRead: true } : notif
@@ -198,7 +219,21 @@ export default function NotificationScreen({ navigation }) {
     );
   };
 
-  const markAsRead = (id) => {
+  const markAsRead = async (id) => {
+    const notification = notifications.find(n => n.id === id);
+    if (!notification || notification.isRead) return;
+
+    // Update in Firestore
+    try {
+      const bookingRef = doc(db, 'bookings', notification.bookingId);
+      await updateDoc(bookingRef, {
+        notificationRead: true
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+
+    // Update local state
     setNotifications(prev =>
       prev.map(notif =>
         notif.id === id ? { ...notif, isRead: true } : notif
@@ -227,6 +262,7 @@ export default function NotificationScreen({ navigation }) {
 
   const todayNotifications = notifications.filter(n => n.section === 'today');
   const yesterdayNotifications = notifications.filter(n => n.section === 'yesterday');
+  const olderNotifications = notifications.filter(n => n.section === 'older');
 
   const NotificationCard = ({ notification }) => (
     <TouchableOpacity
@@ -234,7 +270,13 @@ export default function NotificationScreen({ navigation }) {
         styles.notificationCard,
         !notification.isRead && styles.unreadCard
       ]}
-      onPress={() => markAsRead(notification.id)}
+      onPress={() => {
+        markAsRead(notification.id);
+        // Navigate to booking details if it's a booking notification
+        if (notification.type === 'booking' && notification.bookingId) {
+          navigation.navigate('Bookings');
+        }
+      }}
       activeOpacity={0.7}
     >
       <View style={[styles.iconContainer, { backgroundColor: `${getIconColor(notification.type)}15` }]}>
@@ -260,6 +302,28 @@ export default function NotificationScreen({ navigation }) {
       {!notification.isRead && <View style={styles.unreadDot} />}
     </TouchableOpacity>
   );
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+        <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : 20 }]}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <MaterialIcons name="arrow-back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Notification</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading notifications...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -321,6 +385,24 @@ export default function NotificationScreen({ navigation }) {
             </View>
 
             {yesterdayNotifications.map(notification => (
+              <NotificationCard key={notification.id} notification={notification} />
+            ))}
+          </View>
+        )}
+
+        {/* Older Section */}
+        {olderNotifications.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>OLDER</Text>
+              {olderNotifications.some(n => !n.isRead) && (
+                <TouchableOpacity onPress={() => markAllAsRead('older')}>
+                  <Text style={styles.markAllText}>Mark all as read</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {olderNotifications.map(notification => (
               <NotificationCard key={notification.id} notification={notification} />
             ))}
           </View>
@@ -490,5 +572,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
     paddingHorizontal: 40,
     lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontFamily: 'Montserrat_400Regular',
   },
 });

@@ -20,6 +20,8 @@ import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import SignInScreen from '../screens/auth/SignInScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import VerifyResetCodeScreen from '../screens/auth/VerifyResetCodeScreen';
+import NewPasswordScreen from '../screens/auth/NewPasswordScreen';
 import OTPScreen from '../screens/auth/OTPScreen';
 
 // Location Screens
@@ -194,6 +196,22 @@ export default function AppNavigator() {
             options={{
               title: 'Reset Password',
               gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
+            name="VerifyResetCode"
+            component={VerifyResetCodeScreen}
+            options={{
+              title: 'Verify Code',
+              gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
+            name="NewPassword"
+            component={NewPasswordScreen}
+            options={{
+              title: 'New Password',
+              gestureEnabled: false,
             }}
           />
           <Stack.Screen
