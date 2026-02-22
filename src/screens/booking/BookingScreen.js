@@ -234,7 +234,7 @@ export default function BookingScreen({ navigation }) {
           <MaterialIcons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.centeredTitle}>My Bookings</Text>
-        <View style={{ width: 44 }} /> {/* Balance the flex row */}
+        <View style={{ width: 44 }} />
       </View>
 
       <View style={styles.content}>
