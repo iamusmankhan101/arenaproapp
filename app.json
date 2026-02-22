@@ -29,7 +29,10 @@
       "statusBar": {
         "barStyle": "dark-content",
         "hidden": false
-      }
+      },
+      "associatedDomains": [
+        "applinks:arenapro.pk"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -52,7 +55,24 @@
       "navigationBar": {
         "backgroundColor": "#FFFFFF",
         "barStyle": "dark-content"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "arenapro.pk",
+              "pathPrefix": "/reset-password"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

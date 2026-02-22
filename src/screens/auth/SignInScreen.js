@@ -20,6 +20,7 @@ import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
 
@@ -36,13 +37,19 @@ export default function SignInScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
 
-  const redirectUri = 'https://auth.expo.io/@imusmankhan10/arena-pro';
+  // Force use of Expo's auth proxy instead of local exp:// URL
+  const redirectUri = makeRedirectUri({
+    scheme: 'arenapro',
+    path: 'redirect',
+    useProxy: true, // This forces Expo to use auth.expo.io proxy
+  });
+
+  console.log('🔍 Google Sign-In Redirect URI:', redirectUri);
 
   const [, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
     androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    // Explicitly use Expo's auth proxy to avoid exp:// protocol issues
     redirectUri: redirectUri,
   });
 
@@ -136,6 +143,17 @@ export default function SignInScreen({ navigation }) {
   };
 
   const handleGoogleSignIn = async () => {
+    // Google Sign-In is not available in Expo Go due to redirect URI limitations
+    // It will work in production builds (APK/AAB)
+    if (__DEV__) {
+      Alert.alert(
+        'Google Sign-In Unavailable',
+        'Google Sign-In is not available in development mode. Please use email/password to sign in, or build the app as an APK to test Google Sign-In.\n\nEmail/password sign-in works perfectly!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       await promptAsync();
     } catch (error) {

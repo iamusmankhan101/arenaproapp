@@ -21,12 +21,23 @@ import { theme } from '../../theme/theme';
 import { LightStatusBar } from '../../components/AppStatusBar';
 
 export default function NewPasswordScreen({ navigation, route }) {
-  const { email, code } = route.params;
+  // Extract oobCode from route params (comes from deep link)
+  const oobCode = route.params?.oobCode;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // If no oobCode, show error and go back
+  if (!oobCode) {
+    Alert.alert(
+      'Invalid Link',
+      'This password reset link is invalid or has expired. Please request a new one.',
+      [{ text: 'OK', onPress: () => navigation.navigate('SignIn') }]
+    );
+    return null;
+  }
 
   const validatePassword = () => {
     if (!password.trim()) {
@@ -52,8 +63,8 @@ export default function NewPasswordScreen({ navigation, route }) {
 
     setLoading(true);
     try {
-      // Use Firebase's confirmPasswordReset with the code from email
-      await confirmPasswordReset(auth, code, password);
+      // Use Firebase's confirmPasswordReset with the oobCode from deep link
+      await confirmPasswordReset(auth, oobCode, password);
       
       Alert.alert(
         'Success!',

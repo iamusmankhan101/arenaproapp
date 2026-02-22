@@ -44,19 +44,37 @@ export default function ForgotPasswordScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email.trim().toLowerCase());
-      
-      // Navigate to verification screen
-      navigation.navigate('VerifyResetCode', { email: email.trim().toLowerCase() });
+      // Configure action code settings for deep linking
+      const actionCodeSettings = {
+        // URL to redirect to after email link is clicked
+        // This will be handled by the app's deep linking
+        url: 'https://arenapro.pk/reset-password',
+        handleCodeInApp: true,
+        iOS: {
+          bundleId: 'arenapropk.online',
+        },
+        android: {
+          packageName: 'arenapropk.online',
+          installApp: true,
+          minimumVersion: '1',
+        },
+      };
+
+      await sendPasswordResetEmail(auth, email.trim().toLowerCase(), actionCodeSettings);
       
       Alert.alert(
-        'Code Sent!',
-        'We\'ve sent a verification code to your email. Please check your inbox.',
-        [{ text: 'OK' }]
+        'Email Sent!',
+        'We\'ve sent a password reset link to your email. Please check your inbox and tap the link to reset your password in the app.',
+        [
+          { 
+            text: 'OK',
+            onPress: () => navigation.goBack()
+          }
+        ]
       );
     } catch (error) {
       console.error('Password reset error:', error);
-      let errorMessage = 'Failed to send reset code. Please try again.';
+      let errorMessage = 'Failed to send reset email. Please try again.';
       
       if (error.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email address.';
@@ -94,7 +112,7 @@ export default function ForgotPasswordScreen({ navigation }) {
         {/* Title */}
         <Text style={styles.title}>Forgot Password</Text>
         <Text style={styles.subtitle}>
-          Please enter your email address to receive a verification code
+          Enter your email address and we'll send you a link to reset your password
         </Text>
 
         {/* Email Input */}
@@ -124,7 +142,7 @@ export default function ForgotPasswordScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Send Code Button */}
+        {/* Send Reset Link Button */}
         <Button
           mode="contained"
           onPress={handleSendCode}
@@ -135,7 +153,7 @@ export default function ForgotPasswordScreen({ navigation }) {
           labelStyle={styles.sendButtonText}
           disabled={loading}
         >
-          {loading ? <ActivityIndicator color={theme.colors.secondary} size="small" /> : 'Send Code'}
+          {loading ? <ActivityIndicator color={theme.colors.secondary} size="small" /> : 'Send Reset Link'}
         </Button>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -6,7 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
 import { useFonts, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { store } from './src/store/store';
 import AppNavigator, { linking } from './src/navigation/AppNavigator';
 import { theme } from './src/theme/theme';
@@ -16,6 +16,7 @@ import FlashMessage, { showMessage } from "react-native-flash-message";
 import { notificationService } from './src/services/notificationService';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from './src/config/firebase';
+import * as Linking from 'expo-linking';
 
 // Keep the splash screen visible while we fetch resources
 try {
@@ -27,6 +28,8 @@ try {
 }
 
 export default function App() {
+  const navigationRef = useRef();
+  
   let [fontsLoaded, fontError] = useFonts({
     // Montserrat - Secondary font for body text
     Montserrat_400Regular,
@@ -39,6 +42,45 @@ export default function App() {
     'ClashDisplay-Semibold': require('./assets/fonts/ClashDisplay-Semibold.otf'),
     'ClashDisplay-Bold': require('./assets/fonts/ClashDisplay-Bold.otf'),
   });
+
+  // Handle deep links for password reset
+  useEffect(() => {
+    const handleDeepLink = (event) => {
+      const url = event.url;
+      console.log('🔗 Deep link received:', url);
+      
+      // Check if it's a password reset link
+      if (url && url.includes('reset-password')) {
+        try {
+          // Extract oobCode from URL
+          const urlObj = new URL(url);
+          const oobCode = urlObj.searchParams.get('oobCode');
+          
+          if (oobCode && navigationRef.current) {
+            console.log('🔑 Password reset code found, navigating to NewPassword screen');
+            // Navigate to NewPassword screen with the code
+            navigationRef.current.navigate('NewPassword', { oobCode });
+          }
+        } catch (error) {
+          console.error('Error parsing deep link:', error);
+        }
+      }
+    };
+
+    // Listen for deep links when app is already open
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was opened with a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     // Set default status bar style
@@ -151,7 +193,7 @@ export default function App() {
       <ErrorBoundary>
         <Provider store={store}>
           <PaperProvider theme={theme}>
-            <NavigationContainer linking={linking}>
+            <NavigationContainer ref={navigationRef} linking={linking}>
               <AppNavigator />
               <FlashMessage position="top" />
             </NavigationContainer>
