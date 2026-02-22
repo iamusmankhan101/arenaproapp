@@ -105,7 +105,7 @@ export default function BookingCard({ booking, navigation }) {
           <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
             <Text style={[styles.statusText, { color: statusColor }]}>
-              {booking.status?.toUpperCase() || 'PENDING'}
+              {typeof booking.status === 'string' ? booking.status.toUpperCase() : 'PENDING'}
             </Text>
           </View>
           {isToday && booking.status !== 'cancelled' && (
@@ -121,10 +121,14 @@ export default function BookingCard({ booking, navigation }) {
         {/* Venue Info Section */}
         <View style={styles.venueSection}>
           <View style={styles.venueInfo}>
-            <Text style={styles.venueName} numberOfLines={1}>{booking.turfName || 'Unknown Venue'}</Text>
+            <Text style={styles.venueName} numberOfLines={1}>
+              {typeof booking.turfName === 'string' ? booking.turfName : 'Unknown Venue'}
+            </Text>
             <View style={styles.locationContainer}>
               <MaterialIcons name="location-on" size={12} color="#666" />
-              <Text style={styles.locationText} numberOfLines={1}>{booking.turfArea || 'Unknown Area'}</Text>
+              <Text style={styles.locationText} numberOfLines={1}>
+                {typeof booking.turfArea === 'string' ? booking.turfArea : 'Unknown Area'}
+              </Text>
             </View>
           </View>
           <View style={styles.sportBadge}>
@@ -152,12 +156,16 @@ export default function BookingCard({ booking, navigation }) {
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>DURATION</Text>
-              <Text style={styles.detailValue}>{booking.duration || '1 Hour'}</Text>
+              <Text style={styles.detailValue}>
+                {typeof booking.duration === 'string' || typeof booking.duration === 'number' 
+                  ? booking.duration 
+                  : '1 Hour'}
+              </Text>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>TOTAL PRICE</Text>
               <Text style={[styles.detailValue, { color: '#004d43', fontFamily: 'Montserrat_700Bold' }]}>
-                PKR {(booking.totalAmount || 0).toLocaleString()}
+                PKR {typeof booking.totalAmount === 'number' ? booking.totalAmount.toLocaleString() : '0'}
               </Text>
             </View>
           </View>
