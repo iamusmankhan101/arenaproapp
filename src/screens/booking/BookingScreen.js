@@ -283,7 +283,7 @@ export default function BookingScreen({ navigation }) {
         {filteredBookings.length > 0 && (
           <View style={styles.resultsContainer}>
             <Text style={styles.resultsText}>
-              {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''} found
+              {`${filteredBookings.length} booking${filteredBookings.length !== 1 ? 's' : ''} found`}
             </Text>
           </View>
         )}

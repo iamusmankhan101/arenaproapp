@@ -130,6 +130,7 @@ const customMapStyle = [
 export default function MapScreen({ navigation }) {
   const [location, setLocation] = useState(null);
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(true); // Track location loading state
   const [region, setRegion] = useState({
     latitude: 31.5204, // Lahore coordinates where venues are located
     longitude: 74.3587,
@@ -223,6 +224,7 @@ export default function MapScreen({ navigation }) {
   const requestLocationAccess = async () => {
     try {
       console.log('📍 Checking location permissions...');
+      setIsGettingLocation(true);
 
       // Request permission
       let { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
@@ -234,6 +236,7 @@ export default function MapScreen({ navigation }) {
       } else {
         console.log('❌ Location permission denied');
         setHasLocationPermission(false);
+        setIsGettingLocation(false);
 
         // Custom alert logic
         Alert.alert(
@@ -250,6 +253,7 @@ export default function MapScreen({ navigation }) {
       }
     } catch (error) {
       console.error('📍 Location request error:', error);
+      setIsGettingLocation(false);
       // Continue without location
     }
   };
@@ -950,7 +954,7 @@ export default function MapScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={themeColors.colors.primary} barStyle="light-content" />
+      <StatusBar backgroundColor="transparent" barStyle="dark-content" translucent />
 
       {/* New Header: Search Bar & Filter */}
       <View style={[styles.newHeaderContainer, { paddingTop: insets.top + 10 }]}>
@@ -1222,23 +1226,27 @@ export default function MapScreen({ navigation }) {
       </View>
 
       {/* Location FAB - Center on User Location */}
-      {hasLocationPermission && location && (
-        <FAB
-          icon={({ size, color }) => (
-            <MaterialIcons name="my-location" size={size} color={color} />
-          )}
-          style={[
-            styles.locationFab,
-            {
-              backgroundColor: themeColors.colors.primary,
-              bottom: Platform.OS === 'android' ? 380 : 370
-            }
-          ]}
-          color={themeColors.colors.secondary}
-          onPress={centerOnUserLocation}
-          small
-        />
-      )}
+      <FAB
+        icon={({ size, color }) => (
+          <MaterialIcons name="my-location" size={size} color={color} />
+        )}
+        style={[
+          styles.locationFab,
+          {
+            backgroundColor: themeColors.colors.primary,
+            bottom: Platform.OS === 'android' ? 380 : 370
+          }
+        ]}
+        color={themeColors.colors.secondary}
+        onPress={() => {
+          if (location) {
+            centerOnUserLocation();
+          } else {
+            requestLocationAccess();
+          }
+        }}
+        small
+      />
     </View>
   );
 }

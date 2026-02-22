@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
-  Share
+  Share,
+  StatusBar
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -694,6 +695,7 @@ export default function TurfDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       {!venue ? (
         <ScrollView showsVerticalScrollIndicator={false}>
           <TurfCardSkeleton />

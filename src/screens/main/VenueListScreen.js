@@ -7,7 +7,8 @@ import {
   Dimensions,
   Image,
   FlatList,
-  Platform
+  Platform,
+  StatusBar
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Searchbar, Chip } from 'react-native-paper';
@@ -236,6 +237,7 @@ export default function VenueListScreen({ navigation, route }) {
 
   return (
     <View style={[styles.container, { paddingBottom: Platform.OS === 'android' ? insets.bottom + 60 : 0 }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity

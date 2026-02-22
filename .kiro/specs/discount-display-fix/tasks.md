@@ -71,30 +71,30 @@ This implementation plan addresses the discount display issues across the ArenaP
   - **Validates: Requirements 3.3**
 
 - [ ] 3. Update HomeScreen discount display
-  - [~] 3.1 Import discount utility functions
+  - [ ] 3.1 Import discount utility functions
     - Add import statement for `discountUtils.js`
     - _Requirements: 4.1_
   
-  - [~] 3.2 Update recommended venues discount badge
+  - [ ] 3.2 Update recommended venues discount badge
     - Replace existing discount check with `hasDiscount(venue)`
     - Use `getDiscountValue(venue)` for badge text
     - Ensure conditional rendering is correct
     - _Requirements: 4.1, 4.2, 4.3, 2.4_
   
-  - [~] 3.3 Add discounted price display to recommended venues
+  - [ ] 3.3 Add discounted price display to recommended venues
     - Get original price using `getOriginalPrice(venue)`
     - Calculate discounted price using `calculateDiscountedPrice()`
     - Add original price with strikethrough (conditional)
     - Add discounted price display (conditional)
     - _Requirements: 4.4, 4.5_
   
-  - [~] 3.4 Update nearby venues discount badge
+  - [ ] 3.4 Update nearby venues discount badge
     - Replace existing discount check with `hasDiscount(venue)`
     - Use `getDiscountValue(venue)` for badge text
     - Ensure conditional rendering is correct
     - _Requirements: 4.1, 4.2, 4.3, 2.4_
   
-  - [~] 3.5 Add discounted price display to nearby venues
+  - [ ] 3.5 Add discounted price display to nearby venues
     - Get original price using `getOriginalPrice(venue)`
     - Calculate discounted price using `calculateDiscountedPrice()`
     - Add original price with strikethrough (conditional)
@@ -110,30 +110,30 @@ This implementation plan addresses the discount display issues across the ArenaP
   - **Validates: Requirements 4.5**
 
 - [ ] 4. Update HomeScreenRedesigned discount display
-  - [~] 4.1 Import discount utility functions
+  - [ ] 4.1 Import discount utility functions
     - Add import statement for `discountUtils.js`
     - _Requirements: 5.1_
   
-  - [~] 4.2 Update recommended venues discount badge
+  - [ ] 4.2 Update recommended venues discount badge
     - Replace `venue.discount` check with `hasDiscount(venue)`
     - Use `getDiscountValue(venue)` for badge text
     - Ensure conditional rendering is correct
     - _Requirements: 5.1, 5.2, 5.3, 2.4_
   
-  - [~] 4.3 Add discounted price display to recommended venues
+  - [ ] 4.3 Add discounted price display to recommended venues
     - Get original price using `getOriginalPrice(venue)`
     - Calculate discounted price using `calculateDiscountedPrice()`
     - Add original price with strikethrough (conditional)
     - Add discounted price display (conditional)
     - _Requirements: 5.4, 5.5_
   
-  - [~] 4.4 Update nearby venues discount badge
+  - [ ] 4.4 Update nearby venues discount badge
     - Replace `venue.discount` check with `hasDiscount(venue)`
     - Use `getDiscountValue(venue)` for badge text
     - Ensure conditional rendering is correct
     - _Requirements: 5.1, 5.2, 5.3, 2.4_
   
-  - [~] 4.5 Add discounted price display to nearby venues
+  - [ ] 4.5 Add discounted price display to nearby venues
     - Get original price using `getOriginalPrice(venue)`
     - Calculate discounted price using `calculateDiscountedPrice()`
     - Add original price with strikethrough (conditional)
@@ -178,14 +178,14 @@ This implementation plan addresses the discount display issues across the ArenaP
   - **Validates: Requirements 6.5**
 
 - [ ] 6. Verify visual consistency across components
-  - [~] 6.1 Verify discount badge styling
+  - [ ] 6.1 Verify discount badge styling
     - Check primary color (#004d43) background on all components
     - Check secondary color (#e8ee26) text on all components
     - Check ClashDisplay-Medium font on all components
     - Check border radius and padding consistency
     - _Requirements: 8.1, 8.2, 8.3_
   
-  - [~] 6.2 Verify price display styling
+  - [ ] 6.2 Verify price display styling
     - Check Montserrat font family on all components
     - Check strikethrough styling consistency
     - Check discounted price color (primary)

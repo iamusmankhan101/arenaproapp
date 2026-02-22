@@ -682,6 +682,191 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Slot Duration (minutes)"
+                type="number"
+                value={formData.slotDuration}
+                onChange={handleInputChange('slotDuration')}
+                disabled={loading}
+                helperText="Duration of each time slot"
+                inputProps={{ min: 30, max: 180, step: 30 }}
+              />
+            </Grid>
+
+            {/* Date-Specific Time Slots Configuration */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ color: '#004d43', fontWeight: 600, mt: 3, mb: 1 }}>
+                Configure Time Slots for Specific Dates *
+              </Typography>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Select dates and configure which time slots are available for booking. You must configure at least one date.
+              </Alert>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Select Date"
+                type="date"
+                value={formData.selectedDate}
+                onChange={handleInputChange('selectedDate')}
+                disabled={loading}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: new Date().toISOString().split('T')[0] }}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => {
+                  const date = formData.selectedDate;
+                  if (!date) {
+                    setError('Please select a date first');
+                    return;
+                  }
+
+                  // Generate slots for this date if not already present
+                  if (!formData.dateSpecificSlots[date]) {
+                    const newSlots = generateAllPossibleSlots().map(slot => ({
+                      ...slot,
+                      id: `${date}-${slot.id}`,
+                      date: date,
+                      selected: true
+                    }));
+
+                    setFormData(prev => ({
+                      ...prev,
+                      dateSpecificSlots: {
+                        ...prev.dateSpecificSlots,
+                        [date]: newSlots
+                      }
+                    }));
+                  }
+                }}
+                disabled={loading || !formData.selectedDate}
+                sx={{ 
+                  bgcolor: '#004d43', 
+                  '&:hover': { bgcolor: '#00695c' },
+                  height: '56px'
+                }}
+              >
+                Add Date Configuration
+              </Button>
+            </Grid>
+
+            {/* Display configured dates */}
+            {Object.keys(formData.dateSpecificSlots).length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, mt: 2 }}>
+                  Configured Dates ({Object.keys(formData.dateSpecificSlots).length})
+                </Typography>
+                
+                {Object.keys(formData.dateSpecificSlots).sort().map(date => {
+                  const dateSlots = formData.dateSpecificSlots[date];
+                  const selectedCount = dateSlots.filter(s => s.selected).length;
+                  
+                  return (
+                    <Card key={date} variant="outlined" sx={{ mb: 2, p: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#004d43' }}>
+                            {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {selectedCount} of {dateSlots.length} slots selected
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Button
+                            size="small"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                dateSpecificSlots: {
+                                  ...prev.dateSpecificSlots,
+                                  [date]: dateSlots.map(s => ({ ...s, selected: true }))
+                                }
+                              }));
+                            }}
+                            sx={{ mr: 1 }}
+                          >
+                            Select All
+                          </Button>
+                          <Button
+                            size="small"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                dateSpecificSlots: {
+                                  ...prev.dateSpecificSlots,
+                                  [date]: dateSlots.map(s => ({ ...s, selected: false }))
+                                }
+                              }));
+                            }}
+                            sx={{ mr: 1 }}
+                          >
+                            Deselect All
+                          </Button>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              const newDateSlots = { ...formData.dateSpecificSlots };
+                              delete newDateSlots[date];
+                              setFormData(prev => ({
+                                ...prev,
+                                dateSpecificSlots: newDateSlots
+                              }));
+                            }}
+                          >
+                            <Close />
+                          </IconButton>
+                        </Box>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {dateSlots.map(slot => (
+                          <Chip
+                            key={slot.id}
+                            label={`${slot.startTime} - ${slot.endTime}`}
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                dateSpecificSlots: {
+                                  ...prev.dateSpecificSlots,
+                                  [date]: dateSlots.map(s => 
+                                    s.id === slot.id ? { ...s, selected: !s.selected } : s
+                                  )
+                                }
+                              }));
+                            }}
+                            color={slot.selected ? "primary" : "default"}
+                            variant={slot.selected ? "filled" : "outlined"}
+                            sx={{
+                              bgcolor: slot.selected ? '#004d43' : 'transparent',
+                              color: slot.selected ? 'white' : 'inherit',
+                              '&:hover': {
+                                bgcolor: slot.selected ? '#00695c' : '#f5f5f5'
+                              }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Card>
+                  );
+                })}
+              </Grid>
+            )}
+
             <Grid item xs={12}>
               <Typography variant="h6" sx={{ color: '#004d43', fontWeight: 600, mt: 2, mb: 1 }}>
                 Venue Images
