@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
 import { Card, Text, Chip, Button, Surface, Badge } from 'react-native-paper';
 import { Rating } from 'react-native-ratings';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -248,14 +248,20 @@ export default function TurfCard({ turf, onPress, onFavoritePress, isFavorite })
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
-    elevation: 4,
     borderRadius: 16,
     backgroundColor: 'white',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   cardContent: {
     flex: 1,
@@ -311,6 +317,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   priceBadge: {
     position: 'absolute',
@@ -492,11 +509,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 25,
     gap: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   bookButtonText: {
     color: 'white',
