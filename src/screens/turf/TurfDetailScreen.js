@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
-  Share,
   StatusBar
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -370,34 +369,6 @@ export default function TurfDetailScreen({ route, navigation }) {
     }
   };
 
-  const handleShare = async () => {
-    try {
-      const message = `Check out ${venue.name}!\n\n` +
-        `📍 Location: ${venue.location}\n` +
-        `⭐ Rating: ${venue.rating || 'N/A'}\n` +
-        `💰 Price: PKR ${venue.priceFrom}/hour\n\n` +
-        `Book now on ArenaPro!`;
-
-      const result = await Share.share({
-        message: message,
-        title: `${venue.name} - ArenaPro`,
-      });
-
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          console.log('✅ Shared with activity type:', result.activityType);
-        } else {
-          console.log('✅ Venue shared successfully');
-        }
-      } else if (result.action === Share.dismissedAction) {
-        console.log('ℹ️ Share dismissed');
-      }
-    } catch (error) {
-      console.error('❌ Share error:', error);
-      Alert.alert('Error', 'Failed to share venue details');
-    }
-  };
-
   const handleBooking = () => {
     console.log('🎯 TurfDetailScreen: Opening booking modal, clearing cache');
     // Clear any cached slots and force fresh fetch
@@ -730,21 +701,16 @@ export default function TurfDetailScreen({ route, navigation }) {
                   <MaterialIcons name="arrow-back" size={22} color="#000" />
                 </TouchableOpacity>
 
-                <View style={styles.headerRightActions}>
-                  <TouchableOpacity style={styles.circularButton} onPress={handleShare}>
-                    <MaterialIcons name="share" size={20} color="#000" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.circularButton, { marginLeft: 12 }]}
-                    onPress={handleFavoriteToggle}
-                  >
-                    <MaterialIcons
-                      name={isFavorite ? "favorite" : "favorite-border"}
-                      size={20}
-                      color={isFavorite ? "#F44336" : "#000"}
-                    />
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={styles.circularButton}
+                  onPress={handleFavoriteToggle}
+                >
+                  <MaterialIcons
+                    name={isFavorite ? "favorite" : "favorite-border"}
+                    size={20}
+                    color={isFavorite ? "#F44336" : "#000"}
+                  />
+                </TouchableOpacity>
               </View>
 
               {/* Gallery Glimpse Over Image */}

@@ -205,10 +205,17 @@ export default function ChallengeScreen({ navigation }) {
     const matchesSearch = !searchQuery || 
       challenge.teamName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       challenge.venue?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'all' || 
-      (activeTab === 'my-challenges' && challenge.challengerId === userTeam?.id);
     
-    return matchesSport && matchesSearch && matchesTab;
+    // For "My Challenges" tab, check if user created or accepted the challenge
+    const isMyChallenge = activeTab === 'all' || 
+      (activeTab === 'my-challenges' && (
+        challenge.challengerId === userTeam?.id || 
+        challenge.challengerId === user?.uid ||
+        challenge.opponentId === userTeam?.id ||
+        challenge.opponentId === user?.uid
+      ));
+    
+    return matchesSport && matchesSearch && isMyChallenge;
   });
 
   return (

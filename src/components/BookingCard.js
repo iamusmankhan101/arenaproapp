@@ -21,7 +21,7 @@ export default function BookingCard({ booking, navigation }) {
 
   const getStatusBgColor = (status) => {
     switch (status) {
-      case 'confirmed': return 'rgba(0, 77, 67, 0.1)';
+      case 'confirmed': return '#e8ee26';
       case 'pending': return 'rgba(245, 124, 0, 0.1)';
       case 'cancelled': return 'rgba(211, 47, 47, 0.1)';
       case 'completed': return 'rgba(0, 107, 90, 0.1)';

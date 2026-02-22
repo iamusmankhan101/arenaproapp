@@ -7,11 +7,14 @@ import {
   StatusBar,
   Alert,
   Share,
+  Platform,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function EReceiptScreen({ navigation, route }) {
   const { booking } = route.params || {};
@@ -62,8 +65,73 @@ export default function EReceiptScreen({ navigation, route }) {
     });
   };
 
-  const handleDownload = () => {
-    Alert.alert('Coming Soon', 'Download feature will be available shortly.');
+  const handleDownload = async () => {
+    try {
+      // Generate receipt text content
+      const receiptContent = `
+═══════════════════════════════════════
+           ARENA PRO E-RECEIPT
+═══════════════════════════════════════
+
+Venue: ${booking.turfName || 'N/A'}
+
+───────────────────────────────────────
+BOOKING DETAILS
+───────────────────────────────────────
+Booking Date: ${formatBookingDate(booking.createdAt || booking.dateTime)}
+Check In: ${formatDate(booking.dateTime)}
+Time: ${formatTime(booking.dateTime)}
+Duration: ${booking.duration || '1 Hour'}
+
+───────────────────────────────────────
+PAYMENT DETAILS
+───────────────────────────────────────
+Amount:          PKR ${String((booking.amount || booking.totalAmount || 0).toLocaleString())}
+Tax & Fees:      PKR ${String((booking.taxFees || 0).toLocaleString())}
+                 ─────────────────────
+Total:           PKR ${String((booking.totalAmount || 0).toLocaleString())}
+
+───────────────────────────────────────
+CUSTOMER DETAILS
+───────────────────────────────────────
+Name: ${booking.userName || 'N/A'}
+Phone: ${booking.userPhone || 'N/A'}
+Transaction ID: ${booking.bookingReference || booking.id || 'N/A'}
+
+═══════════════════════════════════════
+Thank you for booking with Arena Pro!
+═══════════════════════════════════════
+      `.trim();
+
+      // Create file name with timestamp
+      const timestamp = new Date().getTime();
+      const fileName = `ArenaPro_Receipt_${booking.bookingReference || booking.id || timestamp}.txt`;
+      const fileUri = FileSystem.documentDirectory + fileName;
+
+      // Write content to file
+      await FileSystem.writeAsStringAsync(fileUri, receiptContent, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Check if sharing is available
+      const isAvailable = await Sharing.isAvailableAsync();
+      
+      if (isAvailable) {
+        // Share/download the file
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'text/plain',
+          dialogTitle: 'Download E-Receipt',
+          UTI: 'public.plain-text',
+        });
+        
+        Alert.alert('Success', 'Receipt downloaded successfully!');
+      } else {
+        Alert.alert('Error', 'Sharing is not available on this device');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('Error', 'Failed to download receipt. Please try again.');
+    }
   };
 
   const handleShare = async () => {
