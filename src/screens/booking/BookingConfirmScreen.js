@@ -10,7 +10,8 @@ import {
   StatusBar,
   SafeAreaView,
   Image,
-  Linking
+  Linking,
+  Platform
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
