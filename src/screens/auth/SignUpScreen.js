@@ -30,11 +30,13 @@ export default function SignUpScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [nameFocused, setNameFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [referralFocused, setReferralFocused] = useState(false);
   const insets = useSafeAreaInsets();
 
   const dispatch = useDispatch();
@@ -123,7 +125,7 @@ export default function SignUpScreen({ navigation }) {
         fullName: name.trim(),
         phoneNumber: '',
         city: 'Lahore',
-        referralCode: ''
+        referralCode: referralCode.trim().toUpperCase() || ''
       }));
     }
   };
@@ -239,6 +241,41 @@ export default function SignUpScreen({ navigation }) {
                   />
                 </TouchableOpacity>
               </View>
+            </View>
+
+            {/* Referral Code (Optional) */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Referral Code</Text>
+                <Text style={styles.optionalLabel}>(Optional)</Text>
+              </View>
+              <View style={[styles.inputWrapper, (referralFocused || referralCode) && styles.inputWrapperFocused]}>
+                <MaterialIcons name="card-giftcard" size={20} color={theme.colors.primary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter referral code"
+                  placeholderTextColor="#999"
+                  value={referralCode}
+                  onChangeText={(text) => setReferralCode(text.toUpperCase())}
+                  onFocus={() => setReferralFocused(true)}
+                  onBlur={() => setReferralFocused(false)}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={8}
+                  selectionColor={theme.colors.primary}
+                />
+                {referralCode.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setReferralCode('')}
+                    style={styles.clearIcon}
+                  >
+                    <MaterialIcons name="close" size={18} color="#666" />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <Text style={styles.helperText}>
+                Have a referral code? Enter it to get PKR 200 discount on your first booking!
+              </Text>
             </View>
 
             {/* Terms & Conditions */}
@@ -379,6 +416,32 @@ const styles = StyleSheet.create({
   eyeIcon: {
     padding: 8,
     marginLeft: 8,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  optionalLabel: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginLeft: 6,
+    fontFamily: 'Montserrat_400Regular',
+    fontStyle: 'italic',
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  clearIcon: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  helperText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 6,
+    fontFamily: 'Montserrat_400Regular',
+    lineHeight: 16,
   },
   checkboxContainer: {
     flexDirection: 'row',

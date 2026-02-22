@@ -527,7 +527,7 @@ export const firebaseAuthAPI = {
 
       let message = 'Account created successfully! Please check your email for verification.';
       if (referrerId) {
-        message += ` You have Rs. 300 off your first booking!`;
+        message += ` You have PKR 200 discount on your first booking!`;
       }
 
       return {

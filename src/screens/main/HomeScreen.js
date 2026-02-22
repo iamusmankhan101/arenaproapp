@@ -19,6 +19,7 @@ import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
 import { theme } from '../../theme/theme';
 import TurfCard from '../../components/TurfCard';
 import FilterModal from '../../components/FilterModal';
+import ReferralModal from '../../components/ReferralModal';
 
 const { width } = Dimensions.get('window');
 
@@ -61,9 +62,11 @@ export default function HomeScreen({ navigation }) {
   const [userLocation, setUserLocation] = useState('Lahore, Pakistan');
   const [userCoords, setUserCoords] = useState({ latitude: 31.5204, longitude: 74.3587 });
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [referralModalVisible, setReferralModalVisible] = useState(false);
   
   const { nearbyTurfs, loading } = useSelector(state => state.turf);
   const { user } = useSelector(state => state.auth);
+  const { userBookings } = useSelector(state => state.booking);
 
   // Get user location on mount
   useEffect(() => {
@@ -86,7 +89,7 @@ export default function HomeScreen({ navigation }) {
     getUserLocation();
   }, []);
 
-  // Load venues on screen focus
+  // Load venues and bookings on screen focus
   useFocusEffect(
     React.useCallback(() => {
       dispatch(fetchNearbyTurfs({
@@ -94,7 +97,13 @@ export default function HomeScreen({ navigation }) {
         longitude: userCoords.longitude,
         radius: 50000 // 50km to get all venues, then filter by distance
       }));
-    }, [dispatch, userCoords])
+      
+      // Fetch user bookings to check eligibility for referral
+      if (user) {
+        const { fetchUserBookings } = require('../../store/slices/bookingSlice');
+        dispatch(fetchUserBookings());
+      }
+    }, [dispatch, userCoords, user])
   );
 
   // Calculate distance between two coordinates using Haversine formula
@@ -509,6 +518,28 @@ export default function HomeScreen({ navigation }) {
         visible={filterModalVisible}
         onDismiss={() => setFilterModalVisible(false)}
       />
+
+      {/* Referral Modal */}
+      <ReferralModal
+        visible={referralModalVisible}
+        onDismiss={() => setReferralModalVisible(false)}
+        user={user}
+        hasCompletedBooking={userBookings && userBookings.length > 0}
+      />
+
+      {/* Referral Floating Action Button - Show for all authenticated users */}
+      {user && (
+        <TouchableOpacity
+          style={styles.referralFAB}
+          onPress={() => setReferralModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.referralFABContent}>
+            <MaterialIcons name="card-giftcard" size={24} color={theme.colors.secondary} />
+            <Text style={styles.referralFABText}>Refer & Earn</Text>
+          </View>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -960,5 +991,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     fontFamily: 'Montserrat_400Regular',
+  },
+  referralFAB: {
+    position: 'absolute',
+    bottom: 105,
+    right: 20,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  referralFABContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  referralFABText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.secondary,
+    fontFamily: 'Montserrat_700Bold',
   },
 });

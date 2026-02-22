@@ -1,296 +1,157 @@
-/**
- * Referral Service
- * Handles all referral-related operations with Firebase
- */
-
-import {
-    collection,
-    query,
-    where,
-    getDocs,
-    doc,
-    getDoc,
-    updateDoc,
-    arrayUnion,
-    increment,
-    serverTimestamp
-} from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import {
-    validateReferralCodeFormat,
-    normalizeReferralCode,
-    REFERRAL_CONSTANTS
-} from '../utils/referralUtils';
 
 /**
- * Verify if a referral code exists and get the referrer's user ID
- * @param {string} code - Referral code to verify
+ * Verify if a referral code is valid
+ * @param {string} referralCode - The referral code to verify
  * @returns {Promise<{valid: boolean, referrerId: string|null, referrerName: string|null}>}
  */
-export const verifyReferralCode = async (code) => {
-    try {
-        // Validate format first
-        const normalizedCode = normalizeReferralCode(code);
-        if (!validateReferralCodeFormat(normalizedCode)) {
-            return { valid: false, referrerId: null, referrerName: null };
-        }
-
-        // Query Firestore for user with this referral code
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('myReferralCode', '==', normalizedCode));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            console.log('❌ Referral code not found:', normalizedCode);
-            return { valid: false, referrerId: null, referrerName: null };
-        }
-
-        // Get the first matching user (should be unique)
-        const referrerDoc = querySnapshot.docs[0];
-        const referrerData = referrerDoc.data();
-
-        console.log('✅ Referral code verified:', normalizedCode, 'Referrer:', referrerData.fullName);
-        return {
-            valid: true,
-            referrerId: referrerDoc.id,
-            referrerName: referrerData.fullName || 'User',
-        };
-    } catch (error) {
-        console.error('❌ Error verifying referral code:', error);
-        return { valid: false, referrerId: null, referrerName: null };
+export const verifyReferralCode = async (referralCode) => {
+  try {
+    if (!referralCode || !referralCode.trim()) {
+      return { valid: false, referrerId: null, referrerName: null };
     }
+
+    const normalizedCode = referralCode.trim().toUpperCase();
+    console.log('🔍 Verifying referral code:', normalizedCode);
+
+    // Query users collection for matching referral code
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('myReferralCode', '==', normalizedCode));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.log('❌ Referral code not found:', normalizedCode);
+      return { valid: false, referrerId: null, referrerName: null };
+    }
+
+    const referrerDoc = querySnapshot.docs[0];
+    const referrerData = referrerDoc.data();
+
+    // Check if referrer has completed at least one booking
+    if (!referrerData.hasCompletedFirstBooking) {
+      console.log('❌ Referrer has not completed first booking yet');
+      return { valid: false, referrerId: null, referrerName: null };
+    }
+
+    console.log('✅ Valid referral code from:', referrerData.fullName);
+    return {
+      valid: true,
+      referrerId: referrerDoc.id,
+      referrerName: referrerData.fullName || referrerData.displayName
+    };
+  } catch (error) {
+    console.error('❌ Error verifying referral code:', error);
+    return { valid: false, referrerId: null, referrerName: null };
+  }
 };
 
 /**
- * Apply referral reward to referrer (eligible for 2nd booking discount)
- * @param {string} referrerId - ID of the user who referred
- * @param {string} refereeId - ID of the user who was referred
- * @param {string} refereeName - Name of the user who was referred
- * @returns {Promise<{success: boolean}>}
- */
-export const applyReferralReward = async (referrerId, refereeId, refereeName) => {
-    try {
-        console.log('🎁 Marking referrer eligible for reward:', referrerId, 'for referring:', refereeName);
-
-        const referrerRef = doc(db, 'users', referrerId);
-
-        // Create referral history entry
-        const referralEntry = {
-            userId: refereeId,
-            userName: refereeName,
-            completedAt: new Date().toISOString(),
-            rewardType: 'BOOKING_DISCOUNT',
-            discountAmount: REFERRAL_CONSTANTS.REFERRER_REWARD,
-        };
-
-        // Update referrer's document to mark them eligible for 2nd booking discount
-        // We only set this if they haven't already used it or if we want to stack them (assuming 1 active at a time for now)
-        await updateDoc(referrerRef, {
-            referralHistory: arrayUnion(referralEntry),
-            referralDiscountEligible: true, // Mark eligible for discount
-            referralDiscountBookingNumber: 2, // Specifically for their 2nd booking (or next if they have more)
-            updatedAt: serverTimestamp(),
-        });
-
-        console.log('✅ Referrer marked eligible for discount on next booking');
-        return { success: true };
-    } catch (error) {
-        console.error('❌ Error applying referral reward:', error);
-        return { success: false };
-    }
-};
-
-/**
- * Mark referral as completed (called after first booking)
- * @param {string} userId - ID of the user who completed first booking
+ * Process referral reward when new user completes first booking
+ * @param {string} userId - The new user's ID
  * @returns {Promise<boolean>}
  */
-export const markReferralCompleted = async (userId) => {
-    try {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-            referralStatus: 'COMPLETED',
-            hasCompletedFirstBooking: true,
-            updatedAt: serverTimestamp(),
-        });
+export const processReferralReward = async (userId) => {
+  try {
+    console.log('🎁 Processing referral reward for user:', userId);
 
-        console.log('✅ Referral marked as completed for user:', userId);
-        return true;
-    } catch (error) {
-        console.error('❌ Error marking referral as completed:', error);
-        return false;
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      console.log('❌ User not found');
+      return false;
     }
-};
 
-/**
- * Get referral history for a user
- * @param {string} userId - User ID
- * @returns {Promise<Array>} Array of referral history entries
- */
-export const getReferralHistory = async (userId) => {
-    try {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+    const userData = userDoc.data();
 
-        if (!userDoc.exists()) {
-            return [];
-        }
-
-        const userData = userDoc.data();
-        return userData.referralHistory || [];
-    } catch (error) {
-        console.error('❌ Error getting referral history:', error);
-        return [];
+    // Check if user was referred and hasn't received reward yet
+    if (!userData.referredBy || userData.referralStatus !== 'PENDING') {
+      console.log('ℹ️ User was not referred or reward already processed');
+      return false;
     }
-};
 
-/**
- * Get wallet balance for a user
- * @param {string} userId - User ID
- * @returns {Promise<number>} Wallet balance
- */
-export const getWalletBalance = async (userId) => {
-    try {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+    const referrerRef = doc(db, 'users', userData.referredBy);
+    const referrerDoc = await getDoc(referrerRef);
 
-        if (!userDoc.exists()) {
-            return 0;
-        }
-
-        const userData = userDoc.data();
-        return userData.walletBalance || 0;
-    } catch (error) {
-        console.error('❌ Error getting wallet balance:', error);
-        return 0;
+    if (!referrerDoc.exists()) {
+      console.log('❌ Referrer not found');
+      return false;
     }
-};
 
-/**
- * Add credit to user's wallet
- * @param {string} userId - User ID
- * @param {number} amount - Amount to add
- * @param {string} reason - Reason for credit
- * @returns {Promise<{success: boolean, newBalance: number}>}
- */
-export const addWalletCredit = async (userId, amount, reason = 'Credit added') => {
-    try {
-        const userRef = doc(db, 'users', userId);
+    // Reward amounts
+    const REFERRER_REWARD = 200; // PKR 200 for referrer (discount on next booking)
+    const REFEREE_REWARD = 200;  // PKR 200 for new user (discount on first booking)
 
-        await updateDoc(userRef, {
-            walletBalance: increment(amount),
-            updatedAt: serverTimestamp(),
-        });
+    // Update referrer's wallet and stats
+    await updateDoc(referrerRef, {
+      walletBalance: increment(REFERRER_REWARD),
+      'stats.totalReferrals': increment(1),
+      referralHistory: arrayUnion({
+        userId: userId,
+        userName: userData.fullName,
+        reward: REFERRER_REWARD,
+        date: new Date().toISOString(),
+        status: 'COMPLETED'
+      }),
+      updatedAt: serverTimestamp()
+    });
 
-        // Get updated balance
-        const updatedDoc = await getDoc(userRef);
-        const newBalance = updatedDoc.data()?.walletBalance || amount;
+    // Update new user's wallet and referral status
+    await updateDoc(userRef, {
+      walletBalance: increment(REFEREE_REWARD),
+      referralStatus: 'COMPLETED',
+      referralRewardReceived: true,
+      referralRewardAmount: REFEREE_REWARD,
+      referralRewardDate: new Date().toISOString(),
+      updatedAt: serverTimestamp()
+    });
 
-        console.log(`✅ Added Rs. ${amount} to wallet. Reason: ${reason}. New balance: ${newBalance}`);
-        return { success: true, newBalance };
-    } catch (error) {
-        console.error('❌ Error adding wallet credit:', error);
-        return { success: false, newBalance: 0 };
-    }
-};
+    console.log('✅ Referral rewards processed successfully');
+    console.log(`   Referrer received: PKR ${REFERRER_REWARD}`);
+    console.log(`   New user received: PKR ${REFEREE_REWARD}`);
 
-/**
- * Deduct amount from user's wallet
- * @param {string} userId - User ID
- * @param {number} amount - Amount to deduct
- * @returns {Promise<{success: boolean, newBalance: number}>}
- */
-export const deductWalletBalance = async (userId, amount) => {
-    try {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-
-        if (!userDoc.exists()) {
-            return { success: false, newBalance: 0 };
-        }
-
-        const currentBalance = userDoc.data()?.walletBalance || 0;
-
-        // Don't allow negative balance
-        if (currentBalance < amount) {
-            console.warn('⚠️ Insufficient wallet balance');
-            return { success: false, newBalance: currentBalance };
-        }
-
-        await updateDoc(userRef, {
-            walletBalance: increment(-amount),
-            updatedAt: serverTimestamp(),
-        });
-
-        const newBalance = currentBalance - amount;
-        console.log(`✅ Deducted Rs. ${amount} from wallet. New balance: ${newBalance}`);
-        return { success: true, newBalance };
-    } catch (error) {
-        console.error('❌ Error deducting wallet balance:', error);
-        return { success: false, newBalance: 0 };
-    }
+    return true;
+  } catch (error) {
+    console.error('❌ Error processing referral reward:', error);
+    return false;
+  }
 };
 
 /**
  * Get referral statistics for a user
- * @param {string} userId - User ID
- * @returns {Promise<{totalReferrals: number, pendingReferrals: number, completedReferrals: number, totalEarned: number}>}
+ * @param {string} userId - The user's ID
+ * @returns {Promise<Object>}
  */
 export const getReferralStats = async (userId) => {
-    try {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
 
-        if (!userDoc.exists()) {
-            return {
-                totalReferrals: 0,
-                pendingReferrals: 0,
-                completedReferrals: 0,
-                totalEarned: 0,
-            };
-        }
-
-        const userData = userDoc.data();
-        const referralHistory = userData.referralHistory || [];
-
-        // Count pending referrals (users who signed up but haven't completed first booking)
-        const usersRef = collection(db, 'users');
-        const pendingQuery = query(
-            usersRef,
-            where('referredBy', '==', userId),
-            where('referralStatus', '==', 'PENDING')
-        );
-        const pendingSnapshot = await getDocs(pendingQuery);
-
-        const completedReferrals = referralHistory.length;
-        const pendingReferrals = pendingSnapshot.size;
-        const totalReferrals = completedReferrals + pendingReferrals;
-        const totalEarned = completedReferrals * REFERRAL_CONSTANTS.REFERRER_REWARD;
-
-        return {
-            totalReferrals,
-            pendingReferrals,
-            completedReferrals,
-            totalEarned,
-        };
-    } catch (error) {
-        console.error('❌ Error getting referral stats:', error);
-        return {
-            totalReferrals: 0,
-            pendingReferrals: 0,
-            completedReferrals: 0,
-            totalEarned: 0,
-        };
+    if (!userDoc.exists()) {
+      return {
+        myReferralCode: null,
+        totalReferrals: 0,
+        totalEarned: 0,
+        referralHistory: []
+      };
     }
-};
 
-export default {
-    verifyReferralCode,
-    applyReferralReward,
-    markReferralCompleted,
-    getReferralHistory,
-    getWalletBalance,
-    addWalletCredit,
-    deductWalletBalance,
-    getReferralStats,
+    const userData = userDoc.data();
+
+    return {
+      myReferralCode: userData.myReferralCode || null,
+      totalReferrals: userData.stats?.totalReferrals || 0,
+      totalEarned: userData.referralHistory?.reduce((sum, ref) => sum + (ref.reward || 0), 0) || 0,
+      referralHistory: userData.referralHistory || []
+    };
+  } catch (error) {
+    console.error('❌ Error getting referral stats:', error);
+    return {
+      myReferralCode: null,
+      totalReferrals: 0,
+      totalEarned: 0,
+      referralHistory: []
+    };
+  }
 };
