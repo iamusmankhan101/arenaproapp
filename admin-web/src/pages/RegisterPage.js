@@ -77,20 +77,25 @@ export default function RegisterPage({ onSwitchToLogin }) {
     const textFieldStyle = {
         mb: 2.5,
         '& .MuiInputLabel-root': {
-            color: 'rgba(255,255,255,0.85)',
+            color: '#004d43',
+            fontWeight: 600,
+            fontSize: '0.95rem',
             '&.Mui-focused': {
-                color: '#e8ee26',
+                color: '#004d43',
+            },
+            '&.MuiInputLabel-shrink': {
+                color: '#004d43',
             }
         },
         '& .MuiOutlinedInput-root': {
             borderRadius: '25px',
-            backgroundColor: 'rgba(255,255,255,0.85)',
+            backgroundColor: 'rgba(255,255,255,0.98)',
             backdropFilter: 'blur(10px)',
             '& fieldset': {
-                borderColor: 'rgba(0,77,67,0.15)',
+                borderColor: 'rgba(0,77,67,0.2)',
             },
             '&:hover fieldset': {
-                borderColor: 'rgba(0,77,67,0.3)',
+                borderColor: 'rgba(0,77,67,0.4)',
             },
             '&.Mui-focused fieldset': {
                 borderColor: '#004d43',
@@ -101,6 +106,11 @@ export default function RegisterPage({ onSwitchToLogin }) {
             px: 3,
             py: 1.8,
             fontSize: '0.95rem',
+            color: '#004d43',
+            '&::placeholder': {
+                color: 'rgba(0,77,67,0.5)',
+                opacity: 1,
+            }
         },
     };
 

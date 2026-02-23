@@ -135,13 +135,13 @@ export default function LoginPage({ onSwitchToRegister }) {
               mb: 3,
               '& .MuiOutlinedInput-root': {
                 borderRadius: '25px',
-                backgroundColor: 'rgba(255,255,255,0.85)',
+                backgroundColor: 'rgba(255,255,255,0.98)',
                 backdropFilter: 'blur(10px)',
                 '& fieldset': {
-                  borderColor: 'rgba(0,77,67,0.15)',
+                  borderColor: 'rgba(0,77,67,0.2)',
                 },
                 '&:hover fieldset': {
-                  borderColor: 'rgba(0,77,67,0.3)',
+                  borderColor: 'rgba(0,77,67,0.4)',
                 },
                 '&.Mui-focused fieldset': {
                   borderColor: '#004d43',
@@ -152,6 +152,11 @@ export default function LoginPage({ onSwitchToRegister }) {
                 px: 3,
                 py: 1.8,
                 fontSize: '0.95rem',
+                color: '#004d43',
+                '&::placeholder': {
+                  color: 'rgba(0,77,67,0.5)',
+                  opacity: 1,
+                }
               },
             }}
           />
@@ -194,13 +199,13 @@ export default function LoginPage({ onSwitchToRegister }) {
               mb: 4,
               '& .MuiOutlinedInput-root': {
                 borderRadius: '25px',
-                backgroundColor: 'rgba(255,255,255,0.85)',
+                backgroundColor: 'rgba(255,255,255,0.98)',
                 backdropFilter: 'blur(10px)',
                 '& fieldset': {
-                  borderColor: 'rgba(0,77,67,0.15)',
+                  borderColor: 'rgba(0,77,67,0.2)',
                 },
                 '&:hover fieldset': {
-                  borderColor: 'rgba(0,77,67,0.3)',
+                  borderColor: 'rgba(0,77,67,0.4)',
                 },
                 '&.Mui-focused fieldset': {
                   borderColor: '#004d43',
@@ -211,6 +216,11 @@ export default function LoginPage({ onSwitchToRegister }) {
                 px: 3,
                 py: 1.8,
                 fontSize: '0.95rem',
+                color: '#004d43',
+                '&::placeholder': {
+                  color: 'rgba(0,77,67,0.5)',
+                  opacity: 1,
+                }
               },
             }}
           />
