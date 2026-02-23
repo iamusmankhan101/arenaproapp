@@ -17,6 +17,8 @@ import {
   Alert,
   Card,
   CardContent,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Search,
@@ -104,6 +106,9 @@ const ActionMenu = ({ booking, onAction }) => {
 export default function BookingsPage() {
   const dispatch = useDispatch();
   const { bookings, bookingsLoading, bookingsError } = useSelector(state => state.admin);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Debug logging
   console.log('📊 BookingsPage render:', {
@@ -195,9 +200,9 @@ export default function BookingsPage() {
     {
       field: 'bookingId',
       headerName: 'Booking ID',
-      width: 130,
+      width: isMobile ? 100 : 130,
       renderCell: (params) => (
-        <Typography variant="body2" fontWeight="medium">
+        <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
           #{params.value}
         </Typography>
       ),
@@ -205,34 +210,38 @@ export default function BookingsPage() {
     {
       field: 'customerName',
       headerName: 'Customer',
-      width: 150,
+      width: isMobile ? 120 : 150,
       renderCell: (params) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium">
+          <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
             {params.value}
           </Typography>
-          <Typography variant="caption" color="textSecondary">
-            {params.row.customerPhone}
-          </Typography>
+          {!isSmallMobile && (
+            <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.65rem' : '0.75rem'}>
+              {params.row.customerPhone}
+            </Typography>
+          )}
         </Box>
       ),
     },
     {
       field: 'turfName',
       headerName: 'Venue',
-      width: 180,
+      width: isMobile ? 130 : 180,
       renderCell: (params) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium">
+          <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
             {params.value}
           </Typography>
-          <Typography variant="caption" color="textSecondary">
-            {params.row.turfArea}
-          </Typography>
+          {!isSmallMobile && (
+            <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.65rem' : '0.75rem'}>
+              {params.row.turfArea}
+            </Typography>
+          )}
         </Box>
       ),
     },
-    {
+    ...(!isMobile ? [{
       field: 'sport',
       headerName: 'Sport',
       width: 100,
@@ -244,20 +253,20 @@ export default function BookingsPage() {
           sx={{ textTransform: 'capitalize' }}
         />
       ),
-    },
+    }] : []),
     {
       field: 'dateTime',
       headerName: 'Date & Time',
-      width: 160,
+      width: isMobile ? 110 : 160,
       renderCell: (params) => {
         try {
           const date = new Date(params.value);
           return (
             <Box>
-              <Typography variant="body2">
-                {format(date, 'MMM dd, yyyy')}
+              <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
+                {format(date, isMobile ? 'MMM dd' : 'MMM dd, yyyy')}
               </Typography>
-              <Typography variant="caption" color="textSecondary">
+              <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.65rem' : '0.75rem'}>
                 {format(date, 'hh:mm a')}
               </Typography>
             </Box>
@@ -266,7 +275,7 @@ export default function BookingsPage() {
           console.error('Date formatting error:', error, params.value);
           return (
             <Box>
-              <Typography variant="body2">
+              <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
                 Invalid Date
               </Typography>
             </Box>
@@ -274,28 +283,32 @@ export default function BookingsPage() {
         }
       },
     },
-    {
+    ...(!isSmallMobile ? [{
       field: 'duration',
       headerName: 'Duration',
-      width: 100,
-      renderCell: (params) => `${params.value}h`,
-    },
+      width: isMobile ? 70 : 100,
+      renderCell: (params) => (
+        <Typography fontSize={isMobile ? '0.75rem' : '0.875rem'}>
+          {params.value}h
+        </Typography>
+      ),
+    }] : []),
     {
       field: 'totalAmount',
       headerName: 'Amount',
-      width: 120,
+      width: isMobile ? 90 : 120,
       renderCell: (params) => {
         try {
           const amount = Number(params.value) || 0;
           return (
-            <Typography variant="body2" fontWeight="medium">
-              PKR {amount.toLocaleString()}
+            <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
+              {isMobile ? `${(amount / 1000).toFixed(1)}k` : `PKR ${amount.toLocaleString()}`}
             </Typography>
           );
         } catch (error) {
           console.error('Amount formatting error:', error, params.value);
           return (
-            <Typography variant="body2" fontWeight="medium">
+            <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
               PKR 0
             </Typography>
           );
@@ -305,10 +318,10 @@ export default function BookingsPage() {
     {
       field: 'status',
       headerName: 'Status',
-      width: 120,
+      width: isMobile ? 90 : 120,
       renderCell: (params) => <StatusChip status={params.value} />,
     },
-    {
+    ...(!isMobile ? [{
       field: 'paymentStatus',
       headerName: 'Payment',
       width: 100,
@@ -320,11 +333,11 @@ export default function BookingsPage() {
           variant="outlined"
         />
       ),
-    },
+    }] : []),
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 80,
+      width: isMobile ? 60 : 80,
       sortable: false,
       renderCell: (params) => (
         <ActionMenu booking={params.row} onAction={handleBookingAction} />
@@ -336,29 +349,44 @@ export default function BookingsPage() {
     <Box>
       {/* Header */}
       <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
-        <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
-              <EventNote sx={{ color: '#fff', fontSize: 28 }} />
+        <CardContent sx={{ 
+          p: { xs: 2, sm: 3 }, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          flexWrap: 'wrap', 
+          gap: 2 
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 } }}>
+            <Box sx={{ p: { xs: 1, sm: 1.5 }, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
+              <EventNote sx={{ color: '#fff', fontSize: { xs: 24, sm: 28 } }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight={700} sx={{ color: '#fff' }}>
+              <Typography variant="h5" fontWeight={700} sx={{ color: '#fff', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 Bookings Overview
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>
-                Track and manage all customer reservations
-              </Typography>
+              {!isSmallMobile && (
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  Track and manage all customer reservations
+                </Typography>
+              )}
             </Box>
           </Box>
 
           <Button
             variant="outlined"
-            startIcon={<Refresh />}
+            startIcon={!isSmallMobile && <Refresh />}
             onClick={handleRefresh}
             disabled={bookingsLoading}
-            sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' } }}
+            size={isMobile ? 'small' : 'medium'}
+            sx={{ 
+              color: 'white', 
+              borderColor: 'rgba(255,255,255,0.5)', 
+              '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+            }}
           >
-            Refresh
+            {isSmallMobile ? <Refresh /> : 'Refresh'}
           </Button>
         </CardContent>
       </Card>
@@ -370,26 +398,35 @@ export default function BookingsPage() {
             placeholder="Search bookings..."
             value={searchQuery}
             onChange={handleSearch}
+            size={isMobile ? 'small' : 'medium'}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search />
+                  <Search fontSize={isMobile ? 'small' : 'medium'} />
                 </InputAdornment>
               ),
             }}
-            sx={{ minWidth: 300 }}
+            sx={{ 
+              minWidth: { xs: '100%', sm: 300 },
+              '& .MuiInputBase-input': {
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }
+            }}
           />
-          <Button
-            variant="outlined"
-            startIcon={<FilterList />}
-            sx={{ minWidth: 120 }}
-          >
-            Export
-          </Button>
+          {!isSmallMobile && (
+            <Button
+              variant="outlined"
+              startIcon={<FilterList />}
+              size={isMobile ? 'small' : 'medium'}
+              sx={{ minWidth: 120 }}
+            >
+              Export
+            </Button>
+          )}
         </Box>
 
         {/* Filter Chips */}
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', overflowX: 'auto', pb: 1 }}>
           {filters.map((filter) => (
             <Chip
               key={filter.key}
@@ -397,6 +434,11 @@ export default function BookingsPage() {
               onClick={() => handleFilterChange(filter.key)}
               color={selectedFilter === filter.key ? 'primary' : 'default'}
               variant={selectedFilter === filter.key ? 'filled' : 'outlined'}
+              size={isMobile ? 'small' : 'medium'}
+              sx={{
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                flexShrink: 0
+              }}
             />
           ))}
         </Box>
@@ -410,7 +452,7 @@ export default function BookingsPage() {
       )}
 
       {/* Data Grid */}
-      <Box sx={{ height: 600, width: '100%' }}>
+      <Box sx={{ height: { xs: 500, sm: 600 }, width: '100%' }}>
         <DataGrid
           rows={bookings?.data || []}
           columns={columns}
@@ -421,22 +463,42 @@ export default function BookingsPage() {
           paginationMode="server"
           loading={bookingsLoading}
           disableRowSelectionOnClick
+          density={isMobile ? 'compact' : 'standard'}
           sx={{
             border: 'none',
+            fontSize: { xs: '0.75rem', sm: '0.875rem' },
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
+              padding: { xs: '4px 8px', sm: '8px 16px' },
             },
             '& .MuiDataGrid-columnHeaders': {
               backgroundColor: '#f5f5f5',
               borderBottom: 'none',
               fontWeight: 'bold',
-              color: '#004d43', // Brand Green
+              color: '#004d43',
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              minHeight: { xs: '40px !important', sm: '56px !important' },
+              maxHeight: { xs: '40px !important', sm: '56px !important' },
+            },
+            '& .MuiDataGrid-columnHeader': {
+              padding: { xs: '0 4px', sm: '0 16px' },
+            },
+            '& .MuiDataGrid-row': {
+              minHeight: { xs: '48px !important', sm: '52px !important' },
+              maxHeight: { xs: '48px !important', sm: '52px !important' },
             },
             '& .MuiDataGrid-row:hover': {
               backgroundColor: '#f9fafb',
             },
             '& .MuiTablePagination-root': {
               color: '#004d43',
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            },
+            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            },
+            '& .MuiDataGrid-footerContainer': {
+              minHeight: { xs: '48px', sm: '52px' },
             },
           }}
         />
