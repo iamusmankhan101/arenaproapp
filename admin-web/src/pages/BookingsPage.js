@@ -199,10 +199,11 @@ export default function BookingsPage() {
   const columns = [
     {
       field: 'bookingId',
-      headerName: 'Booking ID',
-      width: isMobile ? 100 : 130,
+      headerName: 'ID',
+      width: isMobile ? 70 : 130,
+      flex: isMobile ? 0 : undefined,
       renderCell: (params) => (
-        <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
+        <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
           #{params.value}
         </Typography>
       ),
@@ -210,14 +211,15 @@ export default function BookingsPage() {
     {
       field: 'customerName',
       headerName: 'Customer',
-      width: isMobile ? 120 : 150,
+      width: isMobile ? 100 : 150,
+      flex: isMobile ? 0 : undefined,
       renderCell: (params) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
+          <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.7rem' : '0.875rem'} noWrap>
             {params.value}
           </Typography>
           {!isSmallMobile && (
-            <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.65rem' : '0.75rem'}>
+            <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.6rem' : '0.75rem'} noWrap>
               {params.row.customerPhone}
             </Typography>
           )}
@@ -227,14 +229,15 @@ export default function BookingsPage() {
     {
       field: 'turfName',
       headerName: 'Venue',
-      width: isMobile ? 130 : 180,
+      width: isMobile ? 90 : 180,
+      flex: isMobile ? 0 : undefined,
       renderCell: (params) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
+          <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.7rem' : '0.875rem'} noWrap>
             {params.value}
           </Typography>
           {!isSmallMobile && (
-            <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.65rem' : '0.75rem'}>
+            <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.6rem' : '0.75rem'} noWrap>
               {params.row.turfArea}
             </Typography>
           )}
@@ -256,18 +259,19 @@ export default function BookingsPage() {
     }] : []),
     {
       field: 'dateTime',
-      headerName: 'Date & Time',
-      width: isMobile ? 110 : 160,
+      headerName: isMobile ? 'Date' : 'Date & Time',
+      width: isMobile ? 80 : 160,
+      flex: isMobile ? 0 : undefined,
       renderCell: (params) => {
         try {
           const date = new Date(params.value);
           return (
             <Box>
-              <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
+              <Typography variant="body2" fontSize={isMobile ? '0.65rem' : '0.875rem'} noWrap>
                 {format(date, isMobile ? 'MMM dd' : 'MMM dd, yyyy')}
               </Typography>
-              <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.65rem' : '0.75rem'}>
-                {format(date, 'hh:mm a')}
+              <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.6rem' : '0.75rem'} noWrap>
+                {format(date, isMobile ? 'h:mm a' : 'hh:mm a')}
               </Typography>
             </Box>
           );
@@ -275,8 +279,8 @@ export default function BookingsPage() {
           console.error('Date formatting error:', error, params.value);
           return (
             <Box>
-              <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
-                Invalid Date
+              <Typography variant="body2" fontSize={isMobile ? '0.65rem' : '0.875rem'}>
+                Invalid
               </Typography>
             </Box>
           );
@@ -285,31 +289,33 @@ export default function BookingsPage() {
     },
     ...(!isSmallMobile ? [{
       field: 'duration',
-      headerName: 'Duration',
-      width: isMobile ? 70 : 100,
+      headerName: 'Dur',
+      width: isMobile ? 50 : 100,
+      flex: isMobile ? 0 : undefined,
       renderCell: (params) => (
-        <Typography fontSize={isMobile ? '0.75rem' : '0.875rem'}>
+        <Typography fontSize={isMobile ? '0.7rem' : '0.875rem'}>
           {params.value}h
         </Typography>
       ),
     }] : []),
     {
       field: 'totalAmount',
-      headerName: 'Amount',
-      width: isMobile ? 90 : 120,
+      headerName: isMobile ? 'Amt' : 'Amount',
+      width: isMobile ? 65 : 120,
+      flex: isMobile ? 0 : undefined,
       renderCell: (params) => {
         try {
           const amount = Number(params.value) || 0;
           return (
-            <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
-              {isMobile ? `${(amount / 1000).toFixed(1)}k` : `PKR ${amount.toLocaleString()}`}
+            <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.7rem' : '0.875rem'} noWrap>
+              {isMobile ? `${(amount / 1000).toFixed(0)}k` : `PKR ${amount.toLocaleString()}`}
             </Typography>
           );
         } catch (error) {
           console.error('Amount formatting error:', error, params.value);
           return (
-            <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.75rem' : '0.875rem'}>
-              PKR 0
+            <Typography variant="body2" fontWeight="medium" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
+              0
             </Typography>
           );
         }
@@ -318,7 +324,8 @@ export default function BookingsPage() {
     {
       field: 'status',
       headerName: 'Status',
-      width: isMobile ? 90 : 120,
+      width: isMobile ? 75 : 120,
+      flex: isMobile ? 0 : undefined,
       renderCell: (params) => <StatusChip status={params.value} />,
     },
     ...(!isMobile ? [{
@@ -336,8 +343,9 @@ export default function BookingsPage() {
     }] : []),
     {
       field: 'actions',
-      headerName: 'Actions',
-      width: isMobile ? 60 : 80,
+      headerName: '',
+      width: isMobile ? 50 : 80,
+      flex: isMobile ? 0 : undefined,
       sortable: false,
       renderCell: (params) => (
         <ActionMenu booking={params.row} onAction={handleBookingAction} />
@@ -452,7 +460,14 @@ export default function BookingsPage() {
       )}
 
       {/* Data Grid */}
-      <Box sx={{ height: { xs: 500, sm: 600 }, width: '100%' }}>
+      <Box sx={{ 
+        height: { xs: 500, sm: 600 }, 
+        width: '100%',
+        '& .MuiDataGrid-root': {
+          width: '100%',
+          overflowX: 'auto',
+        },
+      }}>
         <DataGrid
           rows={bookings?.data || []}
           columns={columns}
@@ -463,25 +478,46 @@ export default function BookingsPage() {
           paginationMode="server"
           loading={bookingsLoading}
           disableRowSelectionOnClick
+          disableColumnMenu={isMobile}
+          columnHeaderHeight={isMobile ? 40 : 56}
+          rowHeight={isMobile ? 48 : 52}
           density={isMobile ? 'compact' : 'standard'}
           sx={{
             border: 'none',
-            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            fontSize: { xs: '0.7rem', sm: '0.875rem' },
+            width: '100%',
+            '& .MuiDataGrid-main': {
+              width: '100%',
+              overflowX: isMobile ? 'auto' : 'hidden',
+            },
+            '& .MuiDataGrid-virtualScroller': {
+              overflowX: isMobile ? 'auto' : 'hidden',
+            },
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
-              padding: { xs: '4px 8px', sm: '8px 16px' },
+              padding: { xs: '4px 4px', sm: '8px 16px' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             },
             '& .MuiDataGrid-columnHeaders': {
               backgroundColor: '#f5f5f5',
               borderBottom: 'none',
               fontWeight: 'bold',
               color: '#004d43',
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              fontSize: { xs: '0.7rem', sm: '0.875rem' },
               minHeight: { xs: '40px !important', sm: '56px !important' },
               maxHeight: { xs: '40px !important', sm: '56px !important' },
             },
             '& .MuiDataGrid-columnHeader': {
               padding: { xs: '0 4px', sm: '0 16px' },
+            },
+            '& .MuiDataGrid-columnHeaderTitle': {
+              fontSize: { xs: '0.7rem', sm: '0.875rem' },
+              fontWeight: 'bold',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             },
             '& .MuiDataGrid-row': {
               minHeight: { xs: '48px !important', sm: '52px !important' },
@@ -492,13 +528,20 @@ export default function BookingsPage() {
             },
             '& .MuiTablePagination-root': {
               color: '#004d43',
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              fontSize: { xs: '0.7rem', sm: '0.875rem' },
             },
             '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              fontSize: { xs: '0.7rem', sm: '0.875rem' },
+              margin: 0,
+            },
+            '& .MuiTablePagination-select': {
+              fontSize: { xs: '0.7rem', sm: '0.875rem' },
             },
             '& .MuiDataGrid-footerContainer': {
               minHeight: { xs: '48px', sm: '52px' },
+            },
+            '& .MuiDataGrid-columnSeparator': {
+              display: isMobile ? 'none' : 'block',
             },
           }}
         />
