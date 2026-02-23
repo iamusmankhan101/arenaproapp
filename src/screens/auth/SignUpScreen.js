@@ -13,8 +13,7 @@ import {
 } from 'react-native';
 import {
   Text,
-  ActivityIndicator,
-  Checkbox
+  ActivityIndicator
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { signUp, clearError, googleSignIn } from '../../store/slices/authSlice';
@@ -279,24 +278,24 @@ export default function SignUpScreen({ navigation }) {
             </View>
 
             {/* Terms & Conditions */}
-            <View style={styles.checkboxContainer}>
-              <Checkbox
-                status={agreeToTerms ? 'checked' : 'unchecked'}
-                onPress={() => setAgreeToTerms(!agreeToTerms)}
-                color={theme.colors.primary}
-                uncheckedColor="#666"
-              />
-              <TouchableOpacity 
-                onPress={() => setAgreeToTerms(!agreeToTerms)}
-                activeOpacity={0.7}
-                style={{ flex: 1 }}
-              >
-                <Text style={styles.checkboxText}>
-                  Agree with{' '}
-                  <Text style={styles.termsLink}>Terms & Condition</Text>
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={styles.checkboxContainer}
+              onPress={() => setAgreeToTerms(!agreeToTerms)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.customCheckbox,
+                agreeToTerms && styles.customCheckboxChecked
+              ]}>
+                {agreeToTerms && (
+                  <MaterialIcons name="check" size={18} color="#FFFFFF" />
+                )}
+              </View>
+              <Text style={styles.checkboxText}>
+                Agree with{' '}
+                <Text style={styles.termsLink}>Terms & Condition</Text>
+              </Text>
+            </TouchableOpacity>
 
             {/* Sign Up Button */}
             <TouchableOpacity
@@ -449,10 +448,26 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     marginLeft: 0,
   },
+  customCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#999',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  customCheckboxChecked: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
   checkboxText: {
     fontSize: 14,
     color: theme.colors.textSecondary,
-    marginLeft: 8,
+    marginLeft: 0,
+    flex: 1,
     fontFamily: 'Montserrat_400Regular',
   },
   termsLink: {

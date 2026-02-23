@@ -21,13 +21,10 @@ import FilterModal from '../../components/FilterModal';
 
 const { width } = Dimensions.get('window');
 
-const sportCategories = ['All', 'Cricket', 'Futsal', 'Padel'];
-
 export default function VenueListScreen({ navigation, route }) {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
   const [filteredVenues, setFilteredVenues] = useState([]);
 
   const { nearbyTurfs, loading, filters: reduxFilters, favorites } = useSelector(state => state.turf);
@@ -59,35 +56,14 @@ export default function VenueListScreen({ navigation, route }) {
 
   // Get initial filter from navigation params
   useEffect(() => {
-    if (route.params?.sportType) {
-      const sport = route.params.sportType.charAt(0).toUpperCase() + route.params.sportType.slice(1);
-      setSelectedCategory(sport);
-    } else if (route.params?.sport) {
-      setSelectedCategory(route.params.sport);
-    }
-
     if (route.params?.searchQuery) {
       setSearchQuery(route.params.searchQuery);
     }
   }, [route.params]);
 
-  // Filter venues based on search, category, and Redux filters
+  // Filter venues based on search and Redux filters
   useEffect(() => {
     let filtered = nearbyTurfs;
-
-    // Filter by category (horizontal chips)
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(venue => {
-        if (Array.isArray(venue.sports)) {
-          return venue.sports.some(sport => sport.toLowerCase() === selectedCategory.toLowerCase());
-        } else if (typeof venue.sports === 'string') {
-          return venue.sports.toLowerCase().includes(selectedCategory.toLowerCase());
-        } else if (venue.sport) {
-          return venue.sport.toLowerCase() === selectedCategory.toLowerCase();
-        }
-        return false;
-      });
-    }
 
     // Filter by additional Redux filters (from modal)
     if (!reduxFilters.sports.includes('All')) {
@@ -128,7 +104,7 @@ export default function VenueListScreen({ navigation, route }) {
     }
 
     setFilteredVenues(filtered);
-  }, [searchQuery, selectedCategory, nearbyTurfs, reduxFilters]);
+  }, [searchQuery, nearbyTurfs, reduxFilters]);
 
   // Helper function to get default image based on sport
   const getDefaultImage = (sport) => {
