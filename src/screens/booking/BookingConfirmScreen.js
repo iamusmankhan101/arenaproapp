@@ -13,6 +13,7 @@ import {
   Linking,
   Platform
 } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Text,
@@ -342,14 +343,22 @@ Please confirm my booking.`;
     // Refresh user profile to update booking count and unlock referral code
     dispatch(fetchUserProfile());
     
-    // Navigate to success screen
-    navigation.navigate('BookingSuccess', {
-      bookingDetails: {
-        venueName: turf?.name || 'Venue',
-        date: date,
-        slot: slot,
-      }
-    });
+    // Navigate directly to home (skip congratulations screen)
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }],
+      })
+    );
+    
+    // Old navigation to success screen (removed)
+    // navigation.navigate('BookingSuccess', {
+    //   bookingDetails: {
+    //     venueName: turf?.name || 'Venue',
+    //     date: date,
+    //     slot: slot,
+    //   }
+    // });
   };
 
   const formatDateTime = () => {

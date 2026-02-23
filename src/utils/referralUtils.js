@@ -76,3 +76,56 @@ export const formatReferralCode = (code) => {
 
   return `${code.substring(0, 4)}-${code.substring(4)}`;
 };
+
+/**
+ * Referral discount constants
+ */
+export const REFERRAL_CONSTANTS = {
+  REFERRER_REWARD: 200,  // PKR 200 for referrer
+  REFEREE_REWARD: 200,   // PKR 200 for new user
+};
+
+/**
+ * Check if user is eligible for referral discount (new user discount on first booking)
+ * @param {Object} userData - User data from Firestore
+ * @returns {boolean}
+ */
+export const isEligibleForReferralDiscount = (userData) => {
+  if (!userData) return false;
+
+  // User must have been referred
+  if (!userData.referredBy) return false;
+
+  // User must not have completed first booking yet
+  if (userData.hasCompletedFirstBooking) return false;
+
+  // Referral status should be PENDING
+  if (userData.referralStatus !== 'PENDING') return false;
+
+  return true;
+};
+
+/**
+ * Check if referrer is eligible for reward (when their referee completes first booking)
+ * @param {Object} referrerData - Referrer's user data from Firestore
+ * @returns {boolean}
+ */
+export const isReferrerEligibleForReward = (referrerData) => {
+  if (!referrerData) return false;
+
+  // Referrer must have completed at least one booking
+  if (!referrerData.hasCompletedFirstBooking) return false;
+
+  return true;
+};
+
+/**
+ * Calculate discounted total after applying referral discount
+ * @param {number} originalTotal - Original booking total
+ * @param {number} discountAmount - Discount amount (default: REFEREE_REWARD)
+ * @returns {number}
+ */
+export const calculateDiscountedTotal = (originalTotal, discountAmount = REFERRAL_CONSTANTS.REFEREE_REWARD) => {
+  const discountedTotal = originalTotal - discountAmount;
+  return Math.max(0, discountedTotal); // Ensure total doesn't go below 0
+};

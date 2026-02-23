@@ -196,7 +196,9 @@ export default function TurfCard({ turf, onPress, onFavoritePress, isFavorite })
               }]}
               compact
             >
-              {getCurrentTimeSlot()}
+              <Text style={{ fontSize: 11, fontFamily: 'Montserrat_500Medium' }}>
+                {getCurrentTimeSlot()}
+              </Text>
             </Chip>
           </View>
 
@@ -204,17 +206,17 @@ export default function TurfCard({ turf, onPress, onFavoritePress, isFavorite })
           <View style={styles.features}>
             {turf.hasFloodlights && (
               <Chip icon="lightbulb" compact style={styles.featureChip}>
-                Lights
+                <Text style={{ fontSize: 11, fontFamily: 'Montserrat_500Medium' }}>Lights</Text>
               </Chip>
             )}
             {turf.hasGenerator && (
               <Chip icon="flash" compact style={styles.featureChip}>
-                Generator
+                <Text style={{ fontSize: 11, fontFamily: 'Montserrat_500Medium' }}>Generator</Text>
               </Chip>
             )}
             {turf.hasParking && (
               <Chip icon="local-parking" compact style={styles.featureChip}>
-                Parking
+                <Text style={{ fontSize: 11, fontFamily: 'Montserrat_500Medium' }}>Parking</Text>
               </Chip>
             )}
           </View>
