@@ -17,6 +17,58 @@ code {
   box-sizing: border-box;
 }
 
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
+  .MuiTypography-h3 {
+    font-size: 1.5rem !important;
+  }
+  
+  .MuiTypography-h4 {
+    font-size: 1.3rem !important;
+  }
+  
+  .MuiTypography-h5 {
+    font-size: 1.1rem !important;
+  }
+  
+  .MuiTypography-h6 {
+    font-size: 1rem !important;
+  }
+  
+  .MuiButton-root {
+    font-size: 0.875rem !important;
+    padding: 8px 16px !important;
+  }
+  
+  .MuiCard-root {
+    margin: 8px !important;
+  }
+  
+  .MuiTableCell-root {
+    padding: 8px !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .MuiTypography-h3 {
+    font-size: 1.25rem !important;
+  }
+  
+  .MuiTypography-h4 {
+    font-size: 1.1rem !important;
+  }
+  
+  .MuiButton-root {
+    font-size: 0.8125rem !important;
+    padding: 6px 12px !important;
+  }
+}
+
 .MuiDataGrid-root {
   border: none !important;
 }
