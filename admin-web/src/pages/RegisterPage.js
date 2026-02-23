@@ -6,8 +6,6 @@ import {
     Button,
     Typography,
     Alert,
-    ToggleButton,
-    ToggleButtonGroup,
     InputAdornment,
     IconButton,
     CircularProgress,
@@ -16,8 +14,6 @@ import {
 import {
     Visibility,
     VisibilityOff,
-    AdminPanelSettings,
-    Store,
 } from '@mui/icons-material';
 import { registerAdmin, clearError } from '../store/slices/authSlice';
 
@@ -30,7 +26,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'vendor', // Default to vendor as it's the primary user
+        role: 'vendor', // Only vendor registration allowed
     });
     const [localError, setLocalError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -51,12 +47,6 @@ export default function RegisterPage({ onSwitchToLogin }) {
             [e.target.name]: e.target.value,
         });
         setLocalError('');
-    };
-
-    const handleRoleChange = (_, newRole) => {
-        if (newRole !== null) {
-            setFormData({ ...formData, role: newRole });
-        }
     };
 
     const handleSubmit = (e) => {
@@ -206,46 +196,6 @@ export default function RegisterPage({ onSwitchToLogin }) {
                         )}
 
                         <Box component="form" onSubmit={handleSubmit}>
-                            {/* Role Selector */}
-                            <Box sx={{ mb: 4 }}>
-                                <Typography variant="subtitle2" sx={{ color: 'white', mb: 1.5, ml: 1, fontWeight: 600 }}>
-                                    Account Type
-                                </Typography>
-                                <ToggleButtonGroup
-                                    value={formData.role}
-                                    exclusive
-                                    onChange={handleRoleChange}
-                                    fullWidth
-                                    sx={{
-                                        '& .MuiToggleButton-root': {
-                                            py: 1.5,
-                                            textTransform: 'none',
-                                            fontWeight: 700,
-                                            color: 'rgba(255,255,255,0.6)',
-                                            borderColor: 'rgba(255,255,255,0.2)',
-                                            borderRadius: '25px !important',
-                                            mx: 0.5,
-                                            border: '1px solid !important',
-                                            '&:hover': {
-                                                bgcolor: 'rgba(255,255,255,0.1)',
-                                            }
-                                        },
-                                        '& .Mui-selected': {
-                                            backgroundColor: '#e8ee26 !important',
-                                            color: '#004d43 !important',
-                                            boxShadow: '0 4px 15px rgba(232, 238, 38, 0.3)',
-                                        },
-                                    }}
-                                >
-                                    <ToggleButton value="vendor">
-                                        <Store sx={{ mr: 1, fontSize: 20 }} /> Vendor
-                                    </ToggleButton>
-                                    <ToggleButton value="admin">
-                                        <AdminPanelSettings sx={{ mr: 1, fontSize: 20 }} /> Admin
-                                    </ToggleButton>
-                                </ToggleButtonGroup>
-                            </Box>
-
                             <TextField
                                 fullWidth
                                 label="Full Name"

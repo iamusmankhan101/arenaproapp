@@ -942,7 +942,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography variant="h5" sx={{ fontWeight: 700, color: '#004d43' }}>
-          {isEditing ? 'Edit Venue' : 'Agent Registration'}
+          {isEditing ? 'Edit Venue' : 'Venue Registration'}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {isEditing ? 'Update venue details below.' : 'Please fill in the details to register a new venue.'}
