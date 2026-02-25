@@ -1,79 +1,57 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, Dimensions, StatusBar } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { Text } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme/theme';
-
-const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      
-      {/* Decorative circles in background */}
-      <View style={styles.decorativeCircle1} />
-      <View style={styles.decorativeCircle2} />
-      
-      {/* Image circles */}
-      <View style={styles.imagesContainer}>
-        {/* Main center image */}
-        <View style={styles.mainImageContainer}>
-          <Image
-            source={require('../../images/indoor-football-court-turf.jpeg')}
-            style={styles.mainImage}
-            resizeMode="cover"
-          />
-          <TouchableOpacity style={styles.arrowButton}>
-            <MaterialIcons name="arrow-forward" size={24} color={theme.colors.background} />
-          </TouchableOpacity>
-        </View>
-        
-        {/* Small top right image */}
-        <View style={styles.smallImageTop}>
-          <Image
-            source={require('../../images/football.jpg')}
-            style={styles.smallImage}
-            resizeMode="cover"
-          />
-        </View>
-        
-        {/* Small bottom left image */}
-        <View style={styles.smallImageBottom}>
-          <Image
-            source={require('../../images/padel.jpg')}
-            style={styles.smallImage}
-            resizeMode="cover"
-          />
-        </View>
-      </View>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>
-          Redefining Your <Text style={styles.titleHighlight}>Sports Venue Booking</Text>
-          {'\n'}
-          <Text style={styles.titleHighlight}></Text> Experience
-        </Text>
-        
-        <Text style={styles.subtitle}>
-          Discover and book the best sports venues in your area. Join challenges, meet players, and elevate your game.
-        </Text>
-        
-        <TouchableOpacity
-          style={styles.getStartedButton}
-          onPress={() => navigation.navigate('SignUp')}
-        >
-          <Text style={styles.getStartedText}>Let's Get Started</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.signInContainer}>
-          <Text style={styles.signInText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-            <Text style={styles.signInLink}>Sign In</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <LinearGradient
+        colors={['#004d43', '#004d43', '#004d43']}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.content}>
+            {/* Logo Image */}
+            <Image
+              source={require('../../images/app ui arena pro (4).png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+
+            {/* Spacer - removed to move text up */}
+
+            {/* Bottom Content */}
+            <View style={styles.bottomContent}>
+              <Text style={styles.title}>Book Your Favorite</Text>
+              <Text style={styles.titleHighlight}>Sports Venue</Text>
+
+              <Text style={styles.subtitle}>
+                From cricket and football to padel and futsal — we have venues ready for you to book and play
+              </Text>
+
+              
+
+              <TouchableOpacity
+                style={styles.continueButton}
+                onPress={() => navigation.navigate('SignUp')}
+              >
+                <Text style={styles.continueText}>Continue</Text>
+              </TouchableOpacity>
+
+              <View style={styles.signInContainer}>
+                <Text style={styles.signInText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+                  <Text style={styles.signInLink}>Sign In</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
     </View>
   );
 }
@@ -81,148 +59,111 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#004d43',
   },
-  decorativeCircle1: {
-    position: 'absolute',
-    top: -100,
-    left: -100,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: `${theme.colors.primary}10`,
-  },
-  decorativeCircle2: {
-    position: 'absolute',
-    bottom: -80,
-    right: -80,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: `${theme.colors.secondary}10`,
-  },
-  imagesContainer: {
-    height: height * 0.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  mainImageContainer: {
-    width: width * 0.65,
-    height: width * 0.85,
-    borderRadius: (width * 0.65) / 2,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: theme.colors.primary,
-    position: 'relative',
-  },
-  mainImage: {
-    width: '100%',
-    height: '100%',
-  },
-  arrowButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  smallImageTop: {
-    position: 'absolute',
-    top: 80,
-    right: 30,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: theme.colors.primary,
-  },
-  smallImageBottom: {
-    position: 'absolute',
-    bottom: 40,
-    left: 20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: theme.colors.primary,
-  },
-  smallImage: {
-    width: '100%',
-    height: '100%',
+  gradient: {
+    flex: 1,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 20,
+    paddingTop: 40,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  logoImage: {
+    width: 500,
+    height: 500,
+    marginBottom: 20,
+  },
+  bottomContent: {
+    width: '100%',
     paddingBottom: 40,
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: -25,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: theme.colors.text,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+    fontFamily: 'ClashDisplay-Medium',
+    lineHeight: 36,
+  },
+  titleHighlight: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.secondary,
     textAlign: 'center',
     marginBottom: 16,
     fontFamily: 'ClashDisplay-Medium',
     lineHeight: 36,
   },
-  titleHighlight: {
-    color: theme.colors.primary,
-  },
   subtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     fontFamily: 'Montserrat_400Regular',
-    lineHeight: 22,
+    lineHeight: 24,
     paddingHorizontal: 10,
+    opacity: 0.9,
   },
-  getStartedButton: {
-    backgroundColor: theme.colors.primary,
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 28,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  dotActive: {
+    width: 24,
+    backgroundColor: theme.colors.secondary,
+  },
+  continueButton: {
+    backgroundColor: theme.colors.secondary,
     height: 56,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: theme.colors.primary,
+    elevation: 4,
+    shadowColor: theme.colors.secondary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 4,
+    width: '90%',
   },
-  getStartedText: {
-    color: theme.colors.secondary,
-    fontSize: 16,
+  continueText: {
+    color: theme.colors.primary,
+    fontSize: 17,
     fontWeight: '700',
-    fontFamily: 'ClashDisplay-Medium',
+    fontFamily: 'Montserrat_700Bold',
+    letterSpacing: 0.5,
   },
   signInContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: 50,
   },
   signInText: {
-    fontSize: 14,
-    color: theme.colors.text,
+    fontSize: 15,
+    color: '#FFFFFF',
     fontFamily: 'Montserrat_400Regular',
+    opacity: 0.9,
   },
   signInLink: {
-    fontSize: 14,
-    color: theme.colors.primary,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
+    fontSize: 15,
+    color: theme.colors.secondary,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
   },
 });

@@ -89,7 +89,7 @@ export default function ReferralModal({ visible, onDismiss, user, hasCompletedBo
               <View style={styles.codeCard}>
                 <Text style={styles.codeLabel}>Your Referral Code</Text>
                 <View style={styles.codeContainer}>
-                  <Text style={styles.codeText}>{referralCode}</Text>
+                  <Text style={styles.codeText}>{String(referralCode)}</Text>
                   <TouchableOpacity
                     style={styles.copyButton}
                     onPress={handleCopyCode}
@@ -101,7 +101,7 @@ export default function ReferralModal({ visible, onDismiss, user, hasCompletedBo
                       color={theme.colors.primary} 
                     />
                     <Text style={styles.copyButtonText}>
-                      {copied ? 'Copied!' : 'Copy'}
+                      {String(copied ? 'Copied!' : 'Copy')}
                     </Text>
                   </TouchableOpacity>
                 </View>

@@ -58,8 +58,8 @@ export default function AdminBookingCard({ booking, onAction, onPress }) {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.bookingInfo}>
-            <Text style={styles.bookingId}>#{booking.bookingId}</Text>
-            <Text style={styles.customerName}>{booking.customerName}</Text>
+            <Text style={styles.bookingId}>{String('#' + booking.bookingId)}</Text>
+            <Text style={styles.customerName}>{String(booking.customerName)}</Text>
           </View>
           
           <View style={styles.headerActions}>
@@ -67,7 +67,7 @@ export default function AdminBookingCard({ booking, onAction, onPress }) {
               style={[styles.statusChip, { backgroundColor: getStatusBgColor(booking.status) }]}
               textStyle={[styles.statusText, { color: getStatusColor(booking.status) }]}
             >
-              {booking.status.toUpperCase()}
+              {String(booking.status.toUpperCase())}
             </Chip>
             
             <Menu
@@ -119,8 +119,8 @@ export default function AdminBookingCard({ booking, onAction, onPress }) {
             />
           </View>
           <View style={styles.venueDetails}>
-            <Text style={styles.venueName}>{booking.turfName}</Text>
-            <Text style={styles.venueLocation}>{booking.turfArea}</Text>
+            <Text style={styles.venueName}>{String(booking.turfName)}</Text>
+            <Text style={styles.venueLocation}>{String(booking.turfArea)}</Text>
           </View>
         </View>
 
@@ -128,26 +128,26 @@ export default function AdminBookingCard({ booking, onAction, onPress }) {
         <View style={styles.detailsGrid}>
           <View style={styles.detailItem}>
             <MaterialIcons name="event" size={14} color="#666" />
-            <Text style={styles.detailText}>{date}</Text>
+            <Text style={styles.detailText}>{String(date)}</Text>
           </View>
           <View style={styles.detailItem}>
             <MaterialIcons name="schedule" size={14} color="#666" />
-            <Text style={styles.detailText}>{time}</Text>
+            <Text style={styles.detailText}>{String(time)}</Text>
           </View>
           <View style={styles.detailItem}>
             <MaterialIcons name="timer" size={14} color="#666" />
-            <Text style={styles.detailText}>{booking.duration}h</Text>
+            <Text style={styles.detailText}>{String(booking.duration + 'h')}</Text>
           </View>
           <View style={styles.detailItem}>
             <MaterialIcons name="payments" size={14} color="#666" />
-            <Text style={styles.detailText}>PKR {booking.totalAmount.toLocaleString()}</Text>
+            <Text style={styles.detailText}>{String('PKR ' + booking.totalAmount.toLocaleString())}</Text>
           </View>
         </View>
 
         {/* Customer Contact */}
         <View style={styles.contactSection}>
           <MaterialIcons name="phone" size={14} color="#666" />
-          <Text style={styles.contactText}>{booking.customerPhone}</Text>
+          <Text style={styles.contactText}>{String(booking.customerPhone)}</Text>
           
           {booking.paymentStatus === 'pending' && (
             <View style={styles.paymentWarning}>

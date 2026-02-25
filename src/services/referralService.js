@@ -155,3 +155,30 @@ export const getReferralStats = async (userId) => {
     };
   }
 };
+
+/**
+ * Apply referral reward (alias for processReferralReward for backward compatibility)
+ * @param {string} referrerId - The referrer's ID
+ * @param {string} refereeId - The new user's ID
+ * @returns {Promise<boolean>}
+ */
+export const applyReferralReward = async (referrerId, refereeId) => {
+  return await processReferralReward(refereeId);
+};
+
+/**
+ * Mark referral as completed (alias for processReferralReward)
+ * @param {string} userId - The user's ID
+ * @returns {Promise<boolean>}
+ */
+export const markReferralCompleted = async (userId) => {
+  return await processReferralReward(userId);
+};
+
+export const referralService = {
+  verifyReferralCode,
+  processReferralReward,
+  applyReferralReward,
+  markReferralCompleted,
+  getReferralStats
+};

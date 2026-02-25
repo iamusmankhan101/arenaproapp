@@ -24,7 +24,9 @@ import {
   Chip,
   Surface,
   Portal,
-  Modal
+  Modal,
+  Switch,
+  TextInput
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserProfile } from '../../store/slices/authSlice';
@@ -52,6 +54,9 @@ export default function BookingConfirmScreen({ route, navigation }) {
   const [uploading, setUploading] = useState(false);
   const [paymentMode, setPaymentMode] = useState('advance'); // 'venue' or 'advance'
   const [confirmBookingId, setConfirmBookingId] = useState(null); // To store booking ID for WhatsApp notification
+  const [needPlayers, setNeedPlayers] = useState(false);
+  const [playersNeeded, setPlayersNeeded] = useState('1');
+  const [numberOfPlayers, setNumberOfPlayers] = useState('1'); // Total players in the booking
   const insets = useSafeAreaInsets();
 
   const paymentDetails = {
@@ -203,7 +208,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
           Alert.alert(
             'Upload Warning',
             'Payment screenshot could not be uploaded, but your booking will still be created. You can contact the venue directly with proof of payment.',
-            [{ text: 'Continue', onPress: () => {} }]
+            [{ text: 'Continue', onPress: () => { } }]
           );
         }
       }
@@ -228,7 +233,12 @@ export default function BookingConfirmScreen({ route, navigation }) {
         // Pass Redux user data as fallback for auth race conditions
         userId: user?.uid,
         userEmail: user?.email,
-        userName: user?.fullName || user?.displayName
+        userName: user?.fullName || user?.displayName,
+        numberOfPlayers: parseInt(numberOfPlayers) || 1, // Total players in booking
+        // Matchmaking fields
+        needPlayers: needPlayers,
+        playersNeeded: parseInt(playersNeeded) || 0,
+        slotPricePerPlayer: needPlayers ? Math.ceil(pricing.total / (parseInt(playersNeeded) + 1)) : 0
       };
 
       const result = await dispatch(createBooking(bookingData)).unwrap();
@@ -342,7 +352,7 @@ Please confirm my booking.`;
     dispatch(fetchUserBookings());
     // Refresh user profile to update booking count and unlock referral code
     dispatch(fetchUserProfile());
-    
+
     // Navigate directly to home (skip congratulations screen)
     navigation.dispatch(
       CommonActions.reset({
@@ -350,7 +360,7 @@ Please confirm my booking.`;
         routes: [{ name: 'MainTabs' }],
       })
     );
-    
+
     // Old navigation to success screen (removed)
     // navigation.navigate('BookingSuccess', {
     //   bookingDetails: {
@@ -482,7 +492,7 @@ Please confirm my booking.`;
                   <MaterialIcons name="wb-sunny" size={20} color="#FF9800" />
                 </View>
                 <Text style={styles.detailLabel}>Slot Type</Text>
-                <Text style={styles.detailValue}>{slot.priceType}</Text>
+                <Text style={styles.detailValue}>{String(slot.priceType || '')}</Text>
               </View>
             </View>
 
@@ -629,6 +639,104 @@ Please confirm my booking.`;
                 </>
               )}
             </View>
+          </View>
+        </Animated.View>
+
+        {/* Number of Players */}
+        <Animated.View
+          style={[
+            styles.animatedCard,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <View style={styles.paymentCard}>
+            <Text style={styles.sectionTitle}>Number of Players</Text>
+            <Text style={styles.sectionSubtitle}>How many people will be playing?</Text>
+            <View style={styles.playersInputRow}>
+              <TouchableOpacity
+                style={styles.counterButton}
+                onPress={() => setNumberOfPlayers(prev => Math.max(1, parseInt(prev) - 1).toString())}
+              >
+                <MaterialIcons name="remove" size={24} color="#333" />
+              </TouchableOpacity>
+              <TextInput
+                mode="outlined"
+                keyboardType="number-pad"
+                value={numberOfPlayers}
+                onChangeText={setNumberOfPlayers}
+                style={styles.playersInput}
+                outlineStyle={{ borderRadius: 12 }}
+              />
+              <TouchableOpacity
+                style={styles.counterButton}
+                onPress={() => setNumberOfPlayers(prev => (parseInt(prev) + 1).toString())}
+              >
+                <MaterialIcons name="add" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* Squad Builder - Need Players? */}
+        <Animated.View
+          style={[
+            styles.animatedCard,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <View style={styles.paymentCard}>
+            <View style={styles.switchRow}>
+              <View style={styles.switchInfo}>
+                <Text style={styles.sectionTitle}>Need Players?</Text>
+                <Text style={styles.sectionSubtitle}>List your game on the public feed for others to join</Text>
+              </View>
+              <Switch
+                value={needPlayers}
+                onValueChange={setNeedPlayers}
+                color={theme.colors.primary}
+              />
+            </View>
+
+            {needPlayers && (
+              <Animated.View style={styles.squadOptions}>
+                <Divider style={{ marginVertical: 12 }} />
+                <Text style={styles.inputLabel}>How many players do you need?</Text>
+                <View style={styles.playersInputRow}>
+                  <TouchableOpacity
+                    style={styles.counterButton}
+                    onPress={() => setPlayersNeeded(prev => Math.max(1, parseInt(prev) - 1).toString())}
+                  >
+                    <MaterialIcons name="remove" size={24} color="#333" />
+                  </TouchableOpacity>
+                  <TextInput
+                    mode="outlined"
+                    keyboardType="number-pad"
+                    value={playersNeeded}
+                    onChangeText={setPlayersNeeded}
+                    style={styles.playersInput}
+                    outlineStyle={{ borderRadius: 12 }}
+                  />
+                  <TouchableOpacity
+                    style={styles.counterButton}
+                    onPress={() => setPlayersNeeded(prev => (parseInt(prev) + 1).toString())}
+                  >
+                    <MaterialIcons name="add" size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+                <View style={[styles.infoBox, { backgroundColor: `${theme.colors.primary}10`, marginTop: 12 }]}>
+                  <MaterialIcons name="info" size={18} color={theme.colors.primary} />
+                  <Text style={styles.infoBoxText}>
+                    Cost per player: <Text style={{ fontWeight: 'bold' }}>PKR {Math.ceil(pricing.total / (parseInt(playersNeeded) + 1))}</Text>
+                  </Text>
+                </View>
+              </Animated.View>
+            )}
           </View>
         </Animated.View>
 
@@ -1334,5 +1442,53 @@ const styles = StyleSheet.create({
   },
   successButtonContent: {
     paddingVertical: 8,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  switchInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Montserrat_600SemiBold',
+    marginBottom: 12,
+  },
+  playersInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  playersInput: {
+    width: 80,
+    textAlign: 'center',
+    backgroundColor: 'white',
+  },
+  counterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  infoBoxText: {
+    fontSize: 14,
+    color: '#333',
+    fontFamily: 'Montserrat_500Medium',
   },
 });

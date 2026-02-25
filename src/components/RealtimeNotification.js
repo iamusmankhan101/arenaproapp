@@ -85,7 +85,7 @@ const RealtimeNotification = ({ message, type = 'info', duration = 3000, onHide 
             color="white" 
             style={styles.icon}
           />
-          <Text style={styles.message}>{message}</Text>
+          <Text style={styles.message}>{String(message)}</Text>
         </View>
       </Card>
     </Animated.View>

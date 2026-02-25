@@ -35,7 +35,19 @@ export default function ChallengeDetailScreen({ route, navigation }) {
       try {
         const data = await challengeService.getChallengeById(challengeId);
         if (data) {
-          setChallenge(data);
+          // Normalize challenge data - auto-fix legacy challenges
+          let normalizedData = data;
+          if (data.status === 'accepted' && !data.acceptedUser && data.opponentId) {
+            normalizedData = {
+              ...data,
+              acceptedUser: {
+                id: data.opponentId,
+                name: data.opponentName || 'Opponent',
+                photoURL: data.opponentPhotoURL || null,
+              }
+            };
+          }
+          setChallenge(normalizedData);
         } else {
           Alert.alert('Error', 'Challenge not found');
           navigation.goBack();
@@ -58,8 +70,8 @@ export default function ChallengeDetailScreen({ route, navigation }) {
   }
 
   const handleAcceptChallenge = () => {
-    if (!userTeam) {
-      Alert.alert('Error', 'You must have a team to accept challenges.');
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to accept challenges.');
       return;
     }
 
@@ -73,8 +85,11 @@ export default function ChallengeDetailScreen({ route, navigation }) {
           onPress: async () => {
             dispatch(acceptChallenge({
               challengeId,
-              opponentId: userTeam.id,
-              opponentTeamName: userTeam.name
+              opponentId: user.uid,
+              opponentName: user.displayName || user.email,
+              opponentData: {
+                photoURL: user.photoURL || null,
+              }
             }));
 
             // --- SEND EMAIL NOTIFICATIONS ---
@@ -92,20 +107,29 @@ export default function ChallengeDetailScreen({ route, navigation }) {
               console.log('⚠️ Failed to send challenge emails:', emailError);
             }
 
-            Alert.alert(
-              'Challenge Accepted!',
-              `You have accepted the challenge. Please book the venue (${challenge.venue}) to confirm.`,
-              [
-                {
-                  text: 'Book Now',
-                  onPress: () => navigation.navigate('Main', {
-                    screen: 'VenueList',
-                    params: { searchQuery: challenge.venue, sport: challenge.sport }
-                  })
-                },
-                { text: 'Later', style: 'cancel', onPress: () => navigation.goBack() }
-              ]
-            );
+            // Check if venue is already set
+            if (challenge.venue && challenge.venue !== 'TBD' && challenge.venue !== 'No venue specified') {
+              Alert.alert(
+                'Challenge Accepted!',
+                `You have accepted the challenge at ${challenge.venue}. Good luck!`,
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+              );
+            } else {
+              Alert.alert(
+                'Challenge Accepted!',
+                'You have accepted the challenge. Please book a venue to confirm.',
+                [
+                  {
+                    text: 'Book Now',
+                    onPress: () => navigation.navigate('Main', {
+                      screen: 'VenueList',
+                      params: { searchQuery: challenge.venue, sport: challenge.sport }
+                    })
+                  },
+                  { text: 'Later', style: 'cancel', onPress: () => navigation.goBack() }
+                ]
+              );
+            }
           }
         }
       ]
@@ -268,11 +292,11 @@ export default function ChallengeDetailScreen({ route, navigation }) {
           >
             {challenge.status.toUpperCase()}
           </Chip>
-          <Text style={styles.sportLabel}>{challenge.sport?.toUpperCase()}</Text>
+          <Text style={styles.sportLabel}>{String(challenge.sport || 'Sport').toUpperCase()}</Text>
         </View>
 
         {/* Title */}
-        <Text style={styles.mainTitle}>{challenge.title}</Text>
+        <Text style={styles.mainTitle}>{String(challenge.title || 'Challenge')}</Text>
 
         {/* VS Matchup Section */}
         {isTournament ? (
@@ -292,7 +316,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
             </View>
             <Text style={styles.tournamentTitle}>Tournament Challenge</Text>
             <Text style={styles.tournamentSub}>
-              {challenge.participants?.length || 0} / {challenge.maxParticipants} Teams Joined
+              {String(challenge.participants?.length || 0)} / {String(challenge.maxParticipants || 0)} Teams Joined
             </Text>
             <Chip icon="information" style={{ marginTop: 10, backgroundColor: '#e0f2f1' }} textStyle={{ color: '#004d43' }}>
               Knockout Format
@@ -343,8 +367,8 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                   });
                 })()}
               </View>
-              <Text style={styles.teamName} numberOfLines={2}>{challenge.creatorTeam.name}</Text>
-              <Text style={styles.teamStat}>{challenge.creatorTeam.wins || 0} Wins</Text>
+              <Text style={styles.teamName} numberOfLines={2}>{String(challenge.creatorTeam.name || 'Team')}</Text>
+              <Text style={styles.teamStat}>{String(challenge.creatorTeam.wins || 0)} Wins</Text>
             </View>
 
             {/* VS */}
@@ -368,7 +392,8 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                   const avatarSize = count > 2 ? 40 : 64;
                   const overlap = -(avatarSize / 2.5);
 
-                  const hasOpponent = !!challenge.acceptedTeam;
+                  // Check if opponent exists - prioritize acceptedUser
+                  const hasOpponent = !!(challenge.acceptedUser || challenge.acceptedBy || challenge.acceptedTeam || (challenge.status === 'accepted' && challenge.opponentId));
 
                   return Array.from({ length: Math.max(1, count) }).map((_, index) => {
                     const isCaptain = index === 0;
@@ -382,16 +407,16 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                         borderColor: '#fff'
                       }}>
                         {hasOpponent && isCaptain ? (
-                          challenge.acceptedTeam?.avatar && challenge.acceptedTeam.avatar.length > 2 ? (
+                          (challenge.acceptedUser?.photoURL || challenge.acceptedTeam?.avatar) && (challenge.acceptedUser?.photoURL || challenge.acceptedTeam.avatar).length > 2 ? (
                             <Avatar.Image
                               size={avatarSize}
-                              source={{ uri: challenge.acceptedTeam.avatar }}
+                              source={{ uri: challenge.acceptedUser?.photoURL || challenge.acceptedTeam.avatar }}
                               style={{ backgroundColor: '#fff3e0' }}
                             />
                           ) : (
                             <Avatar.Text
                               size={avatarSize}
-                              label={challenge.acceptedTeam.name?.charAt(0) || 'O'}
+                              label={(challenge.acceptedUser?.name || challenge.acceptedTeam?.name || challenge.opponentName)?.charAt(0) || 'O'}
                               style={{ backgroundColor: '#fff3e0' }}
                               color="#e65100"
                               labelStyle={{ fontWeight: 'bold' }}
@@ -418,10 +443,12 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                   });
                 })()}
               </View>
-              {challenge.acceptedTeam ? (
+              {challenge.acceptedUser || challenge.acceptedBy || challenge.acceptedTeam || (challenge.status === 'accepted' && challenge.opponentId) ? (
                 <>
-                  <Text style={styles.teamName} numberOfLines={2}>{challenge.acceptedTeam.name}</Text>
-                  <Text style={styles.teamStat}>{challenge.acceptedTeam.wins || 0} Wins</Text>
+                  <Text style={styles.teamName} numberOfLines={2}>
+                    {challenge.acceptedUser?.name || challenge.opponentName || challenge.acceptedTeam?.name || challenge.opponentTeamName || 'Opponent'}
+                  </Text>
+                  <Text style={styles.teamStat}>{challenge.acceptedTeam?.wins || 0} Wins</Text>
                 </>
               ) : (
                 <Text style={styles.waitingText}>Waiting for{'\n'}Opponent</Text>
@@ -438,7 +465,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
 
           <View style={styles.infoRow}>
             <View style={styles.iconCircle}>
-              <MaterialIcons name="calendar-today" size={20} color="#004d43" />
+              <MaterialIcons name="calendar-today" size={20} color="#e8ee26" />
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Date & Time</Text>
@@ -448,17 +475,17 @@ export default function ChallengeDetailScreen({ route, navigation }) {
 
           <View style={styles.infoRow}>
             <View style={styles.iconCircle}>
-              <MaterialIcons name="location-on" size={20} color="#004d43" />
+              <MaterialIcons name="location-on" size={20} color="#e8ee26" />
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Venue</Text>
-              <Text style={styles.infoValue}>{challenge.venue || 'No venue specified'}</Text>
+              <Text style={styles.infoValue}>{String(challenge.venue || 'No venue specified')}</Text>
             </View>
           </View>
 
           <View style={styles.infoRow}>
             <View style={styles.iconCircle}>
-              <MaterialIcons name={isTournament ? "emoji-events" : "payments"} size={20} color="#004d43" />
+              <MaterialIcons name={isTournament ? "emoji-events" : "payments"} size={20} color="#e8ee26" />
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{isTournament ? "Winning Prize" : "Ground Fee"}</Text>
@@ -476,22 +503,22 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         <View style={styles.infoSection}>
           <Text style={styles.sectionHeader}>SPECIFICATIONS</Text>
           <View style={styles.specsRow}>
-            {!!challenge.format && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.format}</Chip>}
-            {!!challenge.overs && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.overs} Overs</Chip>}
-            {!!challenge.ballType && <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.ballType} Ball</Chip>}
-            <Chip style={styles.specChip} textStyle={{ color: '#004d43' }}>{challenge.type === 'private' ? 'Private' : 'Public'}</Chip>
+            {!!challenge.format && <Chip style={styles.specChip} textStyle={{ color: '#e8ee26' }}>{String(challenge.format)}</Chip>}
+            {!!challenge.overs && <Chip style={styles.specChip} textStyle={{ color: '#e8ee26' }}>{String(challenge.overs)} Overs</Chip>}
+            {!!challenge.ballType && <Chip style={styles.specChip} textStyle={{ color: '#e8ee26' }}>{String(challenge.ballType)} Ball</Chip>}
+            <Chip style={styles.specChip} textStyle={{ color: '#e8ee26' }}>{challenge.type === 'private' ? 'Private' : 'Public'}</Chip>
           </View>
 
           {!!challenge.description && (
             <View style={styles.noteBox}>
-              <Text style={styles.noteText}>{challenge.description}</Text>
+              <Text style={styles.noteText}>{String(challenge.description)}</Text>
             </View>
           )}
         </View>
 
         {isTournament && (
           <View style={styles.infoSection}>
-            <Text style={styles.sectionHeader}>PARTICIPANTS ({challenge.participants?.length || 0}/{challenge.maxParticipants})</Text>
+            <Text style={styles.sectionHeader}>PARTICIPANTS ({String(challenge.participants?.length || 0)}/{String(challenge.maxParticipants || 0)})</Text>
             {challenge.participants && challenge.participants.map((participant, index) => (
               <View key={participant.id || index} style={styles.participantRow}>
                 {participant.avatar ? (
@@ -505,9 +532,9 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                   />
                 )}
                 <View>
-                  <Text style={styles.participantName}>{participant.name}</Text>
+                  <Text style={styles.participantName}>{String(participant.name || 'Participant')}</Text>
                   {!!participant.joinedAt && (
-                    <Text style={styles.participantJoined}>Joined {safeFormatDate(participant.joinedAt)}</Text>
+                    <Text style={styles.participantJoined}>Joined {String(safeFormatDate(participant.joinedAt))}</Text>
                   )}
                 </View>
               </View>
@@ -628,7 +655,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#e8ee26', // Secondary Brand Color
+    backgroundColor: '#004d43', // Primary Brand Color
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
@@ -639,7 +666,7 @@ const styles = StyleSheet.create({
   },
   vsText: {
     fontSize: 14,
-    color: '#004d43',
+    color: '#e8ee26',
     fontWeight: '900',
   },
   teamName: {
@@ -697,7 +724,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#e8ee26', // Secondary Brand Color
+    backgroundColor: '#004d43', // Primary Brand Color
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -726,7 +753,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   specChip: {
-    backgroundColor: '#e8ee26', // Secondary Brand Color
+    backgroundColor: '#004d43', // Primary Brand Color
   },
   noteBox: {
     marginTop: 15,

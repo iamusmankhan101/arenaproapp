@@ -22,7 +22,7 @@ const COLORS = {
 
 const InputField = ({ label, value, onChangeText, icon, keyboardType = 'default', editable = true, onPress, isSelect = false, isEditing }) => (
   <View style={styles.inputGroup}>
-    <Text style={styles.inputLabel}>{label}</Text>
+    <Text style={styles.inputLabel}>{String(label)}</Text>
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={(isEditing && isSelect) ? onPress : undefined}
@@ -289,8 +289,8 @@ export default function ManageProfileScreen({ navigation }) {
               )}
             </View>
           </View>
-          <Text style={styles.userName}>{formData.fullName || 'Your Name'}</Text>
-          <Text style={styles.userEmail}>{formData.email}</Text>
+          <Text style={styles.userName}>{String(formData.fullName || 'Your Name')}</Text>
+          <Text style={styles.userEmail}>{String(formData.email)}</Text>
         </View>
 
         {/* Form Card */}

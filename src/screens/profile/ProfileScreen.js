@@ -86,7 +86,7 @@ export default function ProfileScreen({ navigation }) {
             color={isLogout ? '#FF3B30' : theme.colors.primary}
           />
         </View>
-        <Text style={[styles.menuTitle, isLogout && styles.logoutTitle]}>{title}</Text>
+        <Text style={[styles.menuTitle, isLogout && styles.logoutTitle]}>{String(title)}</Text>
       </View>
       {showChevron && (
         <MaterialIcons name="chevron-right" size={24} color="#C7C7CC" />
@@ -141,7 +141,7 @@ export default function ProfileScreen({ navigation }) {
               <MaterialIcons name="edit" size={18} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>{userData.fullName}</Text>
+          <Text style={styles.userName}>{String(userData.fullName)}</Text>
         </View>
 
         {/* Personal Info Section */}
@@ -153,7 +153,7 @@ export default function ProfileScreen({ navigation }) {
                 <MaterialIcons name="person" size={20} color={theme.colors.textSecondary} />
                 <Text style={styles.infoLabel}>Name</Text>
               </View>
-              <Text style={styles.infoValue}>{userData.fullName}</Text>
+              <Text style={styles.infoValue}>{String(userData.fullName)}</Text>
             </View>
 
             <View style={styles.divider} />

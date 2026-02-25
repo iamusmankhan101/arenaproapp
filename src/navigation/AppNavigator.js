@@ -36,6 +36,7 @@ import FavoritesScreen from '../screens/main/FavoritesScreen';
 import BookingScreen from '../screens/booking/BookingScreen';
 import ChallengeScreen from '../screens/team/ChallengeScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import SquadBuilderScreen from '../screens/main/SquadBuilderScreen';
 import ManageProfileScreen from '../screens/profile/ManageProfileScreen';
 import PasswordSecurityScreen from '../screens/profile/PasswordSecurityScreen';
 import NotificationScreen from '../screens/profile/NotificationScreen';
@@ -97,6 +98,11 @@ function MainTabs() {
         name="Lalkaar"
         component={ChallengeScreen}
         options={{ tabBarLabel: 'Challenge' }}
+      />
+      <Tab.Screen
+        name="SquadBuilder"
+        component={SquadBuilderScreen}
+        options={{ tabBarLabel: 'Matchmaking' }}
       />
       <Tab.Screen
         name="Profile"

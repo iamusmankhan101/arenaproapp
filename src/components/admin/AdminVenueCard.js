@@ -40,8 +40,8 @@ export default function AdminVenueCard({ venue, onAction, onPress }) {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.venueInfo}>
-            <Text style={styles.venueName}>{venue.name}</Text>
-            <Text style={styles.venueLocation}>{venue.area}</Text>
+            <Text style={styles.venueName}>{String(venue.name)}</Text>
+            <Text style={styles.venueLocation}>{String(venue.area)}</Text>
           </View>
           
           <View style={styles.headerActions}>
@@ -49,7 +49,7 @@ export default function AdminVenueCard({ venue, onAction, onPress }) {
               style={[styles.statusChip, { backgroundColor: getStatusBgColor(venue.status) }]}
               textStyle={[styles.statusText, { color: getStatusColor(venue.status) }]}
             >
-              {venue.status.toUpperCase()}
+              {String(venue.status.toUpperCase())}
             </Chip>
             
             <Menu
@@ -99,7 +99,7 @@ export default function AdminVenueCard({ venue, onAction, onPress }) {
                 color={getSportColor(sport)} 
               />
               <Text style={[styles.sportText, { color: getSportColor(sport) }]}>
-                {sport.charAt(0).toUpperCase() + sport.slice(1)}
+                {String(sport.charAt(0).toUpperCase() + sport.slice(1))}
               </Text>
             </View>
           ))}
@@ -109,17 +109,17 @@ export default function AdminVenueCard({ venue, onAction, onPress }) {
         <View style={styles.statsGrid}>
           <View style={styles.statItem}>
             <MaterialIcons name="star" size={16} color="#FFD700" />
-            <Text style={styles.statValue}>{venue.rating}</Text>
-            <Text style={styles.statLabel}>({venue.totalReviews})</Text>
+            <Text style={styles.statValue}>{String(venue.rating || 0)}</Text>
+            <Text style={styles.statLabel}>{String('(' + (venue.totalReviews || 0) + ')')}</Text>
           </View>
           <View style={styles.statItem}>
             <MaterialIcons name="schedule" size={16} color="#666" />
-            <Text style={styles.statValue}>{venue.bookedSlots}/{venue.totalSlots}</Text>
+            <Text style={styles.statValue}>{String(venue.bookedSlots + '/' + venue.totalSlots)}</Text>
             <Text style={styles.statLabel}>Slots</Text>
           </View>
           <View style={styles.statItem}>
             <MaterialIcons name="payments" size={16} color="#4CAF50" />
-            <Text style={styles.statValue}>PKR {venue.priceRange}</Text>
+            <Text style={styles.statValue}>{String('PKR ' + venue.priceRange)}</Text>
             <Text style={styles.statLabel}>Range</Text>
           </View>
         </View>
@@ -128,7 +128,7 @@ export default function AdminVenueCard({ venue, onAction, onPress }) {
         <View style={styles.occupancySection}>
           <View style={styles.occupancyHeader}>
             <Text style={styles.occupancyLabel}>Occupancy Rate</Text>
-            <Text style={styles.occupancyValue}>{occupancyRate.toFixed(0)}%</Text>
+            <Text style={styles.occupancyValue}>{String(occupancyRate.toFixed(0) + '%')}</Text>
           </View>
           <ProgressBar 
             progress={occupancyRate / 100} 
@@ -141,7 +141,7 @@ export default function AdminVenueCard({ venue, onAction, onPress }) {
         <View style={styles.revenueSection}>
           <MaterialIcons name="trending-up" size={16} color="#4CAF50" />
           <Text style={styles.revenueText}>
-            Monthly Revenue: PKR {venue.revenue.toLocaleString()}
+            {String('Monthly Revenue: PKR ' + venue.revenue.toLocaleString())}
           </Text>
         </View>
 
@@ -149,11 +149,11 @@ export default function AdminVenueCard({ venue, onAction, onPress }) {
         <View style={styles.contactSection}>
           <View style={styles.contactItem}>
             <MaterialIcons name="person" size={14} color="#666" />
-            <Text style={styles.contactText}>{venue.contactPerson}</Text>
+            <Text style={styles.contactText}>{String(venue.contactPerson)}</Text>
           </View>
           <View style={styles.contactItem}>
             <MaterialIcons name="phone" size={14} color="#666" />
-            <Text style={styles.contactText}>{venue.contactPhone}</Text>
+            <Text style={styles.contactText}>{String(venue.contactPhone)}</Text>
           </View>
         </View>
 
@@ -163,11 +163,11 @@ export default function AdminVenueCard({ venue, onAction, onPress }) {
           <View style={styles.facilitiesContainer}>
             {venue.facilities.slice(0, 3).map((facility, index) => (
               <Chip key={index} style={styles.facilityChip} textStyle={styles.facilityText}>
-                {facility}
+                {String(facility)}
               </Chip>
             ))}
             {venue.facilities.length > 3 && (
-              <Text style={styles.moreFacilities}>+{venue.facilities.length - 3} more</Text>
+              <Text style={styles.moreFacilities}>{String('+' + (venue.facilities.length - 3) + ' more')}</Text>
             )}
           </View>
         </View>

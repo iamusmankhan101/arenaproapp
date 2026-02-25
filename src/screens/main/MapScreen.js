@@ -420,6 +420,7 @@ export default function MapScreen({ navigation }) {
 
   // Format distance for display
   const formatDistance = (distanceKm) => {
+    if (distanceKm === null || distanceKm === undefined || isNaN(distanceKm)) return '';
     if (distanceKm < 1) {
       return `${Math.round(distanceKm * 1000)}m`;
     } else if (distanceKm < 10) {
@@ -536,13 +537,13 @@ export default function MapScreen({ navigation }) {
   }, [nearbyTurfs, location]);
   const filterVenues = () => {
     // If no filters applied, show all venues
-    const hasNoFilters = !searchQuery.trim() && 
-                        (reduxFilters.sports.includes('All') || reduxFilters.sports.length === 0) && 
-                        reduxFilters.sortBy === 'All' && 
-                        reduxFilters.minRating === 0 &&
-                        reduxFilters.priceRange[0] === 0 &&
-                        reduxFilters.priceRange[1] === 10000;
-    
+    const hasNoFilters = !searchQuery.trim() &&
+      (reduxFilters.sports.includes('All') || reduxFilters.sports.length === 0) &&
+      reduxFilters.sortBy === 'All' &&
+      reduxFilters.minRating === 0 &&
+      reduxFilters.priceRange[0] === 0 &&
+      reduxFilters.priceRange[1] === 10000;
+
     if (hasNoFilters) {
       console.log('📊 MapScreen: No filters applied, showing all venues');
       setFilteredVenues(venuesWithValidCoords);
@@ -575,8 +576,8 @@ export default function MapScreen({ navigation }) {
 
       // Sport filter
       if (!reduxFilters.sports.includes('All') && reduxFilters.sports.length > 0) {
-        const venueSports = Array.isArray(venue.sports) ? venue.sports : 
-                           typeof venue.sports === 'string' && venue.sports.trim() ? venue.sports.split(',').map(s => s.trim()) : [];
+        const venueSports = Array.isArray(venue.sports) ? venue.sports :
+          typeof venue.sports === 'string' && venue.sports.trim() ? venue.sports.split(',').map(s => s.trim()) : [];
         matches = matches && venueSports.some(s => reduxFilters.sports.includes(s));
       }
 
@@ -1058,7 +1059,7 @@ export default function MapScreen({ navigation }) {
               return null;
             }
 
-            console.log(`📍 MapScreen: Rendering marker ${index + 1} for ${venue.name} at ${lat}, ${lng}`);
+
 
             return (
               <Marker
@@ -1089,8 +1090,7 @@ export default function MapScreen({ navigation }) {
             );
           })
         ) : (
-          // Show a message when no venues are found
-          console.log('⚠️ MapScreen: No venues to display on map')
+          null
         )}
       </MapView>
 
@@ -1199,7 +1199,7 @@ export default function MapScreen({ navigation }) {
                   </View>
 
                   <View style={styles.newStatsRow}>
-                    <Text style={styles.ratingLabel}>{venue.rating?.toFixed(1) || '5.0'}</Text>
+                    <Text style={styles.ratingLabel}>{String(venue.rating?.toFixed(1) || '5.0')}</Text>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <MaterialIcons
                         key={star}

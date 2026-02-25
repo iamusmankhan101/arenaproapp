@@ -58,8 +58,8 @@ export default function IconShowcase() {
       <View style={[styles.iconContainer, { backgroundColor: iconData.color }]}>
         <iconData.component size={24} color="white" />
       </View>
-      <Text style={styles.iconName}>{iconData.name}</Text>
-      <Text style={styles.iconCategory}>{iconData.category}</Text>
+      <Text style={styles.iconName}>{String(iconData.name)}</Text>
+      <Text style={styles.iconCategory}>{String(iconData.category)}</Text>
     </TouchableOpacity>
   );
 
@@ -93,7 +93,7 @@ export default function IconShowcase() {
               selectedCategory === category && styles.selectedChipText
             ]}
           >
-            {category}
+            {String(category)}
           </Chip>
         ))}
       </ScrollView>

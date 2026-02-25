@@ -263,7 +263,7 @@ export default function LoginPage({ onSwitchToRegister }) {
           </Button>
 
           {/* Create Account Link */}
-          <Box sx={{ textAlign: 'center', mt: 3 }}>
+          <Box sx={{ textAlign: 'center', mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Typography
               variant="body2"
               sx={{ color: '#ffffff' }}
@@ -287,6 +287,29 @@ export default function LoginPage({ onSwitchToRegister }) {
                 Create Account
               </Box>
             </Typography>
+
+            <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 1 }} />
+
+            <Button
+              variant="outlined"
+              onClick={() => window.open('https://arenapro.pk/ArenaPro.apk', '_blank')}
+              sx={{
+                borderRadius: '25px',
+                py: 1.2,
+                color: '#e8ee26',
+                borderColor: '#e8ee26',
+                borderWidth: 2,
+                textTransform: 'none',
+                fontWeight: 700,
+                '&:hover': {
+                  borderColor: '#f4f93d',
+                  bgcolor: 'rgba(232, 238, 38, 0.05)',
+                  borderWidth: 2,
+                }
+              }}
+            >
+              Download Android App (APK)
+            </Button>
           </Box>
         </Box>
       </Box>

@@ -23,7 +23,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
   const getStatusColor = (status) => {
     switch (status) {
       case 'open': return '#e8ee26'; // Lime Green (Brand Secondary)
-      case 'accepted': return '#FF9800'; // Orange
+      case 'accepted': return '#e8ee26'; // Lime Green (Brand Secondary) - Matched
       case 'completed': return '#2196F3'; // Blue
       case 'cancelled': return '#F44336'; // Red
       default: return '#9E9E9E'; // Grey
@@ -94,7 +94,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
             </Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(challenge.status) }]}>
-            <Text style={[styles.statusText, { color: challenge.status === 'open' ? '#004d43' : '#fff' }]}>
+            <Text style={[styles.statusText, { color: (challenge.status === 'open' || challenge.status === 'accepted') ? '#004d43' : '#fff' }]}>
               {challenge.status?.toUpperCase() || 'OPEN'}
             </Text>
           </View>
@@ -148,7 +148,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                 })()}
               </View>
 
-              <Text numberOfLines={1} style={styles.teamName}>{challenge.teamName}</Text>
+              <Text numberOfLines={1} style={styles.teamName}>{String(challenge.teamName || 'Team')}</Text>
               <View style={styles.statBadge}>
                 <MaterialIcons name="emoji-events" size={12} color="#fbc02d" />
                 <Text style={styles.statText}>{challenge.teamWins || 0} Wins</Text>
@@ -185,8 +185,8 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                         </View>
                       ))}
                     </View>
-                    <Text style={styles.teamName}>{challenge.participants.length} Joined</Text>
-                    <Text style={styles.waitingTeamName}>{challenge.maxParticipants ? `${challenge.maxParticipants} Spots` : 'Open'}</Text>
+                    <Text style={styles.teamName}>{String(challenge.participants.length)} Joined</Text>
+                    <Text style={styles.waitingTeamName}>{challenge.maxParticipants ? `${String(challenge.maxParticipants)} Spots` : 'Open'}</Text>
                   </>
                 ) : (
                   <>
@@ -197,7 +197,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                     <Text style={styles.waitingTeamName}>Open Entry</Text>
                   </>
                 )
-              ) : challenge.acceptedBy ? (
+              ) : (challenge.acceptedUser || challenge.acceptedBy || challenge.acceptedTeam || challenge.status === 'accepted') ? (
                 <>
                   <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
                     {(() => {
@@ -221,16 +221,16 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                             borderWidth: 2,
                             borderColor: '#fff'
                           }}>
-                            {isCaptain && challenge.acceptedTeamAvatar ? ( // Assuming this field exists or handled similarly
+                            {isCaptain && (challenge.acceptedUser?.photoURL || challenge.acceptedTeam?.avatar || challenge.acceptedTeamAvatar) ? (
                               <Avatar.Image
                                 size={avatarSize}
-                                source={{ uri: challenge.acceptedTeamAvatar }} // You might need to check prop mapping
+                                source={{ uri: challenge.acceptedUser?.photoURL || challenge.acceptedTeam?.avatar || challenge.acceptedTeamAvatar }}
                                 style={{ backgroundColor: '#fff3e0' }}
                               />
                             ) : (
                               <Avatar.Text
                                 size={avatarSize}
-                                label={isCaptain ? (challenge.acceptedTeamName?.charAt(0) || 'O') : '+'}
+                                label={isCaptain ? ((challenge.acceptedUser?.name || challenge.acceptedTeam?.name || challenge.acceptedTeamName || challenge.opponentName || challenge.opponentTeamName)?.charAt(0) || 'O') : '+'}
                                 style={{ backgroundColor: isCaptain ? '#fff3e0' : '#f0f0f0' }}
                                 color={isCaptain ? '#e65100' : '#999'}
                                 labelStyle={{ fontWeight: 'bold' }}
@@ -241,10 +241,10 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                       });
                     })()}
                   </View>
-                  <Text numberOfLines={1} style={styles.teamName}>{challenge.acceptedTeamName}</Text>
+                  <Text numberOfLines={1} style={styles.teamName}>{String(challenge.acceptedUser?.name || challenge.acceptedTeam?.name || challenge.acceptedTeamName || challenge.opponentName || challenge.opponentTeamName || 'Opponent')}</Text>
                   <View style={styles.statBadge}>
                     <MaterialIcons name="emoji-events" size={12} color="#fbc02d" />
-                    <Text style={styles.statText}>{challenge.acceptedTeamWins || 0} Wins</Text>
+                    <Text style={styles.statText}>{challenge.acceptedTeam?.wins || challenge.acceptedTeamWins || 0} Wins</Text>
                   </View>
                 </>
               ) : (
@@ -294,13 +294,13 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
             {/* Row 1: Date & Time */}
             <View style={styles.detailRow}>
               <MaterialIcons name="event" size={16} color="#004d43" style={styles.detailIcon} />
-              <Text style={styles.detailText}>{formatDateTime(challenge.proposedDateTime)}</Text>
+              <Text style={styles.detailText}>{String(formatDateTime(challenge.proposedDateTime))}</Text>
             </View>
 
             {/* Row 2: Venue */}
             <View style={styles.detailRow}>
               <MaterialIcons name="place" size={16} color="#004d43" style={styles.detailIcon} />
-              <Text numberOfLines={1} style={styles.detailText}>{challenge.venue || 'Any Venue'}</Text>
+              <Text numberOfLines={1} style={styles.detailText}>{String(challenge.venue || 'Any Venue')}</Text>
             </View>
 
             {/* Row 3: Fee & Type */}
@@ -353,16 +353,16 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
           {/* Tags */}
           {(!!challenge.format || !!challenge.overs || !!challenge.ballType || !!challenge.tournamentFormat) && (
             <View style={styles.chipContainer}>
-              {!!challenge.format && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.format}</Chip>}
-              {!!challenge.tournamentFormat && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.tournamentFormat}</Chip>}
-              {!!challenge.overs && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.overs} Overs</Chip>}
-              {!!challenge.ballType && <Chip style={styles.specChip} textStyle={styles.specText}>{challenge.ballType}</Chip>}
+              {!!challenge.format && <Chip style={styles.specChip} textStyle={styles.specText}>{String(challenge.format)}</Chip>}
+              {!!challenge.tournamentFormat && <Chip style={styles.specChip} textStyle={styles.specText}>{String(challenge.tournamentFormat)}</Chip>}
+              {!!challenge.overs && <Chip style={styles.specChip} textStyle={styles.specText}>{String(challenge.overs)} Overs</Chip>}
+              {!!challenge.ballType && <Chip style={styles.specChip} textStyle={styles.specText}>{String(challenge.ballType)}</Chip>}
             </View>
           )}
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.timeAgo}>{challenge.timeAgo || 'Just now'}</Text>
+            <Text style={styles.timeAgo}>{String(challenge.timeAgo || 'Just now')}</Text>
 
             <View style={styles.actionsRight}>
               {challenge.type === 'private' && (
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
   statBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#004d43',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 10,
-    color: '#666',
+    color: '#e8ee26',
     fontWeight: '600',
   },
   vsContainer: {
@@ -593,14 +593,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   specChip: {
-    backgroundColor: '#e8f5f3', // Light brand primary
+    backgroundColor: '#004d43', // Brand primary
     borderColor: '#004d43',
     marginRight: 4,
     height: 28,
   },
   specText: {
     fontSize: 10,
-    color: '#004d43',
+    color: '#e8ee26',
     fontWeight: '600',
     lineHeight: 14,
   },

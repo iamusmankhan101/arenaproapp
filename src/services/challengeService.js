@@ -59,13 +59,18 @@ export const challengeService = {
     },
 
     // Accept a challenge
-    acceptChallenge: async (challengeId, opponentId, opponentTeamName) => {
+    acceptChallenge: async (challengeId, opponentId, opponentName, opponentData = {}) => {
         try {
             const challengeDocRef = doc(db, 'challenges', challengeId);
             await updateDoc(challengeDocRef, {
-                status: 'matched',
+                status: 'accepted',
                 opponentId,
-                opponentTeamName,
+                opponentName,
+                acceptedUser: {
+                    id: opponentId,
+                    name: opponentName,
+                    photoURL: opponentData.photoURL || null,
+                },
                 matchedAt: serverTimestamp()
             });
             return { success: true };

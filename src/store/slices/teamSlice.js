@@ -1,12 +1,29 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { challengeService } from '../../services/challengeService';
 
+// Helper function to normalize challenge data (auto-fix legacy challenges)
+const normalizeChallengeData = (challenge) => {
+  // If challenge is accepted but missing acceptedUser object, create it from legacy fields
+  if (challenge.status === 'accepted' && !challenge.acceptedUser && challenge.opponentId) {
+    return {
+      ...challenge,
+      acceptedUser: {
+        id: challenge.opponentId,
+        name: challenge.opponentName || 'Opponent',
+        photoURL: challenge.opponentPhotoURL || null,
+      }
+    };
+  }
+  return challenge;
+};
+
 export const fetchChallenges = createAsyncThunk(
   'team/fetchChallenges',
   async (sport, { rejectWithValue }) => {
     try {
       const challenges = await challengeService.getOpenChallenges(sport === 'All Sports' ? null : sport);
-      return challenges;
+      // Automatically normalize all challenges to ensure consistent data structure
+      return challenges.map(normalizeChallengeData);
     } catch (error) {
       console.warn('Failed to fetch challenges:', error.message);
       return [];
@@ -32,11 +49,21 @@ export const createChallenge = createAsyncThunk(
 
 export const acceptChallenge = createAsyncThunk(
   'team/acceptChallenge',
-  async ({ challengeId, opponentId, opponentTeamName }, { rejectWithValue }) => {
+  async ({ challengeId, opponentId, opponentName, opponentData }, { rejectWithValue }) => {
     try {
-      const result = await challengeService.acceptChallenge(challengeId, opponentId, opponentTeamName);
+      const result = await challengeService.acceptChallenge(challengeId, opponentId, opponentName, opponentData);
       if (result.success) {
-        return { id: challengeId, status: 'matched', opponentId, opponentTeamName };
+        return { 
+          id: challengeId, 
+          status: 'accepted', 
+          opponentId, 
+          opponentName,
+          acceptedUser: {
+            id: opponentId,
+            name: opponentName,
+            photoURL: opponentData?.photoURL || null,
+          }
+        };
       } else {
         return rejectWithValue(result.error);
       }

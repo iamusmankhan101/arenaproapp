@@ -176,7 +176,7 @@ export default function AdminCustomersScreen({ navigation }) {
       {/* Stats Summary */}
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{customers.length}</Text>
+          <Text style={styles.statValue}>{String(customers.length)}</Text>
           <Text style={styles.statLabel}>Total Customers</Text>
         </View>
         <View style={styles.statItem}>

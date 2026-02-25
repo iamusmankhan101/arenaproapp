@@ -181,7 +181,7 @@ export default function HomeScreen({ navigation }) {
 
   // Format distance for display
   const formatDistance = (distanceKm) => {
-    if (distanceKm === null) return '';
+    if (distanceKm === null || distanceKm === undefined) return '';
     if (distanceKm < 1) {
       return `${Math.round(distanceKm * 1000)}m`;
     }
@@ -215,7 +215,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.header}>
           <View style={styles.locationContainer}>
             <Text style={styles.greetingText}>
-              Hi, {user?.name || user?.displayName || 'Guest'}
+              Hi, {String(user?.name || user?.displayName || 'Guest')}
             </Text>
             <Text style={styles.welcomeBackText}>Welcome back to Arena Pro</Text>
             <TouchableOpacity 
@@ -227,7 +227,7 @@ export default function HomeScreen({ navigation }) {
                 size={16} 
                 color={theme.colors.primary} 
               />
-              <Text style={styles.locationText}>{userLocation}</Text>
+              <Text style={styles.locationText}>{String(userLocation)}</Text>
               <MaterialIcons 
                 name="keyboard-arrow-down" 
                 size={16} 
@@ -335,7 +335,6 @@ export default function HomeScreen({ navigation }) {
             >
               {recommendedVenues.map((venue) => {
                 const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
-                console.log(`🖼️ Venue ${venue.name}: has remote image=${!!venue.images?.[0]}, imageSource=`, imageSource);
                 
                 return (
                   <TouchableOpacity
@@ -347,8 +346,6 @@ export default function HomeScreen({ navigation }) {
                       source={imageSource}
                       style={styles.venueImage}
                       resizeMode="cover"
-                      onError={(e) => console.log(`❌ Image load error for ${venue.name}:`, e.nativeEvent.error)}
-                      onLoad={() => console.log(`✅ Image loaded for ${venue.name}`)}
                     />
                     
                     {/* Glass overlay for info */}
@@ -359,12 +356,12 @@ export default function HomeScreen({ navigation }) {
                         <View style={styles.venueHeader}>
                           <View style={styles.ratingContainer}>
                             <MaterialIcons name="star" size={16} color="#FFD700" />
-                            <Text style={styles.ratingText}>{venue.rating || 4.5}</Text>
+                            <Text style={styles.ratingText}>{String(venue.rating || 4.5)}</Text>
                           </View>
                         </View>
                         
                         <Text style={styles.venueName} numberOfLines={1}>
-                          {venue.name}
+                          {String(venue.name || 'Venue')}
                         </Text>
                         
                         <View style={styles.venueLocation}>
@@ -374,9 +371,9 @@ export default function HomeScreen({ navigation }) {
                             color={theme.colors.textSecondary} 
                           />
                           <Text style={styles.venueLocationText} numberOfLines={1}>
-                            {venue.city || 'Lahore'}, Pakistan
+                            {String(venue.city || 'Lahore')}, Pakistan
                           </Text>
-                          {venue.distanceKm !== null && (
+                          {venue.distanceKm !== null && venue.distanceKm !== undefined && (
                             <Text style={styles.venueDistance}>
                               • {formatDistance(venue.distanceKm)}
                             </Text>
@@ -386,13 +383,13 @@ export default function HomeScreen({ navigation }) {
                         <View style={styles.venuePriceContainer}>
                           {(venue.discount || venue.discountPercentage) && (
                             <Text style={styles.venueOriginalPrice}>
-                              PKR {venue.pricePerHour || venue.pricing?.basePrice || 1500}
+                              PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
                             </Text>
                           )}
                           <Text style={styles.venuePrice}>
-                            PKR {(venue.discount || venue.discountPercentage) 
+                            PKR {String((venue.discount || venue.discountPercentage) 
                               ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
-                              : (venue.pricePerHour || venue.pricing?.basePrice || 1500)}
+                              : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
                             <Text style={styles.priceUnit}> /hour</Text>
                           </Text>
                         </View>
@@ -405,7 +402,7 @@ export default function HomeScreen({ navigation }) {
                     
                     {(venue.discount || venue.discountPercentage) && (
                       <View style={styles.discountBadge}>
-                        <Text style={styles.discountText}>{venue.discount || venue.discountPercentage}% Off</Text>
+                        <Text style={styles.discountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
                       </View>
                     )}
                 </TouchableOpacity>
@@ -434,7 +431,6 @@ export default function HomeScreen({ navigation }) {
           {nearbyVenues.length > 0 ? (
             nearbyVenues.map((venue) => {
               const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
-              console.log(`🖼️ Nearby venue ${venue.name}: has remote image=${!!venue.images?.[0]}, imageSource=`, imageSource);
               
               return (
                 <TouchableOpacity
@@ -446,19 +442,17 @@ export default function HomeScreen({ navigation }) {
                     source={imageSource}
                     style={styles.nearbyVenueImage}
                     resizeMode="cover"
-                    onError={(e) => console.log(`❌ Image load error for ${venue.name}:`, e.nativeEvent.error)}
-                    onLoad={() => console.log(`✅ Image loaded for ${venue.name}`)}
                   />
                   
                   <View style={styles.nearbyVenueInfo}>
                   {(venue.discount || venue.discountPercentage) && (
                     <View style={styles.nearbyDiscountBadge}>
-                      <Text style={styles.nearbyDiscountText}>{venue.discount || venue.discountPercentage}% Off</Text>
+                      <Text style={styles.nearbyDiscountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
                     </View>
                   )}
                   
                   <Text style={styles.nearbyVenueName} numberOfLines={1}>
-                    {venue.name}
+                    {venue.name || 'Venue'}
                   </Text>
                   
                   <View style={styles.nearbyVenueLocation}>
@@ -468,9 +462,9 @@ export default function HomeScreen({ navigation }) {
                       color={theme.colors.textSecondary} 
                     />
                     <Text style={styles.nearbyVenueLocationText} numberOfLines={1}>
-                      {venue.city || 'Lahore'}, Pakistan
+                      {String(venue.city || 'Lahore')}, Pakistan
                     </Text>
-                    {venue.distanceKm !== null && (
+                    {venue.distanceKm !== null && venue.distanceKm !== undefined && (
                       <Text style={styles.nearbyVenueDistance}>
                         • {formatDistance(venue.distanceKm)}
                       </Text>
@@ -480,13 +474,13 @@ export default function HomeScreen({ navigation }) {
                   <View style={styles.nearbyVenuePriceContainer}>
                     {(venue.discount || venue.discountPercentage) && (
                       <Text style={styles.nearbyVenueOriginalPrice}>
-                        PKR {venue.pricePerHour || venue.pricing?.basePrice || 1500}
+                        PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
                       </Text>
                     )}
                     <Text style={styles.nearbyVenuePrice}>
-                      PKR {(venue.discount || venue.discountPercentage) 
+                      PKR {String((venue.discount || venue.discountPercentage) 
                         ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
-                        : (venue.pricePerHour || venue.pricing?.basePrice || 1500)}
+                        : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
                       <Text style={styles.priceUnit}> /hour</Text>
                     </Text>
                   </View>
@@ -494,7 +488,7 @@ export default function HomeScreen({ navigation }) {
 
                 <View style={styles.nearbyVenueRating}>
                   <MaterialIcons name="star" size={16} color="#FFD700" />
-                  <Text style={styles.nearbyRatingText}>{venue.rating || 4.5}</Text>
+                  <Text style={styles.nearbyRatingText}>{String(venue.rating || 4.5)}</Text>
                 </View>
 
                 <TouchableOpacity style={styles.nearbyFavoriteButton}>

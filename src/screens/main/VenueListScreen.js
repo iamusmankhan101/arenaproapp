@@ -189,7 +189,7 @@ export default function VenueListScreen({ navigation, route }) {
         </TouchableOpacity>
         <View style={styles.ratingBadge}>
           <Icon name="star" size={16} color="#004d43" />
-          <Text style={styles.ratingText}>{item.rating || 0}</Text>
+          <Text style={styles.ratingText}>{String(item.rating || 0)}</Text>
         </View>
         <View style={styles.sportBadge}>
           <Text style={styles.sportBadgeText}>
@@ -209,7 +209,7 @@ export default function VenueListScreen({ navigation, route }) {
         <View style={styles.venueFooter}>
           <View style={styles.priceContainer}>
             <Text style={styles.priceLabel}>PKR </Text>
-            <Text style={styles.priceAmount}>{(item.price || item.pricePerHour || 0).toLocaleString()}</Text>
+            <Text style={styles.priceAmount}>{String((item.price || item.pricePerHour || 0).toLocaleString())}</Text>
             <Text style={styles.priceUnit}>/hour</Text>
           </View>
           {item.bookable && (

@@ -121,7 +121,7 @@ export default function AdminVenuesScreen({ navigation }) {
       {/* Stats Summary */}
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{venues.length}</Text>
+          <Text style={styles.statValue}>{String(venues.length)}</Text>
           <Text style={styles.statLabel}>Total Venues</Text>
         </View>
         <View style={styles.statItem}>

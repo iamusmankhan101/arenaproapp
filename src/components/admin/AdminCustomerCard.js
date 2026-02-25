@@ -45,12 +45,12 @@ export default function AdminCustomerCard({ customer, onAction, onPress }) {
             />
             <View style={styles.customerDetails}>
               <View style={styles.nameRow}>
-                <Text style={styles.customerName}>{customer.name}</Text>
+                <Text style={styles.customerName}>{String(customer.name)}</Text>
                 {customer.isVip && (
                   <MaterialIcons name="star" size={16} color="#FFD700" />
                 )}
               </View>
-              <Text style={styles.customerEmail}>{customer.email}</Text>
+              <Text style={styles.customerEmail}>{String(customer.email)}</Text>
             </View>
           </View>
           
@@ -59,7 +59,7 @@ export default function AdminCustomerCard({ customer, onAction, onPress }) {
               style={[styles.statusChip, { backgroundColor: getStatusBgColor(customer.status) }]}
               textStyle={[styles.statusText, { color: getStatusColor(customer.status) }]}
             >
-              {customer.status.toUpperCase()}
+              {String(customer.status.toUpperCase())}
             </Chip>
             
             <Menu
@@ -103,22 +103,22 @@ export default function AdminCustomerCard({ customer, onAction, onPress }) {
         <View style={styles.statsGrid}>
           <View style={styles.statItem}>
             <MaterialIcons name="event" size={16} color="#4CAF50" />
-            <Text style={styles.statValue}>{customer.totalBookings}</Text>
+            <Text style={styles.statValue}>{String(customer.totalBookings)}</Text>
             <Text style={styles.statLabel}>Bookings</Text>
           </View>
           <View style={styles.statItem}>
             <MaterialIcons name="payments" size={16} color="#FF9800" />
-            <Text style={styles.statValue}>PKR {(customer.totalSpent / 1000).toFixed(0)}K</Text>
+            <Text style={styles.statValue}>{String('PKR ' + (customer.totalSpent / 1000).toFixed(0) + 'K')}</Text>
             <Text style={styles.statLabel}>Spent</Text>
           </View>
           <View style={styles.statItem}>
             <MaterialIcons name="star" size={16} color="#FFD700" />
-            <Text style={styles.statValue}>{customer.rating}</Text>
+            <Text style={styles.statValue}>{String(customer.rating || 0)}</Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
           <View style={styles.statItem}>
             <MaterialIcons name="workspace-premium" size={16} color={tier.color} />
-            <Text style={[styles.statValue, { color: tier.color }]}>{tier.label}</Text>
+            <Text style={[styles.statValue, { color: tier.color }]}>{String(tier.label)}</Text>
             <Text style={styles.statLabel}>Tier</Text>
           </View>
         </View>
@@ -127,11 +127,11 @@ export default function AdminCustomerCard({ customer, onAction, onPress }) {
         <View style={styles.contactSection}>
           <View style={styles.contactItem}>
             <MaterialIcons name="phone" size={14} color="#666" />
-            <Text style={styles.contactText}>{customer.phone}</Text>
+            <Text style={styles.contactText}>{String(customer.phone)}</Text>
           </View>
           <View style={styles.contactItem}>
             <MaterialIcons name="schedule" size={14} color="#666" />
-            <Text style={styles.contactText}>Last: {formatDate(customer.lastBooking)}</Text>
+            <Text style={styles.contactText}>{String('Last: ' + formatDate(customer.lastBooking))}</Text>
           </View>
         </View>
 
@@ -141,7 +141,7 @@ export default function AdminCustomerCard({ customer, onAction, onPress }) {
           <View style={styles.sportsContainer}>
             {customer.preferredSports.map((sport, index) => (
               <Chip key={index} style={styles.sportChip} textStyle={styles.sportText}>
-                {sport.charAt(0).toUpperCase() + sport.slice(1)}
+                {String(sport.charAt(0).toUpperCase() + sport.slice(1))}
               </Chip>
             ))}
           </View>
@@ -151,15 +151,14 @@ export default function AdminCustomerCard({ customer, onAction, onPress }) {
         <View style={styles.venuesSection}>
           <Text style={styles.venuesLabel}>Favorite Venues:</Text>
           <Text style={styles.venuesText}>
-            {customer.favoriteVenues.slice(0, 2).join(', ')}
-            {customer.favoriteVenues.length > 2 && ` +${customer.favoriteVenues.length - 2} more`}
+            {String(customer.favoriteVenues.slice(0, 2).join(', ') + (customer.favoriteVenues.length > 2 ? ` +${customer.favoriteVenues.length - 2} more` : ''))}
           </Text>
         </View>
 
         {/* Join Date */}
         <View style={styles.joinSection}>
           <MaterialIcons name="person-add" size={14} color="#666" />
-          <Text style={styles.joinText}>Joined {formatDate(customer.joinDate)}</Text>
+          <Text style={styles.joinText}>{String('Joined ' + formatDate(customer.joinDate))}</Text>
         </View>
 
         {/* Quick Actions */}

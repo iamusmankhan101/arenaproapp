@@ -390,7 +390,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
                       style={[styles.timeItem, tempTime.hour == h && styles.selectedTimeItem]}
                       onPress={() => setTempTime({ ...tempTime, hour: h.toString() })}
                     >
-                      <Text style={[styles.timeText, tempTime.hour == h && styles.selectedTimeText]}>{h}</Text>
+                      <Text style={[styles.timeText, tempTime.hour == h && styles.selectedTimeText]}>{String(h)}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -405,7 +405,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
                       style={[styles.timeItem, tempTime.minute == m && styles.selectedTimeItem]}
                       onPress={() => setTempTime({ ...tempTime, minute: m })}
                     >
-                      <Text style={[styles.timeText, tempTime.minute == m && styles.selectedTimeText]}>{m}</Text>
+                      <Text style={[styles.timeText, tempTime.minute == m && styles.selectedTimeText]}>{String(m)}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -418,7 +418,7 @@ export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
                       style={[styles.timeItem, tempTime.period == p && styles.selectedTimeItem]}
                       onPress={() => setTempTime({ ...tempTime, period: p })}
                     >
-                      <Text style={[styles.timeText, tempTime.period == p && styles.selectedTimeText]}>{p}</Text>
+                      <Text style={[styles.timeText, tempTime.period == p && styles.selectedTimeText]}>{String(p)}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>

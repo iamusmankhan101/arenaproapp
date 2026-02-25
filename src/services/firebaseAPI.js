@@ -164,7 +164,7 @@ export const turfAPI = {
 
       const data = turfSnap.data();
       console.log(`📊 Raw venue data:`, JSON.stringify(data, null, 2));
-      
+
       // Ensure sports is always an array with safe checks and error handling
       let sports = [];
       try {
@@ -186,7 +186,7 @@ export const turfAPI = {
         // Fallback to empty array on error
         sports = [];
       }
-      
+
       const serializedData = serializeFirestoreData({
         id: turfSnap.id,
         ...data,
@@ -287,7 +287,7 @@ export const turfAPI = {
                 sports = venueData.sports;
               }
             }
-            
+
             favorites.push(serializeFirestoreData({
               id: turfDoc.id,
               ...venueData,
@@ -401,7 +401,7 @@ export const turfAPI = {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        
+
         // Normalize sports data with safe checks
         let sports = [];
         if (data && data.sports !== null && data.sports !== undefined) {
@@ -411,7 +411,7 @@ export const turfAPI = {
             sports = data.sports;
           }
         }
-        
+
         turfs.push(serializeFirestoreData({
           id: doc.id,
           ...data,
@@ -885,7 +885,7 @@ export const bookingAPI = {
         userId: user.uid,
         userType: 'authenticated',
         status: 'confirmed',
-        paymentStatus: bookingData.advancePaid ? 'partial' : 'paid', // 'partial' if advance paid, 'paid' if full (though logic enforces advance now)
+        paymentStatus: bookingData.advancePaid ? 'partial' : 'paid',
         advancePaid: bookingData.advancePaid || 0,
         remainingAmount: bookingData.remainingAmount || 0,
         bookingReference: bookingId,
@@ -896,6 +896,11 @@ export const bookingAPI = {
         originalAmount: bookingData.totalAmount || 0,
         referralDiscount: referralDiscount,
         referralApplied: referralApplied,
+        // Matchmaking / Squad Builder fields
+        needPlayers: bookingData.needPlayers || false,
+        playersNeeded: bookingData.playersNeeded || 0,
+        playersJoined: [], // Initially empty
+        slotPricePerPlayer: bookingData.slotPricePerPlayer || 0,
         createdAt: serverTimestamp()
       };
 

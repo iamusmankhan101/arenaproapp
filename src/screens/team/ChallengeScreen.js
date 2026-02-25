@@ -18,14 +18,11 @@ import { fetchChallenges, createChallenge, acceptChallenge, deleteChallenge, set
 import ChallengeCard from '../../components/ChallengeCard';
 import CreateChallengeModal from '../../components/CreateChallengeModal';
 
-const sportFilters = ['All', 'Cricket', 'Football', 'Futsal', 'Padel'];
-
 export default function ChallengeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedSport, setSelectedSport] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // all, my-challenges
   const [refreshing, setRefreshing] = useState(false);
@@ -108,32 +105,9 @@ export default function ChallengeScreen({ navigation }) {
   };
 
   const handleAcceptChallenge = async (challengeId) => {
-    // Auto-create team if user doesn't have one
-    let currentTeam = userTeam;
-
-    if (!currentTeam) {
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in to accept challenges');
-        return;
-      }
-
-      // Create a default team for the user
-      const newTeam = {
-        id: user.uid,
-        name: `${user.displayName || user.fullName || 'Player'}'s Team`,
-        captain: user.displayName || user.fullName || 'Captain',
-        avatar: user.photoURL || null,
-        founded: new Date().getFullYear().toString(),
-        homeGround: user.city || 'Home Ground',
-        wins: 0,
-        losses: 0,
-        draws: 0,
-        eloRating: 1200,
-        fairPlayScore: 5.0,
-      };
-
-      dispatch(setUserTeam(newTeam));
-      currentTeam = newTeam;
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to accept challenges');
+      return;
     }
 
     const challenge = challenges.find(c => c.id === challengeId);
@@ -141,7 +115,7 @@ export default function ChallengeScreen({ navigation }) {
 
     Alert.alert(
       'Accept Challenge',
-      `Accept challenge from ${challenge.teamName}? ${challenge.isWinnerTakesAll ? 'Winner takes all!' : 'Split ground fee.'}`,
+      `Accept challenge from ${challenge.userName || challenge.teamName}? ${challenge.isWinnerTakesAll ? 'Winner takes all!' : 'Split ground fee.'}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -150,8 +124,11 @@ export default function ChallengeScreen({ navigation }) {
             try {
               await dispatch(acceptChallenge({
                 challengeId,
-                opponentId: currentTeam.id,
-                opponentTeamName: currentTeam.name
+                opponentId: user.uid,
+                opponentName: user.displayName || user.fullName || user.email,
+                opponentData: {
+                  photoURL: user.photoURL || null,
+                }
               })).unwrap();
 
               Alert.alert(
@@ -201,21 +178,17 @@ export default function ChallengeScreen({ navigation }) {
 
   // Filter challenges
   const filteredChallenges = challenges.filter(challenge => {
-    const matchesSport = selectedSport === 'All' || challenge.sport === selectedSport;
     const matchesSearch = !searchQuery || 
       challenge.teamName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       challenge.venue?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // For "My Challenges" tab, check if user created or accepted the challenge
+    // For "My Challenges" tab, only show challenges created by the current user
     const isMyChallenge = activeTab === 'all' || 
       (activeTab === 'my-challenges' && (
-        challenge.challengerId === userTeam?.id || 
-        challenge.challengerId === user?.uid ||
-        challenge.opponentId === userTeam?.id ||
-        challenge.opponentId === user?.uid
+        challenge.challengerId === user?.uid
       ));
     
-    return matchesSport && matchesSearch && isMyChallenge;
+    return matchesSearch && isMyChallenge;
   });
 
   return (
@@ -265,33 +238,6 @@ export default function ChallengeScreen({ navigation }) {
             My Challenges
           </Text>
         </TouchableOpacity>
-      </View>
-
-      {/* Sport Filters */}
-      <View style={styles.filtersWrapper}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContainer}
-        >
-          {sportFilters.map((sport) => (
-            <TouchableOpacity
-              key={sport}
-              style={[
-                styles.filterChip,
-                selectedSport === sport && styles.filterChipActive
-              ]}
-              onPress={() => setSelectedSport(sport)}
-            >
-              <Text style={[
-                styles.filterChipText,
-                selectedSport === sport && styles.filterChipTextActive
-              ]}>
-                {sport}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </View>
 
       {/* Challenges List */}
@@ -372,7 +318,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: theme.colors.text,
-    fontFamily: 'ClashDisplay-Regular',
+    fontFamily: 'ClashDisplay-Medium',
   },
   createButton: {
     width: 48,
@@ -441,10 +387,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.primary,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: theme.colors.primary,
   },
   filterChipActive: {
     backgroundColor: theme.colors.primary,
@@ -452,7 +398,7 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 14,
-    color: theme.colors.text,
+    color: theme.colors.secondary,
     fontFamily: 'Montserrat_500Medium',
   },
   filterChipTextActive: {
@@ -472,7 +418,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: theme.colors.text,
-    fontFamily: 'ClashDisplay-Regular',
+    fontFamily: 'ClashDisplay-Medium',
     marginTop: 16,
     marginBottom: 8,
   },
@@ -494,6 +440,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: theme.colors.secondary,
-    fontFamily: 'ClashDisplay-Regular',
+    fontFamily: 'ClashDisplay-Medium',
   },
 });

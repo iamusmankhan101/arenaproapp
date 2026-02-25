@@ -292,7 +292,7 @@ export default function NotificationScreen({ navigation }) {
           <Text style={styles.notificationTitle} numberOfLines={1}>
             {notification.title}
           </Text>
-          <Text style={styles.notificationTime}>{notification.time}</Text>
+          <Text style={styles.notificationTime}>{String(notification.time)}</Text>
         </View>
         <Text style={styles.notificationMessage} numberOfLines={3}>
           {notification.message}
@@ -342,7 +342,7 @@ export default function NotificationScreen({ navigation }) {
 
         {unreadCount > 0 && (
           <View style={styles.badgeContainer}>
-            <Text style={styles.badgeText}>{unreadCount} NEW</Text>
+            <Text style={styles.badgeText}>{String(unreadCount + ' NEW')}</Text>
           </View>
         )}
       </View>

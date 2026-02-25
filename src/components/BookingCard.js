@@ -148,31 +148,31 @@ export default function BookingCard({ booking, navigation }) {
           <View style={styles.detailGrid}>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>DATE</Text>
-              <Text style={styles.detailValue}>{date}</Text>
+              <Text style={styles.detailValue}>{String(date)}</Text>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>TIME</Text>
-              <Text style={styles.detailValue}>{time}</Text>
+              <Text style={styles.detailValue}>{String(time)}</Text>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>DURATION</Text>
               <Text style={styles.detailValue}>
-                {typeof booking.duration === 'string' || typeof booking.duration === 'number' 
+                {String(typeof booking.duration === 'string' || typeof booking.duration === 'number' 
                   ? booking.duration 
-                  : '1 Hour'}
+                  : '1 Hour')}
               </Text>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>TOTAL PRICE</Text>
               <Text style={[styles.detailValue, { color: '#004d43', fontFamily: 'Montserrat_700Bold' }]}>
-                PKR {typeof booking.totalAmount === 'number' ? booking.totalAmount.toLocaleString() : '0'}
+                {String('PKR ' + (typeof booking.totalAmount === 'number' ? booking.totalAmount.toLocaleString() : '0'))}
               </Text>
             </View>
           </View>
 
           {!!booking.bookingReference && (
             <View style={styles.refRow}>
-              <Text style={styles.refLabel}>REF: {booking.bookingReference}</Text>
+              <Text style={styles.refLabel}>{String('REF: ' + booking.bookingReference)}</Text>
             </View>
           )}
         </View>

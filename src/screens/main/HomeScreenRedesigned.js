@@ -229,7 +229,7 @@ export default function HomeScreen({ navigation }) {
                   
                   {venue.discount && (
                     <View style={styles.discountBadge}>
-                      <Text style={styles.discountText}>{venue.discount}% Off</Text>
+                      <Text style={styles.discountText}>{String(venue.discount)}% Off</Text>
                     </View>
                   )}
 
@@ -237,7 +237,7 @@ export default function HomeScreen({ navigation }) {
                     <View style={styles.venueHeader}>
                       <View style={styles.ratingContainer}>
                         <MaterialIcons name="star" size={16} color="#FFD700" />
-                        <Text style={styles.ratingText}>{venue.rating || 4.5}</Text>
+                        <Text style={styles.ratingText}>{String(venue.rating || 4.5)}</Text>
                       </View>
                     </View>
                     
@@ -296,7 +296,7 @@ export default function HomeScreen({ navigation }) {
                 <View style={styles.nearbyVenueInfo}>
                   {venue.discount && (
                     <View style={styles.nearbyDiscountBadge}>
-                      <Text style={styles.nearbyDiscountText}>{venue.discount}% Off</Text>
+                      <Text style={styles.nearbyDiscountText}>{String(venue.discount)}% Off</Text>
                     </View>
                   )}
                   
@@ -323,7 +323,7 @@ export default function HomeScreen({ navigation }) {
 
                 <View style={styles.nearbyVenueRating}>
                   <MaterialIcons name="star" size={16} color="#FFD700" />
-                  <Text style={styles.nearbyRatingText}>{venue.rating || 4.5}</Text>
+                  <Text style={styles.nearbyRatingText}>{String(venue.rating || 4.5)}</Text>
                 </View>
 
                 <TouchableOpacity style={styles.nearbyFavoriteButton}>

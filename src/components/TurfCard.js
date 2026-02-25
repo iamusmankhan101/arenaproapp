@@ -226,7 +226,7 @@ export default function TurfCard({ turf, onPress, onFavoritePress, isFavorite })
             <View style={styles.sportsContainer}>
               {(Array.isArray(turf.sports) ? turf.sports : typeof turf.sports === 'string' && turf.sports.trim() ? turf.sports.split(', ') : []).slice(0, 3).map((sport, index) => (
                 <View key={sport} style={styles.sportTag}>
-                  <Text style={styles.sportTagText}>{sport.trim()}</Text>
+                  <Text style={styles.sportTagText}>{String(sport.trim())}</Text>
                 </View>
               ))}
             </View>

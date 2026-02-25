@@ -27,6 +27,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 else if (route.name === 'Map') iconName = 'map';
                 else if (route.name === 'Bookings') iconName = 'event';
                 else if (route.name === 'Lalkaar') iconName = 'sports-soccer';
+                else if (route.name === 'SquadBuilder') iconName = 'group-add';
                 else if (route.name === 'Profile') iconName = 'person';
 
                 const onPress = () => {
@@ -72,7 +73,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                             color={isFocused ? '#e8ee26' : '#004d43'}
                         />
                         {isFocused && (
-                            <Text style={styles.activeLabel} numberOfLines={1}>{label}</Text>
+                            <Text style={styles.activeLabel} numberOfLines={1}>{String(label)}</Text>
                         )}
                     </TouchableOpacity>
                 );
