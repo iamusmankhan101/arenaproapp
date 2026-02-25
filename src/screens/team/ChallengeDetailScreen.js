@@ -448,7 +448,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
                   <Text style={styles.teamName} numberOfLines={2}>
                     {challenge.acceptedUser?.name || challenge.opponentName || challenge.acceptedTeam?.name || challenge.opponentTeamName || 'Opponent'}
                   </Text>
-                  <Text style={styles.teamStat}>{challenge.acceptedTeam?.wins || 0} Wins</Text>
+                  <Text style={styles.teamStat}>{String((challenge.acceptedTeam?.wins || 0) + ' Wins')}</Text>
                 </>
               ) : (
                 <Text style={styles.waitingText}>Waiting for{'\n'}Opponent</Text>
@@ -469,7 +469,7 @@ export default function ChallengeDetailScreen({ route, navigation }) {
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Date & Time</Text>
-              <Text style={styles.infoValue}>{dateTime.date} • {dateTime.time}</Text>
+              <Text style={styles.infoValue}>{String(dateTime.date + ' • ' + dateTime.time)}</Text>
             </View>
           </View>
 
@@ -488,11 +488,11 @@ export default function ChallengeDetailScreen({ route, navigation }) {
               <MaterialIcons name={isTournament ? "emoji-events" : "payments"} size={20} color="#e8ee26" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>{isTournament ? "Winning Prize" : "Ground Fee"}</Text>
+              <Text style={styles.infoLabel}>{String(isTournament ? "Winning Prize" : "Ground Fee")}</Text>
               <Text style={styles.infoValue}>
-                PKR {Number(isTournament ? (challenge.winningPrize || 50000) : challenge.maxGroundFee).toLocaleString()}
+                {String('PKR ' + Number(isTournament ? (challenge.winningPrize || 50000) : challenge.maxGroundFee).toLocaleString())}
               </Text>
-              <Text style={styles.infoSub}>{isTournament ? 'Total Pool' : (challenge.isWinnerTakesAll ? 'Winner takes all' : 'Split equally')}</Text>
+              <Text style={styles.infoSub}>{String(isTournament ? 'Total Pool' : (challenge.isWinnerTakesAll ? 'Winner takes all' : 'Split equally'))}</Text>
             </View>
           </View>
         </View>

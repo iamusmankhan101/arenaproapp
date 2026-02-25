@@ -6,7 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import * as ImagePicker from 'expo-image-picker';
 import { updateProfile } from '../../store/slices/authSlice';
-import { uploadImageToCloudinary } from '../../services/cloudinaryService';
+import { uploadToCloudinary } from '../../services/cloudinaryService';
 import { ActivityIndicator } from 'react-native-paper';
 
 // Brand colors
@@ -124,7 +124,7 @@ export default function ManageProfileScreen({ navigation }) {
       if (finalPhotoURL && finalPhotoURL.startsWith('file://')) {
         console.log('🔄 Uploading new profile picture to Cloudinary...');
         try {
-          finalPhotoURL = await uploadImageToCloudinary(finalPhotoURL);
+          finalPhotoURL = await uploadToCloudinary(finalPhotoURL);
         } catch (uploadError) {
           console.error('Failed to upload image:', uploadError);
           Alert.alert('Upload Failed', 'Failed to upload image. Please try again.');

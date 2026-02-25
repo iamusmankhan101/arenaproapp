@@ -151,7 +151,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
               <Text numberOfLines={1} style={styles.teamName}>{String(challenge.teamName || 'Team')}</Text>
               <View style={styles.statBadge}>
                 <MaterialIcons name="emoji-events" size={12} color="#fbc02d" />
-                <Text style={styles.statText}>{challenge.teamWins || 0} Wins</Text>
+                <Text style={styles.statText}>{String((challenge.teamWins || 0) + ' Wins')}</Text>
               </View>
             </View>
 
@@ -186,7 +186,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                       ))}
                     </View>
                     <Text style={styles.teamName}>{String(challenge.participants.length)} Joined</Text>
-                    <Text style={styles.waitingTeamName}>{challenge.maxParticipants ? `${String(challenge.maxParticipants)} Spots` : 'Open'}</Text>
+                    <Text style={styles.waitingTeamName}>{String(challenge.maxParticipants ? challenge.maxParticipants + ' Spots' : 'Open')}</Text>
                   </>
                 ) : (
                   <>
@@ -244,7 +244,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                   <Text numberOfLines={1} style={styles.teamName}>{String(challenge.acceptedUser?.name || challenge.acceptedTeam?.name || challenge.acceptedTeamName || challenge.opponentName || challenge.opponentTeamName || 'Opponent')}</Text>
                   <View style={styles.statBadge}>
                     <MaterialIcons name="emoji-events" size={12} color="#fbc02d" />
-                    <Text style={styles.statText}>{challenge.acceptedTeam?.wins || challenge.acceptedTeamWins || 0} Wins</Text>
+                    <Text style={styles.statText}>{String((challenge.acceptedTeam?.wins || challenge.acceptedTeamWins || 0) + ' Wins')}</Text>
                   </View>
                 </>
               ) : (
@@ -345,7 +345,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
             {challenge.type === 'tournament' && !!challenge.maxParticipants && (
               <View style={[styles.detailRow, { marginTop: 4 }]}>
                 <MaterialIcons name="groups" size={16} color="#004d43" style={styles.detailIcon} />
-                <Text style={styles.detailText}>{challenge.maxParticipants} Teams Participating</Text>
+                <Text style={styles.detailText}>{String(challenge.maxParticipants + ' Teams Participating')}</Text>
               </View>
             )}
           </View>
