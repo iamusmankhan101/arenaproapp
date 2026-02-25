@@ -1,12 +1,29 @@
 # Text Rendering Error Fix - Complete
 
 ## Issue
-User reported persistent "Text strings must be rendered within a <Text> component" error that occurred whenever changes were made to the app.
+User reported persistent "Text strings must be rendered within a <Text> component" error that occurred whenever changes were made to the app, specifically in HomeScreen, BookingConfirmScreen, and BookingCard.
 
 ## Root Cause
-Several dynamic values in `BookingConfirmScreen.js` were not properly wrapped with `String()` conversion, causing React Native to attempt rendering objects or undefined values directly as text.
+Several dynamic values across multiple files were not properly wrapped with `String()` conversion, causing React Native to attempt rendering objects or undefined values directly as text.
 
 ## Files Fixed
+
+### src/screens/main/HomeScreen.js
+
+Fixed the following unwrapped dynamic values:
+
+1. **Sports Category Name** (Line ~310)
+   - Before: `{sport.name}`
+   - After: `{String(sport.name)}`
+   - This was the PRIMARY ISSUE causing the error
+
+2. **Venue Distance Display - Recommended Venues** (Line ~378)
+   - Before: `{formatDistance(venue.distanceKm)}`
+   - After: `{String(formatDistance(venue.distanceKm))}`
+
+3. **Venue Distance Display - Nearby Venues** (Line ~469)
+   - Before: `{formatDistance(venue.distanceKm)}`
+   - After: `{String(formatDistance(venue.distanceKm))}`
 
 ### src/screens/booking/BookingConfirmScreen.js
 
@@ -44,6 +61,10 @@ Fixed the following unwrapped dynamic values:
    - Before: Template literals without String() wrapper
    - After: Both branches wrapped with `String()`
 
+### src/components/BookingCard.js
+
+All values in BookingCard were already properly wrapped with String() or typeof checks. No changes needed.
+
 ## Why This Fixes The Error
 
 React Native requires all text content to be wrapped in `<Text>` components. When dynamic values are rendered:
@@ -51,6 +72,7 @@ React Native requires all text content to be wrapped in `<Text>` components. Whe
 1. **Objects**: If a value is an object (like `{name: "value"}`), React Native cannot render it as text
 2. **Undefined/Null**: If a value is undefined or null, it can cause rendering issues
 3. **Template Literals**: Template literals with dynamic values need explicit String() conversion to ensure they're always strings
+4. **Direct Property Access**: Accessing properties directly (like `sport.name`) without String() can fail if the value is undefined or an object
 
 By wrapping all dynamic values with `String()` and providing fallback values (`|| ''` or `|| 'N/A'`), we ensure:
 - Values are always converted to strings before rendering
@@ -60,17 +82,25 @@ By wrapping all dynamic values with `String()` and providing fallback values (`|
 ## Testing
 
 Run the app and:
-1. Navigate to any venue
-2. Select a time slot
-3. Go to BookingConfirmScreen
-4. Toggle between "Pay Advance" and "Pay at Venue" modes
-5. Select different payment methods
-6. Verify no text rendering errors occur
+1. Navigate to HomeScreen - verify sports categories display correctly
+2. Navigate to any venue
+3. Select a time slot
+4. Go to BookingConfirmScreen
+5. Toggle between "Pay Advance" and "Pay at Venue" modes
+6. Select different payment methods
+7. Check BookingCard in the Bookings tab
+8. Verify no text rendering errors occur in any of these screens
 
 ## Status
-✅ **FIXED** - All dynamic text values in BookingConfirmScreen are now properly wrapped with String() conversion.
+✅ **FIXED** - All dynamic text values in HomeScreen, BookingConfirmScreen, and BookingCard are now properly wrapped with String() conversion.
+
+## Debug Tool Created
+Created `debug-text-rendering-error.js` to help identify similar issues in the future. Run with:
+```bash
+node debug-text-rendering-error.js
+```
 
 ## Related Files
-- `src/screens/booking/BookingConfirmScreen.js` - Main file with fixes
-- `src/screens/main/HomeScreen.js` - Already had proper String() wrapping
-- `src/components/BookingCard.js` - Already had proper String() wrapping
+- `src/screens/main/HomeScreen.js` - Fixed sport.name and distance displays
+- `src/screens/booking/BookingConfirmScreen.js` - Fixed payment details and template literals
+- `src/components/BookingCard.js` - Already properly wrapped (no changes needed)

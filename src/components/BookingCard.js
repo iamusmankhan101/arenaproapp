@@ -105,7 +105,7 @@ export default function BookingCard({ booking, navigation }) {
           <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
             <Text style={[styles.statusText, { color: statusColor }]}>
-              {typeof booking.status === 'string' ? booking.status.toUpperCase() : 'PENDING'}
+              {String(typeof booking.status === 'string' ? booking.status.toUpperCase() : 'PENDING')}
             </Text>
           </View>
           {isToday && booking.status !== 'cancelled' && (
@@ -122,12 +122,12 @@ export default function BookingCard({ booking, navigation }) {
         <View style={styles.venueSection}>
           <View style={styles.venueInfo}>
             <Text style={styles.venueName} numberOfLines={1}>
-              {typeof booking.turfName === 'string' ? booking.turfName : 'Unknown Venue'}
+              {String(typeof booking.turfName === 'string' ? booking.turfName : 'Unknown Venue')}
             </Text>
             <View style={styles.locationContainer}>
               <MaterialIcons name="location-on" size={12} color="#666" />
               <Text style={styles.locationText} numberOfLines={1}>
-                {typeof booking.turfArea === 'string' ? booking.turfArea : 'Unknown Area'}
+                {String(typeof booking.turfArea === 'string' ? booking.turfArea : 'Unknown Area')}
               </Text>
             </View>
           </View>

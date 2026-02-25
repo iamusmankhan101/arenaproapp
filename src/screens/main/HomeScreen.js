@@ -307,7 +307,7 @@ export default function HomeScreen({ navigation }) {
                   styles.categoryName,
                   selectedSport === sport.name && styles.categoryNameActive
                 ]}>
-                  {sport.name}
+                  {String(sport.name)}
                 </Text>
               </TouchableOpacity>
             ))}
