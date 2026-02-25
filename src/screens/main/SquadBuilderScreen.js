@@ -199,7 +199,7 @@ export default function SquadBuilderScreen({ navigation }) {
                                         <Text style={styles.venueName}>{String(game.turfName || 'Venue')}</Text>
                                         <View style={styles.playersBadge}>
                                             <MaterialIcons name="people" size={14} color={theme.colors.secondary} />
-                                            <Text style={styles.playersBadgeText}>{`${(game.playersJoined?.length || 0) + 1}/${(game.playersNeeded || 0) + 1} Players`}</Text>
+                                            <Text style={styles.playersBadgeText}>{String(((game.playersJoined?.length || 0) + 1) + '/' + ((game.playersNeeded || 0) + 1) + ' Players')}</Text>
                                         </View>
                                     </View>
                                     <View style={styles.infoRow}>
@@ -335,7 +335,7 @@ export default function SquadBuilderScreen({ navigation }) {
                                         <View style={styles.detailContent}>
                                             <Text style={styles.detailLabel}>Players</Text>
                                             <Text style={styles.detailValue}>
-                                                {`${(selectedGame.playersJoined?.length || 0) + 1}/${(selectedGame.playersNeeded || 0) + 1} joined`}
+                                                {String(((selectedGame.playersJoined?.length || 0) + 1) + '/' + ((selectedGame.playersNeeded || 0) + 1) + ' joined')}
                                             </Text>
                                         </View>
                                     </View>

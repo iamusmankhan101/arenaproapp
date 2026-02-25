@@ -149,15 +149,21 @@ export default function AppNavigator() {
     }
   }, [initializing]);
 
-  if (initializing || (isAuthenticated && hasLocationPermission === null)) {
-    return null; // Wait for both auth and initial location permission check
+  // Show splash screen while initializing or checking permissions
+  if (initializing) {
+    return null; // Keep splash screen visible
   }
+
+  // For authenticated users, don't wait for location permission check
+  // Let the app load and check permissions in background
+  // The LocationPermissionScreen will handle the permission flow if needed
 
   // Debug what screen should be shown
   console.log('🔍 NAVIGATOR DEBUG: Auth state:', {
     isAuthenticated,
     initializing,
-    hasUser: !!user
+    hasUser: !!user,
+    hasLocationPermission
   });
 
   if (isAuthenticated) {
@@ -168,6 +174,7 @@ export default function AppNavigator() {
 
   return (
     <Stack.Navigator
+      initialRouteName={isAuthenticated ? (hasLocationPermission ? 'MainTabs' : 'LocationPermission') : 'Welcome'}
       screenOptions={{
         headerShown: false,
         cardStyle: { backgroundColor: 'white' },
@@ -264,6 +271,7 @@ export default function AppNavigator() {
             options={{
               gestureEnabled: false,
             }}
+            initialParams={{ skipLocationCheck: hasLocationPermission === true }}
           />
           <Stack.Screen
             name="VenueList"

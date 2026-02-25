@@ -1185,9 +1185,9 @@ export default function MapScreen({ navigation }) {
                 {/* Content Section */}
                 <View style={styles.newCardContent}>
                   <View style={styles.newTitleRow}>
-                    <Text style={styles.newVenueName} numberOfLines={1}>{venue.name}</Text>
+                    <Text style={styles.newVenueName} numberOfLines={1}>{String(venue.name)}</Text>
                     <Text style={styles.newPrice}>
-                      PKR {venue.pricePerHour || venue.basePrice || 'N/A'}<Text style={styles.perHour}>/hr</Text>
+                      {String('PKR ' + (venue.pricePerHour || venue.basePrice || 'N/A'))}<Text style={styles.perHour}>/hr</Text>
                     </Text>
                   </View>
 
@@ -1208,13 +1208,13 @@ export default function MapScreen({ navigation }) {
                         color={star <= (venue.rating || 5) ? "#FFD700" : "#E0E0E0"}
                       />
                     ))}
-                    <Text style={styles.reviewsLabel}>({venue.reviewCount || 0} Reviews)</Text>
+                    <Text style={styles.reviewsLabel}>{String('(' + (venue.reviewCount || 0) + ' Reviews)')}</Text>
                   </View>
 
                   <View style={styles.newFooterRow}>
                     <View style={styles.newTag}>
                       <MaterialIcons name="directions-run" size={14} color="#7D7D7D" />
-                      <Text style={styles.newTagText}>{venue.distance || '3.5 km'}/50min</Text>
+                      <Text style={styles.newTagText}>{String((venue.distance || '3.5 km') + '/50min')}</Text>
                     </View>
                   </View>
                 </View>

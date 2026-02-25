@@ -281,7 +281,7 @@ export default function VenueListScreen({ navigation, route }) {
       {/* Results Count */}
       <View style={styles.resultsSection}>
         <Text style={styles.resultsText}>
-          {loading ? 'Loading venues...' : `${filteredVenues.length} venues found`}
+          {String(loading ? 'Loading venues...' : filteredVenues.length + ' venues found')}
         </Text>
       </View>
 
