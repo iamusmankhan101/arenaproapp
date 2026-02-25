@@ -63,7 +63,7 @@ export default function HomeScreen({ navigation }) {
   const [userCoords, setUserCoords] = useState({ latitude: 31.5204, longitude: 74.3587 });
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [referralModalVisible, setReferralModalVisible] = useState(false);
-  
+
   const { nearbyTurfs, loading } = useSelector(state => state.turf);
   const { user } = useSelector(state => state.auth);
   const { userBookings } = useSelector(state => state.booking);
@@ -97,7 +97,7 @@ export default function HomeScreen({ navigation }) {
         longitude: userCoords.longitude,
         radius: 50000 // 50km to get all venues, then filter by distance
       }));
-      
+
       // Fetch user bookings to check eligibility for referral
       if (user) {
         const { fetchUserBookings } = require('../../store/slices/bookingSlice');
@@ -137,8 +137,8 @@ export default function HomeScreen({ navigation }) {
     // Filter by sport if selected
     if (selectedSport) {
       filtered = filtered.filter(venue => {
-        const venueSports = Array.isArray(venue.sports) 
-          ? venue.sports 
+        const venueSports = Array.isArray(venue.sports)
+          ? venue.sports
           : typeof venue.sports === 'string' && venue.sports.trim()
             ? venue.sports.split(',').map(s => s.trim())
             : [];
@@ -173,7 +173,7 @@ export default function HomeScreen({ navigation }) {
 
   const filteredVenues = getFilteredVenues();
   const recommendedVenues = filteredVenues.slice(0, 5);
-  
+
   // Filter nearby venues to only show those within 10km
   const nearbyVenues = filteredVenues
     .filter(venue => venue.distanceKm !== null && venue.distanceKm <= 10)
@@ -205,8 +205,8 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      
-      <ScrollView 
+
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -218,32 +218,32 @@ export default function HomeScreen({ navigation }) {
               Hi, {String(user?.name || user?.displayName || 'Guest')}
             </Text>
             <Text style={styles.welcomeBackText}>Welcome back to Arena Pro</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.locationButton}
               onPress={() => navigation.navigate('ManualLocation')}
             >
-              <MaterialIcons 
-                name="location-on" 
-                size={16} 
-                color={theme.colors.primary} 
+              <MaterialIcons
+                name="location-on"
+                size={16}
+                color={theme.colors.primary}
               />
               <Text style={styles.locationText}>{String(userLocation)}</Text>
-              <MaterialIcons 
-                name="keyboard-arrow-down" 
-                size={16} 
-                color={theme.colors.text} 
+              <MaterialIcons
+                name="keyboard-arrow-down"
+                size={16}
+                color={theme.colors.text}
               />
             </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.notificationButton}
             onPress={() => navigation.navigate('Notification')}
           >
-            <MaterialIcons 
-              name="notifications-none" 
-              size={28} 
-              color={theme.colors.text} 
+            <MaterialIcons
+              name="notifications-none"
+              size={28}
+              color={theme.colors.text}
             />
             <View style={styles.notificationBadge} />
           </TouchableOpacity>
@@ -262,14 +262,14 @@ export default function HomeScreen({ navigation }) {
             icon="magnify"
             iconColor={theme.colors.textSecondary}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setFilterModalVisible(true)}
           >
-            <MaterialIcons 
-              name="tune" 
-              size={24} 
-              color={theme.colors.secondary} 
+            <MaterialIcons
+              name="tune"
+              size={24}
+              color={theme.colors.secondary}
             />
           </TouchableOpacity>
         </View>
@@ -279,8 +279,8 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Sports Categories</Text>
           </View>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesScroll}
           >
@@ -297,10 +297,10 @@ export default function HomeScreen({ navigation }) {
                   styles.categoryIconContainer,
                   selectedSport === sport.name && styles.categoryIconContainerActive
                 ]}>
-                  <MaterialIcons 
-                    name={sport.icon} 
-                    size={32} 
-                    color={selectedSport === sport.name ? theme.colors.primary : theme.colors.secondary} 
+                  <MaterialIcons
+                    name={sport.icon}
+                    size={32}
+                    color={selectedSport === sport.name ? theme.colors.primary : theme.colors.secondary}
                   />
                 </View>
                 <Text style={[
@@ -328,26 +328,26 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.loadingText}>Loading venues...</Text>
             </View>
           ) : recommendedVenues.length > 0 ? (
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.venuesScroll}
             >
               {recommendedVenues.map((venue) => {
                 const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
-                
+
                 return (
                   <TouchableOpacity
                     key={venue.id}
                     style={styles.venueCard}
                     onPress={() => handleVenuePress(venue)}
                   >
-                    <Image 
+                    <Image
                       source={imageSource}
                       style={styles.venueImage}
                       resizeMode="cover"
                     />
-                    
+
                     {/* Glass overlay for info */}
                     <View style={styles.venueInfoGlass}>
                       {/* Blur simulation layer */}
@@ -359,35 +359,35 @@ export default function HomeScreen({ navigation }) {
                             <Text style={styles.ratingText}>{String(venue.rating || 4.5)}</Text>
                           </View>
                         </View>
-                        
+
                         <Text style={styles.venueName} numberOfLines={1}>
                           {String(venue.name || 'Venue')}
                         </Text>
-                        
+
                         <View style={styles.venueLocation}>
-                          <MaterialIcons 
-                            name="location-on" 
-                            size={14} 
-                            color={theme.colors.textSecondary} 
+                          <MaterialIcons
+                            name="location-on"
+                            size={14}
+                            color={theme.colors.textSecondary}
                           />
                           <Text style={styles.venueLocationText} numberOfLines={1}>
                             {String(venue.city || 'Lahore')}, Pakistan
                           </Text>
-                          {venue.distanceKm !== null && venue.distanceKm !== undefined && (
+                          {venue.distanceKm != null && (
                             <Text style={styles.venueDistance}>
                               • {String(formatDistance(venue.distanceKm))}
                             </Text>
                           )}
                         </View>
-                        
+
                         <View style={styles.venuePriceContainer}>
-                          {(venue.discount || venue.discountPercentage) && (
+                          {!!(venue.discount || venue.discountPercentage) && (
                             <Text style={styles.venueOriginalPrice}>
                               PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
                             </Text>
                           )}
                           <Text style={styles.venuePrice}>
-                            PKR {String((venue.discount || venue.discountPercentage) 
+                            PKR {String((venue.discount || venue.discountPercentage)
                               ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
                               : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
                             <Text style={styles.priceUnit}> /hour</Text>
@@ -399,13 +399,13 @@ export default function HomeScreen({ navigation }) {
                     <TouchableOpacity style={styles.favoriteButton}>
                       <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
                     </TouchableOpacity>
-                    
-                    {(venue.discount || venue.discountPercentage) && (
+
+                    {!!(venue.discount || venue.discountPercentage) && (
                       <View style={styles.discountBadge}>
                         <Text style={styles.discountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
                       </View>
                     )}
-                </TouchableOpacity>
+                  </TouchableOpacity>
                 );
               })}
             </ScrollView>
@@ -431,70 +431,70 @@ export default function HomeScreen({ navigation }) {
           {nearbyVenues.length > 0 ? (
             nearbyVenues.map((venue) => {
               const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
-              
+
               return (
                 <TouchableOpacity
                   key={venue.id}
                   style={styles.nearbyVenueCard}
                   onPress={() => handleVenuePress(venue)}
                 >
-                  <Image 
+                  <Image
                     source={imageSource}
                     style={styles.nearbyVenueImage}
                     resizeMode="cover"
                   />
-                  
+
                   <View style={styles.nearbyVenueInfo}>
-                  {(venue.discount || venue.discountPercentage) && (
-                    <View style={styles.nearbyDiscountBadge}>
-                      <Text style={styles.nearbyDiscountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
+                    {!!(venue.discount || venue.discountPercentage) && (
+                      <View style={styles.nearbyDiscountBadge}>
+                        <Text style={styles.nearbyDiscountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
+                      </View>
+                    )}
+
+                    <Text style={styles.nearbyVenueName} numberOfLines={1}>
+                      {String(venue.name || 'Venue')}
+                    </Text>
+
+                    <View style={styles.nearbyVenueLocation}>
+                      <MaterialIcons
+                        name="location-on"
+                        size={14}
+                        color={theme.colors.textSecondary}
+                      />
+                      <Text style={styles.nearbyVenueLocationText} numberOfLines={1}>
+                        {String(venue.city || 'Lahore')}, Pakistan
+                      </Text>
+                      {venue.distanceKm != null && (
+                        <Text style={styles.nearbyVenueDistance}>
+                          • {String(formatDistance(venue.distanceKm))}
+                        </Text>
+                      )}
                     </View>
-                  )}
-                  
-                  <Text style={styles.nearbyVenueName} numberOfLines={1}>
-                    {String(venue.name || 'Venue')}
-                  </Text>
-                  
-                  <View style={styles.nearbyVenueLocation}>
-                    <MaterialIcons 
-                      name="location-on" 
-                      size={14} 
-                      color={theme.colors.textSecondary} 
-                    />
-                    <Text style={styles.nearbyVenueLocationText} numberOfLines={1}>
-                      {String(venue.city || 'Lahore')}, Pakistan
-                    </Text>
-                    {venue.distanceKm !== null && venue.distanceKm !== undefined && (
-                      <Text style={styles.nearbyVenueDistance}>
-                        • {String(formatDistance(venue.distanceKm))}
-                      </Text>
-                    )}
-                  </View>
-                  
-                  <View style={styles.nearbyVenuePriceContainer}>
-                    {(venue.discount || venue.discountPercentage) && (
-                      <Text style={styles.nearbyVenueOriginalPrice}>
-                        PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
-                      </Text>
-                    )}
-                    <Text style={styles.nearbyVenuePrice}>
-                      PKR {String((venue.discount || venue.discountPercentage) 
-                        ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
-                        : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
-                      <Text style={styles.priceUnit}> /hour</Text>
-                    </Text>
-                  </View>
-                </View>
 
-                <View style={styles.nearbyVenueRating}>
-                  <MaterialIcons name="star" size={16} color="#FFD700" />
-                  <Text style={styles.nearbyRatingText}>{String(venue.rating || 4.5)}</Text>
-                </View>
+                    <View style={styles.nearbyVenuePriceContainer}>
+                      {!!(venue.discount || venue.discountPercentage) && (
+                        <Text style={styles.nearbyVenueOriginalPrice}>
+                          PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
+                        </Text>
+                      )}
+                      <Text style={styles.nearbyVenuePrice}>
+                        PKR {String((venue.discount || venue.discountPercentage)
+                          ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
+                          : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
+                        <Text style={styles.priceUnit}> /hour</Text>
+                      </Text>
+                    </View>
+                  </View>
 
-                <TouchableOpacity style={styles.nearbyFavoriteButton}>
-                  <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
+                  <View style={styles.nearbyVenueRating}>
+                    <MaterialIcons name="star" size={16} color="#FFD700" />
+                    <Text style={styles.nearbyRatingText}>{String(venue.rating || 4.5)}</Text>
+                  </View>
+
+                  <TouchableOpacity style={styles.nearbyFavoriteButton}>
+                    <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
+                  </TouchableOpacity>
                 </TouchableOpacity>
-              </TouchableOpacity>
               );
             })
           ) : (
