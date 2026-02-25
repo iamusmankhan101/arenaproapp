@@ -353,11 +353,16 @@ Please confirm my booking.`;
     // Refresh user profile to update booking count and unlock referral code
     dispatch(fetchUserProfile());
 
-    // Navigate directly to home (skip congratulations screen)
+    // Navigate to Bookings tab
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'MainTabs' }],
+        routes: [{
+          name: 'MainTabs',
+          state: {
+            routes: [{ name: 'Bookings' }],
+          },
+        }],
       })
     );
 

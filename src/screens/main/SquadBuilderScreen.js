@@ -163,7 +163,7 @@ export default function SquadBuilderScreen({ navigation }) {
                             mode="contained"
                             style={styles.bookButton}
                             labelStyle={styles.bookButtonLabel}
-                            onPress={() => navigation.navigate('Home')}
+                            onPress={() => navigation.navigate('VenueList')}
                         >
                             Start Your Own Game
                         </Button>
@@ -285,8 +285,8 @@ export default function SquadBuilderScreen({ navigation }) {
                                 </View>
                                 <Text style={styles.modalTitle}>Join Game</Text>
                             </View>
-                            <TouchableOpacity 
-                                onPress={() => setShowJoinModal(false)} 
+                            <TouchableOpacity
+                                onPress={() => setShowJoinModal(false)}
                                 disabled={joining}
                                 style={styles.closeButton}
                             >
@@ -302,7 +302,7 @@ export default function SquadBuilderScreen({ navigation }) {
                                         <MaterialIcons name="sports-soccer" size={20} color={theme.colors.primary} />
                                         <Text style={styles.detailsHeaderText}>Game Details</Text>
                                     </View>
-                                    
+
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
                                             <MaterialIcons name="location-on" size={18} color={theme.colors.primary} />
@@ -320,9 +320,9 @@ export default function SquadBuilderScreen({ navigation }) {
                                         <View style={styles.detailContent}>
                                             <Text style={styles.detailLabel}>Date</Text>
                                             <Text style={styles.detailValue}>
-                                                {new Date(selectedGame.dateTime).toLocaleDateString('en-US', { 
+                                                {new Date(selectedGame.dateTime).toLocaleDateString('en-US', {
                                                     weekday: 'long',
-                                                    month: 'long', 
+                                                    month: 'long',
                                                     day: 'numeric',
                                                     year: 'numeric'
                                                 })}
@@ -442,10 +442,10 @@ export default function SquadBuilderScreen({ navigation }) {
                                                         styles.paymentMethodIcon,
                                                         paymentMethod === 'venue' && styles.paymentMethodIconSelected
                                                     ]}>
-                                                        <MaterialIcons 
-                                                            name="store" 
-                                                            size={20} 
-                                                            color={paymentMethod === 'venue' ? theme.colors.secondary : theme.colors.primary} 
+                                                        <MaterialIcons
+                                                            name="store"
+                                                            size={20}
+                                                            color={paymentMethod === 'venue' ? theme.colors.secondary : theme.colors.primary}
                                                         />
                                                     </View>
                                                     <View>
