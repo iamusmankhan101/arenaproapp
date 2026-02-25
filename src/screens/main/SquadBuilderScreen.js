@@ -17,6 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
 import { matchmakingService } from '../../services/matchmakingService';
+import { SquadCardSkeleton } from '../../components/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -150,9 +151,10 @@ export default function SquadBuilderScreen({ navigation }) {
                 }
             >
                 {loading && !refreshing ? (
-                    <View style={styles.centered}>
-                        <ActivityIndicator color={theme.colors.primary} size="large" />
-                        <Text style={styles.loadingText}>Looking for open games...</Text>
+                    <View style={{ paddingHorizontal: 0 }}>
+                        {[1, 2, 3].map(i => (
+                            <SquadCardSkeleton key={i} />
+                        ))}
                     </View>
                 ) : filteredGames.length === 0 ? (
                     <View style={styles.emptyState}>

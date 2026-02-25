@@ -15,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { theme } from '../../theme/theme';
+import { NotificationSkeleton } from '../../components/SkeletonLoader';
 
 export default function NotificationScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -353,10 +354,7 @@ export default function NotificationScreen({ navigation }) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Notification</Text>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading notifications...</Text>
-        </View>
+        <NotificationSkeleton />
       </View>
     );
   }

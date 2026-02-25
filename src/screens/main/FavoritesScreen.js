@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchFavorites, toggleFavorite } from '../../store/slices/turfSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
+import { TurfCardSkeleton } from '../../components/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -44,7 +45,7 @@ export default function FavoritesScreen({ navigation }) {
 
   const handleRemoveFavorite = async () => {
     if (!venueToRemove) return;
-    
+
     try {
       await dispatch(toggleFavorite(venueToRemove)).unwrap();
       setRemoveModalVisible(false);
@@ -104,7 +105,7 @@ export default function FavoritesScreen({ navigation }) {
           style={styles.venueImage}
           resizeMode="cover"
         />
-        
+
         {/* Favorite Button */}
         <TouchableOpacity
           style={styles.favoriteButton}
@@ -163,7 +164,7 @@ export default function FavoritesScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        
+
         {/* Header */}
         <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top + 10 : 16 }]}>
           <TouchableOpacity
@@ -215,8 +216,10 @@ export default function FavoritesScreen({ navigation }) {
 
       {/* Venues List */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+        <View style={styles.listContainer}>
+          {[1, 2, 3].map(i => (
+            <TurfCardSkeleton key={i} />
+          ))}
         </View>
       ) : (
         <FlatList
@@ -241,7 +244,7 @@ export default function FavoritesScreen({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Remove from Favorites?</Text>
-            
+
             {venueToRemove && (
               <View style={styles.modalVenueCard}>
                 <Image
@@ -253,14 +256,14 @@ export default function FavoritesScreen({ navigation }) {
                   style={styles.modalVenueImage}
                   resizeMode="cover"
                 />
-                
+
                 <View style={styles.modalVenueInfo}>
                   {venueToRemove.discount ? (
                     <View style={styles.modalDiscountBadge}>
                       <Text style={styles.modalDiscountText}>{String(venueToRemove.discount)}% Off</Text>
                     </View>
                   ) : null}
-                  
+
                   <View style={styles.modalVenueHeader}>
                     <Text style={styles.modalVenueName} numberOfLines={1}>
                       {venueToRemove.name}
