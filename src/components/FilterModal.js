@@ -158,7 +158,7 @@ export default function FilterModal({ visible, onDismiss }) {
                         color={s <= Math.floor(rating) ? "#FFD700" : "#E0E0E0"}
                       />
                     ))}
-                    <Text style={styles.ratingLabel}>{rating} & up</Text>
+                    <Text style={styles.ratingLabel}>{String(rating) + ' & up'}</Text>
                   </View>
                   <View style={[
                     styles.radio,

@@ -238,7 +238,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
         // Matchmaking fields
         needPlayers: needPlayers,
         playersNeeded: parseInt(playersNeeded) || 0,
-        slotPricePerPlayer: needPlayers ? Math.ceil(pricing.total / (parseInt(playersNeeded) + 1)) : 0
+        slotPricePerPlayer: needPlayers ? Math.ceil(pricing.total / (parseInt(numberOfPlayers) + parseInt(playersNeeded))) : 0
       };
 
       const result = await dispatch(createBooking(bookingData)).unwrap();
@@ -462,10 +462,10 @@ Please confirm my booking.`;
                 <MaterialIcons name="sports-soccer" size={28} color={theme.colors.secondary} />
               </View>
               <View style={styles.venueInfo}>
-                <Text style={styles.venueName}>{turf.name}</Text>
+                <Text style={styles.venueName}>{String(turf.name)}</Text>
                 <View style={styles.addressRow}>
                   <MaterialIcons name="location-on" size={14} color="#999" />
-                  <Text style={styles.venueAddress}>{turf.address}</Text>
+                  <Text style={styles.venueAddress}>{String(turf.address)}</Text>
                 </View>
               </View>
             </View>
@@ -476,7 +476,7 @@ Please confirm my booking.`;
                   <MaterialIcons name="event" size={20} color="#4CAF50" />
                 </View>
                 <Text style={styles.detailLabel}>Date</Text>
-                <Text style={styles.detailValue}>{formattedDate}</Text>
+                <Text style={styles.detailValue}>{String(formattedDate)}</Text>
               </View>
 
               <View style={styles.detailBox}>
@@ -484,7 +484,7 @@ Please confirm my booking.`;
                   <MaterialIcons name="schedule" size={20} color="#2196F3" />
                 </View>
                 <Text style={styles.detailLabel}>Time</Text>
-                <Text style={styles.detailValue}>{time}</Text>
+                <Text style={styles.detailValue}>{String(time)}</Text>
               </View>
 
               <View style={styles.detailBox}>
@@ -499,7 +499,7 @@ Please confirm my booking.`;
             <View style={styles.totalPriceRow}>
               <Text style={styles.totalPriceLabel}>Total Amount</Text>
               <Text style={[styles.totalPriceValue, { color: theme.colors.primary }]}>
-                PKR {pricing.total.toLocaleString()}
+                {String('PKR ' + pricing.total.toLocaleString())}
               </Text>
             </View>
           </View>
@@ -587,15 +587,15 @@ Please confirm my booking.`;
               <View style={styles.priceRow}>
                 <Text style={styles.priceLabel}>Slot Price</Text>
                 <Text style={[styles.priceValue, { textDecorationLine: paymentMode === 'advance' ? 'line-through' : 'none', color: paymentMode === 'advance' ? '#999' : '#333' }]}>
-                  PKR {pricing.basePrice.toLocaleString()}
+                  {String('PKR ' + pricing.basePrice.toLocaleString())}
                 </Text>
               </View>
 
               <View style={styles.priceRow}>
                 <Text style={[styles.priceLabel, { color: '#4CAF50' }]}>
-                  Discount ({paymentMode === 'advance' ? '10%' : '5%'})
+                  {String('Discount (' + (paymentMode === 'advance' ? '10%' : '5%') + ')')}
                 </Text>
-                <Text style={[styles.priceValue, { color: '#4CAF50' }]}>- PKR {pricing.discount.toLocaleString()}</Text>
+                <Text style={[styles.priceValue, { color: '#4CAF50' }]}>{String('- PKR ' + pricing.discount.toLocaleString())}</Text>
               </View>
 
               {pricing.referralDiscount > 0 && (
@@ -604,7 +604,7 @@ Please confirm my booking.`;
                     Referral Reward
                   </Text>
                   <Text style={[styles.priceValue, { color: '#2E7D32' }]}>
-                    - PKR {pricing.referralDiscount}
+                    {String('- PKR ' + pricing.referralDiscount)}
                   </Text>
                 </View>
               )}
@@ -613,7 +613,7 @@ Please confirm my booking.`;
 
               <View style={styles.priceRow}>
                 <Text style={[styles.priceLabel, { fontWeight: '700', fontSize: 16, color: '#333', fontFamily: 'Montserrat_700Bold' }]}>Total Amount</Text>
-                <Text style={[styles.priceValue, { fontWeight: '700', fontSize: 18, color: theme.colors.primary, fontFamily: 'Montserrat_700Bold' }]}>PKR {pricing.total.toLocaleString()}</Text>
+                <Text style={[styles.priceValue, { fontWeight: '700', fontSize: 18, color: theme.colors.primary, fontFamily: 'Montserrat_700Bold' }]}>{String('PKR ' + pricing.total.toLocaleString())}</Text>
               </View>
 
               {paymentMode === 'advance' ? (
@@ -621,12 +621,12 @@ Please confirm my booking.`;
                   <View style={styles.priceDivider} />
                   <View style={[styles.priceRow, { backgroundColor: `${theme.colors.primary}08`, padding: 12, borderRadius: 8, marginTop: 8 }]}>
                     <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600', fontFamily: 'Montserrat_600SemiBold' }]}>Advance Payment</Text>
-                    <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700', fontSize: 16, fontFamily: 'Montserrat_700Bold' }]}>PKR {pricing.advance.toLocaleString()}</Text>
+                    <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700', fontSize: 16, fontFamily: 'Montserrat_700Bold' }]}>{String('PKR ' + pricing.advance.toLocaleString())}</Text>
                   </View>
 
                   <View style={styles.priceRow}>
                     <Text style={styles.priceLabel}>Balance Payable at Venue</Text>
-                    <Text style={styles.priceValue}>PKR {pricing.remaining.toLocaleString()}</Text>
+                    <Text style={styles.priceValue}>{String('PKR ' + pricing.remaining.toLocaleString())}</Text>
                   </View>
                 </>
               ) : (
@@ -634,7 +634,7 @@ Please confirm my booking.`;
                   <View style={styles.priceDivider} />
                   <View style={[styles.priceRow, { backgroundColor: `${theme.colors.primary}08`, padding: 12, borderRadius: 8, marginTop: 8 }]}>
                     <Text style={[styles.priceLabel, { color: theme.colors.primary, fontWeight: '600', fontFamily: 'Montserrat_600SemiBold' }]}>Payable at Venue</Text>
-                    <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700', fontSize: 16, fontFamily: 'Montserrat_700Bold' }]}>PKR {pricing.total.toLocaleString()}</Text>
+                    <Text style={[styles.priceValue, { color: theme.colors.primary, fontWeight: '700', fontSize: 16, fontFamily: 'Montserrat_700Bold' }]}>{String('PKR ' + pricing.total.toLocaleString())}</Text>
                   </View>
                 </>
               )}
@@ -729,10 +729,15 @@ Please confirm my booking.`;
                     <MaterialIcons name="add" size={24} color="#333" />
                   </TouchableOpacity>
                 </View>
-                <View style={[styles.infoBox, { backgroundColor: `${theme.colors.primary}10`, marginTop: 12 }]}>
-                  <MaterialIcons name="info" size={18} color={theme.colors.primary} />
-                  <Text style={styles.infoBoxText}>
-                    Cost per player: <Text style={{ fontWeight: 'bold' }}>PKR {Math.ceil(pricing.total / (parseInt(playersNeeded) + 1))}</Text>
+                <View style={[styles.infoBox, { backgroundColor: `${theme.colors.primary}10`, marginTop: 12, flexDirection: 'column', alignItems: 'flex-start' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <MaterialIcons name="info" size={18} color={theme.colors.primary} />
+                    <Text style={[styles.infoBoxText, { marginLeft: 8 }]}>
+                      Total players: {String(parseInt(numberOfPlayers) + parseInt(playersNeeded))}
+                    </Text>
+                  </View>
+                  <Text style={{ fontWeight: '700', color: theme.colors.primary, fontSize: 18, marginTop: 6, fontFamily: 'Montserrat_700Bold' }}>
+                    {String('Cost per player: PKR ' + Math.ceil(pricing.total / (parseInt(numberOfPlayers) + parseInt(playersNeeded))))}
                   </Text>
                 </View>
               </Animated.View>
@@ -798,8 +803,8 @@ Please confirm my booking.`;
                         )}
                       </View>
                       <View style={styles.paymentMethodInfo}>
-                        <Text style={styles.modernPaymentName}>{method.name}</Text>
-                        <Text style={styles.modernPaymentDesc}>{method.desc}</Text>
+                        <Text style={styles.modernPaymentName}>{String(method.name)}</Text>
+                        <Text style={styles.modernPaymentDesc}>{String(method.desc)}</Text>
                       </View>
                     </View>
                     <View style={[
@@ -836,7 +841,7 @@ Please confirm my booking.`;
                   <View style={[styles.infoIconCircle, { backgroundColor: `${theme.colors.primary}15` }]}>
                     <MaterialIcons name="info" size={18} color={theme.colors.primary} />
                   </View>
-                  <Text style={styles.infoText}>Advance payment of PKR {pricing.advance} is non-refundable if cancelled within 2 hours of slot.</Text>
+                  <Text style={styles.infoText}>{String('Advance payment of PKR ' + pricing.advance + ' is non-refundable if cancelled within 2 hours of slot.')}</Text>
                 </View>
               )}
 
@@ -846,8 +851,8 @@ Please confirm my booking.`;
                 </View>
                 <Text style={styles.infoText}>
                   {paymentMode === 'advance'
-                    ? `Remaining PKR ${pricing.remaining} to be paid at the venue.`
-                    : `Full amount based on venue rates to be paid at the venue.`}
+                    ? String(`Remaining PKR ${pricing.remaining} to be paid at the venue.`)
+                    : String(`Full amount based on venue rates to be paid at the venue.`)}
                 </Text>
               </View>
 
@@ -862,7 +867,7 @@ Please confirm my booking.`;
                 <View style={[styles.infoIconCircle, { backgroundColor: '#E3F2FD' }]}>
                   <MaterialIcons name="phone" size={18} color="#2196F3" />
                 </View>
-                <Text style={styles.infoText}>Contact: {turf.phoneNumber}</Text>
+                <Text style={styles.infoText}>Contact: {String(turf.phoneNumber || 'N/A')}</Text>
               </View>
             </View>
           </View>
@@ -872,9 +877,9 @@ Please confirm my booking.`;
       {/* Bottom Action */}
       <View style={[styles.bottomAction, { paddingBottom: Platform.OS === 'android' ? 20 + insets.bottom : 20 }]}>
         <View style={styles.totalSummary}>
-          <Text style={styles.totalSummaryLabel}>{paymentMode === 'advance' ? 'Advance Payable' : 'Payable at Venue'}</Text>
+          <Text style={styles.totalSummaryLabel}>{String(paymentMode === 'advance' ? 'Advance Payable' : 'Payable at Venue')}</Text>
           <Text style={[styles.totalSummaryValue, { color: theme.colors.primary }]}>
-            PKR {paymentMode === 'advance' ? pricing.advance.toLocaleString() : pricing.total.toLocaleString()}
+            {String('PKR ' + (paymentMode === 'advance' ? pricing.advance.toLocaleString() : pricing.total.toLocaleString()))}
           </Text>
         </View>
         <Button
@@ -886,7 +891,7 @@ Please confirm my booking.`;
           contentStyle={styles.confirmButtonContent}
           labelStyle={[styles.confirmButtonLabel, { color: theme.colors.secondary }]}
         >
-          {isBooking ? 'Processing...' : (paymentMode === 'advance' ? `Pay ${pricing.advance} & Confirm` : 'Confirm Booking')}
+          {isBooking ? 'Processing...' : (paymentMode === 'advance' ? String(`Pay ${pricing.advance} & Confirm`) : 'Confirm Booking')}
         </Button>
       </View>
 
@@ -900,7 +905,9 @@ Please confirm my booking.`;
           <Surface style={styles.successModal} elevation={4}>
             <Text style={styles.successTitle}>Payment Instructions</Text>
             <Text style={[styles.successMessage, { marginBottom: 10 }]}>
-              Please send <Text style={{ fontWeight: 'bold' }}>PKR {pricing.advance}</Text> to the following account:
+              {String('Please send ')}
+              <Text style={{ fontWeight: 'bold' }}>{String('PKR ' + pricing.advance)}</Text>
+              {String(' to the following account:')}
             </Text>
 
             <View style={{
@@ -928,18 +935,18 @@ Please confirm my booking.`;
                     <MaterialIcons name="account-balance" size={24} color="#1976D2" />
                   </View>
                 )}
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{paymentDetails[paymentMethod]?.name}</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{String(paymentDetails[paymentMethod]?.name || '')}</Text>
               </View>
 
               <View style={{ marginBottom: 8 }}>
                 <Text style={{ fontSize: 12, color: '#666' }}>Account Title</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>{paymentDetails[paymentMethod]?.accountName}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>{String(paymentDetails[paymentMethod]?.accountName || '')}</Text>
               </View>
 
               {!!paymentDetails[paymentMethod]?.bankName && (
                 <View style={{ marginBottom: 8 }}>
                   <Text style={{ fontSize: 12, color: '#666' }}>Bank Name</Text>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>{paymentDetails[paymentMethod]?.bankName}</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>{String(paymentDetails[paymentMethod]?.bankName || '')}</Text>
                 </View>
               )}
 
@@ -947,7 +954,7 @@ Please confirm my booking.`;
                 <Text style={{ fontSize: 12, color: '#666' }}>Account Number</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.colors.primary, letterSpacing: 1 }}>
-                    {paymentDetails[paymentMethod]?.accountNumber}
+                    {String(paymentDetails[paymentMethod]?.accountNumber || '')}
                   </Text>
                 </View>
               </View>
@@ -1022,8 +1029,8 @@ Please confirm my booking.`;
             <Text style={styles.successTitle}>Booking Confirmed!</Text>
             <Text style={styles.successMessage}>
               {paymentMode === 'advance'
-                ? `Your advance payment was successful. Please pay the remaining PKR ${pricing.remaining} at the venue.`
-                : `Booking confirmed! Please pay PKR ${pricing.total} at the venue.`}
+                ? String(`Your advance payment was successful. Please pay the remaining PKR ${pricing.remaining} at the venue.`)
+                : String(`Booking confirmed! Please pay PKR ${pricing.total} at the venue.`)}
             </Text>
             <Button
               mode="contained"

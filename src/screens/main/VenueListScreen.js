@@ -200,10 +200,10 @@ export default function VenueListScreen({ navigation, route }) {
         </View>
       </View>
       <View style={styles.venueInfo}>
-        <Text style={styles.venueName}>{item.name}</Text>
+        <Text style={styles.venueName}>{String(item.name)}</Text>
         <View style={styles.venueLocationRow}>
           <Icon name="location-on" size={14} color="#666" />
-          <Text style={styles.venueLocation}>{item.area}, {item.city}</Text>
+          <Text style={styles.venueLocation}>{String(item.area + ', ' + item.city)}</Text>
         </View>
 
         <View style={styles.venueFooter}>

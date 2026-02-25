@@ -102,7 +102,7 @@ export default function HomeScreen({ navigation }) {
                 size={20} 
                 color={theme.colors.primary} 
               />
-              <Text style={styles.locationText}>{userLocation}</Text>
+              <Text style={styles.locationText}>{String(userLocation)}</Text>
               <MaterialIcons 
                 name="keyboard-arrow-down" 
                 size={20} 

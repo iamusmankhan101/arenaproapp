@@ -7,11 +7,11 @@ const sendEmail = async (options) => {
 
     const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST || 'smtp-relay.brevo.com', // Default to Brevo
-        port: process.env.SMTP_PORT || 587,
-        secure: false, // true for 465, false for other ports
+        port: parseInt(process.env.SMTP_PORT) || 587,
+        secure: parseInt(process.env.SMTP_PORT) === 465, // true for 465 (SSL), false for other ports (TLS)
         auth: {
-            user: process.env.SMTP_EMAIL, // Your Brevo login email
-            pass: process.env.SMTP_PASSWORD // Your Brevo SMTP Key (XS...)
+            user: process.env.SMTP_EMAIL, // Your SMTP email
+            pass: process.env.SMTP_PASSWORD // Your SMTP password
         }
     });
 

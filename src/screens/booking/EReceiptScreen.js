@@ -164,7 +164,7 @@ Transaction ID: ${booking.bookingReference || booking.id || 'N/A'}
 
   const ReceiptRow = ({ label, value, bold = false }) => (
     <View style={styles.receiptRow}>
-      <Text style={styles.receiptLabel}>{label}</Text>
+      <Text style={styles.receiptLabel}>{String(label)}</Text>
       <Text style={[styles.receiptValue, bold && styles.receiptValueBold]}>
         {String(value)}
       </Text>
@@ -222,7 +222,7 @@ Transaction ID: ${booking.bookingReference || booking.id || 'N/A'}
           {/* Venue Name */}
           <View style={styles.venueSection}>
             <Text style={styles.venueLabel}>Venue Name</Text>
-            <Text style={styles.venueName}>{booking.turfName || 'N/A'}</Text>
+            <Text style={styles.venueName}>{String(booking.turfName || 'N/A')}</Text>
           </View>
 
           {/* Divider */}

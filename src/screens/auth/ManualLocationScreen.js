@@ -87,8 +87,8 @@ export default function ManualLocationScreen({ navigation }) {
                         >
                             <MaterialIcons name="near-me" size={20} color={theme.colors.primary} style={styles.resultIcon} />
                             <View style={styles.resultTextContainer}>
-                                <Text style={styles.resultName}>{item.name}</Text>
-                                <Text style={styles.resultAddress}>{item.address}</Text>
+                                <Text style={styles.resultName}>{String(item.name)}</Text>
+                                <Text style={styles.resultAddress}>{String(item.address)}</Text>
                             </View>
                         </TouchableOpacity>
                     ))}

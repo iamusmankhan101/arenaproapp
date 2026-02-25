@@ -375,7 +375,7 @@ export default function HomeScreen({ navigation }) {
                           </Text>
                           {venue.distanceKm !== null && venue.distanceKm !== undefined && (
                             <Text style={styles.venueDistance}>
-                              • {formatDistance(venue.distanceKm)}
+                              • {String(formatDistance(venue.distanceKm))}
                             </Text>
                           )}
                         </View>
@@ -452,7 +452,7 @@ export default function HomeScreen({ navigation }) {
                   )}
                   
                   <Text style={styles.nearbyVenueName} numberOfLines={1}>
-                    {venue.name || 'Venue'}
+                    {String(venue.name || 'Venue')}
                   </Text>
                   
                   <View style={styles.nearbyVenueLocation}>
@@ -466,7 +466,7 @@ export default function HomeScreen({ navigation }) {
                     </Text>
                     {venue.distanceKm !== null && venue.distanceKm !== undefined && (
                       <Text style={styles.nearbyVenueDistance}>
-                        • {formatDistance(venue.distanceKm)}
+                        • {String(formatDistance(venue.distanceKm))}
                       </Text>
                     )}
                   </View>

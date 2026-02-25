@@ -58,7 +58,7 @@ export default function BookingSuccessScreen({ navigation, route }) {
               Your booking has been confirmed
             </Text>
             {bookingDetails.venueName && (
-              <Text style={styles.venueText}>{bookingDetails.venueName}</Text>
+              <Text style={styles.venueText}>{String(bookingDetails.venueName)}</Text>
             )}
           </View>
         )}

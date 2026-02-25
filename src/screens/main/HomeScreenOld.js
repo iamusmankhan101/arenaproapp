@@ -277,7 +277,7 @@ export default function HomeScreen({ navigation }) {
       <View style={[styles.sportIconContainer, { backgroundColor: sport.color }]}>
         <SportsIcon sport={sport.name.toLowerCase()} size={32} style={styles.sportIconImage} />
       </View>
-      <Text style={styles.sportName}>{sport.name}</Text>
+      <Text style={styles.sportName}>{String(sport.name)}</Text>
     </TouchableOpacity>
   );
 
@@ -307,10 +307,10 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
       <View style={styles.venueInfo}>
-        <Text style={styles.venueName}>{venue.name || 'Unnamed Venue'}</Text>
+        <Text style={styles.venueName}>{String(venue.name || 'Unnamed Venue')}</Text>
         <View style={styles.venueLocationRow}>
           <MaterialIcons name="location-on" size={14} color="#666" />
-          <Text style={styles.venueLocation}>{venue.area || 'Unknown Area'}, {venue.city || 'Unknown City'}</Text>
+          <Text style={styles.venueLocation}>{String((venue.area || 'Unknown Area') + ', ' + (venue.city || 'Unknown City'))}</Text>
         </View>
 
         <View style={styles.venueFooter}>
@@ -373,7 +373,7 @@ export default function HomeScreen({ navigation }) {
       return (
         <View key={sportName} style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{sportName} Venues</Text>
+            <Text style={styles.sectionTitle}>{String(sportName)} Venues</Text>
             <TouchableOpacity onPress={() => navigation.navigate('VenueList', { sport: sportName })}>
               <Text style={styles.seeMoreText}>See all</Text>
             </TouchableOpacity>
@@ -742,7 +742,7 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.referralCodeLabel}>Your Referral Code</Text>
                     <View style={styles.referralCodeBox}>
                       {user?.myReferralCode ? (
-                        <Text style={styles.referralCodeText}>{user.myReferralCode}</Text>
+                        <Text style={styles.referralCodeText}>{String(user.myReferralCode)}</Text>
                       ) : (
                         <Text style={styles.referralCodePlaceholder}>Generating your code...</Text>
                       )}

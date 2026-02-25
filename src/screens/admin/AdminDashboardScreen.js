@@ -53,8 +53,8 @@ export default function AdminDashboardScreen({ navigation }) {
           <MaterialIcons name={icon} size={24} color={color} />
         </View>
         <View style={styles.statText}>
-          <Text style={styles.statValue}>{value}</Text>
-          <Text style={styles.statTitle}>{title}</Text>
+          <Text style={styles.statValue}>{String(value)}</Text>
+          <Text style={styles.statTitle}>{String(title)}</Text>
         </View>
       </Card.Content>
     </Card>
@@ -70,7 +70,7 @@ export default function AdminDashboardScreen({ navigation }) {
       >
         <MaterialIcons name={icon} size={20} color="white" />
       </Button>
-      <Text style={styles.quickActionText}>{title}</Text>
+      <Text style={styles.quickActionText}>{String(title)}</Text>
     </Surface>
   );
 

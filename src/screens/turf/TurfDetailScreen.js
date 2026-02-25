@@ -646,9 +646,9 @@ export default function TurfDetailScreen({ route, navigation }) {
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    if (diffDays < 7) return String(diffDays + ' days ago');
+    if (diffDays < 30) return String(Math.floor(diffDays / 7) + ' weeks ago');
+    if (diffDays < 365) return String(Math.floor(diffDays / 30) + ' months ago');
 
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
@@ -745,20 +745,20 @@ export default function TurfDetailScreen({ route, navigation }) {
                 <View style={styles.badgeRow}>
                   {hasDiscount(venue) && (
                     <View style={styles.discountBadge}>
-                      <Text style={styles.discountText}>{getDiscountValue(venue)}% Off</Text>
+                      <Text style={styles.discountText}>{String(getDiscountValue(venue))}% Off</Text>
                     </View>
                   )}
                   <View style={styles.ratingBadge}>
                     <MaterialIcons name="star" size={14} color="#FFD700" />
-                    <Text style={styles.ratingValue}>{calculateAverageRating()}</Text>
-                    <Text style={styles.reviewCount}>({reviews.length} reviews)</Text>
+                    <Text style={styles.ratingValue}>{String(calculateAverageRating())}</Text>
+                    <Text style={styles.reviewCount}>({String(reviews.length)} reviews)</Text>
                   </View>
                 </View>
 
                 <View style={styles.titleRow}>
                   <View style={styles.titleContent}>
-                    <Text style={styles.venueName}>{venue.name}</Text>
-                    <Text style={styles.addressText}>{typeof venue.location === 'string' ? venue.location : venue.location?.address}</Text>
+                    <Text style={styles.venueName}>{String(venue.name)}</Text>
+                    <Text style={styles.addressText}>{String(typeof venue.location === 'string' ? venue.location : venue.location?.address || 'Address not available')}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.floatingDirectionBtn}
@@ -790,7 +790,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                     style={[styles.tabItem, activeTab === tab && styles.activeTabItem]}
                     onPress={() => setActiveTab(tab)}
                   >
-                    <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+                    <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{String(tab)}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -801,7 +801,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                   {/* Description */}
                   <View style={styles.infoSection}>
                     <Text style={styles.infoTitle}>About Venue</Text>
-                    <Text style={styles.descriptionText}>{venue.description}</Text>
+                    <Text style={styles.descriptionText}>{String(venue.description || 'No description available')}</Text>
                   </View>
 
                   {/* Available Sports */}
@@ -814,7 +814,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                             <View style={styles.sportIconCircle}>
                               <Image source={sport.image} style={styles.sportIconImg} />
                             </View>
-                            <Text style={styles.sportLabel}>{sport.name}</Text>
+                            <Text style={styles.sportLabel}>{String(sport.name)}</Text>
                           </View>
                         ))}
                       </View>
@@ -831,7 +831,7 @@ export default function TurfDetailScreen({ route, navigation }) {
                             <View style={styles.facilityIconCircle}>
                               <MaterialIcons name={facility.icon} size={18} color="#004d43" />
                             </View>
-                            <Text style={styles.facilityLabel}>{facility.name}</Text>
+                            <Text style={styles.facilityLabel}>{String(facility.name)}</Text>
                           </View>
                         ))}
                       </View>
@@ -881,17 +881,17 @@ export default function TurfDetailScreen({ route, navigation }) {
                       <View key={review.id} style={styles.reviewItem}>
                         <View style={styles.reviewTop}>
                           <View style={styles.reviewerAvatar}>
-                            <Text style={styles.avatarChar}>{review.userName.charAt(0)}</Text>
+                            <Text style={styles.avatarChar}>{String(review.userName.charAt(0))}</Text>
                           </View>
                           <View style={styles.reviewMeta}>
-                            <Text style={styles.reviewerName}>{review.userName}</Text>
+                            <Text style={styles.reviewerName}>{String(review.userName)}</Text>
                             <View style={styles.starsRow}>
                               {renderReviewStars(review.rating, 12)}
-                              <Text style={styles.reviewDate}>{formatReviewDate(review.date)}</Text>
+                              <Text style={styles.reviewDate}>{String(formatReviewDate(review.date))}</Text>
                             </View>
                           </View>
                         </View>
-                        <Text style={styles.reviewComment}>{review.comment}</Text>
+                        <Text style={styles.reviewComment}>{String(review.comment)}</Text>
                       </View>
                     ))
                   )}

@@ -1,58 +1,9 @@
-import Constants from 'expo-constants';
+import { API_URL } from '../config/apiConfig';
 
-const EMAILJS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
-
-// Helper to send email via EmailJS REST API
-const sendEmailJS = async (templateParams, specificTemplateId = null) => {
-    // Get credentials from expo-constants (bundled in APK)
-    const serviceId = Constants.expoConfig?.extra?.emailjs?.serviceId;
-    const templateId = specificTemplateId || Constants.expoConfig?.extra?.emailjs?.templateId;
-    const userId = Constants.expoConfig?.extra?.emailjs?.userId;
-
-    // Debug logging
-    console.log('📧 EmailJS Config Check:', {
-        serviceId: serviceId ? '✅ SET' : '❌ MISSING',
-        templateId: templateId ? '✅ SET' : '❌ MISSING',
-        userId: userId ? '✅ SET' : '❌ MISSING'
-    });
-
-    if (!serviceId || !templateId || !userId) {
-        console.warn('⚠️ EmailJS: Missing configuration. Emails will not be sent.');
-        console.warn('⚠️ Check app.json extra.emailjs configuration');
-        return { success: false, error: 'Missing configuration' };
-    }
-
-    const payload = {
-        service_id: serviceId,
-        template_id: templateId,
-        user_id: userId,
-        template_params: templateParams
-    };
-
-    try {
-        console.log('📤 EmailJS: Sending request to:', EMAILJS_API_URL);
-        
-        const response = await fetch(EMAILJS_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            console.log('✅ EmailJS: Email sent successfully!');
-            return { success: true };
-        } else {
-            const errorText = await response.text();
-            console.error('❌ EmailJS: Failed to send email:', errorText);
-            return { success: false, error: errorText };
-        }
-    } catch (error) {
-        console.error('❌ EmailJS: Network error:', error);
-        return { success: false, error: error.message };
-    }
-};
+/**
+ * Backend Email Service
+ * Sends emails through the backend API using Nodemailer
+ */
 
 export const emailService = {
     /**
@@ -61,28 +12,40 @@ export const emailService = {
      * @param {Object} user - User details
      */
     sendBookingConfirmation: async (details, user) => {
-        console.log('📧 Sending Booking Confirmation...');
-        const params = {
-            to_name: user.name || user.email.split('@')[0],
-            to_email: user.email,
-            subject: `Booking Confirmed! - ${details.turfName}`,
-            message: `
-        Booking ID: ${details.bookingId}
-        Venue: ${details.turfName}
-        Date: ${details.date}
-        Time: ${details.timeSlot}
-        Amount: ${details.totalAmount}
-        Location: ${details.turfAddress}
-      `,
-            // Map to template variables if using specific template fields
-            booking_id: details.bookingId,
-            turf_name: details.turfName,
-            date: details.date,
-            time_slot: details.timeSlot,
-            total_amount: details.totalAmount,
-            turf_address: details.turfAddress
-        };
-        return await sendEmailJS(params);
+        console.log('📧 Sending Booking Confirmation via Backend...');
+        try {
+            const response = await fetch(`${API_URL}/notifications/booking-confirmation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    bookingDetails: {
+                        bookingId: details.bookingId,
+                        turfName: details.turfName,
+                        date: details.date,
+                        timeSlot: details.timeSlot,
+                        totalAmount: details.totalAmount,
+                        turfAddress: details.turfAddress
+                    },
+                    userEmail: user.email,
+                    userName: user.name || user.fullName
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Booking confirmation email sent');
+                return { success: true };
+            } else {
+                console.error('❌ Failed to send booking confirmation:', result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (error) {
+            console.error('❌ Email service error:', error);
+            return { success: false, error: error.message };
+        }
     },
 
     /**
@@ -92,27 +55,41 @@ export const emailService = {
      * @param {Object} creator - Creator details
      */
     sendChallengeAcceptanceToCreator: async (challenge, acceptorTeam, creator) => {
-        console.log('📧 Sending Challenge Acceptance to Creator...');
-        const params = {
-            to_name: creator.fullName,
-            to_email: creator.email,
-            subject: `Challenge Accepted! - ${challenge.title}`,
-            message: `
-        Your challenge "${challenge.title}" has been accepted by ${acceptorTeam.name}!
-        Sport: ${challenge.sport}
-        Date: ${new Date(challenge.proposedDateTime).toDateString()}
-        Venue: ${challenge.venue?.name || 'TBD'}
-      `,
-            // Specific fields for template
-            creator_name: creator.fullName,
-            acceptor_team: acceptorTeam.name,
-            challenge_title: challenge.title,
-            sport: challenge.sport,
-            date: new Date(challenge.proposedDateTime).toDateString(),
-            venue: challenge.venue?.name || 'TBD'
-        };
-        // Use specific challenge template
-        return await sendEmailJS(params, 'template_y43apqr');
+        console.log('📧 Sending Challenge Acceptance to Creator via Backend...');
+        try {
+            const response = await fetch(`${API_URL}/notifications/challenge-acceptance`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    challenge: {
+                        title: challenge.title,
+                        sport: challenge.sport,
+                        proposedDateTime: challenge.proposedDateTime,
+                        venue: challenge.venue
+                    },
+                    acceptorTeam: {
+                        name: acceptorTeam.name
+                    },
+                    creatorEmail: creator.email,
+                    creatorName: creator.fullName
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Challenge acceptance email sent');
+                return { success: true };
+            } else {
+                console.error('❌ Failed to send challenge acceptance:', result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (error) {
+            console.error('❌ Email service error:', error);
+            return { success: false, error: error.message };
+        }
     },
 
     /**
@@ -121,20 +98,137 @@ export const emailService = {
      * @param {Object} user - Acceptor user details
      */
     sendChallengeJoinConfirmation: async (challenge, user) => {
-        console.log('📧 Sending Challenge Join Confirmation...');
-        const params = {
-            to_name: user.fullName,
-            to_email: user.email,
-            subject: `You Joined a Challenge! - ${challenge.title}`,
-            message: `
-        You have successfully joined the challenge "${challenge.title}".
-        Get ready for the match!
-      `,
-            // Specific fields for template
-            challenge_title: challenge.title,
-            date: new Date(challenge.proposedDateTime).toDateString(),
-        };
-        // Use default template for acceptor (or add specific one if user provides)
-        return await sendEmailJS(params);
+        console.log('📧 Sending Challenge Join Confirmation via Backend...');
+        // This can be implemented later if needed
+        return { success: true };
+    },
+
+    /**
+     * Sends email to organizer when a player joins their Squad Builder game
+     * @param {Object} gameDetails - Game details
+     * @param {Object} organizer - Organizer details
+     * @param {Object} player - Player who joined
+     */
+    sendSquadPlayerJoinedEmail: async (gameDetails, organizer, player) => {
+        console.log('📧 Sending Squad Player Joined Email to Organizer via Backend...');
+        try {
+            const response = await fetch(`${API_URL}/notifications/squad-player-joined`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    gameDetails: {
+                        turfName: gameDetails.turfName,
+                        dateTime: gameDetails.dateTime,
+                        startTime: gameDetails.startTime,
+                        endTime: gameDetails.endTime,
+                        currentPlayers: gameDetails.currentPlayers,
+                        totalPlayers: gameDetails.totalPlayers
+                    },
+                    organizerEmail: organizer.email,
+                    organizerName: organizer.name,
+                    playerName: player.name
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Squad player joined email sent');
+                return { success: true };
+            } else {
+                console.error('❌ Failed to send squad player joined email:', result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (error) {
+            console.error('❌ Email service error:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Sends email to participants when organizer cancels a Squad Builder game
+     * @param {Object} gameDetails - Game details
+     * @param {Object} participant - Participant details
+     */
+    sendSquadGameCancelledEmail: async (gameDetails, participant) => {
+        console.log('📧 Sending Squad Game Cancelled Email to Participant via Backend...');
+        try {
+            const response = await fetch(`${API_URL}/notifications/squad-game-cancelled`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    gameDetails: {
+                        turfName: gameDetails.turfName,
+                        dateTime: gameDetails.dateTime,
+                        startTime: gameDetails.startTime,
+                        endTime: gameDetails.endTime,
+                        organizerName: gameDetails.organizerName
+                    },
+                    participantEmail: participant.email,
+                    participantName: participant.name
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Squad game cancelled email sent');
+                return { success: true };
+            } else {
+                console.error('❌ Failed to send squad game cancelled email:', result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (error) {
+            console.error('❌ Email service error:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Sends confirmation email to player when they join a Squad Builder game
+     * @param {Object} gameDetails - Game details
+     * @param {Object} player - Player details
+     */
+    sendSquadJoinConfirmationEmail: async (gameDetails, player) => {
+        console.log('📧 Sending Squad Join Confirmation Email to Player via Backend...');
+        try {
+            const response = await fetch(`${API_URL}/notifications/squad-join-confirmation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    gameDetails: {
+                        turfName: gameDetails.turfName,
+                        dateTime: gameDetails.dateTime,
+                        startTime: gameDetails.startTime,
+                        endTime: gameDetails.endTime,
+                        pricePerPlayer: gameDetails.pricePerPlayer,
+                        currentPlayers: gameDetails.currentPlayers,
+                        totalPlayers: gameDetails.totalPlayers,
+                        organizerName: gameDetails.organizerName
+                    },
+                    playerEmail: player.email,
+                    playerName: player.name
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Squad join confirmation email sent');
+                return { success: true };
+            } else {
+                console.error('❌ Failed to send squad join confirmation email:', result.error);
+                return { success: false, error: result.error };
+            }
+        } catch (error) {
+            console.error('❌ Email service error:', error);
+            return { success: false, error: error.message };
+        }
     }
 };

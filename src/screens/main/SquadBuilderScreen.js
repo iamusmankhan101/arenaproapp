@@ -11,22 +11,20 @@ import {
     Dimensions,
     Image
 } from 'react-native';
-import { Text, Searchbar, Card, Button, Chip, Surface, Badge, ActivityIndicator, Portal, Modal, Divider, RadioButton } from 'react-native-paper';
+import { Text, Searchbar, Card, Button, Surface, ActivityIndicator, Portal, Modal, Divider, RadioButton } from 'react-native-paper';
 import { useSelector } from 'react-redux';
-import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
 import { matchmakingService } from '../../services/matchmakingService';
 
 const { width } = Dimensions.get('window');
-const sportFilters = ['All', 'Cricket', 'Football', 'Futsal', 'Padel'];
 
 export default function SquadBuilderScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [selectedSport, setSelectedSport] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
 
     const [selectedGame, setSelectedGame] = useState(null);
@@ -39,10 +37,12 @@ export default function SquadBuilderScreen({ navigation }) {
     const fetchGames = async () => {
         try {
             setLoading(true);
-            const openGames = await matchmakingService.getOpenGames(selectedSport === 'All' ? null : selectedSport);
+            console.log('🔍 SquadBuilder: Fetching open games...');
+            const openGames = await matchmakingService.getOpenGames();
+            console.log('📊 SquadBuilder: Received games:', openGames.length);
             setGames(openGames);
         } catch (error) {
-            console.error('Error fetching games:', error);
+            console.error('❌ SquadBuilder: Error fetching games:', error);
             Alert.alert('Error', 'Failed to load open games');
         } finally {
             setLoading(false);
@@ -52,7 +52,7 @@ export default function SquadBuilderScreen({ navigation }) {
 
     useEffect(() => {
         fetchGames();
-    }, [selectedSport]);
+    }, []);
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -69,6 +69,32 @@ export default function SquadBuilderScreen({ navigation }) {
         }
         setSelectedGame(game);
         setShowJoinModal(true);
+    };
+
+    const handleDeleteGame = (game) => {
+        Alert.alert(
+            'Cancel Game',
+            `Are you sure you want to cancel this game? All ${game.playersJoined?.length || 0} participants will be notified.`,
+            [
+                { text: 'No', style: 'cancel' },
+                {
+                    text: 'Yes, Cancel',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await matchmakingService.deleteGame(game.id, user.uid);
+                            Alert.alert('Success', 'Game cancelled successfully. All participants have been notified.');
+                            fetchGames();
+                        } catch (error) {
+                            Alert.alert('Error', error.message || 'Failed to cancel game');
+                        } finally {
+                            setLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const confirmJoin = async () => {
@@ -105,7 +131,7 @@ export default function SquadBuilderScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Search & Filters */}
+            {/* Search */}
             <View style={styles.filterSection}>
                 <Searchbar
                     placeholder="Search venues or organizers..."
@@ -115,31 +141,6 @@ export default function SquadBuilderScreen({ navigation }) {
                     inputStyle={styles.searchInput}
                     elevation={0}
                 />
-
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.sportFilterContainer}
-                >
-                    {sportFilters.map(sport => (
-                        <Chip
-                            key={sport}
-                            selected={selectedSport === sport}
-                            onPress={() => setSelectedSport(sport)}
-                            style={[
-                                styles.sportChip,
-                                selectedSport === sport && { backgroundColor: theme.colors.primary }
-                            ]}
-                            textStyle={[
-                                styles.sportChipText,
-                                selectedSport === sport && { color: theme.colors.secondary }
-                            ]}
-                            showSelectedOverlay
-                        >
-                            {sport}
-                        </Chip>
-                    ))}
-                </ScrollView>
             </View>
 
             <ScrollView
@@ -199,7 +200,7 @@ export default function SquadBuilderScreen({ navigation }) {
                                         <Text style={styles.venueName}>{String(game.turfName || 'Venue')}</Text>
                                         <View style={styles.playersBadge}>
                                             <MaterialIcons name="people" size={14} color={theme.colors.secondary} />
-                                            <Text style={styles.playersBadgeText}>{String(((game.playersJoined?.length || 0) + 1) + '/' + ((game.playersNeeded || 0) + 1) + ' Players')}</Text>
+                                            <Text style={styles.playersBadgeText}>{String(((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0)) + '/' + ((game.numberOfPlayers || 1) + (game.playersNeeded || 0)) + ' Players')}</Text>
                                         </View>
                                     </View>
                                     <View style={styles.infoRow}>
@@ -225,33 +226,44 @@ export default function SquadBuilderScreen({ navigation }) {
                                 <View style={styles.progressSection}>
                                     <View style={styles.progressLabels}>
                                         <Text style={styles.playersJoinedText}>
-                                            {String(game.playersJoined?.length || 0)} Joined
+                                            {String((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0))} Joined
                                         </Text>
                                         <Text style={styles.playersNeededText}>
-                                            {String(game.playersNeeded - (game.playersJoined?.length || 0))} Spots Left
+                                            {String((game.playersNeeded || 0) - (game.playersJoined?.length || 0))} Spots Left
                                         </Text>
                                     </View>
                                     <View style={styles.progressBar}>
                                         <View
                                             style={[
                                                 styles.progressFill,
-                                                { width: `${((game.playersJoined?.length || 0) / game.playersNeeded) * 100}%` }
+                                                { width: `${Math.min(100, (((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0)) / ((game.numberOfPlayers || 1) + (game.playersNeeded || 0))) * 100)}%` }
                                             ]}
                                         />
                                     </View>
                                 </View>
 
-                                <TouchableOpacity
-                                    style={[
-                                        styles.joinButton,
-                                        game.userId === user?.uid && styles.joinButtonDisabled
-                                    ]}
-                                    onPress={() => handleJoinGame(game)}
-                                    disabled={game.userId === user?.uid}
-                                    activeOpacity={0.7}
-                                >
-                                    <Text style={styles.joinButtonText}>Join Game</Text>
-                                </TouchableOpacity>
+                                {game.userId === user?.uid ? (
+                                    <TouchableOpacity
+                                        style={styles.deleteButton}
+                                        onPress={() => handleDeleteGame(game)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <MaterialIcons name="delete" size={20} color="#fff" />
+                                        <Text style={styles.deleteButtonText}>Cancel Game</Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.joinButton,
+                                            game.userId === user?.uid && styles.joinButtonDisabled
+                                        ]}
+                                        onPress={() => handleJoinGame(game)}
+                                        disabled={game.userId === user?.uid}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={styles.joinButtonText}>Join Game</Text>
+                                    </TouchableOpacity>
+                                )}
                             </Card.Content>
                         </Card>
                     ))
@@ -335,7 +347,7 @@ export default function SquadBuilderScreen({ navigation }) {
                                         <View style={styles.detailContent}>
                                             <Text style={styles.detailLabel}>Players</Text>
                                             <Text style={styles.detailValue}>
-                                                {String(((selectedGame.playersJoined?.length || 0) + 1) + '/' + ((selectedGame.playersNeeded || 0) + 1) + ' joined')}
+                                                {String(((selectedGame.numberOfPlayers || 1) + (selectedGame.playersJoined?.length || 0)) + '/' + ((selectedGame.numberOfPlayers || 1) + (selectedGame.playersNeeded || 0)) + ' joined')}
                                             </Text>
                                         </View>
                                     </View>
@@ -514,7 +526,7 @@ const styles = StyleSheet.create({
     },
     filterSection: {
         paddingHorizontal: 20,
-        paddingBottom: 10,
+        paddingBottom: 16,
     },
     searchBar: {
         backgroundColor: 'white',
@@ -774,6 +786,25 @@ const styles = StyleSheet.create({
     },
     joinButtonText: {
         color: theme.colors.secondary,
+        fontFamily: 'Montserrat_700Bold',
+        fontSize: 15,
+    },
+    deleteButton: {
+        borderRadius: 14,
+        backgroundColor: '#DC2626',
+        paddingVertical: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 8,
+        elevation: 3,
+        shadowColor: '#DC2626',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    deleteButtonText: {
+        color: '#fff',
         fontFamily: 'Montserrat_700Bold',
         fontSize: 15,
     },

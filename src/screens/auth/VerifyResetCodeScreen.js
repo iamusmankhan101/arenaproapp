@@ -99,7 +99,7 @@ export default function VerifyResetCodeScreen({ navigation, route }) {
         <Text style={styles.title}>Verify Code</Text>
         <Text style={styles.subtitle}>
           Please enter the code we just sent to email{'\n'}
-          <Text style={styles.email}>{email}</Text>
+          <Text style={styles.email}>{String(email)}</Text>
         </Text>
 
         {/* Code Input */}

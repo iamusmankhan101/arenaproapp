@@ -109,7 +109,7 @@ export default function OTPScreen({ route, navigation }) {
             />
 
             {error && (
-              <Text style={styles.error}>{error}</Text>
+              <Text style={styles.error}>{String(error)}</Text>
             )}
 
             <Button

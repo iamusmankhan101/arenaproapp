@@ -81,28 +81,28 @@ export default function NotificationScreen({ navigation }) {
         type = 'booking';
         icon = 'event-available';
         title = 'Booking Confirmed';
-        message = `Your booking at ${booking.venueName || 'venue'} has been confirmed for ${formatBookingDate(booking.date)} at ${booking.startTime}.`;
+        message = String('Your booking at ' + (booking.venueName || 'venue') + ' has been confirmed for ' + formatBookingDate(booking.date) + ' at ' + booking.startTime + '.');
         break;
       
       case 'pending':
         type = 'booking';
         icon = 'schedule';
         title = 'Booking Pending';
-        message = `Your booking at ${booking.venueName || 'venue'} is pending confirmation. We'll notify you once confirmed.`;
+        message = String('Your booking at ' + (booking.venueName || 'venue') + ' is pending confirmation. We\'ll notify you once confirmed.');
         break;
       
       case 'cancelled':
         type = 'booking';
         icon = 'cancel';
         title = 'Booking Cancelled';
-        message = `Your booking at ${booking.venueName || 'venue'} has been cancelled. ${booking.refundStatus ? 'Refund will be processed in 3-5 days.' : ''}`;
+        message = String('Your booking at ' + (booking.venueName || 'venue') + ' has been cancelled. ' + (booking.refundStatus ? 'Refund will be processed in 3-5 days.' : ''));
         break;
       
       case 'completed':
         type = 'booking';
         icon = 'check-circle';
         title = 'Booking Completed';
-        message = `Thank you for using Arena Pro. Your booking at ${booking.venueName || 'venue'} is complete.`;
+        message = String('Thank you for using Arena Pro. Your booking at ' + (booking.venueName || 'venue') + ' is complete.');
         break;
       
       default:
@@ -110,14 +110,14 @@ export default function NotificationScreen({ navigation }) {
         type = 'booking';
         icon = 'event-available';
         title = 'New Booking Created';
-        message = `Your booking at ${booking.venueName || 'venue'} for ${formatBookingDate(booking.date)} at ${booking.startTime} has been created.`;
+        message = String('Your booking at ' + (booking.venueName || 'venue') + ' for ' + formatBookingDate(booking.date) + ' at ' + booking.startTime + ' has been created.');
     }
 
     // Add payment notification if payment was made
     if (booking.paymentStatus === 'paid' || booking.paymentStatus === 'partial') {
       // This could be a separate notification, but for now we'll just update the message
       if (booking.advancePaid > 0) {
-        message += ` Advance payment of PKR ${booking.advancePaid} received.`;
+        message = String(message + ' Advance payment of PKR ' + booking.advancePaid + ' received.');
       }
     }
 
@@ -172,10 +172,10 @@ export default function NotificationScreen({ navigation }) {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays < 7) return `${diffDays}d`;
-    return `${Math.floor(diffDays / 7)}w`;
+    if (diffMins < 60) return String(diffMins + 'm');
+    if (diffHours < 24) return String(diffHours + 'h');
+    if (diffDays < 7) return String(diffDays + 'd');
+    return String(Math.floor(diffDays / 7) + 'w');
   };
 
   // Determine section (today, yesterday, older)

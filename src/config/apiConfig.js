@@ -64,6 +64,9 @@ export const API_CONFIG = {
   }
 };
 
+// Export API_URL for backward compatibility and email service
+export const API_URL = API_CONFIG.BASE_URL;
+
 // Helper function to build endpoint URLs
 export const buildEndpoint = (endpoint, params = {}) => {
   let url = endpoint;

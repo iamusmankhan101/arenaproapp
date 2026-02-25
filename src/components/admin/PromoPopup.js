@@ -68,8 +68,8 @@ export default function PromoPopup({ visible, onClose, onExplore }) {
                                         <MaterialIcons name={item.icon} size={20} color="#004d43" />
                                     </View>
                                     <View style={styles.featureText}>
-                                        <Text style={styles.featureTitle}>{item.title}</Text>
-                                        <Text style={styles.featureDesc}>{item.desc}</Text>
+                                        <Text style={styles.featureTitle}>{String(item.title)}</Text>
+                                        <Text style={styles.featureDesc}>{String(item.desc)}</Text>
                                     </View>
                                 </View>
                             ))}
