@@ -13,6 +13,7 @@ import {
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
+import { HomeScreenSkeleton } from '../../components/SkeletonLoader';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
@@ -179,6 +180,40 @@ export default function HomeScreen({ navigation }) {
     .filter(venue => venue.distanceKm !== null && venue.distanceKm <= 10)
     .slice(0, 10);
 
+  // Get venues filtered by a specific sport (uses all venues, ignoring selectedSport filter)
+  const getVenuesBySport = (sportName) => {
+    return nearbyTurfs
+      .filter(venue => {
+        const venueSports = Array.isArray(venue.sports)
+          ? venue.sports
+          : typeof venue.sports === 'string' && venue.sports.trim()
+            ? venue.sports.split(',').map(s => s.trim())
+            : [];
+        return venueSports.includes(sportName);
+      })
+      .map(venue => {
+        const coords = getVenueCoords(venue);
+        if (coords) {
+          const distance = calculateDistance(
+            userCoords.latitude, userCoords.longitude,
+            coords.latitude, coords.longitude
+          );
+          return { ...venue, distance, distanceKm: distance };
+        }
+        return { ...venue, distance: null, distanceKm: null };
+      })
+      .sort((a, b) => {
+        if (a.distanceKm === null) return 1;
+        if (b.distanceKm === null) return -1;
+        return a.distanceKm - b.distanceKm;
+      })
+      .slice(0, 8);
+  };
+
+  const cricketVenues = getVenuesBySport('Cricket');
+  const futsalVenues = getVenuesBySport('Futsal');
+  const padelVenues = getVenuesBySport('Padel');
+
   // Format distance for display
   const formatDistance = (distanceKm) => {
     if (distanceKm === null || distanceKm === undefined) return '';
@@ -275,118 +310,213 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {/* Sports Categories */}
-        <View style={styles.categoriesSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Sports Categories</Text>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesScroll}
-          >
-            {sportsCategories.map((sport) => (
-              <TouchableOpacity
-                key={sport.id}
-                style={[
-                  styles.categoryCard,
-                  selectedSport === sport.name && styles.categoryCardActive
-                ]}
-                onPress={() => handleSportSelect(sport.name)}
+        {loading && nearbyTurfs.length === 0 ? (
+          <HomeScreenSkeleton />
+        ) : (
+          <>
+            <View style={styles.categoriesSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Sports Categories</Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoriesScroll}
               >
-                <View style={[
-                  styles.categoryIconContainer,
-                  selectedSport === sport.name && styles.categoryIconContainerActive
-                ]}>
-                  <MaterialIcons
-                    name={sport.icon}
-                    size={32}
-                    color={selectedSport === sport.name ? theme.colors.primary : theme.colors.secondary}
-                  />
-                </View>
-                <Text style={[
-                  styles.categoryName,
-                  selectedSport === sport.name && styles.categoryNameActive
-                ]}>
-                  {String(sport.name)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Recommended Venues */}
-        <View style={styles.venuesSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recommended Venues</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('VenueList')}>
-              <Text style={styles.seeAllText}>See all</Text>
-            </TouchableOpacity>
-          </View>
-
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading venues...</Text>
-            </View>
-          ) : recommendedVenues.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.venuesScroll}
-            >
-              {recommendedVenues.map((venue) => {
-                const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
-
-                return (
+                {sportsCategories.map((sport) => (
                   <TouchableOpacity
-                    key={venue.id}
-                    style={styles.venueCard}
-                    onPress={() => handleVenuePress(venue)}
+                    key={sport.id}
+                    style={[
+                      styles.categoryCard,
+                      selectedSport === sport.name && styles.categoryCardActive
+                    ]}
+                    onPress={() => handleSportSelect(sport.name)}
                   >
-                    <Image
-                      source={imageSource}
-                      style={styles.venueImage}
-                      resizeMode="cover"
-                    />
+                    <View style={[
+                      styles.categoryIconContainer,
+                      selectedSport === sport.name && styles.categoryIconContainerActive
+                    ]}>
+                      <MaterialIcons
+                        name={sport.icon}
+                        size={32}
+                        color={selectedSport === sport.name ? theme.colors.primary : theme.colors.secondary}
+                      />
+                    </View>
+                    <Text style={[
+                      styles.categoryName,
+                      selectedSport === sport.name && styles.categoryNameActive
+                    ]}>
+                      {String(sport.name)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
 
-                    {/* Glass overlay for info */}
-                    <View style={styles.venueInfoGlass}>
-                      {/* Blur simulation layer */}
-                      <View style={styles.blurLayer} />
-                      <View style={styles.venueInfo}>
-                        <View style={styles.venueHeader}>
-                          <View style={styles.ratingContainer}>
-                            <MaterialIcons name="star" size={16} color="#FFD700" />
-                            <Text style={styles.ratingText}>{String(venue.rating || 4.5)}</Text>
+            {/* Recommended Venues */}
+            <View style={styles.venuesSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recommended Venues</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('VenueList')}>
+                  <Text style={styles.seeAllText}>See all</Text>
+                </TouchableOpacity>
+              </View>
+
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <Text style={styles.loadingText}>Loading venues...</Text>
+                </View>
+              ) : recommendedVenues.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.venuesScroll}
+                >
+                  {recommendedVenues.map((venue) => {
+                    const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
+
+                    return (
+                      <TouchableOpacity
+                        key={venue.id}
+                        style={styles.venueCard}
+                        onPress={() => handleVenuePress(venue)}
+                      >
+                        <Image
+                          source={imageSource}
+                          style={styles.venueImage}
+                          resizeMode="cover"
+                        />
+
+                        {/* Glass overlay for info */}
+                        <View style={styles.venueInfoGlass}>
+                          {/* Blur simulation layer */}
+                          <View style={styles.blurLayer} />
+                          <View style={styles.venueInfo}>
+                            <View style={styles.venueHeader}>
+                              <View style={styles.ratingContainer}>
+                                <MaterialIcons name="star" size={16} color="#FFD700" />
+                                <Text style={styles.ratingText}>{String(venue.rating || 4.5)}</Text>
+                              </View>
+                            </View>
+
+                            <Text style={styles.venueName} numberOfLines={1}>
+                              {String(venue.name || 'Venue')}
+                            </Text>
+
+                            <View style={styles.venueLocation}>
+                              <MaterialIcons
+                                name="location-on"
+                                size={14}
+                                color={theme.colors.textSecondary}
+                              />
+                              <Text style={styles.venueLocationText} numberOfLines={1}>
+                                {String(venue.city || 'Lahore')}, Pakistan
+                              </Text>
+                              {venue.distanceKm != null && (
+                                <Text style={styles.venueDistance}>
+                                  • {String(formatDistance(venue.distanceKm))}
+                                </Text>
+                              )}
+                            </View>
+
+                            <View style={styles.venuePriceContainer}>
+                              {!!(venue.discount || venue.discountPercentage) && (
+                                <Text style={styles.venueOriginalPrice}>
+                                  PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
+                                </Text>
+                              )}
+                              <Text style={styles.venuePrice}>
+                                PKR {String((venue.discount || venue.discountPercentage)
+                                  ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
+                                  : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
+                                <Text style={styles.priceUnit}> /hour</Text>
+                              </Text>
+                            </View>
                           </View>
                         </View>
 
-                        <Text style={styles.venueName} numberOfLines={1}>
+                        <TouchableOpacity style={styles.favoriteButton}>
+                          <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
+                        </TouchableOpacity>
+
+                        {!!(venue.discount || venue.discountPercentage) && (
+                          <View style={styles.discountBadge}>
+                            <Text style={styles.discountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No venues found</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Nearby Venues */}
+            <View style={styles.venuesSection}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleContainer}>
+                  <Text style={styles.sectionTitle}>Nearby Venues</Text>
+                  <Text style={styles.sectionSubtitle}>Within 10km radius</Text>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('VenueList')}>
+                  <Text style={styles.seeAllText}>See all</Text>
+                </TouchableOpacity>
+              </View>
+
+              {nearbyVenues.length > 0 ? (
+                nearbyVenues.map((venue) => {
+                  const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
+
+                  return (
+                    <TouchableOpacity
+                      key={venue.id}
+                      style={styles.nearbyVenueCard}
+                      onPress={() => handleVenuePress(venue)}
+                    >
+                      <Image
+                        source={imageSource}
+                        style={styles.nearbyVenueImage}
+                        resizeMode="cover"
+                      />
+
+                      <View style={styles.nearbyVenueInfo}>
+                        {!!(venue.discount || venue.discountPercentage) && (
+                          <View style={styles.nearbyDiscountBadge}>
+                            <Text style={styles.nearbyDiscountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
+                          </View>
+                        )}
+
+                        <Text style={styles.nearbyVenueName} numberOfLines={1}>
                           {String(venue.name || 'Venue')}
                         </Text>
 
-                        <View style={styles.venueLocation}>
+                        <View style={styles.nearbyVenueLocation}>
                           <MaterialIcons
                             name="location-on"
                             size={14}
                             color={theme.colors.textSecondary}
                           />
-                          <Text style={styles.venueLocationText} numberOfLines={1}>
+                          <Text style={styles.nearbyVenueLocationText} numberOfLines={1}>
                             {String(venue.city || 'Lahore')}, Pakistan
                           </Text>
                           {venue.distanceKm != null && (
-                            <Text style={styles.venueDistance}>
+                            <Text style={styles.nearbyVenueDistance}>
                               • {String(formatDistance(venue.distanceKm))}
                             </Text>
                           )}
                         </View>
 
-                        <View style={styles.venuePriceContainer}>
+                        <View style={styles.nearbyVenuePriceContainer}>
                           {!!(venue.discount || venue.discountPercentage) && (
-                            <Text style={styles.venueOriginalPrice}>
+                            <Text style={styles.nearbyVenueOriginalPrice}>
                               PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
                             </Text>
                           )}
-                          <Text style={styles.venuePrice}>
+                          <Text style={styles.nearbyVenuePrice}>
                             PKR {String((venue.discount || venue.discountPercentage)
                               ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
                               : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
@@ -394,117 +524,120 @@ export default function HomeScreen({ navigation }) {
                           </Text>
                         </View>
                       </View>
-                    </View>
 
-                    <TouchableOpacity style={styles.favoriteButton}>
-                      <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
+                      <View style={styles.nearbyVenueRating}>
+                        <MaterialIcons name="star" size={16} color="#FFD700" />
+                        <Text style={styles.nearbyRatingText}>{String(venue.rating || 4.5)}</Text>
+                      </View>
+
+                      <TouchableOpacity style={styles.nearbyFavoriteButton}>
+                        <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
+                      </TouchableOpacity>
                     </TouchableOpacity>
-
-                    {!!(venue.discount || venue.discountPercentage) && (
-                      <View style={styles.discountBadge}>
-                        <Text style={styles.discountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No venues found</Text>
+                  );
+                })
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No nearby venues found</Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
 
-        {/* Nearby Venues */}
-        <View style={styles.venuesSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <Text style={styles.sectionTitle}>Nearby Venues</Text>
-              <Text style={styles.sectionSubtitle}>Within 10km radius</Text>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('VenueList')}>
-              <Text style={styles.seeAllText}>See all</Text>
-            </TouchableOpacity>
-          </View>
-
-          {nearbyVenues.length > 0 ? (
-            nearbyVenues.map((venue) => {
-              const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
-
-              return (
-                <TouchableOpacity
-                  key={venue.id}
-                  style={styles.nearbyVenueCard}
-                  onPress={() => handleVenuePress(venue)}
-                >
-                  <Image
-                    source={imageSource}
-                    style={styles.nearbyVenueImage}
-                    resizeMode="cover"
-                  />
-
-                  <View style={styles.nearbyVenueInfo}>
-                    {!!(venue.discount || venue.discountPercentage) && (
-                      <View style={styles.nearbyDiscountBadge}>
-                        <Text style={styles.nearbyDiscountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
-                      </View>
-                    )}
-
-                    <Text style={styles.nearbyVenueName} numberOfLines={1}>
-                      {String(venue.name || 'Venue')}
-                    </Text>
-
-                    <View style={styles.nearbyVenueLocation}>
-                      <MaterialIcons
-                        name="location-on"
-                        size={14}
-                        color={theme.colors.textSecondary}
-                      />
-                      <Text style={styles.nearbyVenueLocationText} numberOfLines={1}>
-                        {String(venue.city || 'Lahore')}, Pakistan
-                      </Text>
-                      {venue.distanceKm != null && (
-                        <Text style={styles.nearbyVenueDistance}>
-                          • {String(formatDistance(venue.distanceKm))}
-                        </Text>
-                      )}
-                    </View>
-
-                    <View style={styles.nearbyVenuePriceContainer}>
-                      {!!(venue.discount || venue.discountPercentage) && (
-                        <Text style={styles.nearbyVenueOriginalPrice}>
-                          PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
-                        </Text>
-                      )}
-                      <Text style={styles.nearbyVenuePrice}>
-                        PKR {String((venue.discount || venue.discountPercentage)
-                          ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
-                          : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
-                        <Text style={styles.priceUnit}> /hour</Text>
-                      </Text>
-                    </View>
+            {/* Sport-Specific Sections */}
+            {[{ name: 'Cricket', icon: 'sports-cricket', venues: cricketVenues },
+            { name: 'Futsal', icon: 'sports-soccer', venues: futsalVenues },
+            { name: 'Padel', icon: 'sports-tennis', venues: padelVenues },
+            ].map(sportSection => (
+              sportSection.venues.length > 0 && (
+                <View key={sportSection.name} style={styles.venuesSection}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>{sportSection.name} Venues</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('VenueList', { selectedSport: sportSection.name })}>
+                      <Text style={styles.seeAllText}>See all</Text>
+                    </TouchableOpacity>
                   </View>
 
-                  <View style={styles.nearbyVenueRating}>
-                    <MaterialIcons name="star" size={16} color="#FFD700" />
-                    <Text style={styles.nearbyRatingText}>{String(venue.rating || 4.5)}</Text>
-                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.venuesScroll}
+                  >
+                    {sportSection.venues.map((venue) => {
+                      const imageSource = venue.images?.[0] ? { uri: venue.images[0] } : getVenueImageBySport(venue);
+                      return (
+                        <TouchableOpacity
+                          key={venue.id}
+                          style={styles.venueCard}
+                          onPress={() => handleVenuePress(venue)}
+                        >
+                          <Image
+                            source={imageSource}
+                            style={styles.venueImage}
+                            resizeMode="cover"
+                          />
 
-                  <TouchableOpacity style={styles.nearbyFavoriteButton}>
-                    <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              );
-            })
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No nearby venues found</Text>
-            </View>
-          )}
-        </View>
+                          <View style={styles.venueInfoGlass}>
+                            <View style={styles.blurLayer} />
+                            <View style={styles.venueInfo}>
+                              <View style={styles.venueHeader}>
+                                <View style={styles.ratingContainer}>
+                                  <MaterialIcons name="star" size={16} color="#FFD700" />
+                                  <Text style={styles.ratingText}>{String(venue.rating || 4.5)}</Text>
+                                </View>
+                              </View>
 
-        <View style={{ height: 100 }} />
+                              <Text style={styles.venueName} numberOfLines={1}>
+                                {String(venue.name || 'Venue')}
+                              </Text>
+
+                              <View style={styles.venueLocation}>
+                                <MaterialIcons name="location-on" size={14} color={theme.colors.textSecondary} />
+                                <Text style={styles.venueLocationText} numberOfLines={1}>
+                                  {String(venue.city || 'Lahore')}, Pakistan
+                                </Text>
+                                {venue.distanceKm != null && (
+                                  <Text style={styles.venueDistance}>
+                                    • {String(formatDistance(venue.distanceKm))}
+                                  </Text>
+                                )}
+                              </View>
+
+                              <View style={styles.venuePriceContainer}>
+                                {!!(venue.discount || venue.discountPercentage) && (
+                                  <Text style={styles.venueOriginalPrice}>
+                                    PKR {String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}
+                                  </Text>
+                                )}
+                                <Text style={styles.venuePrice}>
+                                  PKR {String((venue.discount || venue.discountPercentage)
+                                    ? Math.round((venue.pricePerHour || venue.pricing?.basePrice || 1500) * (1 - (venue.discount || venue.discountPercentage) / 100))
+                                    : (venue.pricePerHour || venue.pricing?.basePrice || 1500))}
+                                  <Text style={styles.priceUnit}> /hour</Text>
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+
+                          <TouchableOpacity style={styles.favoriteButton}>
+                            <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
+                          </TouchableOpacity>
+
+                          {!!(venue.discount || venue.discountPercentage) && (
+                            <View style={styles.discountBadge}>
+                              <Text style={styles.discountText}>{String(venue.discount || venue.discountPercentage)}% Off</Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )
+            ))}
+
+            <View style={{ height: 100 }} />
+          </>
+        )}
       </ScrollView>
 
       {/* Filter Modal */}
@@ -692,6 +825,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.primary,
     fontFamily: 'Montserrat_600SemiBold',
+  },
+  sportSectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sportSectionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   venuesScroll: {
     paddingHorizontal: 20,

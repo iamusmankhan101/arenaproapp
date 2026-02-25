@@ -20,6 +20,7 @@ const challengeRoutes = require('./routes/challenges');
 const teamRoutes = require('./routes/teams');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payments');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 
@@ -80,6 +81,7 @@ app.use(`/api/challenges`, challengeRoutes);
 app.use(`/api/teams`, teamRoutes);
 app.use(`/api/admin`, adminRoutes);
 app.use(`/api/payments`, paymentRoutes);
+app.use(`/api/notifications`, notificationRoutes);
 
 // 404 handler
 app.all('*', (req, res) => {

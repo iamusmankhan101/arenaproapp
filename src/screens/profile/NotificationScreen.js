@@ -12,11 +12,9 @@ import { Text } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { theme } from '../../theme/theme';
-
-const NOTIFICATIONS_STORAGE_KEY = '@notifications_state';
 
 export default function NotificationScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -24,16 +22,51 @@ export default function NotificationScreen({ navigation }) {
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch real-time notifications from Firestore
+  // Fetch real-time notifications from Firestore notifications collection + bookings
   useEffect(() => {
     if (!user?.uid) {
       setIsLoading(false);
       return;
     }
 
-    console.log('📬 NotificationScreen: Setting up real-time listener for user:', user.uid);
+    console.log('📬 NotificationScreen: Setting up listeners for user:', user.uid);
 
-    // Subscribe to user's bookings for booking notifications
+    const allNotifications = { fromNotifs: [], fromBookings: [] };
+
+    // 1. Listen to 'notifications' collection for all notification types
+    const notifsRef = collection(db, 'notifications');
+    const notifsQuery = query(
+      notifsRef,
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubNotifs = onSnapshot(notifsQuery, (snapshot) => {
+      const notifs = [];
+      snapshot.forEach((docSnap) => {
+        const data = { id: docSnap.id, ...docSnap.data() };
+        const createdAt = data.createdAt?.toDate() || new Date();
+        notifs.push({
+          id: docSnap.id,
+          type: data.type || 'system',
+          icon: data.icon || 'notifications',
+          title: data.title || 'Notification',
+          message: data.message || '',
+          time: getTimeAgo(createdAt),
+          isRead: data.read || false,
+          section: getSection(createdAt),
+          createdAt,
+          data: data.data || {},
+          source: 'notifications',
+        });
+      });
+      allNotifications.fromNotifs = notifs;
+      mergeAndSetNotifications(allNotifications);
+    }, (error) => {
+      console.error('❌ Error fetching notifications:', error);
+    });
+
+    // 2. Listen to 'bookings' collection for booking notifications (backward compat)
     const bookingsRef = collection(db, 'bookings');
     const bookingsQuery = query(
       bookingsRef,
@@ -41,39 +74,45 @@ export default function NotificationScreen({ navigation }) {
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(bookingsQuery, (snapshot) => {
-      const bookingNotifications = [];
-      
-      snapshot.forEach((doc) => {
-        const booking = { id: doc.id, ...doc.data() };
-        
-        // Create notification based on booking status
+    const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
+      const bookingNotifs = [];
+      snapshot.forEach((docSnap) => {
+        const booking = { id: docSnap.id, ...docSnap.data() };
         const notification = createBookingNotification(booking);
         if (notification) {
-          bookingNotifications.push(notification);
+          bookingNotifs.push(notification);
         }
       });
-
-      console.log('📬 Loaded booking notifications:', bookingNotifications.length);
-      setNotifications(bookingNotifications);
-      setIsLoading(false);
+      allNotifications.fromBookings = bookingNotifs;
+      mergeAndSetNotifications(allNotifications);
     }, (error) => {
-      console.error('❌ Error fetching notifications:', error);
-      setIsLoading(false);
+      console.error('❌ Error fetching booking notifications:', error);
     });
 
-    return () => unsubscribe();
+    setIsLoading(false);
+
+    return () => {
+      unsubNotifs();
+      unsubBookings();
+    };
   }, [user?.uid]);
+
+  // Merge notifications from both sources, deduplicate by type+id, sort by date
+  const mergeAndSetNotifications = (sources) => {
+    const all = [...sources.fromNotifs, ...sources.fromBookings];
+    // Sort by createdAt desc
+    all.sort((a, b) => b.createdAt - a.createdAt);
+    setNotifications(all);
+  };
 
   // Create notification object from booking data
   const createBookingNotification = (booking) => {
     if (!booking.createdAt) return null;
 
-    const createdAt = booking.createdAt.toDate();
+    const createdAt = booking.createdAt.toDate ? booking.createdAt.toDate() : new Date(booking.createdAt);
     const timeAgo = getTimeAgo(createdAt);
     const section = getSection(createdAt);
 
-    // Determine notification type and content based on booking status
     let type, icon, title, message;
 
     switch (booking.status) {
@@ -83,46 +122,37 @@ export default function NotificationScreen({ navigation }) {
         title = 'Booking Confirmed';
         message = String('Your booking at ' + (booking.venueName || 'venue') + ' has been confirmed for ' + formatBookingDate(booking.date) + ' at ' + booking.startTime + '.');
         break;
-      
       case 'pending':
         type = 'booking';
         icon = 'schedule';
         title = 'Booking Pending';
-        message = String('Your booking at ' + (booking.venueName || 'venue') + ' is pending confirmation. We\'ll notify you once confirmed.');
+        message = String('Your booking at ' + (booking.venueName || 'venue') + ' is pending confirmation.');
         break;
-      
       case 'cancelled':
         type = 'booking';
         icon = 'cancel';
         title = 'Booking Cancelled';
-        message = String('Your booking at ' + (booking.venueName || 'venue') + ' has been cancelled. ' + (booking.refundStatus ? 'Refund will be processed in 3-5 days.' : ''));
+        message = String('Your booking at ' + (booking.venueName || 'venue') + ' has been cancelled.');
         break;
-      
       case 'completed':
         type = 'booking';
         icon = 'check-circle';
         title = 'Booking Completed';
-        message = String('Thank you for using Arena Pro. Your booking at ' + (booking.venueName || 'venue') + ' is complete.');
+        message = String('Your booking at ' + (booking.venueName || 'venue') + ' is complete.');
         break;
-      
       default:
-        // New booking notification
         type = 'booking';
         icon = 'event-available';
-        title = 'New Booking Created';
-        message = String('Your booking at ' + (booking.venueName || 'venue') + ' for ' + formatBookingDate(booking.date) + ' at ' + booking.startTime + ' has been created.');
+        title = 'New Booking';
+        message = String('Your booking at ' + (booking.venueName || 'venue') + ' for ' + formatBookingDate(booking.date) + ' has been created.');
     }
 
-    // Add payment notification if payment was made
-    if (booking.paymentStatus === 'paid' || booking.paymentStatus === 'partial') {
-      // This could be a separate notification, but for now we'll just update the message
-      if (booking.advancePaid > 0) {
-        message = String(message + ' Advance payment of PKR ' + booking.advancePaid + ' received.');
-      }
+    if (booking.advancePaid > 0) {
+      message = String(message + ' Advance: PKR ' + booking.advancePaid + '.');
     }
 
     return {
-      id: booking.id,
+      id: 'booking_' + booking.id,
       type,
       icon,
       title,
@@ -131,39 +161,27 @@ export default function NotificationScreen({ navigation }) {
       isRead: booking.notificationRead || false,
       section,
       createdAt,
-      bookingId: booking.id
+      data: { bookingId: booking.id },
+      source: 'bookings',
     };
   };
 
-  // Format booking date for display
   const formatBookingDate = (dateString) => {
     if (!dateString) return 'upcoming date';
-    
     try {
       const [year, month, day] = dateString.split('-').map(Number);
       const date = new Date(year, month - 1, day);
-      
       const today = new Date();
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
-      
-      if (date.toDateString() === today.toDateString()) {
-        return 'today';
-      } else if (date.toDateString() === tomorrow.toDateString()) {
-        return 'tomorrow';
-      } else {
-        return date.toLocaleDateString('en-US', { 
-          weekday: 'short', 
-          month: 'short', 
-          day: 'numeric' 
-        });
-      }
+      if (date.toDateString() === today.toDateString()) return 'today';
+      if (date.toDateString() === tomorrow.toDateString()) return 'tomorrow';
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     } catch (error) {
       return dateString;
     }
   };
 
-  // Calculate time ago from timestamp
   const getTimeAgo = (date) => {
     const now = new Date();
     const diffMs = now - date;
@@ -178,15 +196,12 @@ export default function NotificationScreen({ navigation }) {
     return String(Math.floor(diffDays / 7) + 'w');
   };
 
-  // Determine section (today, yesterday, older)
   const getSection = (date) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
     const notifDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    
     if (notifDate.getTime() === today.getTime()) return 'today';
     if (notifDate.getTime() === yesterday.getTime()) return 'yesterday';
     return 'older';
@@ -195,23 +210,23 @@ export default function NotificationScreen({ navigation }) {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const markAllAsRead = async (section) => {
-    const notificationsToUpdate = notifications.filter(
-      n => n.section === section && !n.isRead
-    );
+    const toUpdate = notifications.filter(n => n.section === section && !n.isRead);
 
-    // Update in Firestore
-    for (const notif of notificationsToUpdate) {
+    for (const notif of toUpdate) {
       try {
-        const bookingRef = doc(db, 'bookings', notif.bookingId);
-        await updateDoc(bookingRef, {
-          notificationRead: true
-        });
+        if (notif.source === 'notifications') {
+          const notifRef = doc(db, 'notifications', notif.id);
+          await updateDoc(notifRef, { read: true });
+        } else if (notif.source === 'bookings') {
+          const bookingId = notif.data?.bookingId || notif.id.replace('booking_', '');
+          const bookingRef = doc(db, 'bookings', bookingId);
+          await updateDoc(bookingRef, { notificationRead: true });
+        }
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
     }
 
-    // Update local state
     setNotifications(prev =>
       prev.map(notif =>
         notif.section === section ? { ...notif, isRead: true } : notif
@@ -223,17 +238,19 @@ export default function NotificationScreen({ navigation }) {
     const notification = notifications.find(n => n.id === id);
     if (!notification || notification.isRead) return;
 
-    // Update in Firestore
     try {
-      const bookingRef = doc(db, 'bookings', notification.bookingId);
-      await updateDoc(bookingRef, {
-        notificationRead: true
-      });
+      if (notification.source === 'notifications') {
+        const notifRef = doc(db, 'notifications', notification.id);
+        await updateDoc(notifRef, { read: true });
+      } else if (notification.source === 'bookings') {
+        const bookingId = notification.data?.bookingId || notification.id.replace('booking_', '');
+        const bookingRef = doc(db, 'bookings', bookingId);
+        await updateDoc(bookingRef, { notificationRead: true });
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
 
-    // Update local state
     setNotifications(prev =>
       prev.map(notif =>
         notif.id === id ? { ...notif, isRead: true } : notif
@@ -243,20 +260,30 @@ export default function NotificationScreen({ navigation }) {
 
   const getIconColor = (type) => {
     switch (type) {
-      case 'booking':
-        return theme.colors.primary;
-      case 'challenge':
-        return '#9C27B0'; // Purple for challenges
-      case 'offer':
-        return '#FF9800'; // Orange for offers
-      case 'review':
-        return '#FFD700'; // Gold for reviews
-      case 'payment':
-        return '#4CAF50'; // Green for payments
-      case 'system':
-        return '#2196F3'; // Blue for system notifications
-      default:
-        return theme.colors.primary;
+      case 'booking': return theme.colors.primary;
+      case 'challenge': return '#9C27B0';
+      case 'squad': return '#FF5722';
+      case 'offer': return '#FF9800';
+      case 'payment': return '#4CAF50';
+      case 'system': return '#2196F3';
+      default: return theme.colors.primary;
+    }
+  };
+
+  const handleNotificationPress = (notification) => {
+    markAsRead(notification.id);
+    const data = notification.data || {};
+
+    if (notification.type === 'booking') {
+      navigation.navigate('MainTabs', { screen: 'Bookings' });
+    } else if (notification.type === 'challenge') {
+      if (data.challengeId) {
+        navigation.navigate('ChallengeDetail', { challengeId: data.challengeId });
+      } else {
+        navigation.navigate('MainTabs', { screen: 'Lalkaar' });
+      }
+    } else if (notification.type === 'squad') {
+      navigation.navigate('MainTabs', { screen: 'SquadBuilder' });
     }
   };
 
@@ -270,13 +297,7 @@ export default function NotificationScreen({ navigation }) {
         styles.notificationCard,
         !notification.isRead && styles.unreadCard
       ]}
-      onPress={() => {
-        markAsRead(notification.id);
-        // Navigate to booking details if it's a booking notification
-        if (notification.type === 'booking' && notification.bookingId) {
-          navigation.navigate('Bookings');
-        }
-      }}
+      onPress={() => handleNotificationPress(notification)}
       activeOpacity={0.7}
     >
       <View style={[styles.iconContainer, { backgroundColor: `${getIconColor(notification.type)}15` }]}>
@@ -303,16 +324,31 @@ export default function NotificationScreen({ navigation }) {
     </TouchableOpacity>
   );
 
-  // Show loading state
+  const renderSection = (title, sectionNotifications, sectionKey) => {
+    if (sectionNotifications.length === 0) return null;
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          {sectionNotifications.some(n => !n.isRead) && (
+            <TouchableOpacity onPress={() => markAllAsRead(sectionKey)}>
+              <Text style={styles.markAllText}>Mark all as read</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        {sectionNotifications.map(notification => (
+          <NotificationCard key={notification.id} notification={notification} />
+        ))}
+      </View>
+    );
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
         <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : 20 }]}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <MaterialIcons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Notification</Text>
@@ -329,12 +365,8 @@ export default function NotificationScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-      {/* Header */}
       <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : 20 }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
 
@@ -354,61 +386,10 @@ export default function NotificationScreen({ navigation }) {
           { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom : 40 }
         ]}
       >
-        {/* Today Section */}
-        {todayNotifications.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>TODAY</Text>
-              {todayNotifications.some(n => !n.isRead) && (
-                <TouchableOpacity onPress={() => markAllAsRead('today')}>
-                  <Text style={styles.markAllText}>Mark all as read</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+        {renderSection('TODAY', todayNotifications, 'today')}
+        {renderSection('YESTERDAY', yesterdayNotifications, 'yesterday')}
+        {renderSection('OLDER', olderNotifications, 'older')}
 
-            {todayNotifications.map(notification => (
-              <NotificationCard key={notification.id} notification={notification} />
-            ))}
-          </View>
-        )}
-
-        {/* Yesterday Section */}
-        {yesterdayNotifications.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>YESTERDAY</Text>
-              {yesterdayNotifications.some(n => !n.isRead) && (
-                <TouchableOpacity onPress={() => markAllAsRead('yesterday')}>
-                  <Text style={styles.markAllText}>Mark all as read</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {yesterdayNotifications.map(notification => (
-              <NotificationCard key={notification.id} notification={notification} />
-            ))}
-          </View>
-        )}
-
-        {/* Older Section */}
-        {olderNotifications.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>OLDER</Text>
-              {olderNotifications.some(n => !n.isRead) && (
-                <TouchableOpacity onPress={() => markAllAsRead('older')}>
-                  <Text style={styles.markAllText}>Mark all as read</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {olderNotifications.map(notification => (
-              <NotificationCard key={notification.id} notification={notification} />
-            ))}
-          </View>
-        )}
-
-        {/* Empty State */}
         {notifications.length === 0 && (
           <View style={styles.emptyState}>
             <MaterialIcons name="notifications-none" size={80} color="#E0E0E0" />

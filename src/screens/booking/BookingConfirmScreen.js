@@ -37,6 +37,7 @@ import { theme } from '../../theme/theme';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadToCloudinary } from '../../services/cloudinaryService';
 import { emailService } from '../../services/emailService';
+import { notificationService } from '../../services/notificationService';
 import { REFERRAL_CONSTANTS, calculateDiscountedTotal } from '../../utils/referralUtils';
 
 const { width, height } = Dimensions.get('window');
@@ -281,6 +282,20 @@ export default function BookingConfirmScreen({ route, navigation }) {
           } catch (emailError) {
             console.log('⚠️ Failed to send booking email:', emailError);
           }
+        }
+
+        // Send push notification for booking confirmation
+        try {
+          await notificationService.notify({
+            userId: user?.uid,
+            type: 'booking',
+            title: 'Booking Confirmed! 🎉',
+            message: `Your booking at ${turf?.name || 'venue'} for ${formattedDate} at ${slot.startTime} is confirmed!`,
+            icon: 'event-available',
+            data: { bookingId: result.bookingId },
+          });
+        } catch (notifError) {
+          console.log('⚠️ Failed to send booking notification:', notifError);
         }
       }
 

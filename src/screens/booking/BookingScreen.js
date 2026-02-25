@@ -26,6 +26,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { safeDate } from '../../utils/dateUtils';
 import { theme } from '../../theme/theme';
 import { useFocusEffect } from '@react-navigation/native';
+import { BookingCardSkeleton } from '../../components/SkeletonLoader';
 
 export default function BookingScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -289,45 +290,53 @@ export default function BookingScreen({ navigation }) {
         )}
 
         {/* Bookings List */}
-        <FlatList
-          data={filteredBookings}
-          renderItem={renderBooking}
-          keyExtractor={item => item.id.toString()}
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing || loading}
-              onRefresh={onRefresh}
-              colors={[theme.colors.primary]}
-              tintColor={theme.colors.primary}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <MaterialIcons name="event-busy" size={80} color="#ccc" style={{ marginBottom: 20 }} />
-              <Text style={styles.emptyTitle}>
-                {getEmptyMessage()}
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                {selectedTab === 'upcoming' || selectedTab === 'all'
-                  ? 'Discover amazing sports venues near you'
-                  : 'Your booking history will appear here'}
-              </Text>
-              {(selectedTab === 'upcoming' || selectedTab === 'all') && !searchQuery.trim() && (
-                <Button
-                  mode="contained"
-                  style={[styles.bookNowButton, { backgroundColor: theme.colors.primary }]}
-                  contentStyle={styles.bookNowButtonContent}
-                  labelStyle={{ color: theme.colors.secondary, fontFamily: 'Montserrat_700Bold' }}
-                  onPress={() => navigation.navigate('VenueList')}
-                >
-                  Book a Ground
-                </Button>
-              )}
-            </View>
-          }
-        />
+        {loading && userBookings.length === 0 ? (
+          <View style={styles.list}>
+            {[1, 2, 3, 4].map(i => (
+              <BookingCardSkeleton key={i} />
+            ))}
+          </View>
+        ) : (
+          <FlatList
+            data={filteredBookings}
+            renderItem={renderBooking}
+            keyExtractor={item => item.id.toString()}
+            contentContainerStyle={styles.list}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing || loading}
+                onRefresh={onRefresh}
+                colors={[theme.colors.primary]}
+                tintColor={theme.colors.primary}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <MaterialIcons name="event-busy" size={80} color="#ccc" style={{ marginBottom: 20 }} />
+                <Text style={styles.emptyTitle}>
+                  {getEmptyMessage()}
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  {selectedTab === 'upcoming' || selectedTab === 'all'
+                    ? 'Discover amazing sports venues near you'
+                    : 'Your booking history will appear here'}
+                </Text>
+                {(selectedTab === 'upcoming' || selectedTab === 'all') && !searchQuery.trim() && (
+                  <Button
+                    mode="contained"
+                    style={[styles.bookNowButton, { backgroundColor: theme.colors.primary }]}
+                    contentStyle={styles.bookNowButtonContent}
+                    labelStyle={{ color: theme.colors.secondary, fontFamily: 'Montserrat_700Bold' }}
+                    onPress={() => navigation.navigate('VenueList')}
+                  >
+                    Book a Ground
+                  </Button>
+                )}
+              </View>
+            }
+          />
+        )}
       </View>
     </View>
   );

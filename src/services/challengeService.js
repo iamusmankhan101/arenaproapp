@@ -1,5 +1,6 @@
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { notificationService } from './notificationService';
 
 // Collection reference
 const challengesRef = collection(db, 'challenges');
@@ -62,6 +63,11 @@ export const challengeService = {
     acceptChallenge: async (challengeId, opponentId, opponentName, opponentData = {}) => {
         try {
             const challengeDocRef = doc(db, 'challenges', challengeId);
+
+            // Get challenge data first to notify the creator
+            const challengeSnap = await getDoc(challengeDocRef);
+            const challengeData = challengeSnap.exists() ? challengeSnap.data() : null;
+
             await updateDoc(challengeDocRef, {
                 status: 'accepted',
                 opponentId,
@@ -73,6 +79,23 @@ export const challengeService = {
                 },
                 matchedAt: serverTimestamp()
             });
+
+            // Notify the challenge creator
+            if (challengeData?.challengerId) {
+                try {
+                    await notificationService.notify({
+                        userId: challengeData.challengerId,
+                        type: 'challenge',
+                        title: 'Challenge Accepted! 🏆',
+                        message: `${opponentName} has accepted your ${challengeData.sport || ''} challenge!`,
+                        icon: 'sports-soccer',
+                        data: { challengeId },
+                    });
+                } catch (notifError) {
+                    console.error('⚠️ Failed to send challenge accepted notification:', notifError);
+                }
+            }
+
             return { success: true };
         } catch (error) {
             console.error("Error accepting challenge:", error);

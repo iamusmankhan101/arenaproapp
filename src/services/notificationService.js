@@ -1,94 +1,184 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PermissionsAndroid, Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
-// Dynamically import messaging only if it exists (for native builds)
-// NOTE: Commented out to prevent Metro resolver errors in Expo Go
-let messaging = null;
-/*
-try {
-    messaging = require('@react-native-firebase/messaging').default;
-} catch (e) {
-    console.log('Firebase Messaging native module not available');
-}
-*/
+// Configure how notifications appear when app is in foreground
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+    }),
+});
 
 export const notificationService = {
-    // Request permission
-    requestUserPermission: async () => {
-        if (!messaging) {
-            console.log('Push notifications skipping: Native module not found');
-            return false;
-        }
-
+    /**
+     * Register for push notifications and return the Expo push token
+     */
+    registerForPushNotifications: async () => {
         try {
+            // Must be a physical device
+            if (!Device.isDevice) {
+                console.log('📱 Push notifications require a physical device');
+                return null;
+            }
+
+            // Check existing permissions
+            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            let finalStatus = existingStatus;
+
+            // Request permission if not granted
+            if (existingStatus !== 'granted') {
+                const { status } = await Notifications.requestPermissionsAsync();
+                finalStatus = status;
+            }
+
+            if (finalStatus !== 'granted') {
+                console.log('❌ Push notification permission not granted');
+                return null;
+            }
+
+            // Get Expo push token
+            const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+            const tokenData = await Notifications.getExpoPushTokenAsync({
+                projectId: projectId,
+            });
+
+            const token = tokenData.data;
+            console.log('✅ Expo Push Token:', token);
+
+            // Set up Android notification channel
             if (Platform.OS === 'android') {
-                const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
-                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                    return true;
-                }
+                await Notifications.setNotificationChannelAsync('default', {
+                    name: 'Arena Pro',
+                    importance: Notifications.AndroidImportance.MAX,
+                    vibrationPattern: [0, 250, 250, 250],
+                    lightColor: '#004d43',
+                    sound: 'default',
+                });
             }
 
-            const authStatus = await messaging().requestPermission();
-            const enabled =
-                authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-                authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-            console.log('Authorization status:', authStatus);
-            return enabled;
+            return token;
         } catch (error) {
-            console.log('Error requesting permission:', error);
-            return false;
-        }
-    },
-
-    // Get FCM Token
-    getFCMToken: async () => {
-        if (!messaging) return null;
-        try {
-            // Check if we already have a token
-            const fcmToken = await AsyncStorage.getItem('fcmToken');
-            if (fcmToken) {
-                console.log('Found saved FCM token:', fcmToken);
-                return fcmToken;
-            }
-
-            // If not, get a new one
-            const token = await messaging().getToken();
-            if (token) {
-                console.log('New FCM token:', token);
-                await AsyncStorage.setItem('fcmToken', token);
-                return token;
-            }
-        } catch (error) {
-            console.log('Error getting FCM token:', error);
+            console.error('❌ Error registering for push notifications:', error);
             return null;
         }
     },
 
-    // Listen for Token Refresh
-    onTokenRefresh: (callback) => {
-        if (!messaging) return () => { };
+    /**
+     * Save the push token to the user's Firestore document
+     */
+    savePushToken: async (userId, token) => {
+        if (!userId || !token) return;
         try {
-            return messaging().onTokenRefresh(token => {
-                console.log('FCM Token refreshed:', token);
-                AsyncStorage.setItem('fcmToken', token);
-                callback(token);
-            });
+            const userRef = doc(db, 'users', userId);
+            await setDoc(userRef, {
+                expoPushToken: token,
+                pushTokenUpdatedAt: serverTimestamp(),
+            }, { merge: true });
+            console.log('✅ Push token saved to Firestore');
         } catch (error) {
-            console.log('Error in onTokenRefresh:', error);
-            return () => { };
+            console.error('❌ Error saving push token:', error);
         }
     },
 
-    // Background Handler (Must be called early outside components)
-    setBackgroundMessageHandler: () => {
-        if (!messaging) return;
+    /**
+     * Create a notification in the Firestore notifications collection
+     * This triggers the NotificationScreen to show it AND can be used to send a push
+     */
+    createNotification: async ({ userId, type, title, message, icon, data = {} }) => {
+        if (!userId) return null;
         try {
-            messaging().setBackgroundMessageHandler(async remoteMessage => {
-                console.log('Message handled in the background!', remoteMessage);
+            const notifRef = collection(db, 'notifications');
+            const docRef = await addDoc(notifRef, {
+                userId,
+                type,        // 'booking', 'challenge', 'squad', 'system'
+                title,
+                message,
+                icon: icon || 'notifications',
+                read: false,
+                data,        // Extra context: bookingId, challengeId, etc.
+                createdAt: serverTimestamp(),
             });
+            console.log('📬 Notification created:', title);
+            return docRef.id;
         } catch (error) {
-            console.log('Error setting background handler:', error);
+            console.error('❌ Error creating notification:', error);
+            return null;
         }
-    }
+    },
+
+    /**
+     * Send a local push notification immediately (works in Expo Go)
+     */
+    sendLocalNotification: async ({ title, body, data = {} }) => {
+        try {
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title,
+                    body,
+                    data,
+                    sound: 'default',
+                },
+                trigger: null, // null = send immediately
+            });
+            console.log('📤 Local notification sent:', title);
+        } catch (error) {
+            console.error('❌ Error sending local notification:', error);
+        }
+    },
+
+    /**
+     * Create a Firestore notification AND send a local push notification
+     * This is the primary method to call from event triggers
+     */
+    notify: async ({ userId, type, title, message, icon, data = {} }) => {
+        // Write to Firestore (for NotificationScreen)
+        await notificationService.createNotification({ userId, type, title, message, icon, data });
+
+        // Also send a local push notification for immediate feedback
+        await notificationService.sendLocalNotification({ title, body: message, data: { type, ...data } });
+    },
+
+    /**
+     * Set up notification response listener (when user taps a notification)
+     * Returns a cleanup function to remove the listener
+     */
+    setupResponseListener: (navigation) => {
+        const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+            const data = response.notification.request.content.data;
+            console.log('📬 Notification tapped:', data);
+
+            // Navigate based on notification type
+            if (data.type === 'booking') {
+                navigation.navigate('MainTabs', { screen: 'Bookings' });
+            } else if (data.type === 'challenge') {
+                if (data.challengeId) {
+                    navigation.navigate('ChallengeDetail', { challengeId: data.challengeId });
+                } else {
+                    navigation.navigate('MainTabs', { screen: 'Lalkaar' });
+                }
+            } else if (data.type === 'squad') {
+                navigation.navigate('MainTabs', { screen: 'SquadBuilder' });
+            }
+        });
+
+        return () => subscription.remove();
+    },
+
+    /**
+     * Set up foreground notification listener
+     * Returns a cleanup function
+     */
+    setupForegroundListener: (callback) => {
+        const subscription = Notifications.addNotificationReceivedListener(notification => {
+            console.log('📬 Foreground notification:', notification.request.content.title);
+            if (callback) callback(notification);
+        });
+
+        return () => subscription.remove();
+    },
 };

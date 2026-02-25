@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSelector, useDispatch } from 'react-redux';
@@ -7,6 +7,7 @@ import { theme } from '../theme/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import CustomTabBar from '../components/CustomTabBar';
 import * as Linking from 'expo-linking';
+import { notificationService } from '../services/notificationService';
 
 // Admin Components
 import AdminLoginScreen from '../screens/admin/AdminLoginScreen';
@@ -126,6 +127,28 @@ export default function AppNavigator() {
   }, [dispatch]);
 
   const [hasLocationPermission, setHasLocationPermission] = useState(null);
+  const navigationRef = useRef(null);
+
+  // Register for push notifications when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.uid) {
+      const initPushNotifications = async () => {
+        try {
+          const token = await notificationService.registerForPushNotifications();
+          if (token) {
+            await notificationService.savePushToken(user.uid, token);
+          }
+        } catch (error) {
+          console.log('⚠️ Push notification setup error:', error);
+        }
+      };
+      initPushNotifications();
+
+      // Set up foreground notification listener
+      const cleanupForeground = notificationService.setupForegroundListener();
+      return () => cleanupForeground();
+    }
+  }, [isAuthenticated, user?.uid]);
 
   useEffect(() => {
     async function checkPermission() {

@@ -4,12 +4,12 @@ import { theme } from '../theme/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-const SkeletonLoader = ({ 
-  width: customWidth = '100%', 
-  height = 20, 
+const SkeletonLoader = ({
+  width: customWidth = '100%',
+  height = 20,
   borderRadius = 4,
   style = {},
-  animationSpeed = 1200 
+  animationSpeed = 1200
 }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
@@ -39,19 +39,19 @@ const SkeletonLoader = ({
     outputRange: [-screenWidth, screenWidth],
   });
 
-  const skeletonWidth = typeof customWidth === 'string' && customWidth.includes('%') 
-    ? customWidth 
+  const skeletonWidth = typeof customWidth === 'string' && customWidth.includes('%')
+    ? customWidth
     : customWidth;
 
   return (
-    <View 
+    <View
       style={[
-        styles.container, 
-        { 
-          width: skeletonWidth, 
-          height, 
-          borderRadius 
-        }, 
+        styles.container,
+        {
+          width: skeletonWidth,
+          height,
+          borderRadius
+        },
         style
       ]}
     >
@@ -137,6 +137,109 @@ export const SearchBarSkeleton = () => (
   </View>
 );
 
+export const BookingCardSkeleton = () => (
+  <View style={styles.bookingCardSkeleton}>
+    <View style={styles.bookingCardRow}>
+      <SkeletonLoader width={60} height={60} borderRadius={12} />
+      <View style={styles.bookingCardInfo}>
+        <SkeletonLoader width="70%" height={16} borderRadius={4} style={{ marginBottom: 8 }} />
+        <SkeletonLoader width="50%" height={12} borderRadius={4} style={{ marginBottom: 6 }} />
+        <SkeletonLoader width="40%" height={12} borderRadius={4} />
+      </View>
+    </View>
+    <View style={styles.bookingCardFooter}>
+      <SkeletonLoader width={80} height={24} borderRadius={12} />
+      <SkeletonLoader width={60} height={24} borderRadius={12} />
+    </View>
+  </View>
+);
+
+export const SquadCardSkeleton = () => (
+  <View style={styles.squadCardSkeleton}>
+    <View style={styles.squadCardHeader}>
+      <SkeletonLoader width={50} height={50} borderRadius={25} />
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <SkeletonLoader width="60%" height={16} borderRadius={4} style={{ marginBottom: 8 }} />
+        <SkeletonLoader width="40%" height={12} borderRadius={4} />
+      </View>
+      <SkeletonLoader width={60} height={24} borderRadius={12} />
+    </View>
+    <View style={styles.squadCardDetails}>
+      <SkeletonLoader width="45%" height={14} borderRadius={4} />
+      <SkeletonLoader width="35%" height={14} borderRadius={4} />
+    </View>
+    <View style={styles.squadCardDetails}>
+      <SkeletonLoader width="55%" height={14} borderRadius={4} />
+      <SkeletonLoader width="25%" height={14} borderRadius={4} />
+    </View>
+    <SkeletonLoader width="100%" height={44} borderRadius={12} style={{ marginTop: 12 }} />
+  </View>
+);
+
+export const ProfileSkeleton = () => (
+  <View style={styles.profileSkeleton}>
+    <View style={styles.profileHeader}>
+      <SkeletonLoader width={90} height={90} borderRadius={45} />
+      <SkeletonLoader width="50%" height={20} borderRadius={4} style={{ marginTop: 16 }} />
+      <SkeletonLoader width="35%" height={14} borderRadius={4} style={{ marginTop: 8 }} />
+    </View>
+    <View style={styles.profileStats}>
+      <SkeletonLoader width="30%" height={50} borderRadius={12} />
+      <SkeletonLoader width="30%" height={50} borderRadius={12} />
+      <SkeletonLoader width="30%" height={50} borderRadius={12} />
+    </View>
+    {[1, 2, 3, 4].map((i) => (
+      <View key={i} style={styles.profileMenuItem}>
+        <SkeletonLoader width={40} height={40} borderRadius={20} />
+        <SkeletonLoader width="60%" height={16} borderRadius={4} style={{ marginLeft: 16 }} />
+      </View>
+    ))}
+  </View>
+);
+
+export const NotificationSkeleton = () => (
+  <View style={styles.notificationSkeleton}>
+    {[1, 2, 3, 4].map((i) => (
+      <View key={i} style={styles.notifCardSkeleton}>
+        <SkeletonLoader width={48} height={48} borderRadius={24} />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+            <SkeletonLoader width="60%" height={16} borderRadius={4} />
+            <SkeletonLoader width={30} height={12} borderRadius={4} />
+          </View>
+          <SkeletonLoader width="90%" height={12} borderRadius={4} style={{ marginBottom: 4 }} />
+          <SkeletonLoader width="70%" height={12} borderRadius={4} />
+        </View>
+      </View>
+    ))}
+  </View>
+);
+
+export const HomeScreenSkeleton = () => (
+  <View style={styles.homeSkeletonContainer}>
+    {/* Sport categories */}
+    <View style={styles.homeSkeletonCategories}>
+      {[1, 2, 3].map(i => (
+        <SportCategorySkeleton key={i} />
+      ))}
+    </View>
+    {/* Section title */}
+    <SkeletonLoader width="50%" height={18} borderRadius={4} style={{ marginHorizontal: 20, marginBottom: 16 }} />
+    {/* Venue cards */}
+    <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 16 }}>
+      <VenueCardSkeleton />
+      <VenueCardSkeleton />
+    </View>
+    {/* Section title */}
+    <SkeletonLoader width="40%" height={18} borderRadius={4} style={{ marginHorizontal: 20, marginTop: 24, marginBottom: 16 }} />
+    {/* More venue cards */}
+    <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 16 }}>
+      <VenueCardSkeleton />
+      <VenueCardSkeleton />
+    </View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#E8F0FE',
@@ -148,7 +251,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     position: 'absolute',
   },
-  
+
   // TurfCard Skeleton
   turfCardSkeleton: {
     backgroundColor: 'white',
@@ -184,7 +287,7 @@ const styles = StyleSheet.create({
   buttonSkeleton: {
     marginTop: 8,
   },
-  
+
   // VenueCard Skeleton
   venueCardSkeleton: {
     width: 280,
@@ -207,7 +310,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  
+
   // SportCategory Skeleton
   sportCategorySkeleton: {
     alignItems: 'center',
@@ -220,7 +323,7 @@ const styles = StyleSheet.create({
   sportNameSkeleton: {
     marginTop: 4,
   },
-  
+
   // ChallengeCard Skeleton
   challengeCardSkeleton: {
     width: 280,
@@ -251,7 +354,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  
+
   // Header Skeleton
   headerSkeleton: {
     height: 250,
@@ -259,12 +362,110 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
     overflow: 'hidden',
   },
-  
+
   // SearchBar Skeleton
   searchBarSkeleton: {
     paddingHorizontal: 20,
     paddingVertical: 15,
     backgroundColor: 'white',
+  },
+
+  // BookingCard Skeleton
+  bookingCardSkeleton: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  bookingCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  bookingCardInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  bookingCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+
+  // SquadCard Skeleton
+  squadCardSkeleton: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  squadCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  squadCardDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+
+  // Profile Skeleton
+  profileSkeleton: {
+    padding: 20,
+  },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  profileStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingHorizontal: 10,
+  },
+  profileMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+
+  // Notification Skeleton
+  notificationSkeleton: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  notifCardSkeleton: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+
+  // HomeScreen Skeleton
+  homeSkeletonContainer: {
+    paddingTop: 16,
+  },
+  homeSkeletonCategories: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 24,
   },
 });
 

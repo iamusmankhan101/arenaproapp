@@ -17,11 +17,12 @@ import { theme } from '../../theme/theme';
 import { fetchChallenges, createChallenge, acceptChallenge, deleteChallenge, setUserTeam } from '../../store/slices/teamSlice';
 import ChallengeCard from '../../components/ChallengeCard';
 import CreateChallengeModal from '../../components/CreateChallengeModal';
+import { ChallengeCardSkeleton } from '../../components/SkeletonLoader';
 
 export default function ChallengeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
-  
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // all, my-challenges
@@ -178,16 +179,16 @@ export default function ChallengeScreen({ navigation }) {
 
   // Filter challenges
   const filteredChallenges = challenges.filter(challenge => {
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       challenge.teamName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       challenge.venue?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // For "My Challenges" tab, only show challenges created by the current user
-    const isMyChallenge = activeTab === 'all' || 
+    const isMyChallenge = activeTab === 'all' ||
       (activeTab === 'my-challenges' && (
         challenge.challengerId === user?.uid
       ));
-    
+
     return matchesSearch && isMyChallenge;
   });
 
@@ -257,16 +258,17 @@ export default function ChallengeScreen({ navigation }) {
         }
       >
         {loading && challenges.length === 0 ? (
-          <View style={styles.emptyState}>
-            <MaterialIcons name="emoji-events" size={80} color="#E0E0E0" />
-            <Text style={styles.emptyTitle}>Loading Challenges...</Text>
+          <View style={{ paddingHorizontal: 0 }}>
+            {[1, 2, 3].map(i => (
+              <ChallengeCardSkeleton key={i} />
+            ))}
           </View>
         ) : filteredChallenges.length === 0 ? (
           <View style={styles.emptyState}>
             <MaterialIcons name="emoji-events" size={80} color="#E0E0E0" />
             <Text style={styles.emptyTitle}>No Challenges Found</Text>
             <Text style={styles.emptyMessage}>
-              {activeTab === 'my-challenges' 
+              {activeTab === 'my-challenges'
                 ? 'Create your first challenge to get started!'
                 : 'Be the first to create a challenge!'}
             </Text>

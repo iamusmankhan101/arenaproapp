@@ -1,6 +1,7 @@
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, serverTimestamp, getDoc, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { emailService } from './emailService';
+import { notificationService } from './notificationService';
 
 const bookingsRef = collection(db, 'bookings');
 const notificationsRef = collection(db, 'notifications');
@@ -91,9 +92,10 @@ export const matchmakingService = {
             // Send notification to organizer
             await addDoc(notificationsRef, {
                 userId: gameData.userId,
-                type: 'squad_player_joined',
-                title: 'New Player Joined!',
+                type: 'squad',
+                title: 'New Player Joined! 🎉',
                 message: `${participant.name} joined your game at ${gameData.turfName}`,
+                icon: 'group-add',
                 data: {
                     bookingId: bookingId,
                     playerName: participant.name,
@@ -103,6 +105,17 @@ export const matchmakingService = {
                 createdAt: serverTimestamp()
             });
 
+            // Send local push notification
+            try {
+                await notificationService.sendLocalNotification({
+                    title: 'New Player Joined! 🎉',
+                    body: `${participant.name} joined your game at ${gameData.turfName}`,
+                    data: { type: 'squad', bookingId },
+                });
+            } catch (pushErr) {
+                console.log('⚠️ Local push failed:', pushErr);
+            }
+
             // Send email to organizer
             try {
                 const organizerDoc = await getDoc(doc(usersRef, gameData.userId));
@@ -111,7 +124,7 @@ export const matchmakingService = {
                     if (organizerData.email) {
                         const currentPlayers = (gameData.numberOfPlayers || 1) + (gameData.playersJoined?.length || 0) + 1;
                         const totalPlayers = (gameData.numberOfPlayers || 1) + (gameData.playersNeeded || 0);
-                        
+
                         await emailService.sendSquadPlayerJoinedEmail(
                             {
                                 turfName: gameData.turfName,
@@ -145,7 +158,7 @@ export const matchmakingService = {
                     if (playerData.email) {
                         const currentPlayers = (gameData.numberOfPlayers || 1) + (gameData.playersJoined?.length || 0) + 1;
                         const totalPlayers = (gameData.numberOfPlayers || 1) + (gameData.playersNeeded || 0);
-                        
+
                         await emailService.sendSquadJoinConfirmationEmail(
                             {
                                 turfName: gameData.turfName,
@@ -201,12 +214,13 @@ export const matchmakingService = {
 
             // Send notifications to all participants
             const participants = gameData.playersJoined || [];
-            const notificationPromises = participants.map(participant => 
+            const notificationPromises = participants.map(participant =>
                 addDoc(notificationsRef, {
                     userId: participant.uid,
-                    type: 'squad_game_cancelled',
-                    title: 'Game Cancelled',
+                    type: 'squad',
+                    title: 'Game Cancelled ❌',
                     message: `The game at ${gameData.turfName} on ${new Date(gameData.dateTime).toLocaleDateString()} has been cancelled by the organizer`,
+                    icon: 'cancel',
                     data: {
                         bookingId: bookingId,
                         turfName: gameData.turfName,
