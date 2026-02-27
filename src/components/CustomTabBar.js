@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -8,8 +9,10 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
+    const insets = useSafeAreaInsets();
+    
     return (
-        <View style={styles.tabBarContainer}>
+        <View style={[styles.tabBarContainer, { bottom: insets.bottom + 20 }]}>
             {state.routes.map((route, index) => {
                 const { options } = descriptors[route.key];
                 const label =
@@ -86,7 +89,6 @@ const styles = StyleSheet.create({
     tabBarContainer: {
         flexDirection: 'row',
         position: 'absolute',
-        bottom: 30,
         left: 20,
         right: 20,
         backgroundColor: '#FFFFFF',

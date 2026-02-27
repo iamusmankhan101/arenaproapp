@@ -226,16 +226,16 @@ export default function BookingScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar backgroundColor="transparent" barStyle="dark-content" translucent />
 
-      {/* New Clean White Header */}
-      <View style={[styles.whiteHeader, { paddingTop: insets.top + 10 }]}>
+      {/* Header */}
+      <View style={styles.header}>
         <TouchableOpacity
-          style={styles.circularBackButton}
+          style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialIcons name="arrow-back" size={24} color="#333" />
+          <MaterialIcons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.centeredTitle}>My Bookings</Text>
-        <View style={{ width: 44 }} />
+        <Text style={styles.headerTitle}>My Bookings</Text>
+        <View style={styles.headerRight} />
       </View>
 
       <View style={styles.content}>
@@ -346,35 +346,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+    paddingTop: 46,
   },
-  whiteHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    backgroundColor: 'white',
-    paddingBottom: 16,
+    paddingTop: 10,
+    paddingBottom: 20,
   },
-  circularBackButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'white',
+  backButton: {
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
   },
-  centeredTitle: {
+  headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#333',
-    fontFamily: 'Montserrat_700Bold',
-    flex: 1,
-    textAlign: 'center',
+    color: theme.colors.text,
+    fontFamily: 'ClashDisplay-Medium',
+  },
+  headerRight: {
+    width: 40,
   },
   customTabBar: {
     flexDirection: 'row',
@@ -438,7 +433,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 120,
   },
   emptyState: {
     alignItems: 'center',

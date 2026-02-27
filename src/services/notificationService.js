@@ -5,6 +5,22 @@ import { Platform } from 'react-native';
 import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
+// Suppress Expo Go notification warning in development
+if (__DEV__) {
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('expo-notifications') &&
+      args[0].includes('Expo Go')
+    ) {
+      // Suppress this specific warning
+      return;
+    }
+    originalWarn(...args);
+  };
+}
+
 // Configure how notifications appear when app is in foreground
 Notifications.setNotificationHandler({
     handleNotification: async () => ({

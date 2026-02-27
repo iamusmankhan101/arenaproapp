@@ -122,7 +122,7 @@ export default function SquadBuilderScreen({ navigation }) {
             <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
             {/* Header */}
-            <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top + 10 : 20 }]}>
+            <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top + 4 : insets.top + 20 }]}>
                 <View>
                     <Text style={styles.headerTitle}>Squad Builder</Text>
                     <Text style={styles.headerSubtitle}>Find teammates and split the cost</Text>
@@ -492,6 +492,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
+        paddingTop: 26,
     },
     header: {
         flexDirection: 'row',
@@ -560,7 +561,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: 20,
         paddingTop: 10,
-        paddingBottom: 100,
+        paddingBottom: 120,
     },
     centered: {
         marginTop: 100,

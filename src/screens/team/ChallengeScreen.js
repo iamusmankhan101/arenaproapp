@@ -123,13 +123,24 @@ export default function ChallengeScreen({ navigation }) {
           text: 'Accept',
           onPress: async () => {
             try {
+              // Ensure we pass complete user data
+              const opponentData = {
+                photoURL: user.photoURL || user.photoUrl || null,
+                email: user.email || null,
+                displayName: user.displayName || user.fullName || null,
+              };
+
+              console.log('🎯 Accepting challenge with user data:', {
+                opponentId: user.uid,
+                opponentName: user.displayName || user.fullName || user.email,
+                opponentData
+              });
+
               await dispatch(acceptChallenge({
                 challengeId,
                 opponentId: user.uid,
                 opponentName: user.displayName || user.fullName || user.email,
-                opponentData: {
-                  photoURL: user.photoURL || null,
-                }
+                opponentData
               })).unwrap();
 
               Alert.alert(
@@ -197,7 +208,7 @@ export default function ChallengeScreen({ navigation }) {
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top + 10 : 20 }]}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top + 10 : insets.top + 20 }]}>
         <Text style={styles.headerTitle}>Challenges</Text>
         <TouchableOpacity
           style={styles.createButton}
@@ -246,7 +257,7 @@ export default function ChallengeScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 60 : 100 }
+          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 80 : 120 }
         ]}
         refreshControl={
           <RefreshControl
@@ -308,6 +319,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    paddingTop: 16,
   },
   header: {
     flexDirection: 'row',

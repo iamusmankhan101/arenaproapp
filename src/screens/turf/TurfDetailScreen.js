@@ -44,7 +44,18 @@ import { TurfCardSkeleton } from '../../components/SkeletonLoader';
 const { width, height } = Dimensions.get('window');
 
 export default function TurfDetailScreen({ route, navigation }) {
-  const { turfId } = route.params;
+  const { turfId } = route.params || {};
+  
+  // Validate turfId
+  useEffect(() => {
+    if (!turfId) {
+      console.error('❌ TurfDetailScreen: No turfId provided');
+      Alert.alert('Error', 'Venue information is missing', [
+        { text: 'Go Back', onPress: () => navigation.goBack() }
+      ]);
+    }
+  }, [turfId, navigation]);
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showTimeSlots, setShowTimeSlots] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -1114,6 +1125,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    paddingTop: 16,
   },
   imageContainer: {
     height: height * 0.45,

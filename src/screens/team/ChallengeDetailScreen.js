@@ -37,16 +37,51 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         if (data) {
           // Normalize challenge data - auto-fix legacy challenges
           let normalizedData = data;
+          
+          // If challenge is accepted but acceptedUser is missing, try to fetch user data
           if (data.status === 'accepted' && !data.acceptedUser && data.opponentId) {
-            normalizedData = {
-              ...data,
-              acceptedUser: {
-                id: data.opponentId,
-                name: data.opponentName || 'Opponent',
-                photoURL: data.opponentPhotoURL || null,
+            console.log('🔧 Legacy challenge detected, fetching opponent user data...');
+            try {
+              const { doc, getDoc } = require('firebase/firestore');
+              const { db } = require('../../config/firebase');
+              
+              const userDoc = await getDoc(doc(db, 'users', data.opponentId));
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                normalizedData = {
+                  ...data,
+                  acceptedUser: {
+                    id: data.opponentId,
+                    name: userData.displayName || userData.fullName || userData.email || data.opponentName || 'Opponent',
+                    photoURL: userData.photoURL || userData.photoUrl || null,
+                  }
+                };
+                console.log('✅ Fetched opponent data:', normalizedData.acceptedUser);
+              } else {
+                // Fallback to basic data from challenge
+                normalizedData = {
+                  ...data,
+                  acceptedUser: {
+                    id: data.opponentId,
+                    name: data.opponentName || 'Opponent',
+                    photoURL: null,
+                  }
+                };
               }
-            };
+            } catch (fetchError) {
+              console.error('❌ Error fetching opponent user data:', fetchError);
+              // Fallback to basic data
+              normalizedData = {
+                ...data,
+                acceptedUser: {
+                  id: data.opponentId,
+                  name: data.opponentName || 'Opponent',
+                  photoURL: null,
+                }
+              };
+            }
           }
+          
           setChallenge(normalizedData);
         } else {
           Alert.alert('Error', 'Challenge not found');
@@ -83,13 +118,24 @@ export default function ChallengeDetailScreen({ route, navigation }) {
         {
           text: 'Accept Challenge',
           onPress: async () => {
+            // Ensure we pass complete user data
+            const opponentData = {
+              photoURL: user.photoURL || user.photoUrl || null,
+              email: user.email || null,
+              displayName: user.displayName || null,
+            };
+
+            console.log('🎯 Accepting challenge with user data:', {
+              opponentId: user.uid,
+              opponentName: user.displayName || user.email,
+              opponentData
+            });
+
             dispatch(acceptChallenge({
               challengeId,
               opponentId: user.uid,
               opponentName: user.displayName || user.email,
-              opponentData: {
-                photoURL: user.photoURL || null,
-              }
+              opponentData
             }));
 
             // --- SEND EMAIL NOTIFICATIONS ---

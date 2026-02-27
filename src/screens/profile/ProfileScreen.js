@@ -109,7 +109,7 @@ export default function ProfileScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 60 : 40 }
+          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 80 : 120 }
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -338,6 +338,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    paddingTop: 16,
   },
   centered: {
     justifyContent: 'center',

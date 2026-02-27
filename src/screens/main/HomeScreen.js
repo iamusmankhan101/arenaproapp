@@ -675,12 +675,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    paddingTop: 16,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 120,
   },
   header: {
     flexDirection: 'row',
@@ -998,19 +999,19 @@ const styles = StyleSheet.create({
   },
   nearbyVenueCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: '#FFFFFF',
     backdropFilter: 'blur(20px)',
     borderRadius: 16,
     marginHorizontal: 20,
     marginBottom: 12,
     padding: 12,
-    elevation: 4,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   nearbyVenueImage: {
     width: 100,

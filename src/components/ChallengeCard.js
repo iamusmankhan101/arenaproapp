@@ -4,21 +4,76 @@ import { Card, Text, Button, Chip, Avatar } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDelete, userTeam, currentUserId }) {
-  if (!challenge) return null;
+  const [normalizedChallenge, setNormalizedChallenge] = React.useState(challenge);
+
+  // Normalize challenge data on mount and when challenge changes
+  React.useEffect(() => {
+    const normalizeChallenge = async () => {
+      if (!challenge) {
+        setNormalizedChallenge(null);
+        return;
+      }
+
+      // If challenge is accepted but acceptedUser is missing, try to fetch user data
+      if (actualChallenge.status === 'accepted' && !actualChallenge.acceptedUser && actualChallenge.opponentId) {
+        console.log('🔧 ChallengeCard: Legacy challenge detected, fetching opponent user data...');
+        try {
+          const { doc, getDoc } = require('firebase/firestore');
+          const { db } = require('../config/firebase');
+          
+          const userDoc = await getDoc(doc(db, 'users', actualChallenge.opponentId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setNormalizedChallenge({
+              ...challenge,
+              acceptedUser: {
+                id: actualChallenge.opponentId,
+                name: userData.displayName || userData.fullName || userData.email || actualChallenge.opponentName || 'Opponent',
+                photoURL: userData.photoURL || userData.photoUrl || null,
+              }
+            });
+            console.log('✅ ChallengeCard: Fetched opponent data');
+            return;
+          }
+        } catch (fetchError) {
+          console.error('❌ ChallengeCard: Error fetching opponent user data:', fetchError);
+        }
+        
+        // Fallback to basic data
+        setNormalizedChallenge({
+          ...challenge,
+          acceptedUser: {
+            id: actualChallenge.opponentId,
+            name: actualChallenge.opponentName || 'Opponent',
+            photoURL: null,
+          }
+        });
+      } else {
+        setNormalizedChallenge(challenge);
+      }
+    };
+
+    normalizeChallenge();
+  }, [challenge]);
+
+  if (!normalizedChallenge) return null;
+
+  // Use normalizedChallenge instead of challenge for all logic below
+  const actualChallenge = normalizedChallenge;
 
   const isOwnChallenge = React.useMemo(() => {
-    if (!challenge) return false;
-    const normalizedCreatorId = String(challenge.creatorTeam?.id || challenge.challengerId || '').toLowerCase();
+    if (!actualChallenge) return false;
+    const normalizedCreatorId = String(actualChallenge.creatorTeam?.id || actualChallenge.challengerId || '').toLowerCase();
     const normalizedUserId = String(currentUserId || '').toLowerCase();
     const normalizedTeamId = String(userTeam?.id || '').toLowerCase();
 
     return (normalizedUserId && normalizedCreatorId === normalizedUserId) ||
       (normalizedTeamId && normalizedCreatorId === normalizedTeamId) ||
-      (normalizedUserId && String(challenge.challengerId).toLowerCase() === normalizedUserId);
-  }, [challenge, currentUserId, userTeam]);
+      (normalizedUserId && String(actualChallenge.challengerId).toLowerCase() === normalizedUserId);
+  }, [actualChallenge, currentUserId, userTeam]);
 
-  const isAccepted = challenge.status === 'accepted';
-  const canAccept = !isOwnChallenge && !isAccepted && challenge.status === 'open';
+  const isAccepted = actualChallenge.status === 'accepted';
+  const canAccept = !isOwnChallenge && !isAccepted && actualChallenge.status === 'open';
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -67,8 +122,8 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
     try {
       const result = await Share.share({
         title: 'Arena Pro Challenge',
-        message: `Join my match on Arena Pro! \n\nChallenge: ${challenge.title} vs ${challenge.teamName}\nType: ${challenge.type.toUpperCase()}\nVenue: ${challenge.venue || 'TBD'}\n\nCheck it out here: https://arenapro.pk/challenge/${challenge.id}`,
-        url: `https://arenapro.pk/challenge/${challenge.id}`
+        message: `Join my match on Arena Pro! \n\nChallenge: ${actualChallenge.title} vs ${actualChallenge.teamName}\nType: ${actualChallenge.type.toUpperCase()}\nVenue: ${actualChallenge.venue || 'TBD'}\n\nCheck it out here: https://arenapro.pk/challenge/${actualChallenge.id}`,
+        url: `https://arenapro.pk/challenge/${actualChallenge.id}`
       });
     } catch (error) {
       console.log(error.message);
@@ -88,14 +143,14 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
         {/* Brand Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <MaterialIcons name={getSportIcon(challenge.sport)} size={18} color="#e8ee26" style={styles.sportIcon} />
+            <MaterialIcons name={getSportIcon(actualChallenge.sport)} size={18} color="#e8ee26" style={styles.sportIcon} />
             <Text numberOfLines={1} style={styles.challengeTitle}>
-              {challenge.title || 'Challenge Match'}
+              {actualChallenge.title || 'Challenge Match'}
             </Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(challenge.status) }]}>
-            <Text style={[styles.statusText, { color: (challenge.status === 'open' || challenge.status === 'accepted') ? '#004d43' : '#fff' }]}>
-              {challenge.status?.toUpperCase() || 'OPEN'}
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(actualChallenge.status) }]}>
+            <Text style={[styles.statusText, { color: (actualChallenge.status === 'open' || actualChallenge.status === 'accepted') ? '#004d43' : '#fff' }]}>
+              {actualChallenge.status?.toUpperCase() || 'OPEN'}
             </Text>
           </View>
         </View>
@@ -108,9 +163,9 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
               <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
                 {(() => {
                   let count = 1;
-                  if (challenge.sport === 'Padel') {
-                    if (challenge.format === '2v2') count = 2;
-                    else if (challenge.format === '4v4') count = 4;
+                  if (actualChallenge.sport === 'Padel') {
+                    if (actualChallenge.format === '2v2') count = 2;
+                    else if (actualChallenge.format === '4v4') count = 4;
                   }
 
                   const avatarSize = count > 2 ? 32 : 44; // Smaller for 4v4
@@ -127,16 +182,16 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                         borderWidth: 2,
                         borderColor: '#fff'
                       }}>
-                        {isCaptain && challenge.creatorTeam?.avatar && challenge.creatorTeam.avatar.length > 2 ? (
+                        {isCaptain && actualChallenge.creatorTeam?.avatar && actualChallenge.creatorTeam.avatar.length > 2 ? (
                           <Avatar.Image
                             size={avatarSize}
-                            source={{ uri: challenge.creatorTeam.avatar }}
+                            source={{ uri: actualChallenge.creatorTeam.avatar }}
                             style={{ backgroundColor: '#e8f5f3' }}
                           />
                         ) : (
                           <Avatar.Text
                             size={avatarSize}
-                            label={isCaptain ? ((challenge.teamName || challenge.creatorTeam?.name)?.charAt(0) || 'T') : '+'}
+                            label={isCaptain ? ((actualChallenge.teamName || actualChallenge.creatorTeam?.name)?.charAt(0) || 'T') : '+'}
                             style={{ backgroundColor: isCaptain ? '#e8f5f3' : '#f0f0f0' }}
                             color={isCaptain ? '#004d43' : '#999'}
                             labelStyle={{ fontWeight: 'bold' }}
@@ -148,28 +203,28 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                 })()}
               </View>
 
-              <Text numberOfLines={1} style={styles.teamName}>{String(challenge.teamName || 'Team')}</Text>
+              <Text numberOfLines={1} style={styles.teamName}>{String(actualChallenge.teamName || 'Team')}</Text>
               <View style={styles.statBadge}>
                 <MaterialIcons name="emoji-events" size={12} color="#fbc02d" />
-                <Text style={styles.statText}>{String((challenge.teamWins || 0) + ' Wins')}</Text>
+                <Text style={styles.statText}>{String((actualChallenge.teamWins || 0) + ' Wins')}</Text>
               </View>
             </View>
 
             {/* VS Indicator */}
             <View style={styles.vsContainer}>
               <Text style={styles.vsText}>
-                {challenge.type === 'tournament' ? '' :
-                  challenge.sport === 'Padel' && challenge.format ? challenge.format : 'VS'}
+                {actualChallenge.type === 'tournament' ? '' :
+                  actualChallenge.sport === 'Padel' && actualChallenge.format ? actualChallenge.format : 'VS'}
               </Text>
             </View>
 
             {/* Opponent Team or Tournament Info */}
             <View style={styles.teamBlock}>
-              {challenge.type === 'tournament' ? (
-                challenge.participants && challenge.participants.length > 0 ? (
+              {actualChallenge.type === 'tournament' ? (
+                actualChallenge.participants && actualChallenge.participants.length > 0 ? (
                   <>
                     <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 6 }}>
-                      {challenge.participants.slice(0, 3).map((p, i) => (
+                      {actualChallenge.participants.slice(0, 3).map((p, i) => (
                         <View key={i} style={{
                           marginLeft: i === 0 ? 0 : -12,
                           zIndex: 3 - i,
@@ -185,8 +240,8 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                         </View>
                       ))}
                     </View>
-                    <Text style={styles.teamName}>{String(challenge.participants.length)} Joined</Text>
-                    <Text style={styles.waitingTeamName}>{String(challenge.maxParticipants ? challenge.maxParticipants + ' Spots' : 'Open')}</Text>
+                    <Text style={styles.teamName}>{String(actualChallenge.participants.length)} Joined</Text>
+                    <Text style={styles.waitingTeamName}>{String(actualChallenge.maxParticipants ? actualChallenge.maxParticipants + ' Spots' : 'Open')}</Text>
                   </>
                 ) : (
                   <>
@@ -197,14 +252,14 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                     <Text style={styles.waitingTeamName}>Open Entry</Text>
                   </>
                 )
-              ) : (challenge.acceptedUser || challenge.acceptedBy || challenge.acceptedTeam || challenge.status === 'accepted') ? (
+              ) : (actualChallenge.acceptedUser || actualChallenge.acceptedBy || actualChallenge.acceptedTeam || actualChallenge.status === 'accepted') ? (
                 <>
                   <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
                     {(() => {
                       let count = 1;
-                      if (challenge.sport === 'Padel') {
-                        if (challenge.format === '2v2') count = 2;
-                        else if (challenge.format === '4v4') count = 4;
+                      if (actualChallenge.sport === 'Padel') {
+                        if (actualChallenge.format === '2v2') count = 2;
+                        else if (actualChallenge.format === '4v4') count = 4;
                       }
 
                       const avatarSize = count > 2 ? 32 : 44;
@@ -221,16 +276,16 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                             borderWidth: 2,
                             borderColor: '#fff'
                           }}>
-                            {isCaptain && (challenge.acceptedUser?.photoURL || challenge.acceptedTeam?.avatar || challenge.acceptedTeamAvatar) ? (
+                            {isCaptain && (actualChallenge.acceptedUser?.photoURL || actualChallenge.acceptedTeam?.avatar || actualChallenge.acceptedTeamAvatar) ? (
                               <Avatar.Image
                                 size={avatarSize}
-                                source={{ uri: challenge.acceptedUser?.photoURL || challenge.acceptedTeam?.avatar || challenge.acceptedTeamAvatar }}
+                                source={{ uri: actualChallenge.acceptedUser?.photoURL || actualChallenge.acceptedTeam?.avatar || actualChallenge.acceptedTeamAvatar }}
                                 style={{ backgroundColor: '#fff3e0' }}
                               />
                             ) : (
                               <Avatar.Text
                                 size={avatarSize}
-                                label={isCaptain ? ((challenge.acceptedUser?.name || challenge.acceptedTeam?.name || challenge.acceptedTeamName || challenge.opponentName || challenge.opponentTeamName)?.charAt(0) || 'O') : '+'}
+                                label={isCaptain ? ((actualChallenge.acceptedUser?.name || actualChallenge.acceptedTeam?.name || actualChallenge.acceptedTeamName || actualChallenge.opponentName || actualChallenge.opponentTeamName)?.charAt(0) || 'O') : '+'}
                                 style={{ backgroundColor: isCaptain ? '#fff3e0' : '#f0f0f0' }}
                                 color={isCaptain ? '#e65100' : '#999'}
                                 labelStyle={{ fontWeight: 'bold' }}
@@ -241,10 +296,10 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                       });
                     })()}
                   </View>
-                  <Text numberOfLines={1} style={styles.teamName}>{String(challenge.acceptedUser?.name || challenge.acceptedTeam?.name || challenge.acceptedTeamName || challenge.opponentName || challenge.opponentTeamName || 'Opponent')}</Text>
+                  <Text numberOfLines={1} style={styles.teamName}>{String(actualChallenge.acceptedUser?.name || actualChallenge.acceptedTeam?.name || actualChallenge.acceptedTeamName || actualChallenge.opponentName || actualChallenge.opponentTeamName || 'Opponent')}</Text>
                   <View style={styles.statBadge}>
                     <MaterialIcons name="emoji-events" size={12} color="#fbc02d" />
-                    <Text style={styles.statText}>{String((challenge.acceptedTeam?.wins || challenge.acceptedTeamWins || 0) + ' Wins')}</Text>
+                    <Text style={styles.statText}>{String((actualChallenge.acceptedTeam?.wins || actualChallenge.acceptedTeamWins || 0) + ' Wins')}</Text>
                   </View>
                 </>
               ) : (
@@ -252,9 +307,9 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                   <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
                     {(() => {
                       let count = 1;
-                      if (challenge.sport === 'Padel') {
-                        if (challenge.format === '2v2') count = 2;
-                        else if (challenge.format === '4v4') count = 4;
+                      if (actualChallenge.sport === 'Padel') {
+                        if (actualChallenge.format === '2v2') count = 2;
+                        else if (actualChallenge.format === '4v4') count = 4;
                       }
 
                       const avatarSize = count > 2 ? 32 : 44;
@@ -283,9 +338,9 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
           </View>
 
           {/* Description Snippet (optional) */}
-          {!!challenge.description && (
+          {!!actualChallenge.description && (
             <Text numberOfLines={2} style={styles.description}>
-              "{challenge.description}"
+              "{actualChallenge.description}"
             </Text>
           )}
 
@@ -294,47 +349,47 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
             {/* Row 1: Date & Time */}
             <View style={styles.detailRow}>
               <MaterialIcons name="event" size={16} color="#004d43" style={styles.detailIcon} />
-              <Text style={styles.detailText}>{String(formatDateTime(challenge.proposedDateTime))}</Text>
+              <Text style={styles.detailText}>{String(formatDateTime(actualChallenge.proposedDateTime))}</Text>
             </View>
 
             {/* Row 2: Venue */}
             <View style={styles.detailRow}>
               <MaterialIcons name="place" size={16} color="#004d43" style={styles.detailIcon} />
-              <Text numberOfLines={1} style={styles.detailText}>{String(challenge.venue || 'Any Venue')}</Text>
+              <Text numberOfLines={1} style={styles.detailText}>{String(actualChallenge.venue || 'Any Venue')}</Text>
             </View>
 
             {/* Row 3: Fee & Type */}
             {/* Row 3: Fee/Prize & Entry Fee */}
             <View style={styles.detailRowDual}>
               <View style={styles.detailItemHalf}>
-                {challenge.winningPrize ? (
+                {actualChallenge.winningPrize ? (
                   <>
                     <MaterialIcons name="emoji-events" size={16} color="#fbc02d" style={styles.detailIcon} />
                     <Text style={styles.detailText}>
-                      Prize: {Number(challenge.winningPrize).toLocaleString()}
+                      Prize: {Number(actualChallenge.winningPrize).toLocaleString()}
                     </Text>
                   </>
-                ) : challenge.maxGroundFee ? (
+                ) : actualChallenge.maxGroundFee ? (
                   <>
                     <MaterialIcons name="payments" size={16} color="#004d43" style={styles.detailIcon} />
                     <Text style={styles.detailText}>
-                      PKR {Number(challenge.maxGroundFee).toLocaleString()}
+                      PKR {Number(actualChallenge.maxGroundFee).toLocaleString()}
                     </Text>
                   </>
                 ) : null}
               </View>
 
               <View style={styles.detailItemHalf}>
-                {challenge.type === 'tournament' && challenge.entryFee ? (
+                {actualChallenge.type === 'tournament' && actualChallenge.entryFee ? (
                   <>
                     <MaterialIcons name="attach-money" size={16} color="#004d43" style={styles.detailIcon} />
-                    <Text style={styles.detailText}>Entry: {Number(challenge.entryFee).toLocaleString()}</Text>
+                    <Text style={styles.detailText}>Entry: {Number(actualChallenge.entryFee).toLocaleString()}</Text>
                   </>
                 ) : (
                   <>
-                    <MaterialIcons name={getChallengeTypeIcon(challenge.type)} size={16} color="#004d43" style={styles.detailIcon} />
+                    <MaterialIcons name={getChallengeTypeIcon(actualChallenge.type)} size={16} color="#004d43" style={styles.detailIcon} />
                     <Text style={styles.detailText}>
-                      {challenge.type === 'open' ? 'Public' : challenge.type === 'private' ? 'Private' : 'Tournament'}
+                      {actualChallenge.type === 'open' ? 'Public' : actualChallenge.type === 'private' ? 'Private' : 'Tournament'}
                     </Text>
                   </>
                 )}
@@ -342,30 +397,30 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
             </View>
 
             {/* Row 4: Tournament Participants */}
-            {challenge.type === 'tournament' && !!challenge.maxParticipants && (
+            {actualChallenge.type === 'tournament' && !!actualChallenge.maxParticipants && (
               <View style={[styles.detailRow, { marginTop: 4 }]}>
                 <MaterialIcons name="groups" size={16} color="#004d43" style={styles.detailIcon} />
-                <Text style={styles.detailText}>{String(challenge.maxParticipants + ' Teams Participating')}</Text>
+                <Text style={styles.detailText}>{String(actualChallenge.maxParticipants + ' Teams Participating')}</Text>
               </View>
             )}
           </View>
 
           {/* Tags */}
-          {(!!challenge.format || !!challenge.overs || !!challenge.ballType || !!challenge.tournamentFormat) && (
+          {(!!actualChallenge.format || !!actualChallenge.overs || !!actualChallenge.ballType || !!actualChallenge.tournamentFormat) && (
             <View style={styles.chipContainer}>
-              {!!challenge.format && <Chip style={styles.specChip} textStyle={styles.specText}>{String(challenge.format)}</Chip>}
-              {!!challenge.tournamentFormat && <Chip style={styles.specChip} textStyle={styles.specText}>{String(challenge.tournamentFormat)}</Chip>}
-              {!!challenge.overs && <Chip style={styles.specChip} textStyle={styles.specText}>{String(challenge.overs)} Overs</Chip>}
-              {!!challenge.ballType && <Chip style={styles.specChip} textStyle={styles.specText}>{String(challenge.ballType)}</Chip>}
+              {!!actualChallenge.format && <Chip style={styles.specChip} textStyle={styles.specText}>{String(actualChallenge.format)}</Chip>}
+              {!!actualChallenge.tournamentFormat && <Chip style={styles.specChip} textStyle={styles.specText}>{String(actualChallenge.tournamentFormat)}</Chip>}
+              {!!actualChallenge.overs && <Chip style={styles.specChip} textStyle={styles.specText}>{String(actualChallenge.overs)} Overs</Chip>}
+              {!!actualChallenge.ballType && <Chip style={styles.specChip} textStyle={styles.specText}>{String(actualChallenge.ballType)}</Chip>}
             </View>
           )}
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.timeAgo}>{String(challenge.timeAgo || 'Just now')}</Text>
+            <Text style={styles.timeAgo}>{String(actualChallenge.timeAgo || 'Just now')}</Text>
 
             <View style={styles.actionsRight}>
-              {challenge.type === 'private' && (
+              {actualChallenge.type === 'private' && (
                 <Button
                   mode="outlined"
                   onPress={handleShare}
@@ -409,7 +464,7 @@ export default function ChallengeCard({ challenge, onAccept, onViewDetails, onDe
                 </View>
               ) : (
                 <Button mode="text" compact disabled textColor="#999">
-                  {challenge.status === 'accepted' ? 'Match Set' : 'View Details'}
+                  {actualChallenge.status === 'accepted' ? 'Match Set' : 'View Details'}
                 </Button>
               )}
             </View>
