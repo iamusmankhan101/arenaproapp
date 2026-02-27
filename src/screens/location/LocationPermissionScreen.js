@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   Platform,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -20,12 +20,12 @@ export default function LocationPermissionScreen({ navigation }) {
     setLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      
+
       if (status === 'granted') {
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         });
-        
+
         // Navigate to main app with location
         navigation.replace('MainTabs', {
           location: {
@@ -72,9 +72,9 @@ export default function LocationPermissionScreen({ navigation }) {
         barStyle="dark-content"
         backgroundColor={theme.colors.background}
       />
-      
+
       {/* Skip Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.skipButton}
         onPress={handleSkip}
       >
@@ -85,10 +85,10 @@ export default function LocationPermissionScreen({ navigation }) {
         {/* Icon */}
         <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
-            <MaterialIcons 
-              name="location-on" 
-              size={80} 
-              color={theme.colors.primary} 
+            <MaterialIcons
+              name="location-on"
+              size={80}
+              color={theme.colors.primary}
             />
           </View>
         </View>
@@ -111,10 +111,10 @@ export default function LocationPermissionScreen({ navigation }) {
             <ActivityIndicator color={theme.colors.secondary} />
           ) : (
             <>
-              <MaterialIcons 
-                name="my-location" 
-                size={24} 
-                color={theme.colors.secondary} 
+              <MaterialIcons
+                name="my-location"
+                size={24}
+                color={theme.colors.secondary}
               />
               <Text style={styles.allowButtonText}>Allow Location Access</Text>
             </>

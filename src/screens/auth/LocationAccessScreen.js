@@ -3,11 +3,11 @@ import {
     View,
     StyleSheet,
     TouchableOpacity,
-    SafeAreaView,
     StatusBar,
     Dimensions,
     Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, ActivityIndicator } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { locationService } from '../../services/locationService';

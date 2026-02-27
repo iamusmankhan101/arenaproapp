@@ -7,9 +7,9 @@ import {
   Image,
   Dimensions,
   StatusBar,
-  SafeAreaView,
   Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';

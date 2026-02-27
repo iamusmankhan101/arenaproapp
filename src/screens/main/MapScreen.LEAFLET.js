@@ -1,10 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
+  Alert,
   TouchableOpacity,
+  Dimensions,
   Animated,
   StatusBar,
+  SafeAreaView,
+  Platform,
 } from 'react-native';
 import {
   Text,
@@ -14,7 +18,7 @@ import {
   ActivityIndicator
 } from 'react-native-paper';
 import { WebView } from 'react-native-webview';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchNearbyTurfs } from '../../store/slices/turfSlice';
@@ -22,14 +26,18 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { theme } from '../../theme/theme';
 import FilterModal from '../../components/FilterModal';
 
+const { width, height } = Dimensions.get('window');
+
 export default function MapScreen({ navigation }) {
   const [location, setLocation] = useState(null);
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(true);
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [filteredVenues, setFilteredVenues] = useState([]);
   const { filters: reduxFilters } = useSelector(state => state.turf);
+  const [isLoading, setIsLoading] = useState(false);
   const [venuesWithValidCoords, setVenuesWithValidCoords] = useState([]);
   const insets = useSafeAreaInsets();
 
@@ -63,7 +71,7 @@ export default function MapScreen({ navigation }) {
     console.log('🚀 MapScreen: Initializing with Leaflet...');
 
     try {
-      dispatch(fetchNearbyTurfs({
+      const result = await dispatch(fetchNearbyTurfs({
         latitude: 31.5204,
         longitude: 74.3587,
         radius: 50000
@@ -82,6 +90,7 @@ export default function MapScreen({ navigation }) {
 
   const requestLocationAccess = async () => {
     try {
+      setIsGettingLocation(true);
       let { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status === 'granted') {
@@ -89,9 +98,11 @@ export default function MapScreen({ navigation }) {
         await getCurrentLocation();
       } else {
         setHasLocationPermission(false);
+        setIsGettingLocation(false);
       }
     } catch (error) {
       console.error('📍 Location request error:', error);
+      setIsGettingLocation(false);
     }
   };
 
@@ -110,8 +121,11 @@ export default function MapScreen({ navigation }) {
           true;
         `);
       }
+
+      setIsGettingLocation(false);
     } catch (error) {
       console.error('❌ Location error:', error);
+      setIsGettingLocation(false);
     }
   };
 
@@ -171,18 +185,14 @@ export default function MapScreen({ navigation }) {
   };
 
   const processVenuesCoordinates = (venues) => {
-    return venues
-      .map(venue => {
-        const coords = getVenueCoordinatesSync(venue);
-        if (coords.isValid) {
-          return {
-            ...venue,
-            coordinates: coords
-          };
-        }
-        return null;
-      })
-      .filter(venue => venue !== null);
+    return venues.filter(venue => {
+      const coords = getVenueCoordinatesSync(venue);
+      if (coords.isValid) {
+        venue.coordinates = coords;
+        return true;
+      }
+      return false;
+    });
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -519,7 +529,7 @@ export default function MapScreen({ navigation }) {
       />
 
       {/* Loading Indicator */}
-      {loading && (
+      {(loading || isLoading) && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={themeColors.colors.primary} />
         </View>

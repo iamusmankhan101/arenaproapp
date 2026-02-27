@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   Platform,
@@ -10,6 +9,7 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, TextInput, ActivityIndicator } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -31,15 +31,15 @@ export default function ManualLocationScreen({ navigation }) {
     setLoading(true);
     try {
       // Try to geocode the location
-      const searchQuery = area.trim() 
-        ? `${area}, ${city}, Pakistan` 
+      const searchQuery = area.trim()
+        ? `${area}, ${city}, Pakistan`
         : `${city}, Pakistan`;
-      
+
       const geocodeResult = await Location.geocodeAsync(searchQuery);
 
       if (geocodeResult && geocodeResult.length > 0) {
         const { latitude, longitude } = geocodeResult[0];
-        
+
         // Navigate to main app with geocoded location
         navigation.replace('MainTabs', {
           location: {
@@ -56,8 +56,8 @@ export default function ManualLocationScreen({ navigation }) {
           'Location Not Found',
           'Could not find exact coordinates. Using city center.',
           [
-            { 
-              text: 'OK', 
+            {
+              text: 'OK',
               onPress: () => {
                 // Default to Lahore coordinates if geocoding fails
                 navigation.replace('MainTabs', {
@@ -80,8 +80,8 @@ export default function ManualLocationScreen({ navigation }) {
         'Error',
         'Failed to process location. Using default location.',
         [
-          { 
-            text: 'OK', 
+          {
+            text: 'OK',
             onPress: () => {
               navigation.replace('MainTabs', {
                 location: {
@@ -117,28 +117,28 @@ export default function ManualLocationScreen({ navigation }) {
         barStyle="dark-content"
         backgroundColor={theme.colors.background}
       />
-      
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <MaterialIcons 
-                name="arrow-back" 
-                size={24} 
-                color={theme.colors.text} 
+              <MaterialIcons
+                name="arrow-back"
+                size={24}
+                color={theme.colors.text}
               />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.skipButton}
               onPress={handleSkip}
             >
@@ -149,10 +149,10 @@ export default function ManualLocationScreen({ navigation }) {
           {/* Icon */}
           <View style={styles.iconContainer}>
             <View style={styles.iconCircle}>
-              <MaterialIcons 
-                name="edit-location" 
-                size={60} 
-                color={theme.colors.primary} 
+              <MaterialIcons
+                name="edit-location"
+                size={60}
+                color={theme.colors.primary}
               />
             </View>
           </View>
@@ -172,10 +172,10 @@ export default function ManualLocationScreen({ navigation }) {
                 styles.inputWrapper,
                 cityFocused && styles.inputWrapperFocused
               ]}>
-                <MaterialIcons 
-                  name="location-city" 
-                  size={20} 
-                  color={cityFocused ? theme.colors.primary : theme.colors.textSecondary} 
+                <MaterialIcons
+                  name="location-city"
+                  size={20}
+                  color={cityFocused ? theme.colors.primary : theme.colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -224,10 +224,10 @@ export default function ManualLocationScreen({ navigation }) {
                 styles.inputWrapper,
                 areaFocused && styles.inputWrapperFocused
               ]}>
-                <MaterialIcons 
-                  name="place" 
-                  size={20} 
-                  color={areaFocused ? theme.colors.primary : theme.colors.textSecondary} 
+                <MaterialIcons
+                  name="place"
+                  size={20}
+                  color={areaFocused ? theme.colors.primary : theme.colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -259,10 +259,10 @@ export default function ManualLocationScreen({ navigation }) {
               ) : (
                 <>
                   <Text style={styles.submitButtonText}>Continue</Text>
-                  <MaterialIcons 
-                    name="arrow-forward" 
-                    size={24} 
-                    color={theme.colors.secondary} 
+                  <MaterialIcons
+                    name="arrow-forward"
+                    size={24}
+                    color={theme.colors.secondary}
                   />
                 </>
               )}

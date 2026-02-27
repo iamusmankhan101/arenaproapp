@@ -7,9 +7,9 @@ import {
   Image,
   Dimensions,
   StatusBar,
-  SafeAreaView,
   Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -33,7 +33,7 @@ export default function HomeScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState(null);
   const [userLocation, setUserLocation] = useState('Lahore, Pakistan');
-  
+
   const { nearbyTurfs, loading } = useSelector(state => state.turf);
   const { user } = useSelector(state => state.auth);
 
@@ -51,10 +51,10 @@ export default function HomeScreen({ navigation }) {
   // Filter venues by selected sport
   const getFilteredVenues = () => {
     if (!selectedSport) return nearbyTurfs;
-    
+
     return nearbyTurfs.filter(venue => {
-      const venueSports = Array.isArray(venue.sports) 
-        ? venue.sports 
+      const venueSports = Array.isArray(venue.sports)
+        ? venue.sports
         : typeof venue.sports === 'string' && venue.sports.trim()
           ? venue.sports.split(',').map(s => s.trim())
           : [];
@@ -83,8 +83,8 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      
-      <ScrollView 
+
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -93,32 +93,32 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.header}>
           <View style={styles.locationContainer}>
             <Text style={styles.locationLabel}>Location</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.locationButton}
               onPress={() => navigation.navigate('ManualLocation')}
             >
-              <MaterialIcons 
-                name="location-on" 
-                size={20} 
-                color={theme.colors.primary} 
+              <MaterialIcons
+                name="location-on"
+                size={20}
+                color={theme.colors.primary}
               />
               <Text style={styles.locationText}>{String(userLocation)}</Text>
-              <MaterialIcons 
-                name="keyboard-arrow-down" 
-                size={20} 
-                color={theme.colors.text} 
+              <MaterialIcons
+                name="keyboard-arrow-down"
+                size={20}
+                color={theme.colors.text}
               />
             </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.notificationButton}
-            onPress={() => {/* Handle notifications */}}
+            onPress={() => {/* Handle notifications */ }}
           >
-            <MaterialIcons 
-              name="notifications-none" 
-              size={28} 
-              color={theme.colors.text} 
+            <MaterialIcons
+              name="notifications-none"
+              size={28}
+              color={theme.colors.text}
             />
             <View style={styles.notificationBadge} />
           </TouchableOpacity>
@@ -127,10 +127,10 @@ export default function HomeScreen({ navigation }) {
         {/* Search Bar with Filter */}
         <View style={styles.searchContainer}>
           <View style={styles.searchWrapper}>
-            <MaterialIcons 
-              name="search" 
-              size={24} 
-              color={theme.colors.textSecondary} 
+            <MaterialIcons
+              name="search"
+              size={24}
+              color={theme.colors.textSecondary}
               style={styles.searchIcon}
             />
             <Searchbar
@@ -143,14 +143,14 @@ export default function HomeScreen({ navigation }) {
               elevation={0}
             />
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.filterButton}
-            onPress={() => {/* Open filter modal */}}
+            onPress={() => {/* Open filter modal */ }}
           >
-            <MaterialIcons 
-              name="tune" 
-              size={24} 
-              color={theme.colors.secondary} 
+            <MaterialIcons
+              name="tune"
+              size={24}
+              color={theme.colors.secondary}
             />
           </TouchableOpacity>
         </View>
@@ -158,8 +158,8 @@ export default function HomeScreen({ navigation }) {
         {/* Sports Categories */}
         <View style={styles.categoriesSection}>
           <Text style={styles.sectionTitle}>Sports Categories</Text>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesScroll}
           >
@@ -176,10 +176,10 @@ export default function HomeScreen({ navigation }) {
                   styles.categoryIconContainer,
                   selectedSport === sport.name && styles.categoryIconContainerActive
                 ]}>
-                  <MaterialIcons 
-                    name={sport.icon} 
-                    size={32} 
-                    color={selectedSport === sport.name ? theme.colors.secondary : theme.colors.primary} 
+                  <MaterialIcons
+                    name={sport.icon}
+                    size={32}
+                    color={selectedSport === sport.name ? theme.colors.secondary : theme.colors.primary}
                   />
                 </View>
                 <Text style={[
@@ -207,8 +207,8 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.loadingText}>Loading venues...</Text>
             </View>
           ) : recommendedVenues.length > 0 ? (
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.venuesScroll}
             >
@@ -218,7 +218,7 @@ export default function HomeScreen({ navigation }) {
                   style={styles.venueCard}
                   onPress={() => handleVenuePress(venue)}
                 >
-                  <Image 
+                  <Image
                     source={{ uri: venue.images?.[0] || 'https://via.placeholder.com/300x200' }}
                     style={styles.venueImage}
                     resizeMode="cover"
@@ -226,7 +226,7 @@ export default function HomeScreen({ navigation }) {
                   <TouchableOpacity style={styles.favoriteButton}>
                     <MaterialIcons name="favorite-border" size={20} color={theme.colors.primary} />
                   </TouchableOpacity>
-                  
+
                   {venue.discount && (
                     <View style={styles.discountBadge}>
                       <Text style={styles.discountText}>{String(venue.discount)}% Off</Text>
@@ -240,22 +240,22 @@ export default function HomeScreen({ navigation }) {
                         <Text style={styles.ratingText}>{String(venue.rating || 4.5)}</Text>
                       </View>
                     </View>
-                    
+
                     <Text style={styles.venueName} numberOfLines={1}>
                       {venue.name}
                     </Text>
-                    
+
                     <View style={styles.venueLocation}>
-                      <MaterialIcons 
-                        name="location-on" 
-                        size={14} 
-                        color={theme.colors.textSecondary} 
+                      <MaterialIcons
+                        name="location-on"
+                        size={14}
+                        color={theme.colors.textSecondary}
                       />
                       <Text style={styles.venueLocationText} numberOfLines={1}>
                         {venue.city || 'Lahore'}, Pakistan
                       </Text>
                     </View>
-                    
+
                     <Text style={styles.venuePrice}>
                       PKR {venue.pricePerHour || venue.pricing?.basePrice || 1500}
                       <Text style={styles.priceUnit}> /hour</Text>
@@ -287,34 +287,34 @@ export default function HomeScreen({ navigation }) {
                 style={styles.nearbyVenueCard}
                 onPress={() => handleVenuePress(venue)}
               >
-                <Image 
+                <Image
                   source={{ uri: venue.images?.[0] || 'https://via.placeholder.com/150x150' }}
                   style={styles.nearbyVenueImage}
                   resizeMode="cover"
                 />
-                
+
                 <View style={styles.nearbyVenueInfo}>
                   {venue.discount && (
                     <View style={styles.nearbyDiscountBadge}>
                       <Text style={styles.nearbyDiscountText}>{String(venue.discount)}% Off</Text>
                     </View>
                   )}
-                  
+
                   <Text style={styles.nearbyVenueName} numberOfLines={1}>
                     {venue.name}
                   </Text>
-                  
+
                   <View style={styles.nearbyVenueLocation}>
-                    <MaterialIcons 
-                      name="location-on" 
-                      size={14} 
-                      color={theme.colors.textSecondary} 
+                    <MaterialIcons
+                      name="location-on"
+                      size={14}
+                      color={theme.colors.textSecondary}
                     />
                     <Text style={styles.nearbyVenueLocationText} numberOfLines={1}>
                       {venue.city || 'Lahore'}, Pakistan
                     </Text>
                   </View>
-                  
+
                   <Text style={styles.nearbyVenuePrice}>
                     PKR {venue.pricePerHour || venue.pricing?.basePrice || 1500}
                     <Text style={styles.priceUnit}> /hour</Text>
