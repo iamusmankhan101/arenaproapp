@@ -210,7 +210,9 @@ export default function MapScreen({ navigation }) {
 
   useEffect(() => {
     if (nearbyTurfs.length > 0) {
+      console.log('📍 MapScreen: Processing', nearbyTurfs.length, 'venues for map display');
       const validVenues = processVenuesCoordinates(nearbyTurfs);
+      console.log('✅ MapScreen: Found', validVenues.length, 'venues with valid coordinates');
       
       const venuesWithDistances = validVenues.map(venue => {
         if (location) {
@@ -243,10 +245,16 @@ export default function MapScreen({ navigation }) {
           price: v.pricePerHour || v.pricing?.basePrice || 0
         }));
 
-        webViewRef.current.injectJavaScript(`
-          updateMarkers(${JSON.stringify(markersData)});
-          true;
-        `);
+        console.log('🗺️ MapScreen: Sending', markersData.length, 'markers to map');
+        console.log('First marker sample:', markersData[0]);
+
+        // Small delay to ensure WebView is ready
+        setTimeout(() => {
+          webViewRef.current.injectJavaScript(`
+            updateMarkers(${JSON.stringify(markersData)});
+            true;
+          `);
+        }, 500);
       }
     }
   }, [nearbyTurfs, location]);
@@ -350,9 +358,10 @@ export default function MapScreen({ navigation }) {
   <script>
     var map = L.map('map').setView([${userLat}, ${userLng}], 13);
     
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
+    // Using Stadia Maps Alidade Smooth for English labels
+    L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+      maxZoom: 20
     }).addTo(map);
 
     var markers = {};
@@ -369,27 +378,36 @@ export default function MapScreen({ navigation }) {
     ` : ''}
 
     function updateMarkers(venuesData) {
+      console.log('Updating markers with', venuesData.length, 'venues');
+      
       // Clear existing markers
       Object.values(markers).forEach(marker => map.removeLayer(marker));
       markers = {};
 
       // Add new markers
       venuesData.forEach(venue => {
+        console.log('Adding marker for:', venue.name, 'at', venue.lat, venue.lng);
+        
         var marker = L.marker([venue.lat, venue.lng], {
           icon: L.divIcon({
             className: 'venue-marker',
-            html: '<div style="background: ${theme.colors.primary}; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 16px;">⚽</div>',
-            iconSize: [34, 34]
+            html: '<div style="background: ${theme.colors.primary}; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4); font-size: 18px; font-weight: bold;">📍</div>',
+            iconSize: [38, 38],
+            iconAnchor: [19, 38]
           })
         }).addTo(map);
 
         marker.bindPopup(\`
-          <div style="min-width: 150px;">
-            <h3 style="margin: 0 0 8px 0; color: ${theme.colors.primary};">\${venue.name}</h3>
-            <p style="margin: 4px 0;"><strong>Rating:</strong> ⭐ \${venue.rating}</p>
-            <p style="margin: 4px 0;"><strong>Price:</strong> Rs. \${venue.price}/hr</p>
+          <div style="min-width: 180px; padding: 8px;">
+            <h3 style="margin: 0 0 10px 0; color: ${theme.colors.primary}; font-size: 16px; font-weight: bold;">\${venue.name}</h3>
+            <p style="margin: 6px 0; font-size: 14px;"><strong>Rating:</strong> ⭐ \${venue.rating}</p>
+            <p style="margin: 6px 0; font-size: 14px;"><strong>Price:</strong> Rs. \${venue.price}/hr</p>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">Tap marker to view details</p>
           </div>
-        \`);
+        \`, {
+          maxWidth: 250,
+          closeButton: true
+        });
 
         marker.on('click', function() {
           window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -400,6 +418,14 @@ export default function MapScreen({ navigation }) {
 
         markers[venue.id] = marker;
       });
+      
+      console.log('Total markers added:', Object.keys(markers).length);
+      
+      // Fit map to show all markers if there are any
+      if (venuesData.length > 0) {
+        var bounds = L.latLngBounds(venuesData.map(v => [v.lat, v.lng]));
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+      }
     }
   </script>
 </body>

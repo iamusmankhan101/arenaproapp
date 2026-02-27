@@ -32,11 +32,19 @@ export default function ProfileScreen({ navigation }) {
     );
   }
 
-  const userData = user || {
+  // Normalize user data to handle different field names
+  const userData = user ? {
+    fullName: user.fullName || user.displayName || 'User',
+    email: user.email || 'Not set',
+    phoneNumber: user.phoneNumber || user.phone || null,
+    city: user.city || null,
+    photoURL: user.photoURL || user.profilePicture || null,
+    uid: user.uid
+  } : {
     fullName: 'Guest User',
     email: 'guest@example.com',
-    phoneNumber: '+92 300 1234567',
-    city: 'Lahore'
+    phoneNumber: null,
+    city: null
   };
 
   const handleLogout = () => {
