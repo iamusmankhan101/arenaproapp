@@ -12,7 +12,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     const insets = useSafeAreaInsets();
     
     return (
-        <View style={[styles.tabBarContainer, { bottom: insets.bottom + 20 }]}>
+        <View style={[styles.tabBarContainer, { paddingBottom: insets.bottom }]}>
             {state.routes.map((route, index) => {
                 const { options } = descriptors[route.key];
                 const label =
@@ -65,19 +65,15 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                         onLongPress={onLongPress}
                         style={[
                             styles.tabButton,
-                            { flex: isFocused ? 2.5 : 1 }, // Give more space to active tab
                             isFocused && styles.activeTabButton
                         ]}
                         activeOpacity={0.8}
                     >
                         <MaterialIcons
                             name={iconName}
-                            size={24}
+                            size={28}
                             color={isFocused ? '#e8ee26' : '#004d43'}
                         />
-                        {isFocused && (
-                            <Text style={styles.activeLabel} numberOfLines={1}>{String(label)}</Text>
-                        )}
                     </TouchableOpacity>
                 );
             })}
@@ -88,37 +84,22 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
 const styles = StyleSheet.create({
     tabBarContainer: {
         flexDirection: 'row',
-        position: 'absolute',
-        left: 20,
-        right: 20,
         backgroundColor: '#FFFFFF',
-        borderRadius: 30,
-        height: 65,
+        height: 70,
         alignItems: 'center',
-        justifyContent: 'space-between', // Changed from space-around for better spacing control
-        paddingHorizontal: 5, // Reduced padding
-        elevation: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 5 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
+        justifyContent: 'space-around',
+        paddingHorizontal: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
     },
     tabButton: {
         alignItems: 'center',
         justifyContent: 'center',
-        height: 48,
-        borderRadius: 24,
-        paddingHorizontal: 4, // Minimal padding for inactive
+        height: 50,
+        width: 50,
+        borderRadius: 25,
     },
     activeTabButton: {
         backgroundColor: '#004d43',
-        flexDirection: 'row',
-        paddingHorizontal: 16, // Reduced from 20 to save space
-    },
-    activeLabel: {
-        fontSize: 13, // Slightly reduced font size
-        fontWeight: '600',
-        color: '#e8ee26',
-        marginLeft: 6, // Reduced margin
     },
 });

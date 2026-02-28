@@ -67,7 +67,7 @@ export default function ProfileScreen({ navigation }) {
     
     switch (method) {
       case 'email':
-        Linking.openURL('mailto:support@arenapro.pk');
+        Linking.openURL('mailto:support@arenapropk.online');
         break;
       case 'phone':
         Linking.openURL('tel:+923390078965');
@@ -109,7 +109,7 @@ export default function ProfileScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 80 : 120 }
+          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 60 : 100 } // Reduced since navbar is no longer floating
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -280,7 +280,7 @@ export default function ProfileScreen({ navigation }) {
                 </View>
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactLabel}>Email</Text>
-                  <Text style={styles.contactValue}>support@arenapro.pk</Text>
+                  <Text style={styles.contactValue}>support@arenapropk.online</Text>
                 </View>
                 <MaterialIcons name="chevron-right" size={24} color="#C7C7CC" />
               </TouchableOpacity>
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_500Medium',
   },
   infoValue: {
-    fontSize: 15,
+    fontSize: 13,
     color: theme.colors.text,
     fontFamily: 'Montserrat_500Medium',
     textAlign: 'right',
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_600SemiBold',
   },
   contactValue: {
-    fontSize: 14,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     fontFamily: 'Montserrat_400Regular',
   },

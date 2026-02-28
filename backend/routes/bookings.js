@@ -259,7 +259,7 @@ router.post('/', [protect, validateBookingCreation, handleValidationErrors], asy
         <!-- Footer -->
         <div class="footer">
             <p>&copy; 2026 Arena Pro. All rights reserved.</p>
-            <p>Need help? Contact us at support@arenapro.com</p>
+            <p>Need help? Contact us at support@arenapropk.online</p>
         </div>
     </div>
 </body>
@@ -711,7 +711,7 @@ router.post('/send-confirmation', async (req, res) => {
         <!-- Footer -->
         <div class="footer">
             <p>&copy; 2026 Arena Pro. All rights reserved.</p>
-            <p>Need help? Contact us at support@arenapro.com</p>
+            <p>Need help? Contact us at support@arenapropk.online</p>
         </div>
     </div>
 </body>

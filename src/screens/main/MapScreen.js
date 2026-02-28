@@ -535,9 +535,6 @@ export default function MapScreen({ navigation }) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Debug info */}
-      {console.log('🎨 MapScreen: Rendering with filteredVenues.length =', filteredVenues.length)}
-
       {/* Search Bar with Filter Button */}
       <View style={styles.searchContainer}>
         <Searchbar
@@ -577,7 +574,7 @@ export default function MapScreen({ navigation }) {
       {hasLocationPermission && location && (
         <FAB
           icon="crosshairs-gps"
-          style={[styles.locationFab, { bottom: selectedVenue ? insets.bottom + 285 : insets.bottom + 245 }]}
+          style={[styles.locationFab, { bottom: insets.bottom + 245 }]}
           onPress={centerOnUserLocation}
           color={theme.colors.secondary}
           size="small"
@@ -586,7 +583,7 @@ export default function MapScreen({ navigation }) {
 
       {/* Horizontal Scrollable Venue List - Recommended Style */}
       {filteredVenues.length > 0 && (
-        <View style={[styles.venueListContainer, { bottom: insets.bottom + 105 }]}>
+        <View style={[styles.venueListContainer, { bottom: insets.bottom - 30 }]}>
           <ScrollView
             ref={scrollViewRef}
             horizontal
@@ -813,6 +810,7 @@ const styles = StyleSheet.create({
     right: 16,
     backgroundColor: theme.colors.primary,
     elevation: 4,
+    zIndex: 10,
   },
   venueListContainer: {
     position: 'absolute',

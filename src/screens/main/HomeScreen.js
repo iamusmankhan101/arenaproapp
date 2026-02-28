@@ -9,7 +9,7 @@ import {
   StatusBar,
   Platform
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Searchbar } from 'react-native-paper';
 import { useSelector, useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -58,6 +58,7 @@ const sportsCategories = [
 
 export default function HomeScreen({ navigation }) {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets(); // Get safe area insets for dynamic positioning
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState(null);
   const [userLocation, setUserLocation] = useState('Lahore, Pakistan');
@@ -657,7 +658,7 @@ export default function HomeScreen({ navigation }) {
       {/* Referral Floating Action Button - Show for all authenticated users */}
       {user && (
         <TouchableOpacity
-          style={styles.referralFAB}
+          style={[styles.referralFAB, { bottom: insets.bottom -20 }]}
           onPress={() => setReferralModalVisible(true)}
           activeOpacity={0.8}
         >
@@ -681,7 +682,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 100, // Ensure all content is visible above navbar (70px navbar + 30px buffer)
   },
   header: {
     flexDirection: 'row',
@@ -1135,8 +1136,10 @@ const styles = StyleSheet.create({
   },
   referralFAB: {
     position: 'absolute',
-    bottom: 105,
+    // bottom is set dynamically via inline style: bottom: insets.bottom + 80
     right: 20,
+    
+    
     backgroundColor: theme.colors.primary,
     borderRadius: 30,
     elevation: 8,

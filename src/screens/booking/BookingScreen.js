@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 20,
-    paddingBottom: 120,
+    paddingBottom: 100, // Reduced since navbar is no longer floating
   },
   emptyState: {
     alignItems: 'center',

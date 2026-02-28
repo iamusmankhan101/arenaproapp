@@ -257,7 +257,7 @@ export default function ChallengeScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 80 : 120 }
+          { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom + 60 : 100 } // Reduced since navbar is no longer floating
         ]}
         refreshControl={
           <RefreshControl

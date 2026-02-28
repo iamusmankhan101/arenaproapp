@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: 20,
         paddingTop: 10,
-        paddingBottom: 120,
+        paddingBottom: 100, // Reduced since navbar is no longer floating
     },
     centered: {
         marginTop: 100,
