@@ -29,6 +29,8 @@ const challengeTypes = [
 const sports = ['Cricket', 'Football', 'Padel'];
 
 export default function CreateChallengeModal({ visible, onDismiss, onSubmit }) {
+  console.log('🎨 CreateChallengeModal rendered, visible:', visible);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',

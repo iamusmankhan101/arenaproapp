@@ -28,6 +28,8 @@ export default function ChallengeScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('all'); // all, my-challenges
   const [refreshing, setRefreshing] = useState(false);
 
+  console.log('🔍 ChallengeScreen: showCreateModal =', showCreateModal);
+
   const { challenges, loading, userTeam } = useSelector(state => state.team);
   const { user } = useSelector(state => state.auth);
 
@@ -212,7 +214,11 @@ export default function ChallengeScreen({ navigation }) {
         <Text style={styles.headerTitle}>Challenges</Text>
         <TouchableOpacity
           style={styles.createButton}
-          onPress={() => setShowCreateModal(true)}
+          onPress={() => {
+            console.log('🎯 Create Challenge button pressed');
+            setShowCreateModal(true);
+          }}
+          activeOpacity={0.7}
         >
           <MaterialIcons name="add" size={24} color={theme.colors.secondary} />
         </TouchableOpacity>

@@ -658,7 +658,7 @@ export default function HomeScreen({ navigation }) {
       {/* Referral Floating Action Button - Show for all authenticated users */}
       {user && (
         <TouchableOpacity
-          style={[styles.referralFAB, { bottom: insets.bottom -20 }]}
+          style={[styles.referralFAB, { bottom: insets.bottom - 80 }]}
           onPress={() => setReferralModalVisible(true)}
           activeOpacity={0.8}
         >
