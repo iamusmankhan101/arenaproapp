@@ -16,6 +16,23 @@ export const challengeService = {
                 status: 'open',
                 createdAt: serverTimestamp(),
             });
+            
+            // Send notification to the creator
+            if (challengeData.challengerId) {
+                try {
+                    await notificationService.notify({
+                        userId: challengeData.challengerId,
+                        type: 'challenge',
+                        title: 'Challenge Created! 🏆',
+                        message: `Your challenge "${challengeData.title}" is now live and visible to other players!`,
+                        icon: 'emoji-events',
+                        data: { challengeId: docRef.id }
+                    });
+                } catch (notifError) {
+                    console.log('⚠️ Failed to send challenge creation notification:', notifError);
+                }
+            }
+            
             return { success: true, id: docRef.id };
         } catch (error) {
             console.error("Error creating challenge:", error);

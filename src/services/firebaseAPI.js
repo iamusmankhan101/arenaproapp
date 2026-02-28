@@ -918,6 +918,23 @@ export const bookingAPI = {
       const bookingRef = await addDoc(collection(db, 'bookings'), cleanBookingData);
       console.log('🔥 FIREBASE: Booking saved successfully with ID:', bookingRef.id);
 
+      // Send notification if this is a squad builder game (needPlayers = true)
+      if (cleanBookingData.needPlayers) {
+        try {
+          const { notificationService } = require('./notificationService');
+          await notificationService.notify({
+            userId: user.uid,
+            type: 'squad',
+            title: 'Game Listed on Squad Builder! 🎮',
+            message: `Your game at ${cleanBookingData.turfName} is now visible to other players looking to join!`,
+            icon: 'group-add',
+            data: { bookingId: bookingRef.id }
+          });
+        } catch (notifError) {
+          console.log('⚠️ Failed to send squad builder notification:', notifError);
+        }
+      }
+
       const finalResult = {
         data: {
           id: bookingRef.id,
