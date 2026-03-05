@@ -1,0 +1,110 @@
+{
+  "expo": {
+    "name": "Arena Pro",
+    "slug": "arena-pro",
+    "scheme": "arenapro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./src/images/arena_pro_logoqr.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#004d43"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "arenapropk.online",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIViewControllerBasedStatusBarAppearance": true,
+        "UIStatusBarStyle": "UIStatusBarStyleDarkContent"
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
+      },
+      "statusBar": {
+        "barStyle": "dark-content",
+        "hidden": false
+      },
+      "associatedDomains": [
+        "applinks:arenapro.pk"
+      ]
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#004d43"
+      },
+      "package": "arenapropk.online",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "runtimeVersion": "1.0.0",
+      "statusBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#FFFFFF",
+        "translucent": true
+      },
+      "navigationBar": {
+        "backgroundColor": "#FFFFFF",
+        "barStyle": "dark-content"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "arenapro.pk",
+              "pathPrefix": "/reset-password"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you set your profile picture.",
+          "cameraPermission": "The app accesses your camera to let you take a profile picture."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#004d43"
+        }
+      ]
+    ],
+    "newArchEnabled": false,
+    "extra": {
+      "emailjs": {
+        "serviceId": "service_fbv2xpl",
+        "templateId": "template_rvzdkla",
+        "userId": "DeOJhRm2vDyqLXLIN"
+      },
+      "eas": {
+        "projectId": "7b813ecd-6082-4f3b-838a-aaa4eee6f983"
+      }
+    }
+  }
+}
