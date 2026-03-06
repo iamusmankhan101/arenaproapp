@@ -415,7 +415,7 @@ export default function HomeScreen({ navigation }) {
                               </Text>
                               {venue.distanceKm != null && (
                                 <Text style={styles.venueDistance}>
-                                  {`ΓÇó ${String(formatDistance(venue.distanceKm))}`}
+                                  {`• ${String(formatDistance(venue.distanceKm))}`}
                                 </Text>
                               )}
                             </View>
@@ -506,7 +506,7 @@ export default function HomeScreen({ navigation }) {
                           </Text>
                           {venue.distanceKm != null && (
                             <Text style={styles.nearbyVenueDistance}>
-                              {`ΓÇó ${String(formatDistance(venue.distanceKm))}`}
+                              {`• ${String(formatDistance(venue.distanceKm))}`}
                             </Text>
                           )}
                         </View>
@@ -598,7 +598,7 @@ export default function HomeScreen({ navigation }) {
                                 </Text>
                                 {venue.distanceKm != null && (
                                   <Text style={styles.venueDistance}>
-                                    {`ΓÇó ${String(formatDistance(venue.distanceKm))}`}
+                                    {`• ${String(formatDistance(venue.distanceKm))}`}
                                   </Text>
                                 )}
                               </View>
@@ -658,7 +658,7 @@ export default function HomeScreen({ navigation }) {
       {/* Referral Floating Action Button - Show for all authenticated users */}
       {user && (
         <TouchableOpacity
-          style={[styles.referralFAB, { bottom: insets.bottom + 80 }]}
+          style={[styles.referralFAB, { bottom: insets.bottom + 0 }]}
           onPress={() => setReferralModalVisible(true)}
           activeOpacity={0.8}
         >
@@ -1138,8 +1138,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     // bottom is set dynamically via inline style: bottom: insets.bottom + 80
     right: 20,
-    
-    
+
+
     backgroundColor: theme.colors.primary,
     borderRadius: 30,
     elevation: 8,

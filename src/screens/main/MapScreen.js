@@ -643,7 +643,7 @@ export default function MapScreen({ navigation }) {
                       <Text style={styles.venueLocationText} numberOfLines={1}>
                         {`${String(venue.city || venue.area || 'Lahore')}, Pakistan`}
                       </Text>
-                      {venue.distance && (
+                      {!!venue.distance && (
                         <Text style={styles.venueDistance}>
                           {`• ${String(venue.distance)}`}
                         </Text>
@@ -651,7 +651,7 @@ export default function MapScreen({ navigation }) {
                     </View>
 
                     <View style={styles.venuePriceContainer}>
-                      {(venue.discount || venue.discountPercentage) && (
+                      {!!(venue.discount || venue.discountPercentage) && (
                         <Text style={styles.venueOriginalPrice}>
                           {`PKR ${String(venue.pricePerHour || venue.pricing?.basePrice || 1500)}`}
                         </Text>
@@ -680,10 +680,10 @@ export default function MapScreen({ navigation }) {
                   />
                 </TouchableOpacity>
 
-                {(venue.discount || venue.discountPercentage) && (
+                {!!(venue.discount || venue.discountPercentage) && (
                   <View style={styles.discountBadge}>
                     <Text style={styles.discountText}>
-                      {`${venue.discount || venue.discountPercentage}% Off`}
+                      {`${String(venue.discount || venue.discountPercentage)}% Off`}
                     </Text>
                   </View>
                 )}
@@ -724,7 +724,7 @@ export default function MapScreen({ navigation }) {
                   </Text>
                 </View>
 
-                {selectedVenue.distance && (
+                {!!selectedVenue.distance && (
                   <View style={styles.selectedVenueInfo}>
                     <MaterialIcons name="directions" size={16} color="#666" />
                     <Text style={styles.selectedVenueDistance}>{`${String(selectedVenue.distance)} away`}</Text>
