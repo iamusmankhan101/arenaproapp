@@ -40,7 +40,7 @@ import {
   Inventory2,
   WhatsApp,
   Campaign,
-} from '@mui/icons-material';
+, Email} from '@mui/icons-material';
 import { logoutAdmin } from '../store/slices/authSlice';
 
 const drawerWidth = 240;
@@ -52,6 +52,7 @@ const adminMenuItems = [
   { text: 'Customers', icon: <People />, path: '/customers' },
   { text: 'Reports', icon: <Analytics />, path: '/reports' },
   { text: 'Reviews', icon: <RateReview />, path: '/reviews' },
+  { text: 'Waitlist', icon: <Email />, path: '/waitlist' },
   { text: 'Pro Features', icon: <WorkspacePremium />, path: '/pro-management' },
   { text: 'Settings', icon: <Settings />, path: '/settings' },
 ];
@@ -354,3 +355,4 @@ export default function Layout({ children }) {
     </Box>
   );
 }
+
