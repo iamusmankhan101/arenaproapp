@@ -1015,23 +1015,23 @@ export const bookingAPI = {
                     console.log('✅ Mobile: Admin EmailJS success!');
                   } else {
                     const errorText = await adminRes.text();
-                    console.error('⚠️ Mobile: Admin EmailJS failed:', errorText);
+                    console.warn('⚠️ Mobile: Admin EmailJS failed:', errorText);
                   }
                 } catch (e) {
-                  console.error('⚠️ Mobile: Admin EmailJS error:', e);
+                  console.warn('⚠️ Mobile: Admin EmailJS error:', e);
                 }
               }
             } else {
               const errorText = await response.text();
-              console.error('⚠️ Mobile: EmailJS failed:', errorText);
+              console.warn('⚠️ Mobile: EmailJS failed:', errorText);
             }
           })
           .catch((error) => {
-            console.error('⚠️ Mobile: EmailJS network error:', error);
+            console.warn('⚠️ Mobile: EmailJS network error:', error);
           });
 
       } catch (emailError) {
-        console.error('⚠️ Mobile: Error preparing email:', emailError);
+        console.warn('⚠️ Mobile: Error preparing email:', emailError);
       }
 
       console.log('🔥 FIREBASE: Returning booking result with ID:', bookingRef.id);

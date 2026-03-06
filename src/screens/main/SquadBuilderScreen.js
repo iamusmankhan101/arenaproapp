@@ -113,8 +113,8 @@ export default function SquadBuilderScreen({ navigation }) {
     };
 
     const filteredGames = games.filter(game =>
-        game.turfName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        game.userName.toLowerCase().includes(searchQuery.toLowerCase())
+        (game.turfName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (game.userName || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -127,9 +127,6 @@ export default function SquadBuilderScreen({ navigation }) {
                     <Text style={styles.headerTitle}>Squad Builder</Text>
                     <Text style={styles.headerSubtitle}>Find teammates and split the cost</Text>
                 </View>
-                <TouchableOpacity style={styles.infoButton}>
-                    <MaterialIcons name="help-outline" size={24} color={theme.colors.primary} />
-                </TouchableOpacity>
             </View>
 
             {/* Search */}
@@ -171,104 +168,113 @@ export default function SquadBuilderScreen({ navigation }) {
                         </Button>
                     </View>
                 ) : (
-                    filteredGames.map(game => (
-                        <Card key={game.id} style={styles.gameCard} elevation={2}>
-                            <Card.Content>
-                                <View style={styles.cardHeader}>
-                                    <View style={styles.organizerRow}>
-                                        {game.userPhotoURL ? (
-                                            <Image
-                                                source={{ uri: game.userPhotoURL }}
-                                                style={styles.avatarImage}
+                    filteredGames.map(game => {
+                        const gameDate = game.dateTime ? new Date(game.dateTime) : null;
+                        const isPast = gameDate ? gameDate < new Date() : false;
+
+                        return (
+                            <Card key={game.id} style={styles.gameCard} elevation={2}>
+                                <Card.Content>
+                                    <View style={styles.cardHeader}>
+                                        <View style={styles.organizerRow}>
+                                            {game.userPhotoURL ? (
+                                                <Image
+                                                    source={{ uri: game.userPhotoURL }}
+                                                    style={styles.avatarImage}
+                                                />
+                                            ) : (
+                                                <Surface style={styles.avatarCircle} elevation={1}>
+                                                    <Text style={styles.avatarInitial}>{String(game.userName?.charAt(0) || 'P')}</Text>
+                                                </Surface>
+                                            )}
+                                            <View>
+                                                <Text style={styles.organizerName}>{String(game.userName || 'Player')}</Text>
+                                                <Text style={styles.organizerTotal}>Organizer</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.priceTag}>
+                                            <Text style={styles.priceLabel}>PKR</Text>
+                                            <Text style={styles.priceValue}>{String(game.slotPricePerPlayer || 0)}</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.gameDetails}>
+                                        <View style={styles.venueHeader}>
+                                            <Text style={styles.venueName}>{String(game.turfName || 'Venue')}</Text>
+                                            <View style={styles.playersBadge}>
+                                                <MaterialIcons name="people" size={14} color={theme.colors.secondary} />
+                                                <Text style={styles.playersBadgeText}>{`${String(((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0)) + '/' + ((game.numberOfPlayers || 1) + (game.playersNeeded || 0)) + ' Players')}`}</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.infoRow}>
+                                            <MaterialIcons name="event" size={18} color={theme.colors.primary} />
+                                            <Text style={styles.infoText}>
+                                                {game.dateTime ? new Date(game.dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Date TBD'}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.infoRow}>
+                                            <MaterialIcons name="schedule" size={18} color={theme.colors.primary} />
+                                            <Text style={styles.infoText}>{`${String(game.startTime || '')} - ${String(game.endTime || '')}`}</Text>
+                                        </View>
+                                        <View style={styles.infoRow}>
+                                            <MaterialIcons name="sports-soccer" size={18} color={theme.colors.primary} />
+                                            <Text style={styles.infoText}>{String(game.sport || 'Sport')}</Text>
+                                        </View>
+                                        <View style={styles.infoRow}>
+                                            <MaterialIcons name="location-on" size={18} color={theme.colors.primary} />
+                                            <Text style={styles.infoText} numberOfLines={1}>{String(game.turfArea || 'Area')}</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.progressSection}>
+                                        <View style={styles.progressLabels}>
+                                            <Text style={styles.playersJoinedText}>
+                                                {`${String((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0))} Joined`}
+                                            </Text>
+                                            <Text style={styles.playersNeededText}>
+                                                {`${String((game.playersNeeded || 0) - (game.playersJoined?.length || 0))} Spots Left`}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.progressBar}>
+                                            <View
+                                                style={[
+                                                    styles.progressFill,
+                                                    { width: `${Math.min(100, (((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0)) / ((game.numberOfPlayers || 1) + (game.playersNeeded || 0))) * 100)}%` }
+                                                ]}
                                             />
-                                        ) : (
-                                            <Surface style={styles.avatarCircle} elevation={1}>
-                                                <Text style={styles.avatarInitial}>{String(game.userName?.charAt(0) || 'P')}</Text>
-                                            </Surface>
-                                        )}
-                                        <View>
-                                            <Text style={styles.organizerName}>{String(game.userName || 'Player')}</Text>
-                                            <Text style={styles.organizerTotal}>Organizer</Text>
                                         </View>
                                     </View>
-                                    <View style={styles.priceTag}>
-                                        <Text style={styles.priceLabel}>PKR</Text>
-                                        <Text style={styles.priceValue}>{String(game.slotPricePerPlayer || 0)}</Text>
-                                    </View>
-                                </View>
 
-                                <View style={styles.gameDetails}>
-                                    <View style={styles.venueHeader}>
-                                        <Text style={styles.venueName}>{String(game.turfName || 'Venue')}</Text>
-                                        <View style={styles.playersBadge}>
-                                            <MaterialIcons name="people" size={14} color={theme.colors.secondary} />
-                                            <Text style={styles.playersBadgeText}>{`${String(((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0)) + '/' + ((game.numberOfPlayers || 1) + (game.playersNeeded || 0)) + ' Players')}`}</Text>
+                                    {isPast ? (
+                                        <View style={[styles.joinButton, { backgroundColor: '#E0E0E0', elevation: 0 }]} >
+                                            <Text style={[styles.joinButtonText, { color: '#888' }]}>Finished</Text>
                                         </View>
-                                    </View>
-                                    <View style={styles.infoRow}>
-                                        <MaterialIcons name="event" size={18} color={theme.colors.primary} />
-                                        <Text style={styles.infoText}>
-                                            {game.dateTime ? new Date(game.dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Date TBD'}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.infoRow}>
-                                        <MaterialIcons name="schedule" size={18} color={theme.colors.primary} />
-                                        <Text style={styles.infoText}>{`${String(game.startTime || '')} - ${String(game.endTime || '')}`}</Text>
-                                    </View>
-                                    <View style={styles.infoRow}>
-                                        <MaterialIcons name="sports-soccer" size={18} color={theme.colors.primary} />
-                                        <Text style={styles.infoText}>{String(game.sport || 'Sport')}</Text>
-                                    </View>
-                                    <View style={styles.infoRow}>
-                                        <MaterialIcons name="location-on" size={18} color={theme.colors.primary} />
-                                        <Text style={styles.infoText} numberOfLines={1}>{String(game.turfArea || 'Area')}</Text>
-                                    </View>
-                                </View>
-
-                                <View style={styles.progressSection}>
-                                    <View style={styles.progressLabels}>
-                                        <Text style={styles.playersJoinedText}>
-                                            {`${String((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0))} Joined`}
-                                        </Text>
-                                        <Text style={styles.playersNeededText}>
-                                            {`${String((game.playersNeeded || 0) - (game.playersJoined?.length || 0))} Spots Left`}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.progressBar}>
-                                        <View
+                                    ) : game.userId === user?.uid ? (
+                                        <TouchableOpacity
+                                            style={styles.deleteButton}
+                                            onPress={() => handleDeleteGame(game)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <MaterialIcons name="delete" size={20} color="#fff" />
+                                            <Text style={styles.deleteButtonText}>Cancel Game</Text>
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <TouchableOpacity
                                             style={[
-                                                styles.progressFill,
-                                                { width: `${Math.min(100, (((game.numberOfPlayers || 1) + (game.playersJoined?.length || 0)) / ((game.numberOfPlayers || 1) + (game.playersNeeded || 0))) * 100)}%` }
+                                                styles.joinButton,
+                                                game.userId === user?.uid && styles.joinButtonDisabled
                                             ]}
-                                        />
-                                    </View>
-                                </View>
-
-                                {game.userId === user?.uid ? (
-                                    <TouchableOpacity
-                                        style={styles.deleteButton}
-                                        onPress={() => handleDeleteGame(game)}
-                                        activeOpacity={0.7}
-                                    >
-                                        <MaterialIcons name="delete" size={20} color="#fff" />
-                                        <Text style={styles.deleteButtonText}>Cancel Game</Text>
-                                    </TouchableOpacity>
-                                ) : (
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.joinButton,
-                                            game.userId === user?.uid && styles.joinButtonDisabled
-                                        ]}
-                                        onPress={() => handleJoinGame(game)}
-                                        disabled={game.userId === user?.uid}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text style={styles.joinButtonText}>Join Game</Text>
-                                    </TouchableOpacity>
-                                )}
-                            </Card.Content>
-                        </Card>
-                    ))
+                                            onPress={() => handleJoinGame(game)}
+                                            disabled={game.userId === user?.uid}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Text style={styles.joinButtonText}>Join Game</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </Card.Content>
+                            </Card>
+                        )
+                    })
                 )}
             </ScrollView>
 

@@ -34,16 +34,16 @@ export const emailService = {
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 console.log('✅ Booking confirmation email sent');
                 return { success: true };
             } else {
-                console.error('❌ Failed to send booking confirmation:', result.error);
+                console.warn('❌ Failed to send booking confirmation:', result.error);
                 return { success: false, error: result.error };
             }
         } catch (error) {
-            console.error('❌ Email service error:', error);
+            console.warn('❌ Email service error:', error);
             return { success: false, error: error.message };
         }
     },
@@ -78,7 +78,7 @@ export const emailService = {
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 console.log('✅ Challenge acceptance email sent');
                 return { success: true };
@@ -133,7 +133,7 @@ export const emailService = {
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 console.log('✅ Squad player joined email sent');
                 return { success: true };
@@ -174,7 +174,7 @@ export const emailService = {
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 console.log('✅ Squad game cancelled email sent');
                 return { success: true };
@@ -218,7 +218,7 @@ export const emailService = {
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 console.log('✅ Squad join confirmation email sent');
                 return { success: true };

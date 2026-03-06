@@ -30,16 +30,33 @@ export const matchmakingService = {
                 ...doc.data()
             }));
 
-            // Filter out games that are already full or in the past
-            const now = new Date();
+            console.log('🚨 RAW GAMES:', JSON.stringify(games.map(g => ({
+                id: g.id,
+                needPlayers: g.needPlayers,
+                status: g.status,
+                dateTime: g.dateTime,
+                playersNeeded: g.playersNeeded,
+                playersJoined: g.playersJoined?.length || 0,
+                turfName: g.turfName
+            })), null, 2));
+
+            // Filter out games that are already full
             const availableGames = games.filter(game => {
-                const isFull = (game.playersJoined?.length || 0) >= game.playersNeeded;
-                const gameDate = new Date(game.dateTime);
-                const isPast = gameDate < now;
-                return !isFull && !isPast;
+                const isFull = (game.playersJoined?.length || 0) >= (game.playersNeeded || 1);
+
+                // Allow all games regardless of date per user request
+                return !isFull;
             });
 
             console.log(`✅ Matchmaking: Found ${availableGames.length} available games`);
+
+            // Sort games by date descending (latest first)
+            availableGames.sort((a, b) => {
+                const dateA = a.dateTime ? new Date(a.dateTime).getTime() : 0;
+                const dateB = b.dateTime ? new Date(b.dateTime).getTime() : 0;
+                return dateB - dateA; // latest on top
+            });
+
             return availableGames;
         } catch (error) {
             console.error('❌ Matchmaking: Error fetching games:', error);
