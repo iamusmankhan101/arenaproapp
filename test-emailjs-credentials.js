@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const SERVICE_ID = process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID || 'service_fbv2xpl';
+const SERVICE_ID = process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID || 'service_j2kg0v7';
 const TEMPLATE_ID = process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID || 'template_rvzdkla';
 const USER_ID = process.env.EXPO_PUBLIC_EMAILJS_USER_ID || 'DeOJhRm2vDyqLXLIN';
 
