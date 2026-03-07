@@ -315,7 +315,7 @@ export default function DashboardPage() {
                             }}
                           />
                           <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {booking.timeSlot && booking.timeSlot !== 'N/A' ? booking.timeSlot : new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Typography>
                         </Box>
                         <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }} noWrap>

@@ -513,7 +513,7 @@ export default function ReportsPage() {
                       sx={{ '&:nth-of-type(even)': { bgcolor: 'rgba(0, 77, 67, 0.02)' } }}
                     >
                       <TableCell sx={{ color: '#004d43', fontWeight: 500 }}>
-                        {format(new Date(row.date), 'MMM dd, yyyy HH:mm')}
+                        {format(new Date(row.date), 'MMM dd, yyyy')} {row.timeSlot && row.timeSlot !== 'N/A' ? row.timeSlot : format(new Date(row.date), 'HH:mm')}
                       </TableCell>
                       <TableCell sx={{ color: '#555' }}>#{row.id.slice(0, 8)}...</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#333' }}>{row.customerName}</TableCell>

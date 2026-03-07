@@ -280,7 +280,7 @@ export default function BookingsPage() {
                 {format(date, isMobile ? 'MMM dd' : 'MMM dd, yyyy')}
               </Typography>
               <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.6rem' : '0.75rem'} noWrap>
-                {format(date, isMobile ? 'h:mm a' : 'hh:mm a')}
+                {params.row.timeSlot && params.row.timeSlot !== 'N/A' ? params.row.timeSlot : format(date, isMobile ? 'h:mm a' : 'hh:mm a')}
               </Typography>
             </Box>
           );
