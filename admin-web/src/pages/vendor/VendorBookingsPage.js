@@ -32,7 +32,7 @@ import {
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchBookings, updateBookingStatus, fetchVenues, createBooking } from '../../store/slices/adminSlice';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 
 const statusColors = {
     confirmed: '#4CAF50',
@@ -289,7 +289,25 @@ export default function VendorBookingsPage() {
                                 {format(date, 'MMM dd, yyyy')}
                             </Typography>
                             <Typography variant="caption" color="textSecondary">
-                                {format(date, 'hh:mm a')}
+                                {(() => {
+                                    const timeSlot = params.row.timeSlot;
+                                    if (!timeSlot || timeSlot === 'N/A') return format(date, 'hh:mm a');
+
+                                    if (timeSlot.toUpperCase().includes('AM') || timeSlot.toUpperCase().includes('PM')) {
+                                        return timeSlot;
+                                    }
+
+                                    try {
+                                        if (timeSlot.includes(' - ')) {
+                                            const [start, end] = timeSlot.split(' - ');
+                                            const formatTime = (t) => format(parse(t.trim(), 'HH:mm', new Date()), 'hh:mm a');
+                                            return `${formatTime(start)} - ${formatTime(end)}`;
+                                        }
+                                        return format(parse(timeSlot.trim(), 'HH:mm', new Date()), 'hh:mm a');
+                                    } catch (e) {
+                                        return timeSlot;
+                                    }
+                                })()}
                             </Typography>
                         </Box>
                     );

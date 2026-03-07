@@ -168,7 +168,7 @@ export default function ReportsPage() {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      const dateStr = format(new Date(), 'dd MMM yyyy HH:mm');
+      const dateStr = format(new Date(), 'dd MMM yyyy hh:mm a');
       doc.text(`Generated on: ${dateStr}`, 14, 37); // Shifted down for large logo
 
       doc.setFontSize(14);
@@ -221,7 +221,7 @@ export default function ReportsPage() {
         startY: 105,
         head: [['Date', 'Booking ID', 'Customer', 'Venue', 'Sport', 'Amount', 'Status']],
         body: recentTransactions.map(t => [
-          format(new Date(t.date), 'MMM dd, yyyy HH:mm'),
+          format(new Date(t.date), 'MMM dd, yyyy hh:mm a'),
           `#${String(t.id || '').split('-')[0].toUpperCase()}`, // Safer ID slice/format
           String(t.customerName || 'N/A'),
           String(t.venueName || 'N/A'),
@@ -513,7 +513,13 @@ export default function ReportsPage() {
                       sx={{ '&:nth-of-type(even)': { bgcolor: 'rgba(0, 77, 67, 0.02)' } }}
                     >
                       <TableCell sx={{ color: '#004d43', fontWeight: 500 }}>
-                        {format(new Date(row.date), 'MMM dd, yyyy')} {row.timeSlot && row.timeSlot !== 'N/A' ? row.timeSlot : format(new Date(row.date), 'HH:mm')}
+                        {format(new Date(row.date), 'MMM dd, yyyy')} {row.timeSlot && row.timeSlot !== 'N/A' ? (
+                          row.timeSlot.toUpperCase().includes('AM') || row.timeSlot.toUpperCase().includes('PM')
+                            ? row.timeSlot
+                            : row.timeSlot.includes(' - ')
+                              ? row.timeSlot.split(' - ').map(t => format(parse(t.trim(), 'HH:mm', new Date()), 'hh:mm a')).join(' - ')
+                              : format(parse(row.timeSlot.trim(), 'HH:mm', new Date()), 'hh:mm a')
+                        ) : format(new Date(row.date), 'hh:mm a')}
                       </TableCell>
                       <TableCell sx={{ color: '#555' }}>#{row.id.slice(0, 8)}...</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#333' }}>{row.customerName}</TableCell>

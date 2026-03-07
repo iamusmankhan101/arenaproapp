@@ -29,6 +29,7 @@ import {
   Bar,
 } from 'recharts';
 import { fetchDashboardStats } from '../store/slices/adminSlice';
+import { format, parse } from 'date-fns';
 
 const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
   const isDark = variant === 'dark';
@@ -315,7 +316,25 @@ export default function DashboardPage() {
                             }}
                           />
                           <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            {booking.timeSlot && booking.timeSlot !== 'N/A' ? booking.timeSlot : new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {(() => {
+                              const timeSlot = booking.timeSlot;
+                              if (timeSlot && timeSlot !== 'N/A') {
+                                if (timeSlot.toUpperCase().includes('AM') || timeSlot.toUpperCase().includes('PM')) {
+                                  return timeSlot;
+                                }
+                                try {
+                                  if (timeSlot.includes(' - ')) {
+                                    const [start, end] = timeSlot.split(' - ');
+                                    const formatTime = (t) => format(parse(t.trim(), 'HH:mm', new Date()), 'hh:mm a');
+                                    return `${formatTime(start)} - ${formatTime(end)}`;
+                                  }
+                                  return format(parse(timeSlot.trim(), 'HH:mm', new Date()), 'hh:mm a');
+                                } catch (e) {
+                                  return timeSlot;
+                                }
+                              }
+                              return format(new Date(booking.startTime), 'hh:mm a');
+                            })()}
                           </Typography>
                         </Box>
                         <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }} noWrap>
@@ -375,7 +394,7 @@ export default function DashboardPage() {
                     <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{activity.text}</Typography>
                       <Typography variant="caption" color="textSecondary">
-                        {activity.subText} • {new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {activity.subText} • {format(new Date(activity.time), 'hh:mm a')}
                       </Typography>
                     </Box>
                     <Box

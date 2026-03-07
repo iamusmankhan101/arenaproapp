@@ -26,6 +26,7 @@ import {
 import { CloudUpload, Close, ArrowForward, Check, Edit, Payments } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue, updateVenue } from '../store/slices/adminSlice';
+import { format, parse } from 'date-fns';
 
 const CLOUDINARY_CLOUD_NAME = 'dykbxopqn';
 const CLOUDINARY_UPLOAD_PRESET = 'venue_images';
@@ -835,7 +836,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                         {dateSlots.map(slot => (
                           <Box key={slot.id} sx={{ position: 'relative' }}>
                             <Chip
-                              label={`${slot.startTime} - ${slot.endTime} ${slot.price !== parseFloat(formData.basePrice) ? `(PKR ${slot.price})` : ''}`}
+                              label={`${format(parse(slot.startTime, 'HH:mm', new Date()), 'hh:mm a')} - ${format(parse(slot.endTime, 'HH:mm', new Date()), 'hh:mm a')} ${slot.price !== parseFloat(formData.basePrice) ? `(PKR ${slot.price})` : ''}`}
                               onClick={() => {
                                 setFormData(prev => ({
                                   ...prev,

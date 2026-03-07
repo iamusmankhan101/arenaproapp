@@ -280,7 +280,27 @@ export default function BookingsPage() {
                 {format(date, isMobile ? 'MMM dd' : 'MMM dd, yyyy')}
               </Typography>
               <Typography variant="caption" color="textSecondary" fontSize={isMobile ? '0.6rem' : '0.75rem'} noWrap>
-                {params.row.timeSlot && params.row.timeSlot !== 'N/A' ? params.row.timeSlot : format(date, isMobile ? 'h:mm a' : 'hh:mm a')}
+                {(() => {
+                  const timeSlot = params.row.timeSlot;
+                  if (!timeSlot || timeSlot === 'N/A') return format(date, isMobile ? 'h:mm a' : 'hh:mm a');
+
+                  // If it's already in 12h format (contains AM/PM), return as is
+                  if (timeSlot.toUpperCase().includes('AM') || timeSlot.toUpperCase().includes('PM')) {
+                    return timeSlot;
+                  }
+
+                  // If it's a 24h format "HH:mm" or range "HH:mm - HH:mm", try to convert
+                  try {
+                    if (timeSlot.includes(' - ')) {
+                      const [start, end] = timeSlot.split(' - ');
+                      const formatTime = (t) => format(parse(t.trim(), 'HH:mm', new Date()), 'hh:mm a');
+                      return `${formatTime(start)} - ${formatTime(end)}`;
+                    }
+                    return format(parse(timeSlot.trim(), 'HH:mm', new Date()), 'hh:mm a');
+                  } catch (e) {
+                    return timeSlot;
+                  }
+                })()}
               </Typography>
             </Box>
           );
