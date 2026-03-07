@@ -35,13 +35,13 @@ const WaitlistPage = () => {
       const waitlistRef = collection(db, 'waitlist');
       const q = query(waitlistRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      
+
       const entries = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate() || new Date(),
       }));
-      
+
       setWaitlistEntries(entries);
     } catch (error) {
       console.error('Error fetching waitlist:', error);
@@ -65,17 +65,17 @@ const WaitlistPage = () => {
       format(entry.createdAt, 'yyyy-MM-dd HH:mm:ss'),
       entry.type || 'Early Access'
     ]);
-    
+
     const csvContent = [
       headers.join(','),
       ...rows.map(row => row.join(','))
     ].join('\\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = \waitlist-\.csv\;
+    a.download = 'waitlist.csv';
     a.click();
   };
 

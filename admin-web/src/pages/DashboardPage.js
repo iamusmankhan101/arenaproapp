@@ -7,6 +7,7 @@ import {
   Typography,
   Box,
   Avatar,
+  Chip,
 } from '@mui/material';
 import {
   Event,
@@ -16,6 +17,7 @@ import {
   TrendingDown,
   AccessTime,
   FlashOn,
+  People,
 } from '@mui/icons-material';
 import {
   XAxis,

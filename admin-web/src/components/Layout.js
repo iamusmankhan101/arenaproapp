@@ -40,7 +40,8 @@ import {
   Inventory2,
   WhatsApp,
   Campaign,
-, Email} from '@mui/icons-material';
+  Email
+} from '@mui/icons-material';
 import { logoutAdmin } from '../store/slices/authSlice';
 
 const drawerWidth = 240;

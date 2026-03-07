@@ -834,40 +834,42 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                       </Box>
 
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        <Box key={slot.id} sx={{ position: 'relative' }}>
-                          <Chip
-                            label={`${slot.startTime} - ${slot.endTime} ${slot.price !== parseFloat(formData.basePrice) ? `(PKR ${slot.price})` : ''}`}
-                            onClick={() => {
-                              setFormData(prev => ({
-                                ...prev,
-                                dateSpecificSlots: {
-                                  ...prev.dateSpecificSlots,
-                                  [date]: dateSlots.map(s =>
-                                    s.id === slot.id ? { ...s, selected: !s.selected } : s
-                                  )
+                        {dateSlots.map(slot => (
+                          <Box key={slot.id} sx={{ position: 'relative' }}>
+                            <Chip
+                              label={`${slot.startTime} - ${slot.endTime} ${slot.price !== parseFloat(formData.basePrice) ? `(PKR ${slot.price})` : ''}`}
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  dateSpecificSlots: {
+                                    ...prev.dateSpecificSlots,
+                                    [date]: dateSlots.map(s =>
+                                      s.id === slot.id ? { ...s, selected: !s.selected } : s
+                                    )
+                                  }
+                                }));
+                              }}
+                              onDelete={() => {
+                                setPriceEditingSlot({ date, slotId: slot.id, currentPrice: slot.price });
+                                setEditingPrice(slot.price.toString());
+                              }}
+                              deleteIcon={<Edit sx={{ fontSize: '14px !important' }} />}
+                              color={slot.selected ? "primary" : "default"}
+                              variant={slot.selected ? "filled" : "outlined"}
+                              sx={{
+                                bgcolor: slot.selected ? '#004d43' : 'transparent',
+                                color: slot.selected ? 'white' : 'inherit',
+                                '&:hover': {
+                                  bgcolor: slot.selected ? '#00695c' : '#f5f5f5'
+                                },
+                                '& .MuiChip-deleteIcon': {
+                                  color: slot.selected ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+                                  '&:hover': { color: 'white' }
                                 }
-                              }));
-                            }}
-                            onDelete={() => {
-                              setPriceEditingSlot({ date, slotId: slot.id, currentPrice: slot.price });
-                              setEditingPrice(slot.price.toString());
-                            }}
-                            deleteIcon={<Edit sx={{ fontSize: '14px !important' }} />}
-                            color={slot.selected ? "primary" : "default"}
-                            variant={slot.selected ? "filled" : "outlined"}
-                            sx={{
-                              bgcolor: slot.selected ? '#004d43' : 'transparent',
-                              color: slot.selected ? 'white' : 'inherit',
-                              '&:hover': {
-                                bgcolor: slot.selected ? '#00695c' : '#f5f5f5'
-                              },
-                              '& .MuiChip-deleteIcon': {
-                                color: slot.selected ? 'rgba(255,255,255,0.7)' : 'text.secondary',
-                                '&:hover': { color: 'white' }
-                              }
-                            }}
-                          />
-                        </Box>
+                              }}
+                            />
+                          </Box>
+                        ))}
                       </Box>
                     </Card>
                   );
