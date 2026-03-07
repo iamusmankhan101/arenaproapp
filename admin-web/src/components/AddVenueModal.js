@@ -273,8 +273,6 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
 
       existingDates.forEach(date => {
         const oldDateSlots = prev.dateSpecificSlots[date];
-        // Map old selection state by time range
-        const oldSelectionMap = {};
         // Regenerate slots for this date, preserving selection AND price where possible
         updatedDateSlots[date] = newSlots.map(slot => {
           const oldSlot = oldDateSlots.find(s => s.startTime === slot.startTime && s.endTime === slot.endTime);
