@@ -1,6 +1,27 @@
 import { getDocs, addDoc, doc, getDoc, updateDoc, query, orderBy, collection, collectionGroup, deleteDoc, where, Timestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
+// Helper: convert a 24h time string like "14:00" or range "14:00 - 15:00" to 12h format
+const convertTo12h = (timeStr) => {
+  if (!timeStr || timeStr === 'N/A') return timeStr;
+  // Already in 12h format
+  if (timeStr.toUpperCase().includes('AM') || timeStr.toUpperCase().includes('PM')) return timeStr;
+  try {
+    const convertSingle = (t) => {
+      const [h, m] = t.trim().split(':').map(Number);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hour12 = h % 12 || 12;
+      return `${hour12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+    };
+    if (timeStr.includes(' - ')) {
+      return timeStr.split(' - ').map(convertSingle).join(' - ');
+    }
+    return convertSingle(timeStr);
+  } catch (e) {
+    return timeStr;
+  }
+};
+
 const initFirebase = () => {
   return db;
 };
@@ -383,7 +404,7 @@ export const workingAdminAPI = {
           totalAmount: bookingData.totalAmount || 0,
           status: bookingData.status || 'pending',
           paymentStatus: bookingData.paymentStatus || 'pending',
-          timeSlot: bookingData.timeSlot || bookingData.slot?.startTime || 'N/A',
+          timeSlot: convertTo12h(bookingData.timeSlot || bookingData.slot?.startTime || 'N/A'),
           // Ensure dates are properly formatted
           createdAt: bookingData.createdAt?.toDate?.() || new Date(),
           updatedAt: bookingData.updatedAt?.toDate?.() || new Date(),

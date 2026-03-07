@@ -41,6 +41,7 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardStats } from '../../store/slices/adminSlice';
+import { format } from 'date-fns';
 
 const StatCard = ({ title, value, icon, color, growth, variant = 'light' }) => {
     const isDark = variant === 'dark';
@@ -257,7 +258,7 @@ export default function VendorDashboard() {
     const navigate = useNavigate();
     const { dashboardStats, loading } = useSelector(state => state.admin);
     const { admin } = useSelector(state => state.auth);
-    
+
     useEffect(() => {
         if (admin?.uid) {
             const vendorId = admin.vendorId || admin.uid;
@@ -436,7 +437,7 @@ export default function VendorDashboard() {
                                         <Box sx={{ flexGrow: 1 }}>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{activity.text}</Typography>
                                             <Typography variant="caption" color="textSecondary">
-                                                {activity.subText} • {new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {activity.subText} • {format(new Date(activity.time), 'hh:mm a')}
                                             </Typography>
                                         </Box>
                                         <Box
