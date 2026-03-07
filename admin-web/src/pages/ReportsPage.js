@@ -115,7 +115,19 @@ export default function ReportsPage() {
     dispatch(fetchRevenueReport());
   }, [dispatch]);
 
-  const { monthlyData = [], sportsData = [], venuePerformance = [], summary = {}, recentTransactions = [] } = revenueReport || {};
+  const { monthlyData = [], sportsData = [], venuePerformance = [], summary = {}, recentTransactions = [], dailyData = [] } = revenueReport || {};
+
+  // Aggregate Busiest Slots from recent transactions
+  const slotCounts = {};
+  recentTransactions.forEach(t => {
+    if (t.timeSlot) {
+      slotCounts[t.timeSlot] = (slotCounts[t.timeSlot] || 0) + 1;
+    }
+  });
+  const busiestSlotsData = Object.entries(slotCounts)
+    .map(([slot, count]) => ({ slot, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
 
   const handleExport = async () => {
     try {
@@ -415,19 +427,37 @@ export default function ReportsPage() {
           </Paper>
         </Grid>
 
-        {/* Customer Growth */}
+        {/* Daily Revenue Growth (Current Month) */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Daily Revenue - Current Month
+            </Typography>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={dailyData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="day" stroke="#004d43" label={{ value: 'Day of Month', position: 'insideBottom', offset: -5 }} />
+                <YAxis stroke="#004d43" />
+                <Tooltip content={<CustomTooltip measure="Revenue" prefix="PKR " />} />
+                <Bar dataKey="revenue" fill="#004d43" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+
+        {/* Busiest Slots Analysis */}
         <Grid item xs={12} lg={6}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              Customer Growth
+              Busiest Slots (Historical)
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" stroke="#004d43" style={{ fontSize: '12px' }} />
-                <YAxis stroke="#004d43" style={{ fontSize: '12px' }} />
-                <Tooltip content={<CustomTooltip measure="Active Customers" />} />
-                <Bar dataKey="customers" fill="#e8ee26" radius={[4, 4, 0, 0]} />
+              <BarChart data={busiestSlotsData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" hide />
+                <YAxis dataKey="slot" type="category" width={100} style={{ fontSize: '12px' }} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#e8ee26" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </Paper>
@@ -467,7 +497,7 @@ export default function ReportsPage() {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: '#004d43' }}>
-                  {['Date', 'Booking ID', 'Customer', 'Venue', 'Sport', 'Amount', 'Status'].map((head) => (
+                  {['Date', 'Booking ID', 'Customer', 'Venue', 'Sport', 'Amount', 'Payment', 'Status'].map((head) => (
                     <TableCell key={head} sx={{ color: '#fff', fontWeight: 600, borderBottom: 'none' }}>
                       {head}
                     </TableCell>
@@ -504,6 +534,21 @@ export default function ReportsPage() {
                       </TableCell>
                       <TableCell>
                         <Chip
+                          label={row.paymentStatus || 'Pending'}
+                          size="small"
+                          sx={{
+                            bgcolor: row.paymentStatus === 'paid' ? '#e8f5e9' : '#fff3e0',
+                            color: row.paymentStatus === 'paid' ? '#2e7d32' : '#e65100',
+                            fontWeight: 600,
+                            fontSize: '0.7rem'
+                          }}
+                        />
+                        <Typography variant="caption" display="block" color="textSecondary" sx={{ fontSize: '0.6rem' }}>
+                          {row.paymentMethod || 'On-Site'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
                           label={row.status}
                           size="small"
                           sx={{
@@ -518,7 +563,7 @@ export default function ReportsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4, color: '#666' }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4, color: '#666' }}>
                       No recent transactions found
                     </TableCell>
                   </TableRow>

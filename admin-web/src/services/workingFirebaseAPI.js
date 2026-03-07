@@ -32,6 +32,8 @@ export const workingAdminAPI = {
       let todayBookings = 0;
       let pendingBookings = 0;
       let totalRevenue = 0;
+      let activeSessions = 0;
+      const todayBookingsList = [];
 
       // Initialize weekly map
       const weeklyMap = {
@@ -81,9 +83,27 @@ export const workingAdminAPI = {
           }
 
 
-          // Count today's bookings
+          // Count today's bookings and check for active sessions
           if (bookingDate >= today) {
             todayBookings++;
+
+            // Check if session is currently active
+            const startTime = booking.date?.toDate?.() || new Date(booking.date);
+            const durationArr = booking.duration ? String(booking.duration).split(' ') : ['1'];
+            const duration = parseFloat(durationArr[0]) || 1;
+            const endTime = new Date(startTime.getTime() + duration * 60 * 60 * 1000);
+            const now = new Date();
+
+            const isLive = now >= startTime && now <= endTime;
+            if (isLive) activeSessions++;
+
+            todayBookingsList.push({
+              id: doc.id,
+              ...booking,
+              isLive,
+              startTime,
+              endTime
+            });
           }
 
           // Count pending bookings
@@ -131,9 +151,11 @@ export const workingAdminAPI = {
         totalVenues,
         totalCustomers,
         pendingBookings,
+        activeSessions,
         monthlyGrowth: 0,
         revenueGrowth: 0,
-        weeklyStats
+        weeklyStats,
+        todayBookingsList: todayBookingsList.sort((a, b) => a.startTime - b.startTime)
       };
 
       // Fetch recent activity
@@ -808,6 +830,27 @@ export const workingAdminAPI = {
     }
   },
 
+  // Update payment status
+  async updatePaymentStatus(bookingId, paymentStatus, paymentMethod = 'on_site') {
+    try {
+      console.log('💰 Admin: Updating payment status:', bookingId, paymentStatus, paymentMethod);
+      const firestore = initFirebase();
+      const bookingRef = doc(firestore, 'bookings', bookingId);
+
+      await updateDoc(bookingRef, {
+        paymentStatus: paymentStatus,
+        paymentMethod: paymentMethod,
+        updatedAt: new Date()
+      });
+
+      console.log('✅ Admin: Payment status updated successfully');
+      return { success: true, message: 'Payment status updated successfully' };
+    } catch (error) {
+      console.error('❌ Admin: Error updating payment status:', error);
+      throw new Error(`Failed to update payment status: ${error.message}`);
+    }
+  },
+
   // Update customer status
   async updateCustomerStatus(customerId, status) {
     try {
@@ -1209,7 +1252,14 @@ export const workingAdminAPI = {
         const d = new Date(sixMonthsAgo);
         d.setMonth(d.getMonth() + i);
         const monthKey = d.toLocaleString('default', { month: 'short' });
-        monthlyData[monthKey] = { month: monthKey, bookings: 0, revenue: 0, customers: 0, customerSet: new Set() };
+        monthlyData[monthKey] = {
+          month: monthKey,
+          bookings: 0,
+          revenue: 0,
+          customers: 0,
+          customerSet: new Set(),
+          dailyBreakdown: {} // New field for current month daily tracking
+        };
       }
 
       let totalRevenue = 0;
@@ -1244,6 +1294,14 @@ export const workingAdminAPI = {
           monthlyData[monthKey].bookings++;
           monthlyData[monthKey].revenue += amount;
           if (booking.userId) monthlyData[monthKey].customerSet.add(booking.userId);
+
+          // Daily breakdown for the current month
+          const day = date.getDate();
+          if (!monthlyData[monthKey].dailyBreakdown[day]) {
+            monthlyData[monthKey].dailyBreakdown[day] = { revenue: 0, bookings: 0 };
+          }
+          monthlyData[monthKey].dailyBreakdown[day].revenue += amount;
+          monthlyData[monthKey].dailyBreakdown[day].bookings++;
         }
 
         // Aggregate Sports Data
@@ -1313,6 +1371,13 @@ export const workingAdminAPI = {
           revenueChange: Number(revenueChange),
           bookingsChange: Number(bookingsChange)
         },
+        dailyData: Object.entries(monthlyData[now.toLocaleString('default', { month: 'short' })]?.dailyBreakdown || {})
+          .map(([day, stats]) => ({
+            day: parseInt(day),
+            revenue: stats.revenue,
+            bookings: stats.bookings
+          }))
+          .sort((a, b) => a.day - b.day),
         recentTransactions: querySnapshot.docs
           .map(doc => {
             const data = doc.data();
@@ -1323,7 +1388,9 @@ export const workingAdminAPI = {
               amount: Number(data.totalAmount || data.amount) || 0,
               customerName: data.userName || data.customerName || data.name || (data.user && (data.user.name || data.user.displayName)) || 'Guest',
               venueName: venueMap[data.turfId] || data.turfName || 'Unknown Venue',
-              status: data.status || 'completed'
+              status: data.status || 'completed',
+              paymentStatus: data.paymentStatus || 'pending',
+              paymentMethod: data.paymentMethod || (data.paymentStatus === 'paid' ? 'online' : 'unpaid')
             };
           })
           .sort((a, b) => b.date - a.date)

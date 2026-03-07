@@ -31,9 +31,10 @@ import {
   Refresh,
   WhatsApp,
   EventNote,
+  Payments,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
-import { fetchBookings, updateBookingStatus } from '../store/slices/adminSlice';
+import { fetchBookings, updateBookingStatus, updatePaymentStatus } from '../store/slices/adminSlice';
 import { format } from 'date-fns';
 
 const statusColors = {
@@ -82,6 +83,12 @@ const ActionMenu = ({ booking, onAction }) => {
           <MenuItem onClick={() => handleAction('confirm')}>
             <CheckCircle sx={{ mr: 1, fontSize: 16 }} />
             Confirm
+          </MenuItem>
+        )}
+        {booking.paymentStatus !== 'paid' && (
+          <MenuItem onClick={() => handleAction('pay')}>
+            <Payments sx={{ mr: 1, fontSize: 16, color: '#2e7d32' }} />
+            Mark as Paid
           </MenuItem>
         )}
         <MenuItem onClick={() => handleAction('cancel')}>
@@ -159,6 +166,8 @@ export default function BookingsPage() {
   const handleBookingAction = (bookingId, action) => {
     if (action === 'confirm') {
       dispatch(updateBookingStatus({ bookingId, status: 'confirmed' }));
+    } else if (action === 'pay') {
+      dispatch(updatePaymentStatus({ bookingId, paymentStatus: 'paid', paymentMethod: 'on_site' }));
     } else if (action === 'cancel') {
       dispatch(updateBookingStatus({ bookingId, status: 'cancelled' }));
     } else if (action === 'contact') {
@@ -357,13 +366,13 @@ export default function BookingsPage() {
     <Box>
       {/* Header */}
       <Card sx={{ mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #004d43 0%, #00897b 100%)' }}>
-        <CardContent sx={{ 
-          p: { xs: 2, sm: 3 }, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          flexWrap: 'wrap', 
-          gap: 2 
+        <CardContent sx={{
+          p: { xs: 2, sm: 3 },
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 2
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 } }}>
             <Box sx={{ p: { xs: 1, sm: 1.5 }, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
@@ -387,9 +396,9 @@ export default function BookingsPage() {
             onClick={handleRefresh}
             disabled={bookingsLoading}
             size={isMobile ? 'small' : 'medium'}
-            sx={{ 
-              color: 'white', 
-              borderColor: 'rgba(255,255,255,0.5)', 
+            sx={{
+              color: 'white',
+              borderColor: 'rgba(255,255,255,0.5)',
               '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' },
               fontSize: { xs: '0.75rem', sm: '0.875rem' }
             }}
@@ -414,7 +423,7 @@ export default function BookingsPage() {
                 </InputAdornment>
               ),
             }}
-            sx={{ 
+            sx={{
               minWidth: { xs: '100%', sm: 300 },
               '& .MuiInputBase-input': {
                 fontSize: { xs: '0.875rem', sm: '1rem' }
@@ -460,8 +469,8 @@ export default function BookingsPage() {
       )}
 
       {/* Data Grid */}
-      <Box sx={{ 
-        height: { xs: 500, sm: 600 }, 
+      <Box sx={{
+        height: { xs: 500, sm: 600 },
         width: '100%',
         '& .MuiDataGrid-root': {
           width: '100%',

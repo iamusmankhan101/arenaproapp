@@ -13,6 +13,18 @@ export const fetchDashboardStats = createAsyncThunk(
   }
 );
 
+export const updatePaymentStatus = createAsyncThunk(
+  'admin/updatePaymentStatus',
+  async ({ bookingId, paymentStatus, paymentMethod }, { rejectWithValue }) => {
+    try {
+      await workingAdminAPI.updatePaymentStatus(bookingId, paymentStatus, paymentMethod);
+      return { bookingId, paymentStatus, paymentMethod };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Bookings
 export const fetchBookings = createAsyncThunk(
   'admin/fetchBookings',
@@ -365,6 +377,17 @@ const adminSlice = createSlice({
           booking.status = status;
         }
         state.successMessage = 'Booking status updated successfully';
+      })
+
+      // Update Payment Status
+      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
+        const { bookingId, paymentStatus, paymentMethod } = action.payload;
+        const booking = state.bookings.data.find(b => b.id === bookingId);
+        if (booking) {
+          booking.paymentStatus = paymentStatus;
+          booking.paymentMethod = paymentMethod;
+        }
+        state.successMessage = 'Payment status updated successfully';
       })
 
       // Cancel Booking

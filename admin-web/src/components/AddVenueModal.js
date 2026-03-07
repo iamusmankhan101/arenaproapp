@@ -23,7 +23,7 @@ import {
   Step,
   StepLabel
 } from '@mui/material';
-import { CloudUpload, Close, ArrowForward, Check } from '@mui/icons-material';
+import { CloudUpload, Close, ArrowForward, Check, Edit, Payments } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { addVenue, updateVenue } from '../store/slices/adminSlice';
 
@@ -46,6 +46,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
   const [error, setError] = useState('');
   const [uploadedImages, setUploadedImages] = useState([]);
   const isEditing = Boolean(editVenue);
+  const [priceEditingSlot, setPriceEditingSlot] = useState(null);
+  const [editingPrice, setEditingPrice] = useState('');
 
   const steps = ['Venue Details', 'Sports & Location', 'Pricing & Media'];
 
@@ -273,19 +275,17 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
         const oldDateSlots = prev.dateSpecificSlots[date];
         // Map old selection state by time range
         const oldSelectionMap = {};
-        oldDateSlots.forEach(s => {
-          oldSelectionMap[`${s.startTime}-${s.endTime}`] = s.selected;
+        // Regenerate slots for this date, preserving selection AND price where possible
+        updatedDateSlots[date] = newSlots.map(slot => {
+          const oldSlot = oldDateSlots.find(s => s.startTime === slot.startTime && s.endTime === slot.endTime);
+          return {
+            ...slot,
+            id: `${date}-${slot.id}`,
+            date: date,
+            selected: oldSlot ? oldSlot.selected : true,
+            price: oldSlot ? (oldSlot.price || slot.price) : slot.price
+          };
         });
-
-        // Regenerate slots for this date, preserving selection where possible
-        updatedDateSlots[date] = newSlots.map(slot => ({
-          ...slot,
-          id: `${date}-${slot.id}`,
-          date: date,
-          selected: oldSelectionMap[`${slot.startTime}-${slot.endTime}`] !== undefined
-            ? oldSelectionMap[`${slot.startTime}-${slot.endTime}`]
-            : true
-        }));
       });
 
       return {
@@ -748,8 +748,8 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                   }
                 }}
                 disabled={loading || !formData.selectedDate}
-                sx={{ 
-                  bgcolor: '#004d43', 
+                sx={{
+                  bgcolor: '#004d43',
                   '&:hover': { bgcolor: '#00695c' },
                   height: '56px'
                 }}
@@ -764,21 +764,21 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, mt: 2 }}>
                   Configured Dates ({Object.keys(formData.dateSpecificSlots).length})
                 </Typography>
-                
+
                 {Object.keys(formData.dateSpecificSlots).sort().map(date => {
                   const dateSlots = formData.dateSpecificSlots[date];
                   const selectedCount = dateSlots.filter(s => s.selected).length;
-                  
+
                   return (
                     <Card key={date} variant="outlined" sx={{ mb: 2, p: 2 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                         <Box>
                           <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#004d43' }}>
-                            {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
+                            {new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
                             })}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -834,21 +834,25 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                       </Box>
 
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {dateSlots.map(slot => (
+                        <Box key={slot.id} sx={{ position: 'relative' }}>
                           <Chip
-                            key={slot.id}
-                            label={`${slot.startTime} - ${slot.endTime}`}
+                            label={`${slot.startTime} - ${slot.endTime} ${slot.price !== parseFloat(formData.basePrice) ? `(PKR ${slot.price})` : ''}`}
                             onClick={() => {
                               setFormData(prev => ({
                                 ...prev,
                                 dateSpecificSlots: {
                                   ...prev.dateSpecificSlots,
-                                  [date]: dateSlots.map(s => 
+                                  [date]: dateSlots.map(s =>
                                     s.id === slot.id ? { ...s, selected: !s.selected } : s
                                   )
                                 }
                               }));
                             }}
+                            onDelete={() => {
+                              setPriceEditingSlot({ date, slotId: slot.id, currentPrice: slot.price });
+                              setEditingPrice(slot.price.toString());
+                            }}
+                            deleteIcon={<Edit sx={{ fontSize: '14px !important' }} />}
                             color={slot.selected ? "primary" : "default"}
                             variant={slot.selected ? "filled" : "outlined"}
                             sx={{
@@ -856,10 +860,14 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
                               color: slot.selected ? 'white' : 'inherit',
                               '&:hover': {
                                 bgcolor: slot.selected ? '#00695c' : '#f5f5f5'
+                              },
+                              '& .MuiChip-deleteIcon': {
+                                color: slot.selected ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+                                '&:hover': { color: 'white' }
                               }
                             }}
                           />
-                        ))}
+                        </Box>
                       </Box>
                     </Card>
                   );
@@ -938,6 +946,7 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
     }
   };
 
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
       <DialogTitle sx={{ pb: 1 }}>
@@ -1004,6 +1013,54 @@ export default function AddVenueModal({ open, onClose, editVenue = null, vendorI
           )}
         </Box>
       </DialogActions>
+
+      {/* Slot Price Edit Dialog */}
+      <Dialog
+        open={Boolean(priceEditingSlot)}
+        onClose={() => setPriceEditingSlot(null)}
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Payments sx={{ color: '#004d43' }} />
+          Set Slot Price
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Set a custom price for this specific time slot. Default is PKR {formData.basePrice}.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Price (PKR)"
+            type="number"
+            value={editingPrice}
+            onChange={(e) => setEditingPrice(e.target.value)}
+            autoFocus
+            variant="outlined"
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setPriceEditingSlot(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              const { date, slotId } = priceEditingSlot;
+              setFormData(prev => ({
+                ...prev,
+                dateSpecificSlots: {
+                  ...prev.dateSpecificSlots,
+                  [date]: prev.dateSpecificSlots[date].map(s =>
+                    s.id === slotId ? { ...s, price: parseFloat(editingPrice) || parseFloat(formData.basePrice), selected: true } : s
+                  )
+                }
+              }));
+              setPriceEditingSlot(null);
+            }}
+            sx={{ bgcolor: '#004d43', '&:hover': { bgcolor: '#00695c' } }}
+          >
+            Apply Price
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }
