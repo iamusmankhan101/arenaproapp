@@ -62,7 +62,7 @@ const WaitlistPage = () => {
     const headers = ['Email', 'Signup Date', 'Type'];
     const rows = filteredEntries.map(entry => [
       entry.email,
-      format(entry.createdAt, 'yyyy-MM-dd HH:mm:ss'),
+      format(entry.createdAt, 'yyyy-MM-dd hh:mm:ss a'),
       entry.type || 'Early Access'
     ]);
 
@@ -100,7 +100,7 @@ const WaitlistPage = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <CalendarToday sx={{ fontSize: 16, color: '#666' }} />
           <Typography variant="body2">
-            {format(params.value, 'MMM dd, yyyy HH:mm')}
+            {format(params.value, 'MMM dd, yyyy hh:mm a')}
           </Typography>
         </Box>
       ),

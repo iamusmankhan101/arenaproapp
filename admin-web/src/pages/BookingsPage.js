@@ -35,7 +35,7 @@ import {
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchBookings, updateBookingStatus, updatePaymentStatus } from '../store/slices/adminSlice';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 
 const statusColors = {
   confirmed: '#2e7d32', // Brand Green

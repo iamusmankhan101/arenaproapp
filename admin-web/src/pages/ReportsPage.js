@@ -27,7 +27,7 @@ import {
   Payments,
   Assessment,
 } from '@mui/icons-material';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
