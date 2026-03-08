@@ -20,6 +20,7 @@ import { signUp, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
 
@@ -43,10 +44,18 @@ export default function SignUpScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
 
+  // Force use of Expo's auth proxy instead of local exp:// URL
+  const redirectUri = makeRedirectUri({
+    scheme: 'arenapro',
+    path: 'redirect',
+    useProxy: true, // This forces Expo to use auth.expo.io proxy
+  });
+
   const [, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
     androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+    redirectUri: redirectUri,
   });
 
   useEffect(() => {
@@ -140,6 +149,17 @@ export default function SignUpScreen({ navigation }) {
   };
 
   const handleGoogleSignUp = async () => {
+    // Google Sign-In is not available in Expo Go due to redirect URI limitations
+    // It will work in production builds (APK/AAB)
+    if (__DEV__) {
+      Alert.alert(
+        'Google Sign-Up Unavailable',
+        'Google Sign-Up is not available in development mode. Please use email/password to sign up, or build the app as an APK to test Google Sign-Up.\n\nEmail/password sign-up works perfectly!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       await promptAsync();
     } catch (error) {
@@ -150,7 +170,7 @@ export default function SignUpScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -312,7 +332,7 @@ export default function SignUpScreen({ navigation }) {
             </View>
 
             {/* Terms & Conditions */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.checkboxContainer}
               onPress={() => setAgreeToTerms(!agreeToTerms)}
               activeOpacity={0.7}
