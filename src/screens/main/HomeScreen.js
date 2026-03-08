@@ -36,7 +36,7 @@ const getVenueImageBySport = (venue) => {
     primarySport = venue.sport;
   }
 
-  console.log(`≡뿯ƽ뿯½╝∩╕뿯½ getVenueImageBySport for ${venue.name}: sports=${JSON.stringify(venue.sports)}, primarySport=${primarySport}`);
+  console.log(`getVenueImageBySport for ${venue.name}: sports=${JSON.stringify(venue.sports)}, primarySport=${primarySport}`);
 
   const sportImages = {
     'Cricket': require('../../images/cricket.jpg'),
@@ -415,7 +415,7 @@ export default function HomeScreen({ navigation }) {
                               </Text>
                               {venue.distanceKm != null && (
                                 <Text style={styles.venueDistance}>
-                                  {`뿯ν뿯½뿯½ ${String(formatDistance(venue.distanceKm))}`}
+                                  {`${String(formatDistance(venue.distanceKm))}`}
                                 </Text>
                               )}
                             </View>
@@ -506,7 +506,7 @@ export default function HomeScreen({ navigation }) {
                           </Text>
                           {venue.distanceKm != null && (
                             <Text style={styles.nearbyVenueDistance}>
-                              {`뿯ν뿯½뿯½ ${String(formatDistance(venue.distanceKm))}`}
+                              {`${String(formatDistance(venue.distanceKm))}`}
                             </Text>
                           )}
                         </View>
@@ -598,7 +598,7 @@ export default function HomeScreen({ navigation }) {
                                 </Text>
                                 {venue.distanceKm != null && (
                                   <Text style={styles.venueDistance}>
-                                    {`뿯ν뿯½뿯½ ${String(formatDistance(venue.distanceKm))}`}
+                                    {`${String(formatDistance(venue.distanceKm))}`}
                                   </Text>
                                 )}
                               </View>

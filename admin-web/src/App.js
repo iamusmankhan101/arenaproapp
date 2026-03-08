@@ -13,6 +13,8 @@ import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import ReviewsPage from './pages/ReviewsPage';
 import WaitlistPage from './pages/WaitlistPage';
+import TimeTrackingPage from './pages/TimeTrackingPage';
+import RevenueManagementPage from './pages/RevenueManagementPage';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorVenuePage from './pages/vendor/VendorVenuePage';
 import VendorBookingsPage from './pages/vendor/VendorBookingsPage';
@@ -81,6 +83,8 @@ function App() {
         <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ReportsPage /></ProtectedRoute>} />
         <Route path="/reviews" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ReviewsPage /></ProtectedRoute>} />
         <Route path="/waitlist" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><WaitlistPage /></ProtectedRoute>} />
+        <Route path="/time-tracking" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><TimeTrackingPage /></ProtectedRoute>} />
+        <Route path="/revenue" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><RevenueManagementPage /></ProtectedRoute>} />
 
         <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><SettingsPage /></ProtectedRoute>} />
         <Route path="/pro-management" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ProManagementPage /></ProtectedRoute>} />

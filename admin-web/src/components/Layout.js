@@ -40,7 +40,9 @@ import {
   Inventory2,
   WhatsApp,
   Campaign,
-  Email
+  Email,
+  Timer,
+  AttachMoney,
 } from '@mui/icons-material';
 import { logoutAdmin } from '../store/slices/authSlice';
 
@@ -51,6 +53,8 @@ const adminMenuItems = [
   { text: 'Bookings', icon: <Event />, path: '/bookings' },
   { text: 'Venues', icon: <LocationOn />, path: '/venues' },
   { text: 'Customers', icon: <People />, path: '/customers' },
+  { text: 'Time Tracking', icon: <Timer />, path: '/time-tracking' },
+  { text: 'Revenue', icon: <AttachMoney />, path: '/revenue' },
   { text: 'Reports', icon: <Analytics />, path: '/reports' },
   { text: 'Reviews', icon: <RateReview />, path: '/reviews' },
   { text: 'Waitlist', icon: <Email />, path: '/waitlist' },
