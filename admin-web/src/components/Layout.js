@@ -36,7 +36,6 @@ import {
   AccountCircle,
   RateReview,
   WorkspacePremium,
-  Assessment,
   Inventory2,
   WhatsApp,
   Email,
