@@ -26,7 +26,6 @@ import {
     Star,
     CheckCircle,
     Payment,
-    Campaign,
     Close,
     ContentCopy,
     Info,

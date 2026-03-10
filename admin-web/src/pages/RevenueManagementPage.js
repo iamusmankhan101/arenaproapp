@@ -18,7 +18,6 @@ import {
     TableRow,
     Paper,
     CircularProgress,
-    Alert,
     Select,
     MenuItem,
     FormControl,
@@ -47,7 +46,6 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Legend,
 } from 'recharts';
 import { fetchBookings, fetchRevenueReport } from '../store/slices/adminSlice';
 import { format, parse, startOfMonth, endOfMonth, isWithinInterval, getDate } from 'date-fns';
@@ -154,7 +152,7 @@ export default function RevenueManagementPage() {
     useEffect(() => { loadData(); }, [loadData]);
 
     const allBookings = bookings?.data || [];
-    const { monthlyData = [], venuePerformance = [], summary = {}, recentTransactions = [], dailyData = [] } = revenueReport || {};
+    const { monthlyData = [] } = revenueReport || {};
 
     // ── derived revenue metrics ───────────────────────────────────────────────
 

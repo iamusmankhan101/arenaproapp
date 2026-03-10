@@ -39,7 +39,6 @@ import {
   Assessment,
   Inventory2,
   WhatsApp,
-  Campaign,
   Email,
   Timer,
   AttachMoney,
