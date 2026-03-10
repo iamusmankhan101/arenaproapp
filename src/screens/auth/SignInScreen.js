@@ -29,6 +29,7 @@ WebBrowser.maybeCompleteAuthSession();
 // Using the Web Client ID for Expo Go Proxy
 const WEB_CLIENT_ID = '358509015024-d57o1ks13scq2vrt829e0v47rsoch3to.apps.googleusercontent.com';
 const ANDROID_CLIENT_ID = '358509015024-t288i2u2k93qveoh6ndp19gpf13s1s9j.apps.googleusercontent.com';
+const IOS_CLIENT_ID = '960416327217-dt9ddrvb1e0mst3v8q86128oaq4vvbdo.apps.googleusercontent.com';
 
 export default function SignInScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -44,7 +45,7 @@ export default function SignInScreen({ navigation }) {
   const [request, response, promptAsync] = Google.useAuthRequest({
     expoClientId: WEB_CLIENT_ID,
     androidClientId: ANDROID_CLIENT_ID,
-    // iOS Client ID if you have it: iosClientId: '...',
+    iosClientId: IOS_CLIENT_ID,
   });
 
   useEffect(() => {
@@ -143,11 +144,11 @@ export default function SignInScreen({ navigation }) {
   };
 
   const handleGoogleSignIn = () => {
-    if (__DEV__) {
-      promptAsync({ useProxy: true });
-    } else {
-      promptAsync();
+    if (!IOS_CLIENT_ID && Platform.OS === 'ios') {
+      Alert.alert('Setup Required', 'Please configure the iOS Client ID first.');
+      return;
     }
+    promptAsync();
   };
 
   return (
