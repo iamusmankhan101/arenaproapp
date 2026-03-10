@@ -138,6 +138,17 @@ export default function SignUpScreen({ navigation }) {
   };
 
   const handleGoogleSignUp = async () => {
+    // Google Sign-In is not available in Expo Go due to redirect URI limitations
+    // It will work in production builds (APK/AAB)
+    if (__DEV__) {
+      Alert.alert(
+        'Google Sign-Up Unavailable',
+        'Google Sign-Up is not available in development mode. Please use email/password to sign up, or build the app as an APK to test Google Sign-Up.\n\nEmail/password sign-up works perfectly!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       console.log('--- OPENING WEB RELAY ---');
       const result = await WebBrowser.openAuthSessionAsync(

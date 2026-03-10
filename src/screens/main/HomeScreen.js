@@ -859,7 +859,7 @@ const styles = StyleSheet.create({
   },
   venueImage: {
     width: '100%',
-    height: 240,
+    height: 320,
     backgroundColor: '#f0f0f0',
   },
   venueInfoGlass: {

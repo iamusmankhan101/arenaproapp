@@ -160,6 +160,18 @@ export default function AdminDashboardScreen({ navigation }) {
             color="#9C27B0"
             onPress={() => navigation.navigate('AdminReports')}
           />
+          <QuickAction
+            title="Time Tracking"
+            icon="timer"
+            color="#F44336"
+            onPress={() => navigation.navigate('AdminTimeTracking')}
+          />
+          <QuickAction
+            title="Revenue"
+            icon="attach-money"
+            color="#00BCD4"
+            onPress={() => navigation.navigate('AdminRevenue')}
+          />
         </View>
       </View>
 

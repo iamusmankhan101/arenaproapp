@@ -8,6 +8,8 @@ import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AdminBookingsScreen from '../screens/admin/AdminBookingsScreen';
 import AdminVenuesScreen from '../screens/admin/AdminVenuesScreen';
 import AdminCustomersScreen from '../screens/admin/AdminCustomersScreen';
+import AdminTimeTrackingScreen from '../screens/admin/AdminTimeTrackingScreen';
+import AdminRevenueScreen from '../screens/admin/AdminRevenueScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -48,29 +50,29 @@ function AdminTabNavigator() {
         },
       })}
     >
-      <Tab.Screen 
-        name="Dashboard" 
+      <Tab.Screen
+        name="Dashboard"
         component={AdminDashboardScreen}
         options={{
           title: 'Admin Dashboard',
         }}
       />
-      <Tab.Screen 
-        name="Bookings" 
+      <Tab.Screen
+        name="Bookings"
         component={AdminBookingsScreen}
         options={{
           title: 'Manage Bookings',
         }}
       />
-      <Tab.Screen 
-        name="Venues" 
+      <Tab.Screen
+        name="Venues"
         component={AdminVenuesScreen}
         options={{
           title: 'Manage Venues',
         }}
       />
-      <Tab.Screen 
-        name="Customers" 
+      <Tab.Screen
+        name="Customers"
         component={AdminCustomersScreen}
         options={{
           title: 'Manage Customers',
@@ -94,52 +96,57 @@ export default function AdminNavigator() {
         },
       }}
     >
-      <Stack.Screen 
-        name="AdminTabs" 
+      <Stack.Screen
+        name="AdminTabs"
         component={AdminTabNavigator}
         options={{ headerShown: false }}
       />
-      
+
       {/* Additional Admin Screens */}
-      <Stack.Screen 
-        name="BookingDetail" 
+      <Stack.Screen
+        name="BookingDetail"
         component={AdminDashboardScreen} // Placeholder
         options={{ title: 'Booking Details' }}
       />
-      <Stack.Screen 
-        name="VenueDetail" 
+      <Stack.Screen
+        name="VenueDetail"
         component={AdminDashboardScreen} // Placeholder
         options={{ title: 'Venue Details' }}
       />
-      <Stack.Screen 
-        name="CustomerDetail" 
+      <Stack.Screen
+        name="CustomerDetail"
         component={AdminDashboardScreen} // Placeholder
         options={{ title: 'Customer Details' }}
       />
-      <Stack.Screen 
-        name="AddVenue" 
+      <Stack.Screen
+        name="AddVenue"
         component={AdminDashboardScreen} // Placeholder
         options={{ title: 'Add New Venue' }}
       />
-      <Stack.Screen 
-        name="EditVenue" 
+      <Stack.Screen
+        name="EditVenue"
         component={AdminDashboardScreen} // Placeholder
         options={{ title: 'Edit Venue' }}
       />
-      <Stack.Screen 
-        name="AddBooking" 
+      <Stack.Screen
+        name="AddBooking"
         component={AdminDashboardScreen} // Placeholder
         options={{ title: 'Add Manual Booking' }}
       />
-      <Stack.Screen 
-        name="AdminReports" 
+      <Stack.Screen
+        name="AdminReports"
         component={AdminDashboardScreen} // Placeholder
         options={{ title: 'Reports & Analytics' }}
       />
-      <Stack.Screen 
-        name="AdminRevenue" 
-        component={AdminDashboardScreen} // Placeholder
+      <Stack.Screen
+        name="AdminRevenue"
+        component={AdminRevenueScreen}
         options={{ title: 'Revenue Analytics' }}
+      />
+      <Stack.Screen
+        name="AdminTimeTracking"
+        component={AdminTimeTrackingScreen}
+        options={{ title: 'Time Tracking' }}
       />
     </Stack.Navigator>
   );
