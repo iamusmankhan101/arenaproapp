@@ -44,7 +44,7 @@ export default function SignInScreen({ navigation }) {
 
   const handleDeepLink = (event) => {
     const { url } = event;
-    if (url && url.includes('auth-success')) {
+    if (url && (url.includes('auth-success') || url.includes('arenapro.pk') || url.includes('arenapropk.online'))) {
       const parsed = Linking.parse(url);
       const token = parsed.queryParams?.token;
       if (token) {
@@ -134,7 +134,7 @@ export default function SignInScreen({ navigation }) {
     try {
       console.log('--- OPENING WEB RELAY ---');
       const result = await WebBrowser.openAuthSessionAsync(
-        'https://arenapro.pk/auth/google',
+        'https://arenapropk.online/auth/google',
         'arenapro://'
       );
 

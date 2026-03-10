@@ -31,7 +31,7 @@
         "hidden": false
       },
       "associatedDomains": [
-        "applinks:arenapro.pk"
+        "applinks:arenapropk.online"
       ]
     },
     "android": {
@@ -63,7 +63,7 @@
           "data": [
             {
               "scheme": "https",
-              "host": "arenapro.pk",
+              "host": "arenapropk.online",
               "pathPrefix": "/reset-password"
             }
           ],
