@@ -17,6 +17,9 @@ import { notificationService } from './src/services/notificationService';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from './src/config/firebase';
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
 
 // Keep the splash screen visible while we fetch resources
 try {

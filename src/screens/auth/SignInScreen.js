@@ -19,9 +19,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
+
+WebBrowser.maybeCompleteAuthSession();
+
+// Using the Web Client ID for Expo Go Proxy
+const WEB_CLIENT_ID = '358509015024-d57o1ks13scq2vrt829e0v47rsoch3to.apps.googleusercontent.com';
+const ANDROID_CLIENT_ID = '358509015024-t288i2u2k93qveoh6ndp19gpf13s1s9j.apps.googleusercontent.com';
 
 export default function SignInScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -34,25 +41,30 @@ export default function SignInScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId: WEB_CLIENT_ID,
+    androidClientId: ANDROID_CLIENT_ID,
+    // iOS Client ID if you have it: iosClientId: '...',
+  });
+
   useEffect(() => {
     dispatch(clearError());
-
-    // Listen for deep links (for the auth relay)
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-    return () => subscription.remove();
   }, [dispatch]);
 
-  const handleDeepLink = (event) => {
-    const { url } = event;
-    if (url && (url.includes('auth-success') || url.includes('arenapro.pk') || url.includes('arenapropk.online'))) {
-      const parsed = Linking.parse(url);
-      const token = parsed.queryParams?.token;
-      if (token) {
-        console.log('--- TOKEN RECEIVED FROM RELAY ---');
-        dispatch(googleSignIn(token));
+  // Handle Google Auth Session Response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      if (authentication?.idToken) {
+        console.log('--- EXPO AUTH SESSION GOOGLE TOKEN RECEIVED ---');
+        dispatch(googleSignIn(authentication.idToken));
+      } else {
+        Alert.alert('Error', 'Google sign-in succeeded, but no token was returned.');
       }
+    } else if (response?.type === 'error') {
+      Alert.alert('Google Sign-In Error', response.error?.message || 'Authentication failed');
     }
-  };
+  }, [response, dispatch]);
 
   const getFriendlyErrorMessage = (errorCode) => {
     const code = typeof errorCode === 'object' ? errorCode.code : errorCode;
@@ -130,20 +142,11 @@ export default function SignInScreen({ navigation }) {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      console.log('--- OPENING WEB RELAY ---');
-      const result = await WebBrowser.openAuthSessionAsync(
-        'https://arenapropk.online/auth/google',
-        'arenapro://'
-      );
-
-      if (result.type === 'success' && result.url) {
-        handleDeepLink({ url: result.url });
-      }
-    } catch (error) {
-      console.error('Relay Error:', error);
-      Alert.alert('Error', 'Could not open secure login browser.');
+  const handleGoogleSignIn = () => {
+    if (__DEV__) {
+      promptAsync({ useProxy: true });
+    } else {
+      promptAsync();
     }
   };
 
@@ -259,7 +262,7 @@ export default function SignInScreen({ navigation }) {
             <TouchableOpacity
               style={styles.googleButton}
               onPress={handleGoogleSignIn}
-              disabled={loading}
+              disabled={!request || loading}
             >
               <Image
                 source={require('../../images/google_cover_image.png')}

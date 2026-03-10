@@ -18,9 +18,17 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
+import { signUp, clearError, googleSignIn } from '../../store/slices/authSlice';
+
+WebBrowser.maybeCompleteAuthSession();
+
+// Using the Web Client ID for Expo Go Proxy
+const WEB_CLIENT_ID = '358509015024-d57o1ks13scq2vrt829e0v47rsoch3to.apps.googleusercontent.com';
+const ANDROID_CLIENT_ID = '358509015024-t288i2u2k93qveoh6ndp19gpf13s1s9j.apps.googleusercontent.com';
 
 export default function SignUpScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -40,25 +48,30 @@ export default function SignUpScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId: WEB_CLIENT_ID,
+    androidClientId: ANDROID_CLIENT_ID,
+    // iOS Client ID if you have it: iosClientId: '...',
+  });
+
   useEffect(() => {
     dispatch(clearError());
-
-    // Listen for deep links (for the auth relay)
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-    return () => subscription.remove();
   }, [dispatch]);
 
-  const handleDeepLink = (event) => {
-    const { url } = event;
-    if (url && url.includes('auth-success')) {
-      const parsed = Linking.parse(url);
-      const token = parsed.queryParams?.token;
-      if (token) {
-        console.log('--- TOKEN RECEIVED FROM RELAY ---');
-        dispatch(googleSignIn(token));
+  // Handle Google Auth Session Response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      if (authentication?.idToken) {
+        console.log('--- EXPO AUTH SESSION GOOGLE TOKEN RECEIVED ---');
+        dispatch(googleSignIn(authentication.idToken));
+      } else {
+        Alert.alert('Error', 'Google sign-up succeeded, but no token was returned.');
       }
+    } else if (response?.type === 'error') {
+      Alert.alert('Google Sign-Up Error', response.error?.message || 'Authentication failed');
     }
-  };
+  }, [response, dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -137,31 +150,11 @@ export default function SignUpScreen({ navigation }) {
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    // Google Sign-In is not available in Expo Go due to redirect URI limitations
-    // It will work in production builds (APK/AAB)
+  const handleGoogleSignUp = () => {
     if (__DEV__) {
-      Alert.alert(
-        'Google Sign-Up Unavailable',
-        'Google Sign-Up is not available in development mode. Please use email/password to sign up, or build the app as an APK to test Google Sign-Up.\n\nEmail/password sign-up works perfectly!',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    try {
-      console.log('--- OPENING WEB RELAY ---');
-      const result = await WebBrowser.openAuthSessionAsync(
-        'https://arenapro.pk/auth/google',
-        'arenapro://'
-      );
-
-      if (result.type === 'success' && result.url) {
-        handleDeepLink({ url: result.url });
-      }
-    } catch (error) {
-      console.error('Relay Error:', error);
-      Alert.alert('Error', 'Could not open secure login browser.');
+        promptAsync({ useProxy: true });
+    } else {
+        promptAsync();
     }
   };
 
@@ -373,7 +366,7 @@ export default function SignUpScreen({ navigation }) {
             <TouchableOpacity
               style={styles.googleButton}
               onPress={handleGoogleSignUp}
-              disabled={loading}
+              disabled={!request || loading}
             >
               <Image
                 source={require('../../images/google_cover_image.png')}
