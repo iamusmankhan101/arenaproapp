@@ -8,13 +8,12 @@ import {
   Button,
   Card,
   CardContent,
-  IconButton,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
   DialogContentText,
+  Tabs,
+  Tab,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Search,
@@ -24,9 +23,11 @@ import {
   TrendingUp,
   Download,
   Delete,
+  Restore,
+  DeleteForever,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
-import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { format } from 'date-fns';
 
@@ -37,11 +38,14 @@ const WaitlistPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [viewMode, setViewMode] = useState('active'); // 'active' or 'deleted'
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const fetchWaitlistEntries = async () => {
     setLoading(true);
     try {
-      const waitlistRef = collection(db, 'waitlist');
+      const collectionName = viewMode === 'active' ? 'waitlist' : 'deleted_waitlist';
+      const waitlistRef = collection(db, collectionName);
       const q = query(waitlistRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
 
@@ -61,7 +65,7 @@ const WaitlistPage = () => {
 
   useEffect(() => {
     fetchWaitlistEntries();
-  }, []);
+  }, [viewMode]);
 
   const filteredEntries = waitlistEntries.filter(entry =>
     entry.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -96,14 +100,51 @@ const WaitlistPage = () => {
     if (!entryToDelete) return;
     setDeleteLoading(true);
     try {
-      await deleteDoc(doc(db, 'waitlist', entryToDelete.id));
+      if (viewMode === 'active') {
+        // Soft Delete: Move to deleted_waitlist
+        const entryRef = doc(db, 'waitlist', entryToDelete.id);
+        const deletedRef = doc(db, 'deleted_waitlist', entryToDelete.id);
+
+        await setDoc(deletedRef, {
+          ...entryToDelete,
+          deletedAt: new Date(),
+        });
+        await deleteDoc(entryRef);
+        setSnackbar({ open: true, message: 'Entry moved to Recycle Bin', severity: 'info' });
+      } else {
+        // Permanent Delete
+        await deleteDoc(doc(db, 'deleted_waitlist', entryToDelete.id));
+        setSnackbar({ open: true, message: 'Entry permanently deleted', severity: 'success' });
+      }
+
       setWaitlistEntries(prev => prev.filter(e => e.id !== entryToDelete.id));
       setDeleteDialogOpen(false);
       setEntryToDelete(null);
     } catch (error) {
-      console.error('Error deleting waitlist entry:', error);
+      console.error('Error handling deletion:', error);
+      setSnackbar({ open: true, message: 'Action failed', severity: 'error' });
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  const handleRestore = async (entry) => {
+    setLoading(true);
+    try {
+      const deletedRef = doc(db, 'deleted_waitlist', entry.id);
+      const activeRef = doc(db, 'waitlist', entry.id);
+
+      const { deletedAt, ...originalData } = entry;
+      await setDoc(activeRef, originalData);
+      await deleteDoc(deletedRef);
+
+      setWaitlistEntries(prev => prev.filter(e => e.id !== entry.id));
+      setSnackbar({ open: true, message: 'Entry restored successfully', severity: 'success' });
+    } catch (error) {
+      console.error('Error restoring entry:', error);
+      setSnackbar({ open: true, message: 'Restore failed', severity: 'error' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -166,17 +207,30 @@ const WaitlistPage = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 100,
+      width: 120,
       renderCell: (params) => (
-        <Tooltip title="Delete">
-          <IconButton
-            onClick={() => handleDeleteClick(params.row)}
-            sx={{ color: '#d32f2f' }}
-            size="small"
-          >
-            <Delete fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          {viewMode === 'deleted' && (
+            <Tooltip title="Restore">
+              <IconButton
+                onClick={() => handleRestore(params.row)}
+                sx={{ color: '#2e7d32' }}
+                size="small"
+              >
+                <Restore fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title={viewMode === 'active' ? "Delete" : "Delete Permanently"}>
+            <IconButton
+              onClick={() => handleDeleteClick(params.row)}
+              sx={{ color: '#d32f2f' }}
+              size="small"
+            >
+              {viewMode === 'active' ? <Delete fontSize="small" /> : <DeleteForever fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+        </Box>
       ),
     },
   ];
@@ -187,10 +241,10 @@ const WaitlistPage = () => {
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#004d43', mb: 0.5 }}>
-            Waitlist
+            Waitlist {viewMode === 'deleted' && '(Recycle Bin)'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage early access signups
+            {viewMode === 'active' ? 'Manage early access signups' : 'Restore or permanently remove entries'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -208,12 +262,26 @@ const WaitlistPage = () => {
               Export
             </Button>
           </Tooltip>
-          <Tooltip title="Refresh">
-            <IconButton onClick={fetchWaitlistEntries} sx={{ color: '#004d43' }}>
-              <Refresh />
-            </IconButton>
-          </Tooltip>
+          <IconButton onClick={fetchWaitlistEntries} sx={{ color: '#004d43' }}>
+            <Refresh />
+          </IconButton>
         </Box>
+      </Box>
+
+      {/* Tabs */}
+      <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs
+          value={viewMode}
+          onChange={(e, val) => setViewMode(val)}
+          sx={{
+            '& .MuiTab-root': { fontWeight: 'bold' },
+            '& .Mui-selected': { color: '#004d43 !important' },
+            '& .MuiTabs-indicator': { backgroundColor: '#004d43' }
+          }}
+        >
+          <Tab label="Active" value="active" />
+          <Tab label="Recycle Bin" value="deleted" />
+        </Tabs>
       </Box>
 
       {/* Stats Cards */}
@@ -340,10 +408,21 @@ const WaitlistPage = () => {
               '&:hover': { bgcolor: '#b71c1c' }
             }}
           >
-            {deleteLoading ? 'Deleting...' : 'Delete Entry'}
+            {deleteLoading ? 'Processing...' : (viewMode === 'active' ? 'Move to Recycle Bin' : 'Delete Permanently')}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity} sx={{ width: '100%', borderRadius: 2 }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
