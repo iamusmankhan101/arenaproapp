@@ -172,14 +172,14 @@ export default function VendorProFeaturesPage() {
                     >
                         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
                             <Typography variant="h5" sx={{ fontWeight: 800, color: '#e8ee26' }}>
-                                PKR 2,250
+                                PKR 2,550
                             </Typography>
                             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'line-through' }}>
                                 PKR 3,000
                             </Typography>
                         </Box>
                         <Chip
-                            label="25% OFF"
+                            label="15% OFF"
                             size="small"
                             sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 900, fontSize: '0.65rem', height: 20 }}
                         />
@@ -302,7 +302,7 @@ export default function VendorProFeaturesPage() {
                                     '&:hover': { bgcolor: '#00695c' },
                                 }}
                             >
-                                Activate Pro — PKR 2,250/month
+                                Activate Pro — PKR 2,550/month
                             </Button>
                         </Box>
                     )}
@@ -382,11 +382,11 @@ export default function VendorProFeaturesPage() {
                                 <Box sx={{ textAlign: 'right' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, justifyContent: 'flex-end' }}>
                                         <Typography variant="h4" fontWeight={900} sx={{ color: '#004d43' }}>
-                                            PKR 2,250
+                                            PKR 2,550
                                         </Typography>
                                     </Box>
                                     <Typography variant="caption" sx={{ color: '#d32f2f', fontWeight: 700, display: 'block' }}>
-                                        25% DISCOUNT APPLIED
+                                        15% DISCOUNT APPLIED
                                     </Typography>
                                 </Box>
                             </Box>
@@ -483,7 +483,7 @@ export default function VendorProFeaturesPage() {
                                             </Typography>
                                             <Box sx={{ textAlign: 'right' }}>
                                                 <Typography variant="h6" fontWeight={800} color="#1a1a1a">
-                                                    PKR 2,250
+                                                    PKR 2,550
                                                 </Typography>
                                                 <Typography variant="caption" sx={{ color: 'text.secondary', textDecoration: 'line-through' }}>
                                                     PKR 3,000

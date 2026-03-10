@@ -10,6 +10,11 @@ import {
   CardContent,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
 } from '@mui/material';
 import {
   Search,
@@ -18,9 +23,10 @@ import {
   CalendarToday,
   TrendingUp,
   Download,
+  Delete,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { format } from 'date-fns';
 
@@ -28,6 +34,9 @@ const WaitlistPage = () => {
   const [waitlistEntries, setWaitlistEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchWaitlistEntries = async () => {
     setLoading(true);
@@ -77,6 +86,25 @@ const WaitlistPage = () => {
     a.href = url;
     a.download = 'waitlist.csv';
     a.click();
+  };
+  const handleDeleteClick = (entry) => {
+    setEntryToDelete(entry);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!entryToDelete) return;
+    setDeleteLoading(true);
+    try {
+      await deleteDoc(doc(db, 'waitlist', entryToDelete.id));
+      setWaitlistEntries(prev => prev.filter(e => e.id !== entryToDelete.id));
+      setDeleteDialogOpen(false);
+      setEntryToDelete(null);
+    } catch (error) {
+      console.error('Error deleting waitlist entry:', error);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const columns = [
@@ -133,6 +161,22 @@ const WaitlistPage = () => {
           color="warning"
           sx={{ fontWeight: 'bold', fontSize: '10px' }}
         />
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 100,
+      renderCell: (params) => (
+        <Tooltip title="Delete">
+          <IconButton
+            onClick={() => handleDeleteClick(params.row)}
+            sx={{ color: '#d32f2f' }}
+            size="small"
+          >
+            <Delete fontSize="small" />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ];
@@ -255,6 +299,51 @@ const WaitlistPage = () => {
           }}
         />
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => !deleteLoading && setDeleteDialogOpen(false)}
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', color: '#d32f2f' }}>
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this waitlist entry? This action cannot be undone.
+            <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+              <Typography variant="body2" fontWeight="bold">Email: {entryToDelete?.email}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Type: {entryToDelete?.type || 'Early Access'}
+              </Typography>
+            </Box>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 0 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleteLoading}
+            sx={{ color: '#666', fontWeight: 'bold' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            color="error"
+            disabled={deleteLoading}
+            sx={{
+              borderRadius: 2,
+              fontWeight: 'bold',
+              bgcolor: '#d32f2f',
+              '&:hover': { bgcolor: '#b71c1c' }
+            }}
+          >
+            {deleteLoading ? 'Deleting...' : 'Delete Entry'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
