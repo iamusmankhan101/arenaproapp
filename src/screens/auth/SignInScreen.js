@@ -19,12 +19,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
+import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -37,34 +34,25 @@ export default function SignInScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
 
-  // Force use of Expo's auth proxy instead of local exp:// URL
-  const redirectUri = makeRedirectUri({
-    scheme: 'arenapro',
-    path: 'redirect',
-    useProxy: true, // This forces Expo to use auth.expo.io proxy
-  });
-
-  console.log('🔍 Google Sign-In Redirect URI:', redirectUri);
-
-  const [, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
-    iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    redirectUri: redirectUri,
-  });
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      dispatch(googleSignIn(id_token));
-    } else if (response?.type === 'error') {
-      Alert.alert('Sign In Error', 'Google sign-in failed. Please try again.');
-    }
-  }, [response, dispatch]);
-
   useEffect(() => {
     dispatch(clearError());
+
+    // Listen for deep links (for the auth relay)
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
   }, [dispatch]);
+
+  const handleDeepLink = (event) => {
+    const { url } = event;
+    if (url && url.includes('auth-success')) {
+      const parsed = Linking.parse(url);
+      const token = parsed.queryParams?.token;
+      if (token) {
+        console.log('--- TOKEN RECEIVED FROM RELAY ---');
+        dispatch(googleSignIn(token));
+      }
+    }
+  };
 
   const getFriendlyErrorMessage = (errorCode) => {
     const code = typeof errorCode === 'object' ? errorCode.code : errorCode;
@@ -143,28 +131,26 @@ export default function SignInScreen({ navigation }) {
   };
 
   const handleGoogleSignIn = async () => {
-    // Google Sign-In is not available in Expo Go due to redirect URI limitations
-    // It will work in production builds (APK/AAB)
-    if (__DEV__) {
-      Alert.alert(
-        'Google Sign-In Unavailable',
-        'Google Sign-In is not available in development mode. Please use email/password to sign in, or build the app as an APK to test Google Sign-In.\n\nEmail/password sign-in works perfectly!',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
     try {
-      await promptAsync();
+      console.log('--- OPENING WEB RELAY ---');
+      const result = await WebBrowser.openAuthSessionAsync(
+        'https://arenapro.pk/auth/google',
+        'arenapro://'
+      );
+
+      if (result.type === 'success' && result.url) {
+        handleDeepLink({ url: result.url });
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to initiate Google sign-in. Please try again.');
+      console.error('Relay Error:', error);
+      Alert.alert('Error', 'Could not open secure login browser.');
     }
   };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -242,7 +228,7 @@ export default function SignInScreen({ navigation }) {
             </View>
 
             {/* Forgot Password */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.forgotContainer}
               onPress={() => navigation.navigate('ForgotPassword')}
             >

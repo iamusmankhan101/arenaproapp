@@ -40,7 +40,9 @@ import {
   Inventory2,
   WhatsApp,
   Campaign,
-  Email
+  Email,
+  Timer,
+  AttachMoney,
 } from '@mui/icons-material';
 import { logoutAdmin } from '../store/slices/authSlice';
 
@@ -51,6 +53,8 @@ const adminMenuItems = [
   { text: 'Bookings', icon: <Event />, path: '/bookings' },
   { text: 'Venues', icon: <LocationOn />, path: '/venues' },
   { text: 'Customers', icon: <People />, path: '/customers' },
+  { text: 'Time Tracking', icon: <Timer />, path: '/time-tracking' },
+  { text: 'Revenue', icon: <AttachMoney />, path: '/revenue' },
   { text: 'Reports', icon: <Analytics />, path: '/reports' },
   { text: 'Reviews', icon: <RateReview />, path: '/reviews' },
   { text: 'Waitlist', icon: <Email />, path: '/waitlist' },
@@ -66,10 +70,10 @@ const vendorMenuItems = [
 ];
 
 const vendorProMenuItems = [
-  { text: 'Daily Reporting', icon: <Assessment />, path: '/vendor/daily-reporting', pro: true },
+  { text: 'Revenue', icon: <AttachMoney />, path: '/vendor/revenue', pro: true },
+  { text: 'Time Tracking', icon: <Timer />, path: '/vendor/time-tracking', pro: true },
   { text: 'Inventory', icon: <Inventory2 />, path: '/vendor/inventory', pro: true },
   { text: 'WhatsApp API', icon: <WhatsApp />, path: '/vendor/whatsapp', pro: true },
-  { text: 'Marketing', icon: <Campaign />, path: '/vendor/marketing', pro: true },
 ];
 
 

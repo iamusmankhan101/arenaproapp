@@ -16,14 +16,11 @@ import {
   ActivityIndicator
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signUp, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
+import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -43,24 +40,25 @@ export default function SignUpScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
 
-  const [, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
-    iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-  });
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      dispatch(googleSignIn(id_token));
-    } else if (response?.type === 'error') {
-      Alert.alert('Sign Up Error', 'Google sign-up failed. Please try again.');
-    }
-  }, [response, dispatch]);
-
   useEffect(() => {
     dispatch(clearError());
+
+    // Listen for deep links (for the auth relay)
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
   }, [dispatch]);
+
+  const handleDeepLink = (event) => {
+    const { url } = event;
+    if (url && url.includes('auth-success')) {
+      const parsed = Linking.parse(url);
+      const token = parsed.queryParams?.token;
+      if (token) {
+        console.log('--- TOKEN RECEIVED FROM RELAY ---');
+        dispatch(googleSignIn(token));
+      }
+    }
+  };
 
   useEffect(() => {
     if (error) {
@@ -141,16 +139,25 @@ export default function SignUpScreen({ navigation }) {
 
   const handleGoogleSignUp = async () => {
     try {
-      await promptAsync();
+      console.log('--- OPENING WEB RELAY ---');
+      const result = await WebBrowser.openAuthSessionAsync(
+        'https://arenapro.pk/auth/google',
+        'arenapro://'
+      );
+
+      if (result.type === 'success' && result.url) {
+        handleDeepLink({ url: result.url });
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to initiate Google sign-up. Please try again.');
+      console.error('Relay Error:', error);
+      Alert.alert('Error', 'Could not open secure login browser.');
     }
   };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -312,7 +319,7 @@ export default function SignUpScreen({ navigation }) {
             </View>
 
             {/* Terms & Conditions */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.checkboxContainer}
               onPress={() => setAgreeToTerms(!agreeToTerms)}
               activeOpacity={0.7}

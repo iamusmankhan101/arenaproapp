@@ -33,45 +33,61 @@ import {
 } from '@mui/icons-material';
 
 
+import { useNavigate } from 'react-router-dom';
+
 const PRO_FEATURES = [
     {
-        title: 'Daily Reporting',
+        title: 'Revenue Management',
         description:
-            'A complete end-of-day operations module: financial ledger reconciling digital deposits and cash collection, customer insights with new vs. returning player analytics, court utilization rates, and a one-click PDF/WhatsApp shift handover report.',
+            'A complete financial module: track daily earnings, monthly trends, and peak vs. off-peak performance. Generate branded PDF reports for your accounting.',
         icon: <Assessment sx={{ fontSize: 40 }} />,
         color: '#004d43',
+        tag: 'Financial',
+        path: '/vendor/revenue',
+    },
+    {
+        title: 'Booking Time Tracking',
+        description:
+            'Monitor live sessions in real-time with "minutes remaining" countdowns. Identify your busiest time slots and optimize court usage.',
+        icon: <WorkspacePremium sx={{ fontSize: 40 }} />,
+        color: '#004d43',
         tag: 'Operations',
+        path: '/vendor/time-tracking',
     },
     {
         title: 'Live Inventory Tracking',
         description:
-            'Go beyond simple upsells. Track premium padel rackets, cricket tape balls, and other equipment in real-time. Prevents double-booking items across simultaneous court reservations.',
+            'Manage equipment like rackets and balls in real-time. Automatic stock alerts for low or out-of-stock items.',
         icon: <Inventory2 sx={{ fontSize: 40 }} />,
         color: '#004d43',
         tag: 'Operations',
+        path: '/vendor/inventory',
     },
     {
         title: 'WhatsApp API Integration',
         description:
-            'Email notifications often get ignored. Connect a business WhatsApp integration so booking confirmations, payment reminders, or sudden rain delay alerts go directly to the player\'s phone.',
+            'Send automated booking confirmations and reminders directly to your customers\' phones via WhatsApp.',
         icon: <WhatsApp sx={{ fontSize: 40 }} />,
         color: '#004d43',
         tag: 'Communication',
-    },
-    {
-        title: 'Promo & In-App Marketing',
-        description: 'Boost your venue visibility by 3x. Get priority placement in search results and run exclusive "Dead Hour" or "Weekend" promos directly on the user home screen.',
-        icon: <Campaign sx={{ fontSize: 40 }} />,
-        color: '#004d43',
-        tag: 'Marketing',
+        path: '/vendor/whatsapp',
     },
 ];
 
 export default function VendorProFeaturesPage() {
+    const navigate = useNavigate();
     const { admin } = useSelector((state) => state.auth);
     const isProActive = admin?.proActive === true;
     const [paymentOpen, setPaymentOpen] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    const handleFeatureClick = (path) => {
+        if (isProActive && path) {
+            navigate(path);
+        } else if (!isProActive) {
+            setPaymentOpen(true);
+        }
+    };
 
     const handleCopyAccount = () => {
         navigator.clipboard.writeText('03058562523');
@@ -181,9 +197,11 @@ export default function VendorProFeaturesPage() {
                 {PRO_FEATURES.map((feature, index) => (
                     <Grid item xs={12} md={4} key={index}>
                         <Card
+                            onClick={() => handleFeatureClick(feature.path)}
                             sx={{
                                 height: '100%',
                                 borderRadius: 3,
+                                cursor: 'pointer',
                                 transition: 'transform 0.2s, box-shadow 0.2s',
                                 '&:hover': {
                                     transform: 'translateY(-4px)',

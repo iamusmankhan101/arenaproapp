@@ -1249,15 +1249,20 @@ export const workingAdminAPI = {
       const bookingsRef = collection(firestore, 'bookings');
       const venuesRef = collection(firestore, 'venues');
 
-      // Fetch venues for accurate naming
+      // Fetch venues for accurate naming and vendor filtering
       const venuesSnapshot = await getDocs(venuesRef);
       const venueMap = {};
+      const vendorVenueIds = new Set();
+
       venuesSnapshot.forEach(doc => {
-        venueMap[doc.id] = doc.data().name || 'Unknown Venue';
+        const vData = doc.data();
+        venueMap[doc.id] = vData.name || 'Unknown Venue';
+        if (params.vendorId && vData.vendorId === params.vendorId) {
+          vendorVenueIds.add(doc.id);
+        }
       });
 
       // Get all bookings (we'll filter in memory for simplicity as dataset is small)
-      // In production, use range queries
       const querySnapshot = await getDocs(bookingsRef);
 
       const monthlyData = {};
@@ -1279,7 +1284,7 @@ export const workingAdminAPI = {
           revenue: 0,
           customers: 0,
           customerSet: new Set(),
-          dailyBreakdown: {} // New field for current month daily tracking
+          dailyBreakdown: {}
         };
       }
 
@@ -1288,13 +1293,13 @@ export const workingAdminAPI = {
       let uniqueCustomers = new Set();
       let activeVenues = new Set();
 
-
-
       for (const doc of querySnapshot.docs) {
         const booking = doc.data();
 
-        // Filter by vendor if needed
-        // Note: For now assuming global admin access or handling permissions elsewhere
+        // Vendor Filter
+        if (params.vendorId && !vendorVenueIds.has(booking.turfId)) {
+          continue;
+        }
 
         const amount = Number(booking.totalAmount || booking.amount) || 0;
         const date = booking.date ? (booking.date.toDate ? booking.date.toDate() : new Date(booking.date)) : new Date();
