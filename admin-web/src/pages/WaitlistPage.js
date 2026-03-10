@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -32,7 +32,7 @@ import {
   DeleteForever,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
-import { collection, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { format } from 'date-fns';
 
@@ -46,7 +46,7 @@ const WaitlistPage = () => {
   const [viewMode, setViewMode] = useState('active'); // 'active' or 'deleted'
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  const fetchWaitlistEntries = async () => {
+  const fetchWaitlistEntries = useCallback(async () => {
     setLoading(true);
     try {
       const collectionName = viewMode === 'active' ? 'waitlist' : 'deleted_waitlist';
@@ -66,11 +66,11 @@ const WaitlistPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [viewMode]);
 
   useEffect(() => {
     fetchWaitlistEntries();
-  }, [viewMode]);
+  }, [fetchWaitlistEntries]);
 
   const filteredEntries = waitlistEntries.filter(entry =>
     entry.email?.toLowerCase().includes(searchTerm.toLowerCase())
