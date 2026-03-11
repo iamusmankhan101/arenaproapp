@@ -16,3 +16,4 @@ function getDimensions(filePath) {
 
 console.log('icon.png:', getDimensions(path.join(__dirname, 'assets/icon.png')));
 console.log('adaptive-icon.png:', getDimensions(path.join(__dirname, 'assets/adaptive-icon.png')));
+console.log('splash.png:', getDimensions(path.join(__dirname, 'src/images/arena_pro_logoqr.png')));

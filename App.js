@@ -21,14 +21,10 @@ import * as WebBrowser from 'expo-web-browser';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Keep the splash screen visible while we fetch resources
-try {
-  SplashScreen.preventAutoHideAsync().catch(() => {
-    /* reload if splash screen is already hidden */
-  });
-} catch (e) {
-  console.warn('SplashScreen.preventAutoHideAsync error:', e);
-}
+// Initial splash screen prevention should happen as early as possible
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* reload if splash screen is already hidden */
+});
 
 export default function App() {
   const navigationRef = useRef();
@@ -90,17 +86,15 @@ export default function App() {
     StatusBar.setBarStyle('dark-content', true);
     
     async function prepare() {
-      try {
-        // Keep the splash screen visible while we fetch resources
-        // await SplashScreen.hideAsync(); // Removed to let AppNavigator control hiding
-      } catch (e) {
-        console.warn('SplashScreen.hideAsync error:', e);
-      }
-
+      console.log('🏁 App preparing...', { fontsLoaded, fontError });
       if (fontsLoaded || fontError) {
         // Initialize real-time sync when app starts
-        realtimeSyncService.initialize();
-        console.log('🚀 Real-time sync initialized');
+        try {
+          realtimeSyncService.initialize();
+          console.log('🚀 Real-time sync initialized');
+        } catch (e) {
+          console.error('Error initializing sync:', e);
+        }
       }
     }
     prepare();
