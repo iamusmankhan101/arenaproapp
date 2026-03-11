@@ -188,8 +188,6 @@ export default function SignInScreen({ navigation }) {
               <View style={[styles.inputWrapper, (emailFocused || email) && styles.inputWrapperFocused]}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="example@gmail.com"
-                  placeholderTextColor="#999"
                   value={email}
                   onChangeText={setEmail}
                   onFocus={() => setEmailFocused(true)}
@@ -208,8 +206,6 @@ export default function SignInScreen({ navigation }) {
               <View style={[styles.inputWrapper, (passwordFocused || password) && styles.inputWrapperFocused]}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="••••••••••••••••"
-                  placeholderTextColor="#999"
                   value={password}
                   onChangeText={setPassword}
                   onFocus={() => setPasswordFocused(true)}

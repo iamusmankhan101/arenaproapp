@@ -202,8 +202,6 @@ export default function SignUpScreen({ navigation }) {
               <View style={[styles.inputWrapper, (nameFocused || name) && styles.inputWrapperFocused]}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="John Doe"
-                  placeholderTextColor="#999"
                   value={name}
                   onChangeText={setName}
                   onFocus={() => setNameFocused(true)}
@@ -221,8 +219,6 @@ export default function SignUpScreen({ navigation }) {
               <View style={[styles.inputWrapper, (emailFocused || email) && styles.inputWrapperFocused]}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="example@gmail.com"
-                  placeholderTextColor="#999"
                   value={email}
                   onChangeText={setEmail}
                   onFocus={() => setEmailFocused(true)}
@@ -242,8 +238,6 @@ export default function SignUpScreen({ navigation }) {
                 <MaterialIcons name="phone" size={20} color={theme.colors.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
-                  placeholder="03001234567"
-                  placeholderTextColor="#999"
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
                   onFocus={() => setPhoneFocused(true)}
@@ -265,8 +259,6 @@ export default function SignUpScreen({ navigation }) {
               <View style={[styles.inputWrapper, (passwordFocused || password) && styles.inputWrapperFocused]}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="••••••••••••••••"
-                  placeholderTextColor="#999"
                   value={password}
                   onChangeText={setPassword}
                   onFocus={() => setPasswordFocused(true)}
@@ -298,8 +290,6 @@ export default function SignUpScreen({ navigation }) {
                 <MaterialIcons name="card-giftcard" size={20} color={theme.colors.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Enter referral code"
-                  placeholderTextColor="#999"
                   value={referralCode}
                   onChangeText={(text) => setReferralCode(text.toUpperCase())}
                   onFocus={() => setReferralFocused(true)}
