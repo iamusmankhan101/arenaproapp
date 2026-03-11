@@ -143,6 +143,7 @@ const StatCard = ({ title, value, icon, sub, color = '#004d43', gradient = false
 
 export default function TimeTrackingPage() {
     const dispatch = useDispatch();
+    const { admin } = useSelector(state => state.auth);
     const { bookings, bookingsLoading, bookingsError } = useSelector(state => state.admin);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -159,8 +160,9 @@ export default function TimeTrackingPage() {
     }, []);
 
     const loadBookings = useCallback(() => {
-        dispatch(fetchBookings({ page: 0, pageSize: 200, filter: 'all', search: '' }));
-    }, [dispatch]);
+        const vendorId = admin?.role === 'vendor' ? (admin.vendorId || admin.uid) : null;
+        dispatch(fetchBookings({ page: 0, pageSize: 200, filter: 'all', search: '', vendorId }));
+    }, [dispatch, admin]);
 
     useEffect(() => { loadBookings(); }, [loadBookings]);
 

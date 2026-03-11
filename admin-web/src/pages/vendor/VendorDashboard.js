@@ -194,7 +194,7 @@ const ProBanner = ({ onNavigate }) => (
                             Scale with Arena Pro
                         </Typography>
                         <Chip
-                            label="25% OFF"
+                            label="15% OFF"
                             size="small"
                             sx={{ bgcolor: '#e8ee26', color: '#004d43', fontWeight: 900, height: 20, fontSize: '0.65rem' }}
                         />

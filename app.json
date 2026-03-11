@@ -5,7 +5,7 @@
     "scheme": "arenapro",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./src/images/arena_pro_logoqr.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./src/images/arena_pro_logoqr.png",
@@ -31,12 +31,12 @@
         "hidden": false
       },
       "associatedDomains": [
-        "applinks:arenapro.pk"
+        "applinks:arenapropk.online"
       ]
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./src/images/arena_pro_logoqr.png",
         "backgroundColor": "#004d43"
       },
       "package": "arenapropk.online",
@@ -63,7 +63,7 @@
           "data": [
             {
               "scheme": "https",
-              "host": "arenapro.pk",
+              "host": "arenapropk.online",
               "pathPrefix": "/reset-password"
             }
           ],
@@ -90,7 +90,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
+          "icon": "./src/images/arena_pro_logoqr.png",
           "color": "#004d43"
         }
       ]

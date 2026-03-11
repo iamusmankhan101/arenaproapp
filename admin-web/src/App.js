@@ -99,6 +99,8 @@ function App() {
         <Route path="/vendor/whatsapp" element={<ProtectedRoute allowedRoles={['vendor']}><VendorWhatsAppPage /></ProtectedRoute>} />
         <Route path="/vendor/marketing" element={<ProtectedRoute allowedRoles={['vendor']}><VendorMarketingPage /></ProtectedRoute>} />
         <Route path="/vendor/pro-features" element={<ProtectedRoute allowedRoles={['vendor']}><VendorProFeaturesPage /></ProtectedRoute>} />
+        <Route path="/vendor/revenue" element={<ProtectedRoute allowedRoles={['vendor']}><RevenueManagementPage /></ProtectedRoute>} />
+        <Route path="/vendor/time-tracking" element={<ProtectedRoute allowedRoles={['vendor']}><TimeTrackingPage /></ProtectedRoute>} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />

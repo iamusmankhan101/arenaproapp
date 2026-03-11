@@ -36,10 +36,8 @@ import {
   AccountCircle,
   RateReview,
   WorkspacePremium,
-  Assessment,
   Inventory2,
   WhatsApp,
-  Campaign,
   Email,
   Timer,
   AttachMoney,
@@ -70,10 +68,10 @@ const vendorMenuItems = [
 ];
 
 const vendorProMenuItems = [
-  { text: 'Daily Reporting', icon: <Assessment />, path: '/vendor/daily-reporting', pro: true },
+  { text: 'Revenue', icon: <AttachMoney />, path: '/vendor/revenue', pro: true },
+  { text: 'Time Tracking', icon: <Timer />, path: '/vendor/time-tracking', pro: true },
   { text: 'Inventory', icon: <Inventory2 />, path: '/vendor/inventory', pro: true },
   { text: 'WhatsApp API', icon: <WhatsApp />, path: '/vendor/whatsapp', pro: true },
-  { text: 'Marketing', icon: <Campaign />, path: '/vendor/marketing', pro: true },
 ];
 
 

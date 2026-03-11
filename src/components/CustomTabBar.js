@@ -12,7 +12,13 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     const insets = useSafeAreaInsets();
     
     return (
-        <View style={[styles.tabBarContainer, { paddingBottom: insets.bottom }]}>
+        <View style={[
+            styles.tabBarContainer, 
+            { 
+                paddingBottom: Math.max(insets.bottom, 15),
+                paddingTop: 12
+            }
+        ]}>
             {state.routes.map((route, index) => {
                 const { options } = descriptors[route.key];
                 const label =
@@ -85,7 +91,6 @@ const styles = StyleSheet.create({
     tabBarContainer: {
         flexDirection: 'row',
         backgroundColor: '#FFFFFF',
-        height: 70,
         alignItems: 'center',
         justifyContent: 'space-around',
         paddingHorizontal: 10,

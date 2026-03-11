@@ -2,9 +2,11 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
 
 export default function WelcomeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -43,7 +45,7 @@ export default function WelcomeScreen({ navigation }) {
                 <Text style={styles.continueText}>Continue</Text>
               </TouchableOpacity>
 
-              <View style={styles.signInContainer}>
+              <View style={[styles.signInContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
                 <Text style={styles.signInText}>Already have an account? </Text>
                 <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
                   <Text style={styles.signInLink}>Sign In</Text>

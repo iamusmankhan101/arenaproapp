@@ -133,6 +133,7 @@ const StatCard = ({ title, value, sub, icon, gradient = false }) => (
 
 export default function RevenueManagementPage() {
     const dispatch = useDispatch();
+    const { admin } = useSelector(state => state.auth);
     const { bookings, bookingsLoading, revenueReport, reportsLoading } = useSelector(
         state => state.admin,
     );
@@ -143,9 +144,10 @@ export default function RevenueManagementPage() {
     const [dateTo, setDateTo] = useState('');
 
     const loadData = useCallback(() => {
-        dispatch(fetchBookings({ page: 0, pageSize: 500, filter: 'all', search: '' }));
-        dispatch(fetchRevenueReport());
-    }, [dispatch]);
+        const vendorId = admin?.role === 'vendor' ? (admin.vendorId || admin.uid) : null;
+        dispatch(fetchBookings({ page: 0, pageSize: 500, filter: 'all', search: '', vendorId }));
+        dispatch(fetchRevenueReport({ vendorId }));
+    }, [dispatch, admin]);
 
     useEffect(() => { loadData(); }, [loadData]);
 

@@ -16,15 +16,20 @@ import {
   ActivityIndicator
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signUp, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
+import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
+import { signUp, clearError, googleSignIn } from '../../store/slices/authSlice';
 
 WebBrowser.maybeCompleteAuthSession();
+
+// Using the Web Client ID for Expo Go Proxy
+const WEB_CLIENT_ID = '358509015024-d57o1ks13scq2vrt829e0v47rsoch3to.apps.googleusercontent.com';
+const ANDROID_CLIENT_ID = '358509015024-t288i2u2k93qveoh6ndp19gpf13s1s9j.apps.googleusercontent.com';
+const IOS_CLIENT_ID = '960416327217-dt9ddrvb1e0mst3v8q86128oaq4vvbdo.apps.googleusercontent.com';
 
 export default function SignUpScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -44,6 +49,7 @@ export default function SignUpScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
 
+<<<<<<< HEAD
   // Force use of Expo's auth proxy in development, use native scheme in production
   const redirectUri = makeRedirectUri({
     scheme: 'arenapro',
@@ -67,9 +73,32 @@ export default function SignUpScreen({ navigation }) {
     }
   }, [response, dispatch]);
 
+=======
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId: WEB_CLIENT_ID,
+    androidClientId: ANDROID_CLIENT_ID,
+    iosClientId: IOS_CLIENT_ID,
+  });
+
+>>>>>>> 937e9e11161399f6dda4e65c181a1f44c9fbe22a
   useEffect(() => {
     dispatch(clearError());
   }, [dispatch]);
+
+  // Handle Google Auth Session Response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      if (authentication?.idToken) {
+        console.log('--- EXPO AUTH SESSION GOOGLE TOKEN RECEIVED ---');
+        dispatch(googleSignIn(authentication.idToken));
+      } else {
+        Alert.alert('Error', 'Google sign-up succeeded, but no token was returned.');
+      }
+    } else if (response?.type === 'error') {
+      Alert.alert('Google Sign-Up Error', response.error?.message || 'Authentication failed');
+    }
+  }, [response, dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -148,23 +177,12 @@ export default function SignUpScreen({ navigation }) {
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    // Google Sign-In is not available in Expo Go due to redirect URI limitations
-    // It will work in production builds (APK/AAB)
-    if (__DEV__) {
-      Alert.alert(
-        'Google Sign-Up Unavailable',
-        'Google Sign-Up is not available in development mode. Please use email/password to sign up, or build the app as an APK to test Google Sign-Up.\n\nEmail/password sign-up works perfectly!',
-        [{ text: 'OK' }]
-      );
+  const handleGoogleSignUp = () => {
+    if (!IOS_CLIENT_ID && Platform.OS === 'ios') {
+      Alert.alert('Setup Required', 'Please configure the iOS Client ID first.');
       return;
     }
-
-    try {
-      await promptAsync();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to initiate Google sign-up. Please try again.');
-    }
+    promptAsync();
   };
 
   return (
@@ -210,8 +228,6 @@ export default function SignUpScreen({ navigation }) {
               <View style={[styles.inputWrapper, (nameFocused || name) && styles.inputWrapperFocused]}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="John Doe"
-                  placeholderTextColor="#999"
                   value={name}
                   onChangeText={setName}
                   onFocus={() => setNameFocused(true)}
@@ -229,8 +245,6 @@ export default function SignUpScreen({ navigation }) {
               <View style={[styles.inputWrapper, (emailFocused || email) && styles.inputWrapperFocused]}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="example@gmail.com"
-                  placeholderTextColor="#999"
                   value={email}
                   onChangeText={setEmail}
                   onFocus={() => setEmailFocused(true)}
@@ -250,8 +264,6 @@ export default function SignUpScreen({ navigation }) {
                 <MaterialIcons name="phone" size={20} color={theme.colors.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
-                  placeholder="03001234567"
-                  placeholderTextColor="#999"
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
                   onFocus={() => setPhoneFocused(true)}
@@ -273,8 +285,6 @@ export default function SignUpScreen({ navigation }) {
               <View style={[styles.inputWrapper, (passwordFocused || password) && styles.inputWrapperFocused]}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="••••••••••••••••"
-                  placeholderTextColor="#999"
                   value={password}
                   onChangeText={setPassword}
                   onFocus={() => setPasswordFocused(true)}
@@ -306,8 +316,6 @@ export default function SignUpScreen({ navigation }) {
                 <MaterialIcons name="card-giftcard" size={20} color={theme.colors.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Enter referral code"
-                  placeholderTextColor="#999"
                   value={referralCode}
                   onChangeText={(text) => setReferralCode(text.toUpperCase())}
                   onFocus={() => setReferralFocused(true)}
@@ -375,7 +383,7 @@ export default function SignUpScreen({ navigation }) {
             <TouchableOpacity
               style={styles.googleButton}
               onPress={handleGoogleSignUp}
-              disabled={loading}
+              disabled={!request || loading}
             >
               <Image
                 source={require('../../images/google_cover_image.png')}
@@ -384,7 +392,7 @@ export default function SignUpScreen({ navigation }) {
             </TouchableOpacity>
 
             {/* Sign In Link */}
-            <View style={styles.signInContainer}>
+            <View style={[styles.signInContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
               <Text style={styles.signInText}>Already have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
                 <Text style={styles.signInLink}>Sign In</Text>
