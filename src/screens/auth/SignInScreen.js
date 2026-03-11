@@ -252,14 +252,13 @@ export default function SignInScreen({ navigation }) {
               )}
             </TouchableOpacity>
 
-            {/* Divider */}
+            {/* Google Sign In */}
             <View style={styles.dividerContainer}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>Or sign in with</Text>
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Google Sign In */}
             <TouchableOpacity
               style={styles.googleButton}
               onPress={handleGoogleSignIn}
@@ -272,7 +271,7 @@ export default function SignInScreen({ navigation }) {
             </TouchableOpacity>
 
             {/* Sign Up Link */}
-            <View style={styles.signUpContainer}>
+            <View style={[styles.signUpContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
               <Text style={styles.signUpText}>Don't have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
                 <Text style={styles.signUpLink}>Sign Up</Text>

@@ -376,7 +376,7 @@ export default function SignUpScreen({ navigation }) {
             </TouchableOpacity>
 
             {/* Sign In Link */}
-            <View style={styles.signInContainer}>
+            <View style={[styles.signInContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
               <Text style={styles.signInText}>Already have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
                 <Text style={styles.signInLink}>Sign In</Text>
