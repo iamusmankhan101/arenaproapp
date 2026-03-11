@@ -44,16 +44,16 @@ export default function SignUpScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
 
-  // Force use of Expo's auth proxy instead of local exp:// URL
+  // Force use of Expo's auth proxy in development, use native scheme in production
   const redirectUri = makeRedirectUri({
     scheme: 'arenapro',
     path: 'redirect',
-    useProxy: true, // This forces Expo to use auth.expo.io proxy
+    useProxy: __DEV__, // Only use proxy in development
   });
 
   const [, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    androidClientId: '960416327217-87m8l6b8cjti5jg9mejv87v9eo652v6h.apps.googleusercontent.com',
+    androidClientId: '960416327217-12il70sju3qg9f11uh7ll5erj74s7vuq.apps.googleusercontent.com',
     iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
     redirectUri: redirectUri,
   });

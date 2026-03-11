@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "960416327217-7ams9hd8s55u695a22ueu1u5enmde5g0.apps.googleusercontent.com",
+          "client_id": "960416327217-12il70sju3qg9f11uh7ll5erj74s7vuq.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "arenapropk.online",
-            "certificate_hash": "edb93e7b5fc6da33056c35538a7b195d6523cc88"
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
         {
@@ -39,7 +39,7 @@
               "client_type": 3
             },
             {
-              "client_id": "960416327217-m6j5bj1qpu5ss4mdh6dctoublddvslvs.apps.googleusercontent.com",
+              "client_id": "960416327217-72vjrrp71c1d3pgsl343rponpj04r8ct.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
                 "bundle_id": "arenapropk.online"
