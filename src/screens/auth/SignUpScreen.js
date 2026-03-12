@@ -50,18 +50,10 @@ export default function SignUpScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
 
-  // Force use of Expo's auth proxy in development, use native scheme in production
-  const redirectUri = makeRedirectUri({
-    scheme: 'arenapro',
-    path: 'redirect',
-    useProxy: __DEV__, // Only use proxy in development
-  });
-
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: WEB_CLIENT_ID,
     androidClientId: ANDROID_CLIENT_ID,
     iosClientId: IOS_CLIENT_ID,
-    redirectUri: redirectUri,
   });
 
   useEffect(() => {
