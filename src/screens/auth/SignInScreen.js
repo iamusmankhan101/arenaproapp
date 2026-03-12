@@ -20,6 +20,7 @@ import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
@@ -27,9 +28,9 @@ import { theme } from '../../theme/theme';
 WebBrowser.maybeCompleteAuthSession();
 
 // Using the Web Client ID for Expo Go Proxy
-const WEB_CLIENT_ID = '358509015024-d57o1ks13scq2vrt829e0v47rsoch3to.apps.googleusercontent.com';
-const ANDROID_CLIENT_ID = '358509015024-t288i2u2k93qveoh6ndp19gpf13s1s9j.apps.googleusercontent.com';
-const IOS_CLIENT_ID = '960416327217-dt9ddrvb1e0mst3v8q86128oaq4vvbdo.apps.googleusercontent.com';
+const WEB_CLIENT_ID = '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com';
+const ANDROID_CLIENT_ID = '960416327217-7ams9hd8s55u695a22ueu1u5enmde5g0.apps.googleusercontent.com';
+const IOS_CLIENT_ID = '960416327217-m6j5bj1qpu5ss4mdh6dctoublddvslvs.apps.googleusercontent.com';
 
 export default function SignInScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -42,7 +43,6 @@ export default function SignInScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
 
-<<<<<<< HEAD
   // Force use of Expo's auth proxy in development, use native scheme in production
   const redirectUri = makeRedirectUri({
     scheme: 'arenapro',
@@ -52,30 +52,13 @@ export default function SignInScreen({ navigation }) {
 
   console.log('🔍 Google Sign-In Redirect URI:', redirectUri);
 
-  const [, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
-    androidClientId: '960416327217-12il70sju3qg9f11uh7ll5erj74s7vuq.apps.googleusercontent.com',
-    iosClientId: '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com',
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: WEB_CLIENT_ID,
+    androidClientId: ANDROID_CLIENT_ID,
+    iosClientId: IOS_CLIENT_ID,
     redirectUri: redirectUri,
   });
 
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      dispatch(googleSignIn(id_token));
-    } else if (response?.type === 'error') {
-      Alert.alert('Sign In Error', 'Google sign-in failed. Please try again.');
-    }
-  }, [response, dispatch]);
-
-=======
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: WEB_CLIENT_ID,
-    androidClientId: ANDROID_CLIENT_ID,
-    iosClientId: IOS_CLIENT_ID,
-  });
-
->>>>>>> 937e9e11161399f6dda4e65c181a1f44c9fbe22a
   useEffect(() => {
     dispatch(clearError());
   }, [dispatch]);
@@ -83,10 +66,10 @@ export default function SignInScreen({ navigation }) {
   // Handle Google Auth Session Response
   useEffect(() => {
     if (response?.type === 'success') {
-      const { authentication } = response;
-      if (authentication?.idToken) {
+      const { id_token } = response.params;
+      if (id_token) {
         console.log('--- EXPO AUTH SESSION GOOGLE TOKEN RECEIVED ---');
-        dispatch(googleSignIn(authentication.idToken));
+        dispatch(googleSignIn(id_token));
       } else {
         Alert.alert('Error', 'Google sign-in succeeded, but no token was returned.');
       }
