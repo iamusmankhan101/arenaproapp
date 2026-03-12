@@ -29,8 +29,8 @@ WebBrowser.maybeCompleteAuthSession();
 
 // Using the Web Client ID for Expo Go Proxy
 const WEB_CLIENT_ID = '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com';
-const ANDROID_CLIENT_ID = '960416327217-7ams9hd8s55u695a22ueu1u5enmde5g0.apps.googleusercontent.com';
-const IOS_CLIENT_ID = '960416327217-m6j5bj1qpu5ss4mdh6dctoublddvslvs.apps.googleusercontent.com';
+const ANDROID_CLIENT_ID = '960416327217-12il70sju3qg9f11uh7ll5erj74s7vuq.apps.googleusercontent.com';
+const IOS_CLIENT_ID = '960416327217-72vjrrp71c1d3pgsl343rponpj04r8ct.apps.googleusercontent.com';
 
 export default function SignInScreen({ navigation }) {
   const [email, setEmail] = useState('');
