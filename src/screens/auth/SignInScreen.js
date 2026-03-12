@@ -18,19 +18,12 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
-import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme/theme';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 
-WebBrowser.maybeCompleteAuthSession();
-
-// Using the Web Client ID for Expo Go Proxy
+// Web Client ID is used for ID token exchange with Firebase
 const WEB_CLIENT_ID = '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com';
-const ANDROID_CLIENT_ID = '960416327217-12il70sju3qg9f11uh7ll5erj74s7vuq.apps.googleusercontent.com';
-const IOS_CLIENT_ID = '960416327217-72vjrrp71c1d3pgsl343rponpj04r8ct.apps.googleusercontent.com';
 
 export default function SignInScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -43,30 +36,16 @@ export default function SignInScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: WEB_CLIENT_ID,
-    androidClientId: ANDROID_CLIENT_ID,
-    iosClientId: IOS_CLIENT_ID,
-  });
+  // Configure Google Sign-In on mount
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: WEB_CLIENT_ID,
+    });
+  }, []);
 
   useEffect(() => {
     dispatch(clearError());
   }, [dispatch]);
-
-  // Handle Google Auth Session Response
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      if (id_token) {
-        console.log('--- EXPO AUTH SESSION GOOGLE TOKEN RECEIVED ---');
-        dispatch(googleSignIn(id_token));
-      } else {
-        Alert.alert('Error', 'Google sign-in succeeded, but no token was returned.');
-      }
-    } else if (response?.type === 'error') {
-      Alert.alert('Google Sign-In Error', response.error?.message || 'Authentication failed');
-    }
-  }, [response, dispatch]);
 
   const getFriendlyErrorMessage = (errorCode) => {
     const code = typeof errorCode === 'object' ? errorCode.code : errorCode;
@@ -144,12 +123,29 @@ export default function SignInScreen({ navigation }) {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    if (!IOS_CLIENT_ID && Platform.OS === 'ios') {
-      Alert.alert('Setup Required', 'Please configure the iOS Client ID first.');
-      return;
+  const handleGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo?.data?.idToken || userInfo?.idToken;
+      if (idToken) {
+        console.log('--- NATIVE GOOGLE SIGN-IN TOKEN RECEIVED ---');
+        dispatch(googleSignIn(idToken));
+      } else {
+        Alert.alert('Error', 'Google sign-in succeeded, but no token was returned.');
+      }
+    } catch (error) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('Google sign-in cancelled by user');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log('Google sign-in already in progress');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Error', 'Google Play Services is not available on this device.');
+      } else {
+        console.error('Google sign-in error:', error);
+        Alert.alert('Google Sign-In Error', error.message || 'Authentication failed');
+      }
     }
-    promptAsync();
   };
 
   return (
@@ -259,7 +255,7 @@ export default function SignInScreen({ navigation }) {
             <TouchableOpacity
               style={styles.googleButton}
               onPress={handleGoogleSignIn}
-              disabled={!request || loading}
+              disabled={loading}
             >
               <Image
                 source={require('../../images/google_cover_image.png')}
