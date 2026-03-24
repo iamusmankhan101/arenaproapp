@@ -96,8 +96,10 @@ const ActionMenu = ({ booking, onAction }) => {
           Cancel
         </MenuItem>
         <MenuItem onClick={() => handleAction('contact')}>
-          <Phone sx={{ mr: 1, fontSize: 16 }} />
-          Contact Customer
+          <WhatsApp sx={{ mr: 1, fontSize: 16, color: booking.customerPhone ? '#25D366' : 'action.disabled' }} />
+          <Typography color={booking.customerPhone ? 'textPrimary' : 'textSecondary'}>
+            Contact Customer
+          </Typography>
         </MenuItem>
         <MenuItem onClick={() => handleAction('whatsapp')}>
           <WhatsApp sx={{ mr: 1, fontSize: 16, color: booking.venueOwnerPhone ? '#25D366' : 'action.disabled' }} />
@@ -172,8 +174,24 @@ export default function BookingsPage() {
       dispatch(updateBookingStatus({ bookingId, status: 'cancelled' }));
     } else if (action === 'contact') {
       const booking = bookings.data.find(b => b.id === bookingId);
-      setSelectedBooking(booking);
-      setDialogOpen(true);
+      if (booking && booking.customerPhone) {
+        // Format message for customer
+        const message = encodeURIComponent(
+          `*Booking Confirmation - Arena Pro*\n\n` +
+          `Hello *${booking.customerName}*! Here are your booking details:\n\n` +
+          `🏟️ Venue: ${booking.turfName}\n` +
+          `📅 Date: ${format(new Date(booking.dateTime), 'MMM dd, yyyy')}\n` +
+          `⏰ Time: ${booking.timeSlot}\n` +
+          `📋 Status: ${booking.status?.toUpperCase()}\n` +
+          `💰 Amount: PKR ${booking.totalAmount}\n` +
+          `💳 Payment: ${booking.paymentStatus?.toUpperCase()}\n\n` +
+          `Thank you for booking with Arena Pro!`
+        );
+        // Open WhatsApp
+        window.open(`https://wa.me/${booking.customerPhone.replace(/\+/g, '')}?text=${message}`, '_blank');
+      } else {
+        alert('This customer does not have a phone number on record.');
+      }
     } else if (action === 'whatsapp') {
       const booking = bookings.data.find(b => b.id === bookingId);
       if (booking && booking.venueOwnerPhone) {
