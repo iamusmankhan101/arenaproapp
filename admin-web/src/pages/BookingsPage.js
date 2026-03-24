@@ -10,10 +10,6 @@ import {
   Menu,
   MenuItem,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Alert,
   Card,
   CardContent,
@@ -27,7 +23,6 @@ import {
   CheckCircle,
   Cancel,
   Phone,
-  Email,
   Refresh,
   WhatsApp,
   EventNote,
@@ -134,8 +129,7 @@ export default function BookingsPage() {
     page: 0,
     pageSize: 25,
   });
-  const [selectedBooking, setSelectedBooking] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+
 
   const filters = [
     { key: 'all', label: 'All' },
@@ -594,32 +588,6 @@ export default function BookingsPage() {
         />
       </Box>
 
-      {/* Contact Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Contact Customer</DialogTitle>
-        <DialogContent>
-          {selectedBooking && (
-            <Box sx={{ pt: 1 }}>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Customer contact information for booking #{selectedBooking.bookingId}
-              </Alert>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Phone />
-                  <Typography>{selectedBooking.customerPhone}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Email />
-                  <Typography>{selectedBooking.customerEmail}</Typography>
-                </Box>
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }
