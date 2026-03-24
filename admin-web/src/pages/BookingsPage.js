@@ -22,7 +22,6 @@ import {
   MoreVert,
   CheckCircle,
   Cancel,
-  Phone,
   Refresh,
   WhatsApp,
   EventNote,
