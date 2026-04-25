@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Text, TextInput, Button, Surface } from 'react-native-paper';
+import { View, StyleSheet, Alert, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, TextInput, Button, Surface, Checkbox } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function AdminLoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -29,74 +31,169 @@ export default function AdminLoginScreen({ navigation }) {
     }
   };
 
+  const handleForgotPassword = () => {
+    Alert.alert(
+      'Reset Password',
+      'Please contact the system administrator to reset your admin password.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <MaterialIcons name="admin-panel-settings" size={64} color="#4CAF50" />
-        <Text style={styles.title}>Admin Panel</Text>
-        <Text style={styles.subtitle}>Sign in to manage your platform</Text>
-      </View>
-
-      <Surface style={styles.formContainer} elevation={4}>
-        <TextInput
-          label="Admin Email"
-          value={email}
-          onChangeText={setEmail}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          left={<TextInput.Icon icon="email" />}
-        />
-
-        <TextInput
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          mode="outlined"
-          style={styles.input}
-          secureTextEntry={!showPassword}
-          left={<TextInput.Icon icon="lock" />}
-          right={
-            <TextInput.Icon 
-              icon={showPassword ? "eye-off" : "eye"} 
-              onPress={() => setShowPassword(!showPassword)}
-            />
-          }
-        />
-
-        <Button
-          mode="contained"
-          onPress={handleLogin}
-          loading={loading}
-          disabled={loading}
-          style={styles.loginButton}
-          buttonColor="#4CAF50"
-        >
-          Sign In as Admin
-        </Button>
-
-        <View style={styles.credentialsHint}>
-          <Text style={styles.hintTitle}>Demo Credentials:</Text>
-          <Text style={styles.hintText}>Email: admin@pitchit.com</Text>
-          <Text style={styles.hintText}>Password: admin123</Text>
-        </View>
-      </Surface>
-
-      <Button
-        mode="text"
-        onPress={() => {
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation.navigate('SignIn');
-          }
-        }}
-        style={styles.backButton}
+    <LinearGradient
+      colors={['#004d43', '#006b5c', '#008975']}
+      style={styles.gradient}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
       >
-        Back to App
-      </Button>
-    </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Logo and Header Section */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoCircle}>
+              <MaterialIcons name="admin-panel-settings" size={56} color="#FFFFFF" />
+            </View>
+          </View>
+
+          {/* Welcome Text */}
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeTitle}>Welcome back!</Text>
+            <Text style={styles.welcomeSubtitle}>Admin Portal Access</Text>
+          </View>
+
+          {/* Login Form Card */}
+          <Surface style={styles.formCard} elevation={8}>
+            {/* Email Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Your email address</Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                mode="flat"
+                style={styles.input}
+                placeholder="admin@pitchit.com"
+                placeholderTextColor="#999"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                theme={{
+                  colors: {
+                    primary: '#004d43',
+                    background: '#f5f5f5',
+                  },
+                }}
+              />
+            </View>
+
+            {/* Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  mode="flat"
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#999"
+                  secureTextEntry={!showPassword}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  theme={{
+                    colors: {
+                      primary: '#004d43',
+                      background: '#f5f5f5',
+                    },
+                  }}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <MaterialIcons
+                    name={showPassword ? 'visibility-off' : 'visibility'}
+                    size={24}
+                    color="#004d43"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Remember Me & Forgot Password */}
+            <View style={styles.optionsRow}>
+              <TouchableOpacity
+                style={styles.rememberMeContainer}
+                onPress={() => setRememberMe(!rememberMe)}
+              >
+                <Checkbox
+                  status={rememberMe ? 'checked' : 'unchecked'}
+                  onPress={() => setRememberMe(!rememberMe)}
+                  color="#004d43"
+                />
+                <Text style={styles.rememberMeText}>Remember me</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleForgotPassword}>
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Sign In Button */}
+            <TouchableOpacity
+              style={[styles.signInButton, loading && styles.signInButtonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <Text style={styles.signInButtonText}>Signing in...</Text>
+              ) : (
+                <Text style={styles.signInButtonText}>Sign in</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Demo Credentials Info */}
+            <View style={styles.demoInfoContainer}>
+              <MaterialIcons name="info-outline" size={16} color="#666" />
+              <Text style={styles.demoInfoText}>
+                Demo: admin@pitchit.com / admin123
+              </Text>
+            </View>
+          </Surface>
+
+          {/* Create Account Link */}
+          <View style={styles.createAccountContainer}>
+            <Text style={styles.createAccountText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => Alert.alert('Info', 'Contact system administrator for admin access')}>
+              <Text style={styles.createAccountLink}>Contact Admin</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Back to App Button */}
+          <TouchableOpacity
+            style={styles.backToAppButton}
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('SignIn');
+              }
+            }}
+          >
+            <MaterialIcons name="arrow-back" size={20} color="#FFFFFF" />
+            <Text style={styles.backToAppText}>Back to App</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
