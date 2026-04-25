@@ -11,8 +11,7 @@ import {
     CircularProgress,
     Fade,
     Paper,
-    Grid,
-    Divider
+    Grid
 } from '@mui/material';
 import {
     Visibility,
