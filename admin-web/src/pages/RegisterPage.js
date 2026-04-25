@@ -10,6 +10,9 @@ import {
     IconButton,
     CircularProgress,
     Fade,
+    Paper,
+    Grid,
+    Divider
 } from '@mui/material';
 import {
     Visibility,
@@ -76,26 +79,14 @@ export default function RegisterPage({ onSwitchToLogin }) {
 
     const textFieldStyle = {
         mb: 2.5,
-        '& .MuiInputLabel-root': {
-            color: '#004d43',
-            fontWeight: 600,
-            fontSize: '0.95rem',
-            '&.Mui-focused': {
-                color: '#004d43',
-            },
-            '&.MuiInputLabel-shrink': {
-                color: '#004d43',
-            }
-        },
         '& .MuiOutlinedInput-root': {
-            borderRadius: '25px',
-            backgroundColor: 'rgba(255,255,255,0.98)',
-            backdropFilter: 'blur(10px)',
+            borderRadius: '12px',
+            backgroundColor: '#f8faf8',
             '& fieldset': {
-                borderColor: 'rgba(0,77,67,0.2)',
+                borderColor: 'rgba(0,77,67,0.1)',
             },
             '&:hover fieldset': {
-                borderColor: 'rgba(0,77,67,0.4)',
+                borderColor: 'rgba(0,77,67,0.3)',
             },
             '&.Mui-focused fieldset': {
                 borderColor: '#004d43',
@@ -103,102 +94,124 @@ export default function RegisterPage({ onSwitchToLogin }) {
             },
         },
         '& .MuiInputBase-input': {
-            px: 3,
-            py: 1.8,
-            fontSize: '0.95rem',
+            px: 2,
+            py: 1.5,
             color: '#004d43',
-            '&::placeholder': {
-                color: 'rgba(0,77,67,0.5)',
-                opacity: 1,
-            }
         },
     };
 
     return (
-        <Box
-            sx={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #004d43 0%, #00332d 100%)',
-                position: 'relative',
-                py: 4,
-                px: 2,
-                overflow: 'hidden',
-            }}
-        >
-            <Fade in={true} timeout={1000}>
-                <Box
-                    sx={{
-                        width: '100%',
-                        maxWidth: 500,
+        <Grid container sx={{ minHeight: '100vh' }}>
+            {/* Left Side - Image & Branding */}
+            <Grid
+                item
+                xs={12}
+                md={6}
+                sx={{
+                    display: { xs: 'none', md: 'flex' },
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    position: 'relative',
+                    backgroundImage: 'url(/login-bg.jpg)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 77, 67, 0.85)', // Green overlay
                         zIndex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
-                    }}
-                >
-                    {/* Logo */}
-                    <Box sx={{ mb: 2 }}>
-                        <img
-                            src="/logo.png"
-                            alt="Arena Pro"
-                            style={{
-                                width: 200,
-                                height: 200,
-                                objectFit: 'contain',
-                            }}
-                        />
-                    </Box>
-
-                    {/* Header Text */}
-                    <Typography
-                        variant="h4"
-                        sx={{
-                            fontWeight: 800,
-                            color: '#ffffff',
-                            mb: 1,
-                            textAlign: 'center',
-                            textShadow: '0 2px 10px rgba(0,0,0,0.3)',
-                            fontSize: { xs: '1.75rem', sm: '2.25rem' },
+                    },
+                }}
+            >
+                <Box sx={{ position: 'relative', zIndex: 2, textAlign: 'center', color: '#fff', px: 4 }}>
+                    <img
+                        src="/logo.png"
+                        alt="Arena Pro"
+                        style={{
+                            width: 200,
+                            height: 200,
+                            objectFit: 'contain',
+                            marginBottom: '2rem',
+                            filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.3))'
                         }}
-                    >
-                        Create Account
+                    />
+                    <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.5px' }}>
+                        Join Arena Pro
                     </Typography>
-                    <Typography
-                        variant="subtitle1"
-                        sx={{
-                            color: 'rgba(255,255,255,0.8)',
-                            mb: 4,
-                            textAlign: 'center',
-                            fontWeight: 500
-                        }}
-                    >
-                        Join the Arena Pro network today
+                    <Typography variant="h6" sx={{ fontWeight: 400, opacity: 0.9, maxWidth: 400, mx: 'auto' }}>
+                        Start managing your sports venue with Pakistan's premier platform.
                     </Typography>
+                </Box>
+            </Grid>
 
-                    {/* Form Container */}
+            {/* Right Side - Form */}
+            <Grid
+                item
+                xs={12}
+                md={6}
+                component={Paper}
+                elevation={0}
+                square
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    px: { xs: 3, sm: 6, md: 8, lg: 12 },
+                    backgroundColor: '#ffffff',
+                    py: { xs: 4, md: 0 },
+                }}
+            >
+                <Fade in={true} timeout={1000}>
                     <Box
                         sx={{
                             width: '100%',
-                            p: { xs: 3, sm: 4 },
-                            borderRadius: 6,
-                            bgcolor: 'rgba(255,255,255,0.05)',
-                            backdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+                            maxWidth: 450,
+                            display: 'flex',
+                            flexDirection: 'column',
                         }}
                     >
+                        {/* Mobile Logo */}
+                        <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'center', mb: 3 }}>
+                            <img
+                                src="/logo.png"
+                                alt="Arena Pro"
+                                style={{
+                                    width: 140,
+                                    height: 140,
+                                    objectFit: 'contain',
+                                }}
+                            />
+                        </Box>
+
+                        <Typography
+                            variant="h4"
+                            sx={{
+                                fontWeight: 800,
+                                color: '#004d43',
+                                mb: 1,
+                            }}
+                        >
+                            Create Account
+                        </Typography>
+                        <Typography
+                            variant="body1"
+                            sx={{ color: '#666', mb: 4 }}
+                        >
+                            Fill in the details below to get started.
+                        </Typography>
+
                         {(error || localError) && (
                             <Alert
                                 severity="error"
                                 sx={{
                                     mb: 3,
-                                    borderRadius: 3,
-                                    bgcolor: 'rgba(211, 47, 47, 0.1)',
-                                    color: '#ffcdd2',
-                                    '& .MuiAlert-icon': { color: '#ef5350' }
+                                    borderRadius: 2,
                                 }}
                             >
                                 {localError || error}
@@ -206,9 +219,11 @@ export default function RegisterPage({ onSwitchToLogin }) {
                         )}
 
                         <Box component="form" onSubmit={handleSubmit}>
+                            <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: '#004d43', mb: 1 }}>
+                                Full Name
+                            </Typography>
                             <TextField
                                 fullWidth
-                                label="Full Name"
                                 name="fullName"
                                 value={formData.fullName}
                                 onChange={handleChange}
@@ -217,9 +232,11 @@ export default function RegisterPage({ onSwitchToLogin }) {
                                 sx={textFieldStyle}
                             />
 
+                            <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: '#004d43', mb: 1 }}>
+                                Email Address
+                            </Typography>
                             <TextField
                                 fullWidth
-                                label="Email Address"
                                 name="email"
                                 type="email"
                                 value={formData.email}
@@ -229,9 +246,11 @@ export default function RegisterPage({ onSwitchToLogin }) {
                                 sx={textFieldStyle}
                             />
 
+                            <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: '#004d43', mb: 1 }}>
+                                Password
+                            </Typography>
                             <TextField
                                 fullWidth
-                                label="Password"
                                 name="password"
                                 type={showPassword ? 'text' : 'password'}
                                 value={formData.password}
@@ -244,7 +263,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
                                             <IconButton
                                                 onClick={() => setShowPassword(!showPassword)}
                                                 edge="end"
-                                                sx={{ mr: 1, color: '#004d43' }}
+                                                sx={{ color: '#004d43' }}
                                             >
                                                 {showPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
@@ -254,9 +273,11 @@ export default function RegisterPage({ onSwitchToLogin }) {
                                 sx={textFieldStyle}
                             />
 
+                            <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: '#004d43', mb: 1 }}>
+                                Confirm Password
+                            </Typography>
                             <TextField
                                 fullWidth
-                                label="Confirm Password"
                                 name="confirmPassword"
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 value={formData.confirmPassword}
@@ -269,7 +290,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
                                             <IconButton
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                 edge="end"
-                                                sx={{ mr: 1, color: '#004d43' }}
+                                                sx={{ color: '#004d43' }}
                                             >
                                                 {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
@@ -285,24 +306,26 @@ export default function RegisterPage({ onSwitchToLogin }) {
                                 variant="contained"
                                 disabled={loading}
                                 sx={{
-                                    mt: 2,
-                                    mb: 2,
-                                    borderRadius: '25px',
-                                    py: 1.8,
+                                    mt: 1,
+                                    borderRadius: '12px',
+                                    py: 1.5,
                                     fontSize: '1rem',
-                                    fontWeight: 800,
+                                    fontWeight: 700,
                                     textTransform: 'none',
-                                    background: 'linear-gradient(135deg, #e8ee26 0%, #d4db1c 100%)',
+                                    background: '#e8ee26',
                                     color: '#004d43',
-                                    boxShadow: '0 6px 25px rgba(232, 238, 38, 0.3)',
-                                    transition: 'all 0.3s ease',
+                                    boxShadow: 'none',
+                                    transition: 'all 0.2s',
                                     '&:hover': {
-                                        background: 'linear-gradient(135deg, #d4db1c 0%, #c0c614 100%)',
-                                        boxShadow: '0 8px 30px rgba(232, 238, 38, 0.4)',
-                                        transform: 'translateY(-2px)',
+                                        background: '#d4db1c',
+                                        boxShadow: '0 4px 12px rgba(232, 238, 38, 0.3)',
+                                        transform: 'translateY(-1px)',
+                                    },
+                                    '&:active': {
+                                        transform: 'translateY(0)',
                                     },
                                     '&.Mui-disabled': {
-                                        background: 'rgba(232, 238, 38, 0.5)',
+                                        background: '#f4f6b3',
                                         color: 'rgba(0, 77, 67, 0.5)',
                                     },
                                 }}
@@ -315,30 +338,30 @@ export default function RegisterPage({ onSwitchToLogin }) {
                             </Button>
                         </Box>
 
-                        <Box sx={{ textAlign: 'center', mt: 3 }}>
-                            <Typography variant="body2" sx={{ color: '#ffffff' }}>
+                        <Box sx={{ mt: 4, textAlign: 'center' }}>
+                            <Typography variant="body2" sx={{ color: '#666' }}>
                                 Already have an account?{' '}
                                 <Box
                                     component="span"
                                     onClick={onSwitchToLogin}
                                     sx={{
-                                        color: '#e8ee26',
-                                        fontWeight: 800,
+                                        color: '#004d43',
+                                        fontWeight: 700,
                                         cursor: 'pointer',
-                                        textDecoration: 'underline',
-                                        textUnderlineOffset: '3px',
+                                        transition: 'color 0.2s',
                                         '&:hover': {
-                                            opacity: 0.8,
+                                            color: '#00332d',
+                                            textDecoration: 'underline',
                                         },
                                     }}
                                 >
-                                    Sign In
+                                    Sign in here
                                 </Box>
                             </Typography>
                         </Box>
                     </Box>
-                </Box>
-            </Fade>
-        </Box>
+                </Fade>
+            </Grid>
+        </Grid>
     );
 }

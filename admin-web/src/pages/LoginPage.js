@@ -10,6 +10,8 @@ import {
   IconButton,
   CircularProgress,
   Divider,
+  Paper,
+  Grid
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { loginAdmin, clearError } from '../store/slices/authSlice';
@@ -46,266 +48,299 @@ export default function LoginPage({ onSwitchToRegister }) {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #004d43 0%, #00332d 100%)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <Grid container sx={{ minHeight: '100vh' }}>
+      {/* Left Side - Image & Branding */}
+      <Grid
+        item
+        xs={12}
+        md={6}
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'relative',
+          backgroundImage: 'url(/login-bg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 77, 67, 0.85)', // Green overlay
+            zIndex: 1,
+          },
+        }}
+      >
+        <Box sx={{ position: 'relative', zIndex: 2, textAlign: 'center', color: '#fff', px: 4 }}>
+          <img
+            src="/logo.png"
+            alt="Arena Pro"
+            style={{
+              width: 200,
+              height: 200,
+              objectFit: 'contain',
+              marginBottom: '2rem',
+              filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.3))'
+            }}
+          />
+          <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.5px' }}>
+            Arena Pro Admin
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 400, opacity: 0.9, maxWidth: 400, mx: 'auto' }}>
+            Manage your venues, bookings, and customers all in one powerful dashboard.
+          </Typography>
+        </Box>
+      </Grid>
 
-      <Box sx={{ mb: 1, textAlign: 'center', zIndex: 1 }}>
-        <img
-          src="/logo.png"
-          alt="Arena Pro"
-          style={{
-            width: 240,
-            height: 240,
-            objectFit: 'contain',
-            marginBottom: 8,
+      {/* Right Side - Form */}
+      <Grid
+        item
+        xs={12}
+        md={6}
+        component={Paper}
+        elevation={0}
+        square
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: { xs: 3, sm: 6, md: 8, lg: 12 },
+          backgroundColor: '#ffffff',
+        }}
+      >
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: 450,
+            display: 'flex',
+            flexDirection: 'column',
           }}
-        />
-      </Box>
+        >
+          {/* Mobile Logo */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'center', mb: 4 }}>
+            <img
+              src="/logo.png"
+              alt="Arena Pro"
+              style={{
+                width: 140,
+                height: 140,
+                objectFit: 'contain',
+              }}
+            />
+          </Box>
 
-      {/* Welcome Text */}
-      <Typography
-        variant="h3"
-        sx={{
-          fontWeight: 700,
-          color: '#ffffff',
-          mb: 5,
-          zIndex: 1,
-          textAlign: 'center',
-          fontSize: { xs: '1.8rem', sm: '2.5rem' },
-        }}
-      >
-        Welcome back!
-      </Typography>
-
-      {/* Form Container */}
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: 440,
-          px: { xs: 3, sm: 0 },
-          zIndex: 1,
-        }}
-      >
-        {error && (
-          <Alert
-            severity="error"
-            sx={{
-              mb: 3,
-              borderRadius: 3,
-              '& .MuiAlert-icon': { color: '#d32f2f' },
-            }}
-          >
-            {error}
-          </Alert>
-        )}
-
-        <Box component="form" onSubmit={handleSubmit}>
-          {/* Email Field */}
           <Typography
+            variant="h4"
             sx={{
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              color: '#ffffff',
-              mb: 1,
-              textShadow: '0 1px 4px rgba(0,0,0,0.2)'
-            }}
-          >
-            Your email address
-          </Typography>
-          <TextField
-            fullWidth
-            placeholder="Your email address"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            autoComplete="email"
-            autoFocus
-            sx={{
-              mb: 3,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '25px',
-                backgroundColor: 'rgba(255,255,255,0.98)',
-                backdropFilter: 'blur(10px)',
-                '& fieldset': {
-                  borderColor: 'rgba(0,77,67,0.2)',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(0,77,67,0.4)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#004d43',
-                  borderWidth: 2,
-                },
-              },
-              '& .MuiInputBase-input': {
-                px: 3,
-                py: 1.8,
-                fontSize: '0.95rem',
-                color: '#004d43',
-                '&::placeholder': {
-                  color: 'rgba(0,77,67,0.5)',
-                  opacity: 1,
-                }
-              },
-            }}
-          />
-
-          {/* Password Field */}
-          <Typography
-            sx={{
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              color: '#ffffff',
-              mb: 1,
-              textShadow: '0 1px 4px rgba(0,0,0,0.2)'
-            }}
-          >
-            Password
-          </Typography>
-          <TextField
-            fullWidth
-            placeholder="Your password"
-            name="password"
-            type={showPassword ? 'text' : 'password'}
-            value={formData.password}
-            onChange={handleChange}
-            required
-            autoComplete="current-password"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
-                    sx={{ mr: 0.5, color: '#004d43' }}
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              mb: 4,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '25px',
-                backgroundColor: 'rgba(255,255,255,0.98)',
-                backdropFilter: 'blur(10px)',
-                '& fieldset': {
-                  borderColor: 'rgba(0,77,67,0.2)',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(0,77,67,0.4)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#004d43',
-                  borderWidth: 2,
-                },
-              },
-              '& .MuiInputBase-input': {
-                px: 3,
-                py: 1.8,
-                fontSize: '0.95rem',
-                color: '#004d43',
-                '&::placeholder': {
-                  color: 'rgba(0,77,67,0.5)',
-                  opacity: 1,
-                }
-              },
-            }}
-          />
-
-          {/* Sign In Button */}
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            disabled={loading}
-            sx={{
-              borderRadius: '25px',
-              py: 1.8,
-              fontSize: '1rem',
-              fontWeight: 600,
-              textTransform: 'none',
-              background: 'linear-gradient(135deg, #e8ee26 0%, #d4db1c 100%)',
+              fontWeight: 800,
               color: '#004d43',
-              boxShadow: '0 6px 20px rgba(232, 238, 38, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #d4db1c 0%, #c1c712 100%)',
-                boxShadow: '0 8px 25px rgba(232, 238, 38, 0.4)',
-                transform: 'translateY(-1px)',
-              },
-              '&:active': {
-                transform: 'translateY(0)',
-              },
-              '&.Mui-disabled': {
-                background: 'rgba(232, 238, 38, 0.5)',
-                color: 'rgba(0, 77, 67, 0.5)',
-              },
+              mb: 1,
             }}
           >
-            {loading ? (
-              <CircularProgress size={24} sx={{ color: 'white' }} />
-            ) : (
-              'Sign in'
-            )}
-          </Button>
+            Welcome Back
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{ color: '#666', mb: 4 }}
+          >
+            Please enter your details to sign in.
+          </Typography>
 
-          {/* Create Account Link */}
-          <Box sx={{ textAlign: 'center', mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography
-              variant="body2"
-              sx={{ color: '#ffffff' }}
+          {error && (
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+              }}
             >
-              Don't have an account?{' '}
-              <Box
-                component="span"
-                onClick={onSwitchToRegister}
-                sx={{
-                  color: '#e8ee26',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  textUnderlineOffset: '3px',
-                  transition: 'opacity 0.2s',
-                  '&:hover': {
-                    opacity: 0.7,
-                  },
-                }}
-              >
-                Create Account
-              </Box>
-            </Typography>
+              {error}
+            </Alert>
+          )}
 
-            <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 1 }} />
+          <Box component="form" onSubmit={handleSubmit}>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                color: '#004d43',
+                mb: 1,
+              }}
+            >
+              Email Address
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="Enter your email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              autoComplete="email"
+              autoFocus
+              sx={{
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  backgroundColor: '#f8faf8',
+                  '& fieldset': {
+                    borderColor: 'rgba(0,77,67,0.1)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(0,77,67,0.3)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#004d43',
+                    borderWidth: 2,
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  px: 2,
+                  py: 1.5,
+                  color: '#004d43',
+                },
+              }}
+            />
+
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                color: '#004d43',
+                mb: 1,
+              }}
+            >
+              Password
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="Enter your password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password}
+              onChange={handleChange}
+              required
+              autoComplete="current-password"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      sx={{ color: '#004d43' }}
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                mb: 4,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  backgroundColor: '#f8faf8',
+                  '& fieldset': {
+                    borderColor: 'rgba(0,77,67,0.1)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(0,77,67,0.3)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#004d43',
+                    borderWidth: 2,
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  px: 2,
+                  py: 1.5,
+                  color: '#004d43',
+                },
+              }}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={loading}
+              sx={{
+                borderRadius: '12px',
+                py: 1.5,
+                fontSize: '1rem',
+                fontWeight: 700,
+                textTransform: 'none',
+                background: '#e8ee26',
+                color: '#004d43',
+                boxShadow: 'none',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  background: '#d4db1c',
+                  boxShadow: '0 4px 12px rgba(232, 238, 38, 0.3)',
+                  transform: 'translateY(-1px)',
+                },
+                '&:active': {
+                  transform: 'translateY(0)',
+                },
+                '&.Mui-disabled': {
+                  background: '#f4f6b3',
+                  color: 'rgba(0, 77, 67, 0.5)',
+                },
+              }}
+            >
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: '#004d43' }} />
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+
+            <Box sx={{ mt: 4, textAlign: 'center' }}>
+              <Typography variant="body2" sx={{ color: '#666' }}>
+                Don't have an account?{' '}
+                <Box
+                  component="span"
+                  onClick={onSwitchToRegister}
+                  sx={{
+                    color: '#004d43',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'color 0.2s',
+                    '&:hover': {
+                      color: '#00332d',
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Create one now
+                </Box>
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 3, '&::before, &::after': { borderColor: 'rgba(0,0,0,0.08)' } }}>
+              <Typography variant="body2" sx={{ color: '#999', px: 1 }}>OR</Typography>
+            </Divider>
 
             <Button
               variant="outlined"
+              fullWidth
               onClick={() => window.open('https://arenapro.pk/ArenaPro.apk', '_blank')}
               sx={{
-                borderRadius: '25px',
-                py: 1.2,
-                color: '#e8ee26',
-                borderColor: '#e8ee26',
-                borderWidth: 2,
+                borderRadius: '12px',
+                py: 1.5,
+                color: '#004d43',
+                borderColor: '#e0e0e0',
+                borderWidth: 1,
                 textTransform: 'none',
-                fontWeight: 700,
+                fontWeight: 600,
                 '&:hover': {
-                  borderColor: '#f4f93d',
-                  bgcolor: 'rgba(232, 238, 38, 0.05)',
-                  borderWidth: 2,
+                  borderColor: '#004d43',
+                  bgcolor: 'rgba(0, 77, 67, 0.04)',
                 }
               }}
             >
@@ -313,7 +348,7 @@ export default function LoginPage({ onSwitchToRegister }) {
             </Button>
           </Box>
         </Box>
-      </Box>
-    </Box>
+      </Grid>
+    </Grid>
   );
 }
