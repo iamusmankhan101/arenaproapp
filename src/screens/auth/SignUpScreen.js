@@ -8,8 +8,8 @@ import {
   Platform,
   Alert,
   TextInput,
-  Image,
-  StatusBar
+  StatusBar,
+  Dimensions
 } from 'react-native';
 import {
   Text,
@@ -18,12 +18,10 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '../../theme/theme';
-import { signUp, clearError, googleSignIn } from '../../store/slices/authSlice';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { signUp, clearError } from '../../store/slices/authSlice';
+import { LinearGradient } from 'expo-linear-gradient';
 
-// Web Client ID is used for ID token exchange with Firebase
-const WEB_CLIENT_ID = '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com';
+const { width } = Dimensions.get('window');
 
 export default function SignUpScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -42,13 +40,6 @@ export default function SignUpScreen({ navigation }) {
 
   const dispatch = useDispatch();
   const { loading, error, emailVerificationSent } = useSelector(state => state.auth);
-
-  // Configure Google Sign-In on mount
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: WEB_CLIENT_ID,
-    });
-  }, []);
 
   useEffect(() => {
     dispatch(clearError());
@@ -131,34 +122,9 @@ export default function SignUpScreen({ navigation }) {
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo?.data?.idToken || userInfo?.idToken;
-      if (idToken) {
-        console.log('--- NATIVE GOOGLE SIGN-UP TOKEN RECEIVED ---');
-        dispatch(googleSignIn(idToken));
-      } else {
-        Alert.alert('Error', 'Google sign-up succeeded, but no token was returned.');
-      }
-    } catch (error) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('Google sign-up cancelled by user');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log('Google sign-up already in progress');
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('Error', 'Google Play Services is not available on this device.');
-      } else {
-        console.error('Google sign-up error:', error);
-        Alert.alert('Google Sign-Up Error', error.message || 'Authentication failed');
-      }
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <StatusBar barStyle="light-content" backgroundColor="#004d43" />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -166,208 +132,226 @@ export default function SignUpScreen({ navigation }) {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom : 40 }
-          ]}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Back Button */}
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                navigation.navigate('SignIn');
-              }
-            }}
+          {/* Top Branding Section */}
+          <LinearGradient
+            colors={['#004d43', '#006b5c', '#008975']}
+            style={styles.brandingSection}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           >
-            <MaterialIcons name="arrow-back" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-
-          {/* Title */}
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Fill your information below or register with your social account.</Text>
-
-          {/* Form */}
-          <View style={styles.formContainer}>
-            {/* Name */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Name</Text>
-              <View style={[styles.inputWrapper, (nameFocused || name) && styles.inputWrapperFocused]}>
-                <TextInput
-                  style={styles.textInput}
-                  value={name}
-                  onChangeText={setName}
-                  onFocus={() => setNameFocused(true)}
-                  onBlur={() => setNameFocused(false)}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  selectionColor={theme.colors.primary}
-                />
-              </View>
-            </View>
-
-            {/* Email */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <View style={[styles.inputWrapper, (emailFocused || email) && styles.inputWrapperFocused]}>
-                <TextInput
-                  style={styles.textInput}
-                  value={email}
-                  onChangeText={setEmail}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  selectionColor={theme.colors.primary}
-                />
-              </View>
-            </View>
-
-            {/* Phone Number */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Phone Number</Text>
-              <View style={[styles.inputWrapper, (phoneFocused || phoneNumber) && styles.inputWrapperFocused]}>
-                <MaterialIcons name="phone" size={20} color={theme.colors.primary} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.textInput}
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  onFocus={() => setPhoneFocused(true)}
-                  onBlur={() => setPhoneFocused(false)}
-                  keyboardType="phone-pad"
-                  autoCorrect={false}
-                  maxLength={15}
-                  selectionColor={theme.colors.primary}
-                />
-              </View>
-              <Text style={styles.helperText}>
-                Your phone number will be used to contact you for match coordination
+            <View style={styles.brandingContent}>
+              <MaterialIcons name="sports-soccer" size={80} color="#D4E157" />
+              <Text style={styles.brandingTitle}>Join Arena Pro</Text>
+              <Text style={styles.brandingSubtitle}>
+                Create your account and start your football journey today
               </Text>
             </View>
+          </LinearGradient>
 
-            {/* Password */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <View style={[styles.inputWrapper, (passwordFocused || password) && styles.inputWrapperFocused]}>
-                <TextInput
-                  style={styles.textInput}
-                  value={password}
-                  onChangeText={setPassword}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  secureTextEntry={!showPassword}
-                  autoCorrect={false}
-                  selectionColor={theme.colors.primary}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <MaterialIcons
-                    name={showPassword ? "visibility" : "visibility-off"}
-                    size={20}
-                    color="#666"
+          {/* Form Section */}
+          <View style={styles.formSection}>
+            {/* Back Button */}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => {
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  navigation.navigate('SignIn');
+                }
+              }}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#004d43" />
+            </TouchableOpacity>
+
+            <View style={styles.formContent}>
+              <Text style={styles.formTitle}>Sign Up</Text>
+              <Text style={styles.formSubtitle}>Create your account to get started</Text>
+
+              {/* Name Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Name</Text>
+                <View style={[
+                  styles.inputWrapper,
+                  (nameFocused || name) && styles.inputWrapperFocused
+                ]}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={name}
+                    onChangeText={setName}
+                    onFocus={() => setNameFocused(true)}
+                    onBlur={() => setNameFocused(false)}
+                    placeholder="Your full name"
+                    placeholderTextColor="#999"
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    selectionColor="#004d43"
                   />
+                </View>
+              </View>
+
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <View style={[
+                  styles.inputWrapper,
+                  (emailFocused || email) && styles.inputWrapperFocused
+                ]}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={email}
+                    onChangeText={setEmail}
+                    onFocus={() => setEmailFocused(true)}
+                    onBlur={() => setEmailFocused(false)}
+                    placeholder="your.email@example.com"
+                    placeholderTextColor="#999"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    selectionColor="#004d43"
+                  />
+                </View>
+              </View>
+
+              {/* Phone Number Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Phone Number</Text>
+                <View style={[
+                  styles.inputWrapper,
+                  (phoneFocused || phoneNumber) && styles.inputWrapperFocused
+                ]}>
+                  <MaterialIcons name="phone" size={20} color="#004d43" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    onFocus={() => setPhoneFocused(true)}
+                    onBlur={() => setPhoneFocused(false)}
+                    placeholder="+92 300 1234567"
+                    placeholderTextColor="#999"
+                    keyboardType="phone-pad"
+                    autoCorrect={false}
+                    maxLength={15}
+                    selectionColor="#004d43"
+                  />
+                </View>
+              </View>
+
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <View style={[
+                  styles.inputWrapper,
+                  (passwordFocused || password) && styles.inputWrapperFocused
+                ]}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={password}
+                    onChangeText={setPassword}
+                    onFocus={() => setPasswordFocused(true)}
+                    onBlur={() => setPasswordFocused(false)}
+                    placeholder="Create a strong password"
+                    placeholderTextColor="#999"
+                    secureTextEntry={!showPassword}
+                    autoCorrect={false}
+                    selectionColor="#004d43"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.eyeIcon}
+                  >
+                    <MaterialIcons
+                      name={showPassword ? "visibility" : "visibility-off"}
+                      size={22}
+                      color="#004d43"
+                    />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.helperText}>
+                  Use 8 or more characters with a mix of letters, numbers & symbols
+                </Text>
+              </View>
+
+              {/* Referral Code (Optional) */}
+              <View style={styles.inputContainer}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.inputLabel}>Referral Code</Text>
+                  <Text style={styles.optionalLabel}>(Optional)</Text>
+                </View>
+                <View style={[
+                  styles.inputWrapper,
+                  (referralFocused || referralCode) && styles.inputWrapperFocused
+                ]}>
+                  <MaterialIcons name="card-giftcard" size={20} color="#004d43" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.textInput}
+                    value={referralCode}
+                    onChangeText={(text) => setReferralCode(text.toUpperCase())}
+                    onFocus={() => setReferralFocused(true)}
+                    onBlur={() => setReferralFocused(false)}
+                    placeholder="Enter code"
+                    placeholderTextColor="#999"
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    maxLength={8}
+                    selectionColor="#004d43"
+                  />
+                  {referralCode.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => setReferralCode('')}
+                      style={styles.clearIcon}
+                    >
+                      <MaterialIcons name="close" size={18} color="#666" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {/* Terms & Conditions */}
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setAgreeToTerms(!agreeToTerms)}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.customCheckbox,
+                  agreeToTerms && styles.customCheckboxChecked
+                ]}>
+                  {agreeToTerms && (
+                    <MaterialIcons name="check" size={18} color="#FFFFFF" />
+                  )}
+                </View>
+                <Text style={styles.checkboxText}>
+                  I accept the{' '}
+                  <Text style={styles.termsLink}>Terms & Conditions</Text>
+                </Text>
+              </TouchableOpacity>
+
+              {/* Sign Up Button */}
+              <TouchableOpacity
+                style={[styles.signUpButton, loading && styles.signUpButtonDisabled]}
+                onPress={handleSignUp}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#004d43" size="small" />
+                ) : (
+                  <Text style={styles.signUpButtonText}>Sign Up</Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Sign In Link */}
+              <View style={styles.signInContainer}>
+                <Text style={styles.signInText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+                  <Text style={styles.signInLink}>Sign In</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-
-            {/* Referral Code (Optional) */}
-            <View style={styles.inputContainer}>
-              <View style={styles.labelRow}>
-                <Text style={styles.label}>Referral Code</Text>
-                <Text style={styles.optionalLabel}>(Optional)</Text>
-              </View>
-              <View style={[styles.inputWrapper, (referralFocused || referralCode) && styles.inputWrapperFocused]}>
-                <MaterialIcons name="card-giftcard" size={20} color={theme.colors.primary} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.textInput}
-                  value={referralCode}
-                  onChangeText={(text) => setReferralCode(text.toUpperCase())}
-                  onFocus={() => setReferralFocused(true)}
-                  onBlur={() => setReferralFocused(false)}
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  maxLength={8}
-                  selectionColor={theme.colors.primary}
-                />
-                {referralCode.length > 0 && (
-                  <TouchableOpacity
-                    onPress={() => setReferralCode('')}
-                    style={styles.clearIcon}
-                  >
-                    <MaterialIcons name="close" size={18} color="#666" />
-                  </TouchableOpacity>
-                )}
-              </View>
-              <Text style={styles.helperText}>
-                Have a referral code? Enter it to get PKR 200 discount on your first booking!
-              </Text>
-            </View>
-
-            {/* Terms & Conditions */}
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setAgreeToTerms(!agreeToTerms)}
-              activeOpacity={0.7}
-            >
-              <View style={[
-                styles.customCheckbox,
-                agreeToTerms && styles.customCheckboxChecked
-              ]}>
-                {agreeToTerms && (
-                  <MaterialIcons name="check" size={18} color="#FFFFFF" />
-                )}
-              </View>
-              <Text style={styles.checkboxText}>
-                Agree with{' '}
-                <Text style={styles.termsLink}>Terms & Condition</Text>
-              </Text>
-            </TouchableOpacity>
-
-            {/* Sign Up Button */}
-            <TouchableOpacity
-              style={[styles.signUpButton, loading && styles.signUpButtonDisabled]}
-              onPress={handleSignUp}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={theme.colors.secondary} size="small" />
-              ) : (
-                <Text style={styles.signUpButtonText}>Sign Up</Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Or sign up with</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Google Sign Up */}
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={handleGoogleSignUp}
-              disabled={loading}
-            >
-              <Image
-                source={require('../../images/google_cover_image.png')}
-                style={styles.googleIcon}
-              />
-            </TouchableOpacity>
-
-            {/* Sign In Link */}
-            <View style={[styles.signInContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-              <Text style={styles.signInText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-                <Text style={styles.signInLink}>Sign In</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -379,67 +363,104 @@ export default function SignUpScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#FFFFFF',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
+  },
+  brandingSection: {
+    minHeight: 280,
+    paddingHorizontal: 32,
+    paddingVertical: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  brandingContent: {
+    alignItems: 'center',
+    maxWidth: 400,
+  },
+  brandingTitle: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 24,
+    marginBottom: 16,
+    fontFamily: 'Montserrat_700Bold',
+    textAlign: 'center',
+  },
+  brandingSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 24,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  formSection: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -32,
+    paddingTop: 16,
   },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
-    marginBottom: 20,
+    marginLeft: 24,
+    marginTop: 8,
   },
-  title: {
+  formContent: {
+    paddingHorizontal: 32,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  formTitle: {
     fontSize: 32,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
     marginBottom: 8,
-    fontFamily: 'ClashDisplay-Medium',
+    fontFamily: 'Montserrat_700Bold',
   },
-  subtitle: {
+  formSubtitle: {
     fontSize: 15,
-    color: theme.colors.textSecondary,
-    marginBottom: 40,
+    color: '#666',
+    marginBottom: 32,
     fontFamily: 'Montserrat_400Regular',
     lineHeight: 22,
-  },
-  formContainer: {
-    flex: 1,
   },
   inputContainer: {
     marginBottom: 20,
   },
-  label: {
+  inputLabel: {
     fontSize: 14,
-    color: theme.colors.text,
+    fontWeight: '600',
+    color: '#1a1a1a',
     marginBottom: 8,
-    fontFamily: 'Montserrat_500Medium',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f8f8f8',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#e0e0e0',
     paddingHorizontal: 16,
     height: 56,
   },
   inputWrapperFocused: {
-    borderColor: theme.colors.primary,
+    borderColor: '#004d43',
     backgroundColor: '#FFFFFF',
   },
   textInput: {
     flex: 1,
     backgroundColor: 'transparent',
-    fontSize: 16,
-    color: theme.colors.text,
+    fontSize: 15,
+    color: '#1a1a1a',
     paddingHorizontal: 0,
     paddingVertical: 16,
     height: 56,
@@ -456,7 +477,7 @@ const styles = StyleSheet.create({
   },
   optionalLabel: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: '#999',
     marginLeft: 6,
     fontFamily: 'Montserrat_400Regular',
     fontStyle: 'italic',
@@ -470,7 +491,7 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: '#666',
     marginTop: 6,
     fontFamily: 'Montserrat_400Regular',
     lineHeight: 16,
@@ -478,8 +499,8 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
-    marginLeft: 0,
+    marginBottom: 28,
+    marginTop: 4,
   },
   customCheckbox: {
     width: 24,
@@ -493,93 +514,58 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   customCheckboxChecked: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    backgroundColor: '#004d43',
+    borderColor: '#004d43',
   },
   checkboxText: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginLeft: 0,
+    color: '#666',
     flex: 1,
     fontFamily: 'Montserrat_400Regular',
   },
   termsLink: {
-    color: theme.colors.primary,
-    fontFamily: 'Montserrat_500Medium',
+    color: '#004d43',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   signUpButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: 28,
+    backgroundColor: '#D4E157',
+    borderRadius: 12,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
-    elevation: 2,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    marginBottom: 24,
+    shadowColor: '#D4E157',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
     shadowRadius: 8,
+    elevation: 6,
   },
   signUpButtonDisabled: {
     opacity: 0.6,
   },
   signUpButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.secondary,
-    fontFamily: 'ClashDisplay-Medium',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E0E0E0',
-  },
-  dividerText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginHorizontal: 16,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  googleButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: 32,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  googleIcon: {
-    width: 32,
-    height: 32,
+    fontWeight: 'bold',
+    color: '#004d43',
+    fontFamily: 'Montserrat_700Bold',
   },
   signInContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 8,
   },
   signInText: {
     fontSize: 15,
-    color: theme.colors.textSecondary,
+    color: '#666',
     fontFamily: 'Montserrat_400Regular',
   },
   signInLink: {
     fontSize: 15,
-    color: theme.colors.primary,
-    fontFamily: 'Montserrat_600SemiBold',
+    color: '#004d43',
+    fontFamily: 'Montserrat_700Bold',
   },
 });

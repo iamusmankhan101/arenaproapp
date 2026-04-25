@@ -8,22 +8,20 @@ import {
   Platform,
   Alert,
   TextInput,
-  Image,
-  StatusBar
+  StatusBar,
+  Dimensions
 } from 'react-native';
 import {
   Text,
   ActivityIndicator
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { signIn, clearError, googleSignIn } from '../../store/slices/authSlice';
+import { signIn, clearError } from '../../store/slices/authSlice';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '../../theme/theme';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { LinearGradient } from 'expo-linear-gradient';
 
-// Web Client ID is used for ID token exchange with Firebase
-const WEB_CLIENT_ID = '960416327217-0evmllr420e5b8s2lpkb6rgt9a04kr39.apps.googleusercontent.com';
+const { width } = Dimensions.get('window');
 
 export default function SignInScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -35,13 +33,6 @@ export default function SignInScreen({ navigation }) {
 
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
-
-  // Configure Google Sign-In on mount
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: WEB_CLIENT_ID,
-    });
-  }, []);
 
   useEffect(() => {
     dispatch(clearError());
@@ -123,34 +114,9 @@ export default function SignInScreen({ navigation }) {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo?.data?.idToken || userInfo?.idToken;
-      if (idToken) {
-        console.log('--- NATIVE GOOGLE SIGN-IN TOKEN RECEIVED ---');
-        dispatch(googleSignIn(idToken));
-      } else {
-        Alert.alert('Error', 'Google sign-in succeeded, but no token was returned.');
-      }
-    } catch (error) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('Google sign-in cancelled by user');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log('Google sign-in already in progress');
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('Error', 'Google Play Services is not available on this device.');
-      } else {
-        console.error('Google sign-in error:', error);
-        Alert.alert('Google Sign-In Error', error.message || 'Authentication failed');
-      }
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <StatusBar barStyle="light-content" backgroundColor="#004d43" />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -158,117 +124,124 @@ export default function SignInScreen({ navigation }) {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: Platform.OS === 'android' ? 40 + insets.bottom : 40 }
-          ]}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Back Button */}
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+          {/* Left Side - Branding */}
+          <LinearGradient
+            colors={['#004d43', '#006b5c', '#008975']}
+            style={styles.brandingSection}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           >
-            <MaterialIcons name="arrow-back" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-
-          {/* Title */}
-          <Text style={styles.title}>Sign In</Text>
-          <Text style={styles.subtitle}>Hi! Welcome back, you've been missed</Text>
-
-          {/* Form */}
-          <View style={styles.formContainer}>
-            {/* Email */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <View style={[styles.inputWrapper, (emailFocused || email) && styles.inputWrapperFocused]}>
-                <TextInput
-                  style={styles.textInput}
-                  value={email}
-                  onChangeText={setEmail}
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  selectionColor={theme.colors.primary}
-                />
-              </View>
+            <View style={styles.brandingContent}>
+              <MaterialIcons name="sports-soccer" size={80} color="#D4E157" />
+              <Text style={styles.brandingTitle}>Welcome Back!</Text>
+              <Text style={styles.brandingSubtitle}>
+                Sign in to access your account and continue your football journey
+              </Text>
             </View>
+          </LinearGradient>
 
-            {/* Password */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <View style={[styles.inputWrapper, (passwordFocused || password) && styles.inputWrapperFocused]}>
-                <TextInput
-                  style={styles.textInput}
-                  value={password}
-                  onChangeText={setPassword}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  secureTextEntry={!showPassword}
-                  autoCorrect={false}
-                  selectionColor={theme.colors.primary}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <MaterialIcons
-                    name={showPassword ? "visibility" : "visibility-off"}
-                    size={20}
-                    color="#666"
+          {/* Right Side - Form */}
+          <View style={styles.formSection}>
+            {/* Back Button */}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#004d43" />
+            </TouchableOpacity>
+
+            <View style={styles.formContent}>
+              <Text style={styles.formTitle}>Sign In</Text>
+              <Text style={styles.formSubtitle}>Hi! Welcome back, you've been missed</Text>
+
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <View style={[
+                  styles.inputWrapper,
+                  (emailFocused || email) && styles.inputWrapperFocused
+                ]}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={email}
+                    onChangeText={setEmail}
+                    onFocus={() => setEmailFocused(true)}
+                    onBlur={() => setEmailFocused(false)}
+                    placeholder="your.email@example.com"
+                    placeholderTextColor="#999"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    selectionColor="#004d43"
                   />
+                </View>
+              </View>
+
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <View style={[
+                  styles.inputWrapper,
+                  (passwordFocused || password) && styles.inputWrapperFocused
+                ]}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={password}
+                    onChangeText={setPassword}
+                    onFocus={() => setPasswordFocused(true)}
+                    onBlur={() => setPasswordFocused(false)}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#999"
+                    secureTextEntry={!showPassword}
+                    autoCorrect={false}
+                    selectionColor="#004d43"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.eyeIcon}
+                  >
+                    <MaterialIcons
+                      name={showPassword ? "visibility" : "visibility-off"}
+                      size={22}
+                      color="#004d43"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Forgot Password */}
+              <TouchableOpacity
+                style={styles.forgotContainer}
+                onPress={() => navigation.navigate('ForgotPassword')}
+              >
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              {/* Sign In Button */}
+              <TouchableOpacity
+                style={[styles.signInButton, loading && styles.signInButtonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#004d43" size="small" />
+                ) : (
+                  <Text style={styles.signInButtonText}>Sign In</Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Sign Up Link */}
+              <View style={styles.signUpContainer}>
+                <Text style={styles.signUpText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+                  <Text style={styles.signUpLink}>Sign Up</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-
-            {/* Forgot Password */}
-            <TouchableOpacity
-              style={styles.forgotContainer}
-              onPress={() => navigation.navigate('ForgotPassword')}
-            >
-              <Text style={styles.forgotText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
-            {/* Sign In Button */}
-            <TouchableOpacity
-              style={[styles.signInButton, loading && styles.signInButtonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={theme.colors.secondary} size="small" />
-              ) : (
-                <Text style={styles.signInButtonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Google Sign In */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Or sign in with</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={handleGoogleSignIn}
-              disabled={loading}
-            >
-              <Image
-                source={require('../../images/google_cover_image.png')}
-                style={styles.googleIcon}
-              />
-            </TouchableOpacity>
-
-            {/* Sign Up Link */}
-            <View style={[styles.signUpContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-              <Text style={styles.signUpText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                <Text style={styles.signUpLink}>Sign Up</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -280,67 +253,104 @@ export default function SignInScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#FFFFFF',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
+  },
+  brandingSection: {
+    minHeight: 280,
+    paddingHorizontal: 32,
+    paddingVertical: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  brandingContent: {
+    alignItems: 'center',
+    maxWidth: 400,
+  },
+  brandingTitle: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 24,
+    marginBottom: 16,
+    fontFamily: 'Montserrat_700Bold',
+    textAlign: 'center',
+  },
+  brandingSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 24,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  formSection: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -32,
+    paddingTop: 16,
   },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
-    marginBottom: 20,
+    marginLeft: 24,
+    marginTop: 8,
   },
-  title: {
+  formContent: {
+    paddingHorizontal: 32,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  formTitle: {
     fontSize: 32,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
     marginBottom: 8,
-    fontFamily: 'ClashDisplay-Medium',
+    fontFamily: 'Montserrat_700Bold',
   },
-  subtitle: {
+  formSubtitle: {
     fontSize: 15,
-    color: theme.colors.textSecondary,
-    marginBottom: 40,
+    color: '#666',
+    marginBottom: 32,
     fontFamily: 'Montserrat_400Regular',
     lineHeight: 22,
-  },
-  formContainer: {
-    flex: 1,
   },
   inputContainer: {
     marginBottom: 20,
   },
-  label: {
+  inputLabel: {
     fontSize: 14,
-    color: theme.colors.text,
+    fontWeight: '600',
+    color: '#1a1a1a',
     marginBottom: 8,
-    fontFamily: 'Montserrat_500Medium',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f8f8f8',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#e0e0e0',
     paddingHorizontal: 16,
     height: 56,
   },
   inputWrapperFocused: {
-    borderColor: theme.colors.primary,
+    borderColor: '#004d43',
     backgroundColor: '#FFFFFF',
   },
   textInput: {
     flex: 1,
     backgroundColor: 'transparent',
-    fontSize: 16,
-    color: theme.colors.text,
+    fontSize: 15,
+    color: '#1a1a1a',
     paddingHorizontal: 0,
     paddingVertical: 16,
     height: 56,
@@ -352,85 +362,52 @@ const styles = StyleSheet.create({
   },
   forgotContainer: {
     alignItems: 'flex-end',
-    marginBottom: 32,
+    marginBottom: 28,
   },
   forgotText: {
-    color: theme.colors.primary,
+    color: '#004d43',
     fontSize: 14,
-    fontFamily: 'Montserrat_500Medium',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   signInButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: 28,
+    backgroundColor: '#D4E157',
+    borderRadius: 12,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
-    elevation: 2,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    marginBottom: 24,
+    shadowColor: '#D4E157',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
     shadowRadius: 8,
+    elevation: 6,
   },
   signInButtonDisabled: {
     opacity: 0.6,
   },
   signInButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.secondary,
-    fontFamily: 'ClashDisplay-Medium',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E0E0E0',
-  },
-  dividerText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginHorizontal: 16,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  googleButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: 32,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  googleIcon: {
-    width: 32,
-    height: 32,
+    fontWeight: 'bold',
+    color: '#004d43',
+    fontFamily: 'Montserrat_700Bold',
   },
   signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 8,
   },
   signUpText: {
     fontSize: 15,
-    color: theme.colors.textSecondary,
+    color: '#666',
     fontFamily: 'Montserrat_400Regular',
   },
   signUpLink: {
     fontSize: 15,
-    color: theme.colors.primary,
-    fontFamily: 'Montserrat_600SemiBold',
+    color: '#004d43',
+    fontFamily: 'Montserrat_700Bold',
   },
 });
