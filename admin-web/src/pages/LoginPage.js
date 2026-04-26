@@ -15,7 +15,7 @@ import {
   Fade,
   Slide
 } from '@mui/material';
-import { Visibility, VisibilityOff, SportsSoccer, Dashboard, TrendingUp } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Dashboard, TrendingUp } from '@mui/icons-material';
 import { loginAdmin, clearError } from '../store/slices/authSlice';
 
 export default function LoginPage({ onSwitchToRegister }) {

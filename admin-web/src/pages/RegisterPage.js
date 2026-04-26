@@ -17,7 +17,6 @@ import {
 import {
     Visibility,
     VisibilityOff,
-    SportsSoccer,
     CheckCircle,
     Security
 } from '@mui/icons-material';
