@@ -12,8 +12,7 @@ import {
     Fade,
     Paper,
     Grid,
-    Slide,
-    Divider
+    Slide
 } from '@mui/material';
 import {
     Visibility,
