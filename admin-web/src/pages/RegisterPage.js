@@ -144,23 +144,32 @@ export default function RegisterPage({ onSwitchToLogin }) {
             >
                 <Fade in={true} timeout={1000}>
                     <Box sx={{ position: 'relative', zIndex: 2, textAlign: 'center', color: '#fff', px: 4, maxWidth: 500 }}>
-                        {/* Logo/Icon */}
+                        {/* Logo */}
                         <Box
                             sx={{
-                                width: 140,
-                                height: 140,
+                                width: 180,
+                                height: 180,
                                 borderRadius: '50%',
-                                background: 'rgba(255, 255, 255, 0.15)',
+                                background: 'rgba(255, 255, 255, 0.95)',
                                 backdropFilter: 'blur(10px)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 margin: '0 auto 2rem',
                                 border: '3px solid rgba(255, 255, 255, 0.3)',
-                                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                                padding: '20px',
                             }}
                         >
-                            <SportsSoccer sx={{ fontSize: 80, color: '#e8ee26' }} />
+                            <img
+                                src="/logo.png"
+                                alt="Arena Pro Logo"
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'contain',
+                                }}
+                            />
                         </Box>
 
                         <Typography 
@@ -257,16 +266,26 @@ export default function RegisterPage({ onSwitchToLogin }) {
                         <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'center', mb: 4 }}>
                             <Box
                                 sx={{
-                                    width: 100,
-                                    height: 100,
+                                    width: 120,
+                                    height: 120,
                                     borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #004d43 0%, #008975 100%)',
+                                    background: '#ffffff',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
+                                    boxShadow: '0 4px 12px rgba(0, 77, 67, 0.15)',
+                                    padding: '15px',
                                 }}
                             >
-                                <SportsSoccer sx={{ fontSize: 60, color: '#e8ee26' }} />
+                                <img
+                                    src="/logo.png"
+                                    alt="Arena Pro Logo"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'contain',
+                                    }}
+                                />
                             </Box>
                         </Box>
 
